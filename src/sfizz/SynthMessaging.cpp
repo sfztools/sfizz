@@ -33,6 +33,21 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             Layer& layer = *impl.layers_[idx];      \
             const Region& region = layer.getRegion();
 
+        #define GET_FILTER_OR_BREAK(idx)                \
+            if (idx >= region.filters.size())           \
+                break;                                  \
+            const auto& filter = region.filters[idx];
+
+        #define GET_EQ_OR_BREAK(idx)                    \
+            if (idx >= region.equalizers.size())        \
+                break;                                  \
+            const auto& eq = region.equalizers[idx];
+
+        #define GET_LFO_OR_BREAK(idx)             \
+            if (idx >= region.lfos.size())        \
+                break;                            \
+            const auto& lfo = region.lfos[idx];
+
         MATCH("/hello", "") {
             client.receive(delay, "/hello", "", nullptr);
         } break;
@@ -1213,11 +1228,6 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, value * 100.0f);
         } break;
 
-        #define GET_FILTER_OR_BREAK(idx)                \
-            if (idx >= region.filters.size())           \
-                break;                                  \
-            const auto& filter = region.filters[idx];
-
         MATCH("/region&/filter&/cutoff", "") {
             GET_REGION_OR_BREAK(indices[0])
             GET_FILTER_OR_BREAK(indices[1])
@@ -1285,13 +1295,6 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
-        #undef GET_FILTER_OR_BREAK
-
-        #define GET_EQ_OR_BREAK(idx)                    \
-            if (idx >= region.equalizers.size())           \
-                break;                                  \
-            const auto& eq = region.equalizers[idx];
-
         MATCH("/region&/eq&/gain", "") {
             GET_REGION_OR_BREAK(indices[0])
             GET_EQ_OR_BREAK(indices[1])
@@ -1337,9 +1340,72 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
-        #undef GET_EQ_OR_BREAK
+        MATCH("/region&/lfo&/wave", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_LFO_OR_BREAK(indices[1])
+            if (lfo.sub.size() == 0)
+                break;
+
+            client.receive<'i'>(delay, path, static_cast<int32_t>(lfo.sub[0].wave));
+        } break;
 
         #undef GET_REGION_OR_BREAK
+        #undef GET_FILTER_OR_BREAK
+        #undef GET_EQ_OR_BREAK
+        #undef GET_LFO_OR_BREAK
+
+        //----------------------------------------------------------------------
+        // Setting values
+        // Note: all these must be rt-safe within the parseOpcode method in region
+
+        #define GET_REGION_OR_BREAK(idx)            \
+            if (idx >= impl.layers_.size())         \
+                break;                              \
+            Layer& layer = *impl.layers_[idx];      \
+            Region& region = layer.getRegion();
+
+        MATCH("/region&/pitch_keycenter", "i") {
+            GET_REGION_OR_BREAK(indices[0])
+            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
+            Impl::OpcodeUpdate update { delay, &region,
+                Opcode { "pitch_keycenter", std::to_string(args[0].i) } };
+            impl.regionUpdates_.emplace_back(update);
+        } break;
+
+        MATCH("/region&/loop_mode", "s") {
+            GET_REGION_OR_BREAK(indices[0])
+            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
+            Impl::OpcodeUpdate update { delay, &region,
+                Opcode { "loop_mode", args[0].s } };
+            impl.regionUpdates_.emplace_back(update);
+        } break;
+
+        MATCH("/region&/filter&/type", "s") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (indices[1] >= region.filters.size())
+                break;
+
+            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
+            Impl::OpcodeUpdate update { delay, &region,
+                Opcode { absl::StrCat("fil", indices[1] + 1 , "_type "), args[0].s } };
+            impl.regionUpdates_.emplace_back(update);
+        } break;
+
+        MATCH("/region&/lfo&/wave", "i") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (indices[1] >= region.lfos.size())
+                break;
+
+            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
+            Impl::OpcodeUpdate update { delay, &region,
+                Opcode { absl::StrCat("lfo", indices[1] + 1, "_wave1"), std::to_string(args[0].i) } };
+            impl.regionUpdates_.emplace_back(update);
+        } break;
+
+        #undef GET_REGION_OR_BREAK
+
+        //----------------------------------------------------------------------
+        // Voices
 
         MATCH("/num_active_voices", "") {
             client.receive<'i'>(delay, path, impl.voiceManager_.getNumActiveVoices());

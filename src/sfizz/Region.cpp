@@ -53,9 +53,9 @@ sfz::Region::Region(int regionNumber, absl::string_view defaultPath)
     case hash(x "_stepcc&"):   \
     case hash(x "_smoothcc&")
 
-bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
+bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
 {
-    const Opcode opcode = rawOpcode.cleanUp(kOpcodeScopeRegion);
+    const Opcode opcode = cleanOpcode ? rawOpcode.cleanUp(kOpcodeScopeRegion) : rawOpcode;
 
     switch (opcode.lettersOnlyHash) {
 
