@@ -92,6 +92,12 @@ struct sfizz_plugin_t
     LV2_URID time_beats_per_minute_uri {};
     LV2_URID time_speed_uri {};
 
+    // CC parameters
+    LV2_URID* cc_to_urid {};
+    int* urid_to_cc {};
+    LV2_URID min_cc_urid {};
+    LV2_URID max_cc_urid {};
+
     // Sfizz related data
     sfizz_synth_t *synth {};
     sfizz_client_t *client {};

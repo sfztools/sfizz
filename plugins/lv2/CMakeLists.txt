@@ -82,6 +82,9 @@ if(SFIZZ_USE_VCPKG OR SFIZZ_STATIC_DEPENDENCIES OR CMAKE_CXX_COMPILER_ID MATCHES
     file(COPY "lgpl-3.0.txt" DESTINATION ${PROJECT_BINARY_DIR})
 endif()
 
+# Generate controllers.ttl
+sfizz_lv2_generate_controllers_ttl("${PROJECT_BINARY_DIR}/controllers.ttl")
+
 # Copy resource files into the bundle
 set(LV2_RESOURCES
     DefaultInstrument.sfz

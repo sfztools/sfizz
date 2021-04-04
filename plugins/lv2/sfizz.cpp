@@ -329,6 +329,65 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
     (void)write_ok;
 }
 
+static void
+sfizz_lv2_setup_cc_parameters(sfizz_plugin_t* self)
+{
+    // store the associations between CC number and parameter URID
+    // construct it trivially in the form of a tabulated perfect hash function
+
+    LV2_URID* cc_to_urid = new LV2_URID[sfz::config::numCCs];
+    int* urid_to_cc;
+    int urid_to_cc_size;
+
+    LV2_URID min_cc_urid {};
+    LV2_URID max_cc_urid {};
+    for (int cc = 0; cc < sfz::config::numCCs; ++cc) {
+        char name[256];
+        sprintf(name, SFIZZ_URI "#cc%03d", cc);
+        LV2_URID urid = self->map->map(self->map->handle, name);
+        if (cc == 0) {
+            min_cc_urid = urid;
+            max_cc_urid = urid;
+        }
+        else {
+            min_cc_urid = (urid < min_cc_urid) ? urid : min_cc_urid;
+            max_cc_urid = (urid > max_cc_urid) ? urid : max_cc_urid;
+        }
+        cc_to_urid[cc] = urid;
+    }
+
+    urid_to_cc_size = max_cc_urid - min_cc_urid + 1;
+    urid_to_cc = new int[urid_to_cc_size];
+
+    for (int i = 0; i < urid_to_cc_size; ++i)
+        urid_to_cc[i] = -1;
+
+    for (int cc = 0; cc < sfz::config::numCCs; ++cc) {
+        LV2_URID urid = cc_to_urid[cc];
+        urid_to_cc[urid - min_cc_urid] = cc;
+    }
+
+    self->cc_to_urid = cc_to_urid;
+    self->urid_to_cc = urid_to_cc;
+    self->min_cc_urid = min_cc_urid;
+    self->max_cc_urid = max_cc_urid;
+}
+
+static int
+sfizz_lv2_get_cc_from_parameter_urid(const sfizz_plugin_t* self, LV2_URID urid)
+{
+    int cc = -1;
+    if (urid >= self->min_cc_urid && urid <= self->max_cc_urid)
+        cc = self->urid_to_cc[urid - self->min_cc_urid];
+    return cc;
+}
+
+static LV2_URID
+sfizz_lv2_get_parameter_urid_from_cc(const sfizz_plugin_t* self, int cc)
+{
+    return self->cc_to_urid[cc];
+}
+
 static LV2_Handle
 instantiate(const LV2_Descriptor *descriptor,
             double rate,
@@ -476,6 +535,8 @@ instantiate(const LV2_Descriptor *descriptor,
         return NULL;
     }
 
+    sfizz_lv2_setup_cc_parameters(self);
+
     self->synth = sfizz_create_synth();
     self->client = sfizz_create_client(self);
     self->synth_mutex = spin_mutex_create();
@@ -501,6 +562,8 @@ cleanup(LV2_Handle instance)
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
+    delete[] self->cc_to_urid;
+    delete[] self->urid_to_cc;
     delete self;
 }
 
@@ -575,7 +638,14 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         char body[MAX_PATH_SIZE];
     } sfizz_path_atom_buffer_t;
 
-    if (key == self->sfizz_sfz_file_uri)
+    int cc = sfizz_lv2_get_cc_from_parameter_urid(self, key);
+    if (cc != -1) {
+        if (atom->type == self->atom_float_uri && atom->size == sizeof(float)) {
+            float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
+            // TODO: CC parameter arrived
+        }
+    }
+    else if (key == self->sfizz_sfz_file_uri)
     {
         LV2_Atom_Forge *forge = &self->forge_secondary;
         sfizz_path_atom_buffer_t buffer;
@@ -796,6 +866,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         if (ev->body.type == self->atom_object_uri || ev->body.type == self->atom_blank_uri)
         {
             const LV2_Atom_Object *obj = (const LV2_Atom_Object *)&ev->body;
+
             if (obj->body.otype == self->patch_set_uri)
             {
                 sfizz_lv2_handle_atom_object(self, obj);

@@ -371,4 +371,6 @@ midnam:update a lv2:Feature .
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 65535 ;
-  ] .
+  ] ;
+
+  rdfs:seeAlso <controllers.ttl> .
