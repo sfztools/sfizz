@@ -228,6 +228,7 @@ struct Voice::Impl
     int initialDelay_ { 0 };
     int age_ { 0 };
     uint32_t count_ { 1 };
+    int sampleEnd_ { 0 };
     int sampleSize_ { 0 };
 
     struct {
@@ -401,6 +402,9 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     if (impl.triggerEvent_.type == TriggerEventType::CC)
         impl.triggerEvent_.number = region.pitchKeycenter;
 
+    if (region.velocityOverride == VelocityOverride::previous)
+        impl.triggerEvent_.value = resources.midiState.getLastVelocity();
+
     if (region.disabled()) {
         impl.switchState(State::cleanMeUp);
         return false;
@@ -469,8 +473,9 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
 
     impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
     impl.baseGain_ = region.getBaseGain();
-    if (impl.triggerEvent_.type != TriggerEventType::CC)
+    if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
         impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
+
     impl.gainSmoother_.reset();
     impl.resetCrossfades();
 
@@ -485,7 +490,8 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
     impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleSize_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1);
+    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()));
+    impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendStepFactor_ = centsFactor(region.bendStep);
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
@@ -608,32 +614,38 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (impl.region_ == nullptr)
         return;
 
+    const Region& region = *impl.region_;
+
     if (impl.state_ != State::playing)
         return;
 
-    if (impl.region_->checkSustain && (ccNumber == impl.region_->sostenutoCC)) {
-        if (ccValue < impl.region_->sostenutoThreshold) {
+    if (ccNumber != region.sustainCC && ccNumber != region.sostenutoCC)
+        return;
+
+    if (region.checkSustain && (ccNumber == region.sostenutoCC)) {
+        if (ccValue < region.sostenutoThreshold) {
             impl.sostenutoState_ = Impl::SostenutoState::Up;
         } else if (impl.sostenutoState_ == Impl::SostenutoState::Up) {
             impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
         }
     }
 
-    if (impl.region_->checkSostenuto && (ccNumber == impl.region_->sustainCC)) {
-        if (ccValue < impl.region_->sustainThreshold) {
+    if (region.checkSostenuto && (ccNumber == region.sustainCC)) {
+        if (ccValue < region.sustainThreshold) {
             impl.sustainState_ = Impl::SustainState::Up;
         } else {
             impl.sustainState_ = Impl::SustainState::Sustaining;
         }
     }
 
-    const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+    const bool sustainPedalReleaseCondition = !region.checkSustain
         || (impl.sustainState_ != Impl::SustainState::Sustaining);
 
-    const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+    const bool sostenutoPedalReleaseCondition = !region.checkSostenuto
         || (impl.sostenutoState_ != Impl::SostenutoState::Sustaining);
 
-    if (impl.noteIsOff_ && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
+    if (impl.noteIsOff_ && region.loopMode != LoopMode::one_shot
+        && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
 }
 
@@ -1060,11 +1072,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         numPartitions = 1;
     }
 
-    const auto sampleEnd = min(
-            int(sampleSize_),
-            int(currentPromise_->information.end),
-            int(source.getNumFrames()))
-            - 1;
+    const auto sampleEnd = min( int(sampleEnd_), int(currentPromise_->information.end), int(source.getNumFrames())) - 1;
 
     int blockRestarts { 0 };
     int oldIndex {};
@@ -1563,8 +1571,11 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if (region == nullptr || other == nullptr)
         return false;
 
+    if (impl.released())
+        return false;
+
     if (impl.triggerEvent_.type == TriggerEventType::NoteOn
-        && region->offBy == other->group
+        && region->offBy && *region->offBy == other->group
         && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;

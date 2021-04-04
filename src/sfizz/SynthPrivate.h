@@ -219,6 +219,16 @@ struct Synth::Impl final: public Parser::Listener {
      */
     void setDefaultHdcc(int ccNumber, float value);
 
+    /**
+     * @brief Check if we have to kill any voice when starting a new one
+     *      on the specified region with the specified note/cc number
+     *
+     * @param region
+     * @param delay
+     * @param number
+     */
+    void checkOffGroups(const Region* region, int delay, int number);
+
     int numGroups_ { 0 };
     int numMasters_ { 0 };
 
