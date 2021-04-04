@@ -39,6 +39,9 @@ option_ex (SFIZZ_USE_SYSTEM_SIMDE  "Use SIMDe libraries preinstalled on system" 
 option_ex (SFIZZ_STATIC_DEPENDENCIES "Link dependencies statically" OFF)
 option_ex (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds" OFF)
 
+# The fixed number of controller parameters
+set(SFIZZ_NUM_CCS 512)
+
 include (SfizzConfig)
 include (SfizzDeps)
 include (SfizzFaust)
