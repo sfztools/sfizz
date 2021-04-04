@@ -47,6 +47,7 @@ function(sfizz_lv2_generate_controllers_ttl FILE)
     file(WRITE "${FILE}" "# LV2 parameters for SFZ controllers
 @prefix atom:   <http://lv2plug.in/ns/ext/atom#> .
 @prefix lv2:    <http://lv2plug.in/ns/lv2core#> .
+@prefix midi:   <http://lv2plug.in/ns/ext/midi#> .
 @prefix patch:  <http://lv2plug.in/ns/ext/patch#> .
 @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sfizz:  <${LV2PLUGIN_URI}#> .
@@ -58,8 +59,20 @@ function(sfizz_lv2_generate_controllers_ttl FILE)
 sfizz:cc${_i}
   a lv2:Parameter ;
   rdfs:label \"Controller ${_i}\" ;
-  rdfs:range atom:Float .
+  rdfs:range atom:Float")
+
+        if(_i LESS 128)
+            math(EXPR _digit1 "${_i}>>4")
+            math(EXPR _digit2 "${_i}&15")
+            string(SUBSTRING "0123456789ABCDEF" "${_digit1}" 1 _digit1)
+            string(SUBSTRING "0123456789ABCDEF" "${_digit2}" 1 _digit2)
+            file(APPEND "${FILE}" " ;
+  midi:binding \"B0${_digit1}${_digit2}00\"^^midi:MidiEvent .
 ")
+        else()
+            file(APPEND "${FILE}" " .
+")
+        endif()
     endforeach()
 
     file(APPEND "${FILE}" "
