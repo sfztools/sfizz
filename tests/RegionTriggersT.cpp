@@ -227,6 +227,7 @@ TEST_CASE("Legato triggers", "Region triggers")
 TEST_CASE("[Triggers] sw_vel, basic")
 {
     Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
@@ -236,6 +237,7 @@ TEST_CASE("[Triggers] sw_vel, basic")
     )");
     synth.noteOn(0, 60, 127);
     synth.noteOn(10, 62, 10);
+    synth.renderBlock(buffer);
     synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
@@ -250,6 +252,7 @@ TEST_CASE("[Triggers] sw_vel, basic")
 TEST_CASE("[Triggers] sw_vel, without sw_previous")
 {
     Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
@@ -259,6 +262,7 @@ TEST_CASE("[Triggers] sw_vel, without sw_previous")
     )");
     synth.noteOn(0, 60, 127);
     synth.noteOn(10, 62, 10);
+    synth.renderBlock(buffer);
     synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
@@ -273,6 +277,7 @@ TEST_CASE("[Triggers] sw_vel, without sw_previous")
 TEST_CASE("[Triggers] sw_vel, with a note in between")
 {
     Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
@@ -284,6 +289,7 @@ TEST_CASE("[Triggers] sw_vel, with a note in between")
     synth.noteOn(0, 60, 127);
     synth.noteOn(5, 64, 63);
     synth.noteOn(10, 62, 10);
+    synth.renderBlock(buffer);
     synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
@@ -300,6 +306,7 @@ TEST_CASE("[Triggers] sw_vel, with a note in between")
 TEST_CASE("[Triggers] sw_vel, with a note in between and sw_previous")
 {
     Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
@@ -311,6 +318,7 @@ TEST_CASE("[Triggers] sw_vel, with a note in between and sw_previous")
     synth.noteOn(0, 60, 127);
     synth.noteOn(5, 64, 63);
     synth.noteOn(10, 62, 10);
+    synth.renderBlock(buffer);
     synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
     synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
@@ -325,6 +333,7 @@ TEST_CASE("[Triggers] sw_vel, with a note in between and sw_previous")
 TEST_CASE("[Triggers] sw_vel, consider the previous velocity for triggers")
 {
     Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
@@ -336,6 +345,7 @@ TEST_CASE("[Triggers] sw_vel, consider the previous velocity for triggers")
     SECTION("Should trigger") {
         synth.noteOn(0, 60, 127);
         synth.noteOn(10, 62, 10);
+        synth.renderBlock(buffer);
         synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
         synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
         synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);
@@ -350,6 +360,7 @@ TEST_CASE("[Triggers] sw_vel, consider the previous velocity for triggers")
     SECTION("Should not trigger") {
         synth.noteOn(0, 60, 10);
         synth.noteOn(10, 62, 127);
+        synth.renderBlock(buffer);
         synth.dispatchMessage(client, 0, "/num_active_voices", "", nullptr);
         synth.dispatchMessage(client, 0, "/voice0/trigger_value", "", nullptr);
         synth.dispatchMessage(client, 0, "/voice1/trigger_value", "", nullptr);

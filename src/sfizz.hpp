@@ -334,8 +334,11 @@ public:
 
     /**
      * @brief Send a note on event to the synth.
-     *
      * @since 0.2.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -349,8 +352,11 @@ public:
 
     /**
      * @brief Send a note off event to the synth.
-     *
      * @since 0.2.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -364,8 +370,11 @@ public:
 
     /**
      * @brief Send a CC event to the synth
-     *
      * @since 0.2.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -379,8 +388,11 @@ public:
 
     /**
      * @brief Send a high precision CC event to the synth
-     *
      * @since 0.4.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -398,6 +410,10 @@ public:
      * This updates the CC value known to the synth, but without performing
      * additional MIDI-specific interpretations. (eg. the CC 120 and up)
      *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
      * @since 0.6.0
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -413,6 +429,10 @@ public:
     /**
      * @brief Send a pitch bend event to the synth
      *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
      * @since 0.2.0
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -426,6 +446,10 @@ public:
 
     /**
      * @brief Send an aftertouch event to the synth.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
      *
      * @since 0.2.0
      *
@@ -442,6 +466,10 @@ public:
      * @brief Send a polyphonic aftertouch event to the synth. This feature is
      *          experimental and needs more testing in the internal engine.
      *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
      * @since 0.6.0
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -457,6 +485,10 @@ public:
     /**
      * @brief Send a tempo event to the synth.
      *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
+     *
      * @since 0.2.0
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -470,6 +502,10 @@ public:
 
     /**
      * @brief Send the time signature.
+     *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
      *
      * @since 0.5.0
      *
@@ -485,6 +521,10 @@ public:
     /**
      * @brief Send the time position.
      *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
+     *
      * @since 0.5.0
      *
      * @param delay   The delay.
@@ -498,6 +538,10 @@ public:
 
     /**
      * @brief Send the playback state.
+     *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
      *
      * @since 0.5.0
      *

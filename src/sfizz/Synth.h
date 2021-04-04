@@ -417,7 +417,8 @@ public:
      * @brief Send a tempo event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower than the size of
-     *              the block in the next call to renderBlock().
+     *              the block in the next call to renderBlock(), and ordered with respect to
+     *              calls to tempo(), timeSignature(), timePosition(), and playbackState().
      * @param secondsPerQuarter the new period of the quarter note
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
@@ -438,28 +439,35 @@ public:
      */
     void hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) noexcept;
     /**
-     * @brief      Send the time signature.
+     * @brief       Send the time signature.
      *
-     * @param      delay                The delay.
-     * @param      beats_per_bar        The number of beats per bar, or time signature numerator.
-     * @param      beat_unit            The note corresponding to one beat, or time signature denominator.
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock(), and ordered with respect to
+     *              calls to tempo(), timeSignature(), timePosition(), and playbackState().
+     * @param beats_per_bar The number of beats per bar, or time signature numerator.
+     * @param beat_unit The note corresponding to one beat, or time signature denominator.
      */
     void timeSignature(int delay, int beatsPerBar, int beatUnit);
     /**
-     * @brief      Send the time position.
+     * @brief Send the time position.
      *
-     * @param      delay                The delay.
-     * @param      bar                  The current bar.
-     * @param      bar_beat             The fractional position of the current beat within the bar.
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock(), and ordered with respect to
+     *              calls to tempo(), timeSignature(), timePosition(), and playbackState().
+     * @param bar The current bar.
+     * @param bar_beat The fractional position of the current beat within the bar.
      */
     void timePosition(int delay, int bar, double barBeat);
     /**
-     * @brief      Send the playback state.
+     * @brief Send the playback state.
      *
-     * @param      delay                The delay.
-     * @param      playback_state       The playback state, 1 if playing, 0 if stopped.
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock(), and ordered with respect to
+     *              calls to tempo(), timeSignature(), timePosition(), and playbackState().
+     * @param playback_state The playback state, 1 if playing, 0 if stopped.
      */
     void playbackState(int delay, int playbackState);
+
     /**
      * @brief Render an block of audio data in the buffer. This call will reset
      * the synth in its waiting state for the next batch of events. The size of
@@ -534,16 +542,16 @@ public:
     uint32_t getPreloadSize() const noexcept;
 
     /**
-     * @brief      Gets the number of allocated buffers.
+     * @brief Gets the number of allocated buffers.
      *
-     * @return     The allocated buffers.
+     * @return  The allocated buffers.
      */
     int getAllocatedBuffers() const noexcept { return Buffer<float>::counter().getNumBuffers(); }
 
     /**
-     * @brief      Gets the number of bytes allocated through the buffers
+     * @brief Gets the number of bytes allocated through the buffers
      *
-     * @return     The allocated bytes.
+     * @return  The allocated bytes.
      */
     int getAllocatedBytes() const noexcept { return Buffer<float>::counter().getTotalBytes(); }
 
@@ -610,15 +618,15 @@ public:
     void allSoundOff() noexcept;
 
     /**
-     * @brief      Get the parser.
+     * @brief Get the parser.
      *
-     * @return     A reference to the parser.
+     * @return    A reference to the parser.
      */
     Parser& getParser() noexcept;
     /**
-     * @brief      Get the parser.
+     * @brief Get the parser.
      *
-     * @return     A reference to the parser.
+     * @return    A reference to the parser.
      */
     const Parser& getParser() const noexcept;
 
