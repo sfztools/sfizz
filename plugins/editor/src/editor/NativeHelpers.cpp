@@ -54,6 +54,21 @@ bool openDirectoryInExplorer(const char *filename)
     return ShellExecuteExW(&info);
 }
 
+bool openURLWithExternalProgram(const char *url)
+{
+    std::wstring path = stringToWideChar(url);
+
+    SHELLEXECUTEINFOW info;
+    memset(&info, 0, sizeof(info));
+
+    info.cbSize = sizeof(info);
+    info.lpVerb = L"open";
+    info.lpFile = path.c_str();
+    info.nShow = SW_SHOW;
+
+    return ShellExecuteExW(&info);
+}
+
 bool askQuestion(const char *text)
 {
     int ret = MessageBoxW(nullptr, stringToWideChar(text), L"Question", MB_YESNO);
@@ -95,6 +110,12 @@ bool openFileInExternalEditor(const char *filename)
 bool openDirectoryInExplorer(const char *filename)
 {
     return openFileByMimeType(filename, "inode/directory");
+}
+
+bool openURLWithExternalProgram(const char *url)
+{
+    gboolean success = g_app_info_launch_default_for_uri(url, nullptr, nullptr);
+    return success == TRUE;
 }
 
 static std::vector<char *> createForkEnviron()

@@ -3,7 +3,7 @@ version 1.0305
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {659 319 800 475} type Double
+  xywh {353 221 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box imageContainer_ {
@@ -20,9 +20,9 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        comment {tag=kTagFirstChangePanel+kPanelGeneral}
+        comment {tag=kTagAbout} selected
         image {../resources/logo_text_shaded.png} xywh {35 9 120 60}
-        class SfizzMainButton
+        class AboutButton
       }
       Fl_Button {} {
         comment {tag=kTagFirstChangePanel+kPanelGeneral}
@@ -140,7 +140,7 @@ widget_class mainView {open
       }
       Fl_Box volumeCCKnob_ {
         label Volume
-        comment {tag=kTagSetCCVolume} selected
+        comment {tag=kTagSetCCVolume}
         xywh {580 10 70 90} box BORDER_BOX labelsize 12 align 17
         class KnobCCBox
       }
