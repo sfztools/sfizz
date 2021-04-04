@@ -348,6 +348,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("hichanaft"):
         aftertouchRange.setEnd(opcode.read(Default::hiChannelAftertouch));
         break;
+    case hash("lopolyaft"):
+        polyAftertouchRange.setStart(opcode.read(Default::loPolyAftertouch));
+        break;
+    case hash("hipolyaft"):
+        polyAftertouchRange.setEnd(opcode.read(Default::hiPolyAftertouch));
+        break;
     case hash("lobpm"):
         bpmRange.setStart(opcode.read(Default::loBPM));
         break;
@@ -926,7 +932,9 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
             = opcode.read(depthModSpec);
         break;
     case_any_lfo("depthpolyaft"): // NOLINT bugprone-branch-clone
-        // TODO(jpc) LFO v1
+        getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
+        getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), sourceDepthKey).sourceDepth
+            = opcode.read(depthModSpec);
         break;
     case_any_lfo("fade"):
         lfo.fade = opcode.read(Default::lfoFade);
@@ -942,7 +950,8 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
             = opcode.read(Default::lfoFreqMod);
         break;
     case_any_lfo("freqpolyaft"): // NOLINT bugprone-branch-clone
-        // TODO(jpc) LFO v1
+        getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), lfo.freqKey).sourceDepth
+            = opcode.read(Default::lfoFreqMod);
         break;
 
     // sfizz extension

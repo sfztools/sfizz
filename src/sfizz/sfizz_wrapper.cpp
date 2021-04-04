@@ -142,6 +142,10 @@ void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch)
 {
     synth->synth.aftertouch(delay, aftertouch);
 }
+void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch)
+{
+    synth->synth.polyAftertouch(delay, note_number, aftertouch);
+}
 void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter)
 {
     synth->synth.tempo(delay, seconds_per_quarter);

@@ -113,6 +113,8 @@ std::string ModKey::toString() const
         return absl::StrCat("FilterEG {", region_.number(), "}");
     case ModId::ChannelAftertouch:
         return absl::StrCat("ChannelAftertouch");
+    case ModId::PolyAftertouch:
+        return absl::StrCat("PolyAftertouch");
     case ModId::PerVoiceController:
         return absl::StrCat("PerVoiceController ", params_.cc,
             " {curve=", params_.curve, ", smooth=", params_.smooth,

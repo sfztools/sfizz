@@ -430,7 +430,7 @@ SFIZZ_EXPORTED_API void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int
 SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch);
 
 /**
- * @brief Send an aftertouch event. (CURRENTLY UNIMPLEMENTED)
+ * @brief Send an aftertouch event.
  * @since 0.2.0
  *
  * @param synth      The synth.
@@ -442,6 +442,22 @@ SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, 
  * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
+
+/**
+ * @brief Send a polyphonic aftertouch event. This feature is experimental and needs more testing
+ *          in the internal engine.
+ * @since 0.6.0
+ *
+ * @param synth         The synth.
+ * @param delay         The delay at which the event occurs; this should be lower
+ *                      than the size of the block in the next call to renderBlock().
+ * @param note_number   The note number.
+ * @param aftertouch    The aftertouch value.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch);
 
 /**
  * @brief Send a tempo event.
@@ -823,7 +839,7 @@ SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
  * @brief Index out of bound error for the requested CC/key label.
  * @since 0.4.0
  */
-#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX -1
+#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX (-1)
 
 /**
  * @brief Get the number of key labels registered in the current sfz file.

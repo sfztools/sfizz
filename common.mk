@@ -59,6 +59,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModMatrix.cpp \
 	src/sfizz/modulations/sources/ADSREnvelope.cpp \
 	src/sfizz/modulations/sources/ChannelAftertouch.cpp \
+	src/sfizz/modulations/sources/PolyAftertouch.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
 	src/sfizz/modulations/sources/FlexEnvelope.cpp \
 	src/sfizz/modulations/sources/LFO.cpp \

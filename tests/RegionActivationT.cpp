@@ -537,3 +537,47 @@ TEST_CASE("[Keyswitches] Multiple sw_default, in region")
     REQUIRE(!synth.getLayerView(1)->isSwitchedOn());
 }
 
+TEST_CASE("[Region activation] Polyphonic aftertouch")
+{
+    sfz::Synth synth;
+    SECTION("Basic sequence, note on")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyaft.sfz", R"(
+            <region> sample=*saw lokey=48 hikey=60
+            <region> lopolyaft=50 hipolyaft=100 sample=*sine lokey=36 hikey=47
+        )");
+        synth.noteOn(0, 50, 100);
+        REQUIRE( synth.getNumActiveVoices() == 1);
+        synth.noteOn(1, 40, 100);
+        REQUIRE( synth.getNumActiveVoices() == 1); // no notes playing
+        synth.polyAftertouch(2, 40, 80);
+        synth.noteOn(3, 40, 100);
+        REQUIRE( synth.getNumActiveVoices() == 2);
+    }
+
+    SECTION("Basic sequence, note off, no polyaft set")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyaft.sfz", R"(
+            <region> sample=*saw
+            <region> lopolyaft=50 hipolyaft=100 sample=*sine trigger=release
+        )");
+        synth.noteOn(0, 50, 100);
+        REQUIRE( synth.getNumActiveVoices() == 1);
+        synth.noteOff(1, 50, 0);
+        REQUIRE( synth.getNumActiveVoices() == 1); // no note off playing
+    }
+
+    SECTION("Basic sequence, note off")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyaft.sfz", R"(
+            <region> sample=*saw
+            <region> lopolyaft=50 hipolyaft=100 sample=*sine trigger=release
+        )");
+        synth.noteOn(0, 50, 100);
+        REQUIRE( synth.getNumActiveVoices() == 1);
+        synth.polyAftertouch(2, 50, 80);
+        synth.noteOff(3, 50, 0);
+        REQUIRE( synth.getNumActiveVoices() == 2); // no note off playing
+    }
+}
+

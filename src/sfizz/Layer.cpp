@@ -59,7 +59,10 @@ bool Layer::registerNoteOn(int noteNumber, float velocity, float randValue) noex
             ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
     }
 
-    if (!isSwitchedOn())
+    const bool polyAftertouchActive =
+        region.polyAftertouchRange.containsWithEnd(midiState_.getPolyAftertouch(noteNumber));
+
+    if (!isSwitchedOn() || !polyAftertouchActive)
         return false;
 
     if (!region.triggerOnNote)
@@ -83,7 +86,10 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
 
     const Region& region = region_;
 
-    if (!isSwitchedOn())
+    const bool polyAftertouchActive =
+        region.polyAftertouchRange.containsWithEnd(midiState_.getPolyAftertouch(noteNumber));
+
+    if (!isSwitchedOn() || !polyAftertouchActive)
         return false;
 
     if (!region.triggerOnNote)

@@ -16,6 +16,7 @@
 #include "LFO.h"
 #include "MathHelpers.h"
 #include "ModifierHelpers.h"
+#include "TriggerEvent.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -658,8 +659,23 @@ void Voice::registerPitchWheel(int delay, float pitch) noexcept
     UNUSED(pitch);
 }
 
-void Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
+void Voice::registerAftertouch(int delay, float aftertouch) noexcept
 {
+    // TODO
+    UNUSED(delay);
+    UNUSED(aftertouch);
+}
+
+void Voice::registerPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept
+{
+    Impl& impl = *impl_;
+    if (impl.state_ != State::playing)
+        return;
+
+    if (!(impl.triggerEvent_.type == TriggerEventType::NoteOn || impl.triggerEvent_.type == TriggerEventType::NoteOff)
+        || impl.triggerEvent_.number != noteNumber)
+        return;
+
     // TODO
     UNUSED(delay);
     UNUSED(aftertouch);

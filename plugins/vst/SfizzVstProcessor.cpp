@@ -465,9 +465,13 @@ void SfizzVstProcessor::processEvents(Vst::IEventList& events)
             _noteEventsCurrentCycle[pitch] = 0.0f;
             break;
         }
-        // case Vst::Event::kPolyPressureEvent:
-        //     synth.aftertouch(e.sampleOffset, convertVelocityFromFloat(e.polyPressure.pressure));
-        //     break;
+        case Vst::Event::kPolyPressureEvent: {
+            int pitch = e.polyPressure.pitch;
+            if (pitch < 0 || pitch >= 128)
+                break;
+            synth.polyAftertouch(e.sampleOffset, pitch, convertVelocityFromFloat(e.polyPressure.pressure));
+            break;
+        }
         }
     }
 }

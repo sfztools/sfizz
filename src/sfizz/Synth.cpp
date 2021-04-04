@@ -64,6 +64,7 @@ Synth::Impl::Impl()
     genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
     genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
     genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, resources_.midiState));
+    genPolyAftertouch_.reset(new PolyAftertouchSource(voiceManager_, resources_.midiState));
 }
 
 Synth::Impl::~Impl()
@@ -1337,6 +1338,26 @@ void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
     impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
 }
 
+void Synth::polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept
+{
+    const float normalizedAftertouch = normalize7Bits(aftertouch);
+    hdPolyAftertouch(delay, noteNumber, normalizedAftertouch);
+}
+
+void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) noexcept
+{
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+
+    impl.resources_.midiState.polyAftertouchEvent(delay, noteNumber, normAftertouch);
+
+    for (auto& voice : impl.voiceManager_)
+        voice.registerPolyAftertouch(delay, noteNumber, normAftertouch);
+
+    // Note information is lost on this CC
+    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false);
+}
+
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
 {
     Impl& impl = *impl_;
@@ -1720,6 +1741,9 @@ void Synth::Impl::setupModMatrix()
                 break;
             case ModId::ChannelAftertouch:
                 gen = genChannelAftertouch_.get();
+                break;
+            case ModId::PolyAftertouch:
+                gen = genPolyAftertouch_.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");

@@ -446,6 +446,14 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive(delay, path, "ff", args);
         } break;
 
+        MATCH("/region&/polyaft_range", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            sfizz_arg_t args[2];
+            args[0].f = region.polyAftertouchRange.getStart();
+            args[1].f = region.polyAftertouchRange.getEnd();
+            client.receive(delay, path, "ff", args);
+        } break;
+
         MATCH("/region&/bpm_range", "") {
             GET_REGION_OR_BREAK(indices[0])
             sfizz_arg_t args[2];

@@ -362,6 +362,7 @@ struct Region {
 
     // Region logic: internal conditions
     UncheckedRange<float> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
+    UncheckedRange<float> polyAftertouchRange { Default::loPolyAftertouch, Default::hiPolyAftertouch }; // hipolyaft and lopolyaft
     UncheckedRange<float> bpmRange { Default::loBPM, Default::hiBPM }; // hibpm and lobpm
     UncheckedRange<float> randRange { Default::loNormalized, Default::hiNormalized }; // hirand and lorand
     uint8_t sequenceLength { Default::sequence }; // seq_length

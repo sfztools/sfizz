@@ -425,7 +425,7 @@ public:
     void pitchWheel(int delay, int pitch) noexcept;
 
     /**
-     * @brief Send a aftertouch event to the synth. (CURRENTLY UNIMPLEMENTED)
+     * @brief Send an aftertouch event to the synth.
      *
      * @since 0.2.0
      *
@@ -437,6 +437,22 @@ public:
      * - @b RT: the function must be invoked from the Real-time thread
      */
     void aftertouch(int delay, uint8_t aftertouch) noexcept;
+
+    /**
+     * @brief Send a polyphonic aftertouch event to the synth. This feature is
+     *          experimental and needs more testing in the internal engine.
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the note number.
+     * @param aftertouch the aftertouch value.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
 
     /**
      * @brief Send a tempo event to the synth.

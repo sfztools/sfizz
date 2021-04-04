@@ -422,6 +422,22 @@ public:
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
+     * @brief Send a polyphonic aftertouch event to the synth
+     *
+     * @param delay
+     * @param noteNumber
+     * @param normAftertouch
+     */
+    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+    /**
+     * @brief Send a polyphonic aftertouch event to the synth
+     *
+     * @param delay
+     * @param noteNumber
+     * @param normAftertouch
+     */
+    void hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) noexcept;
+    /**
      * @brief      Send the time signature.
      *
      * @param      delay                The delay.

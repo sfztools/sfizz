@@ -640,6 +640,12 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                       (int)ev->time.frames,
                       msg[1]);
         break;
+    case LV2_MIDI_MSG_NOTE_PRESSURE:
+        sfizz_send_poly_aftertouch(self->synth,
+                      (int)ev->time.frames,
+                      (int)msg[1],
+                      msg[2]);
+        break;
     case LV2_MIDI_MSG_BENDER:
         sfizz_send_pitch_wheel(self->synth,
                         (int)ev->time.frames,
