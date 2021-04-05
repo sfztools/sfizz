@@ -93,10 +93,7 @@ struct sfizz_plugin_t
     LV2_URID time_speed_uri {};
 
     // CC parameters
-    LV2_URID* cc_to_urid {};
-    int* urid_to_cc {};
-    LV2_URID min_cc_urid {};
-    LV2_URID max_cc_urid {};
+    sfizz_lv2_ccmap* ccmap {};
 
     // Sfizz related data
     sfizz_synth_t *synth {};

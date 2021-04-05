@@ -85,3 +85,10 @@ struct sfizz_plugin_t;
 bool sfizz_lv2_fetch_description(
     sfizz_plugin_t *self, const int *serial,
     uint8_t **descp, uint32_t *sizep, int *serialp);
+
+// Mapping URID to CC and vice-versa
+struct sfizz_lv2_ccmap;
+sfizz_lv2_ccmap *sfizz_lv2_ccmap_create(LV2_URID_Map* map);
+void sfizz_lv2_ccmap_free(sfizz_lv2_ccmap *ccmap);
+LV2_URID sfizz_lv2_ccmap_map(const sfizz_lv2_ccmap *ccmap, int cc);
+int sfizz_lv2_ccmap_unmap(const sfizz_lv2_ccmap *ccmap, LV2_URID urid);
