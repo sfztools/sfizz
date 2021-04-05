@@ -123,7 +123,8 @@ static const fs::path getSettingsPath()
     dirPath /= "SFZTools";
     dirPath /= "sfizz";
     std::error_code ec;
-    if (!fs::create_directories(dirPath, ec))
+    fs::create_directories(dirPath, ec);
+    if (ec)
         return {};
     return dirPath / "settings.xml";
 }
