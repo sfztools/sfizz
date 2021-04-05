@@ -216,9 +216,6 @@ SFIZZ_SOURCES += \
 # absl::exponential_biased
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/exponential_biased.cc
-# absl::dynamic_annotations
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/dynamic_annotations.cc
 # absl::malloc_internal
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/low_level_alloc.cc
