@@ -476,6 +476,9 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         else if (editIdIsKeyswitchLabel(id)) {
             updateSWLastLabel(keyswitchLabelForEditId(id), v.to_string().c_str());
         }
+        else if (editIdIsCC(id)) {
+            updateCCValue(unsigned(ccForEditId(id)), v.to_float());
+        }
         else if (editIdIsCCUsed(id)) {
             updateCCUsed(ccUsedForEditId(id), v.to_float() != 0);
             // TODO(jpc) remove value requests, when implementing CC automation
