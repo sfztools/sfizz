@@ -139,37 +139,6 @@ private:
 };
 
 /**
- * @brief Update which indicates the processor status.
- */
-class ProcessorStateUpdate : public Steinberg::FObject {
-public:
-    void setState(SfizzVstState newState)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        state_ = std::move(newState);
-    }
-
-    SfizzVstState getState() const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return state_;
-    }
-
-    template <class F>
-    void access(F&& fn)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        fn(state_);
-    }
-
-    OBJ_METHODS(ProcessorStateUpdate, FObject)
-
-private:
-    SfizzVstState state_;
-    mutable std::mutex mutex_;
-};
-
-/**
  * @brief Update which indicates the playing SFZ status.
  */
 class PlayStateUpdate : public Steinberg::FObject {

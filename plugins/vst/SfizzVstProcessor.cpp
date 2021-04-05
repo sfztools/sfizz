@@ -84,6 +84,9 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
 
     _state = SfizzVstState();
 
+    // allocate needed space to track CC values
+    _state.controllers.resize(sfz::config::numCCs);
+
     fprintf(stderr, "[sfizz] new synth\n");
     _synth.reset(new sfz::Sfizz);
 
@@ -97,7 +100,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth->setBroadcastCallback(onMessage, this);
 
     _currentStretchedTuning = 0.0;
-    loadSfzFileOrDefault({});
+    loadSfzFileOrDefault({}, false);
 
     _synth->tempo(0, 0.5);
     _timeSigNumerator = 4;
@@ -130,6 +133,8 @@ tresult PLUGIN_API SfizzVstProcessor::connect(IConnectionPoint* other)
     // when controller connects, send these messages that we couldn't earlier
     if (_loadedSfzMessage)
         sendMessage(_loadedSfzMessage);
+    if (_automateMessage)
+        sendMessage(_automateMessage);
 
     return kResultTrue;
 }
@@ -168,6 +173,9 @@ tresult PLUGIN_API SfizzVstProcessor::setState(IBStream* stream)
     std::lock_guard<SpinMutex> lock(_processMutex);
     _state = s;
 
+    // allocate needed space to track CC values
+    _state.controllers.resize(sfz::config::numCCs);
+
     syncStateToSynth();
 
     return r;
@@ -186,7 +194,7 @@ void SfizzVstProcessor::syncStateToSynth()
     if (!synth)
         return;
 
-    loadSfzFileOrDefault(_state.sfzFile);
+    loadSfzFileOrDefault(_state.sfzFile, true);
     synth->setVolume(_state.volume);
     synth->setNumVoices(_state.numVoices);
     synth->setOversamplingFactor(1 << _state.oversamplingLog2);
@@ -284,7 +292,6 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 
     // Request OSC updates
     sfz::Client& client = *_client;
-    synth.sendMessage(client, 0, "/cc/changed~", "", nullptr);
     synth.sendMessage(client, 0, "/sw/last/current", "", nullptr);
 
     //
@@ -409,8 +416,10 @@ void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
             if (id >= kPidCC0 && id <= kPidCCLast) {
                 auto ccNumber = static_cast<int>(id - kPidCC0);
                 for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
-                    if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
+                    if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue) {
                         synth.hdcc(sampleOffset, ccNumber, value);
+                        _state.controllers[ccNumber] = value;
+                    }
                 }
             }
             break;
@@ -561,7 +570,7 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 
         std::unique_lock<SpinMutex> lock(_processMutex);
         _state.sfzFile.assign(static_cast<const char *>(data), size);
-        loadSfzFileOrDefault(_state.sfzFile);
+        loadSfzFileOrDefault(_state.sfzFile, false);
         lock.unlock();
     }
     else if (!std::strcmp(id, "LoadScala")) {
@@ -614,7 +623,7 @@ void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* 
     }
 }
 
-void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath)
+void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState)
 {
     sfz::Sfizz& synth = *_synth;
 
@@ -634,18 +643,56 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath)
         synth.loadSfzString("default.sfz", defaultSfzText);
     }
 
-    const std::string desc = getDescriptionBlob(synth.handle());
+    const std::string descBlob = getDescriptionBlob(synth.handle());
 
-    Steinberg::OPtr<Vst::IMessage> message { allocateMessage() };
-    message->setMessageID("LoadedSfz");
-    Vst::IAttributeList* attrs = message->getAttributes();
-    attrs->setBinary("File", filePath.data(), filePath.size());
-    attrs->setBinary("Description", desc.data(), desc.size());
+    Steinberg::OPtr<Vst::IMessage> loadMessage { allocateMessage() };
+    loadMessage->setMessageID("LoadedSfz");
+    Vst::IAttributeList* loadAttrs = loadMessage->getAttributes();
+    loadAttrs->setBinary("File", filePath.data(), filePath.size());
+    loadAttrs->setBinary("Description", descBlob.data(), descBlob.size());
+
+    {
+        std::vector<absl::optional<float>> newControllers(sfz::config::numCCs);
+        const std::vector<absl::optional<float>> oldControllers = std::move(_state.controllers);
+        // collect initial CC from instrument
+        const InstrumentDescription desc = parseDescriptionBlob(descBlob);
+        for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
+            if (desc.ccUsed.test(cc))
+                newControllers[cc] = desc.ccDefault[cc];
+        }
+        // set CC from existing state
+        if (initParametersFromState) {
+            for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
+                if (absl::optional<float> value = oldControllers[cc]) {
+                    newControllers[cc] = *value;
+                    synth.hdcc(0, int(cc), *value);
+                }
+            }
+        }
+        _state.controllers = std::move(newControllers);
+    }
+
+    // create a message which requests the controller to automate initial parameters
+    Steinberg::OPtr<Vst::IMessage> automateMessage { allocateMessage() };
+    automateMessage->setMessageID("Automate");
+    Vst::IAttributeList* automateAttrs = automateMessage->getAttributes();
+    std::string automateBlob;
+    automateBlob.reserve(sfz::config::numCCs * (sizeof(uint32) + sizeof(float)));
+    for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
+        uint32 pid = kPidCC0 + cc;
+        float value = _state.controllers[cc].value_or(0.0f);
+        automateBlob.append(reinterpret_cast<const char*>(&pid), sizeof(uint32));
+        automateBlob.append(reinterpret_cast<const char*>(&value), sizeof(float));
+    }
+    automateAttrs->setBinary("Data", automateBlob.data(), uint32(automateBlob.size()));
 
     // sending can fail if controller is not connected yet, so keep it around
-    _loadedSfzMessage = message;
+    _loadedSfzMessage = loadMessage;
+    _automateMessage = automateMessage;
 
-    sendMessage(message);
+    // send message
+    sendMessage(loadMessage);
+    sendMessage(automateMessage);
 }
 
 void SfizzVstProcessor::doBackgroundWork()
@@ -726,7 +773,7 @@ void SfizzVstProcessor::doBackgroundIdle(size_t idleCounter)
         if (_synth->shouldReloadFile()) {
             fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
             std::lock_guard<SpinMutex> lock(_processMutex);
-            loadSfzFileOrDefault(_state.sfzFile);
+            loadSfzFileOrDefault(_state.sfzFile, false);
         }
         if (_synth->shouldReloadScala()) {
             fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
