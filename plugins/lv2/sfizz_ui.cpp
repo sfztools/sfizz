@@ -537,6 +537,22 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
         }
     };
 
+    auto sendController = [this](LV2_URID property, float value) {
+        LV2_Atom_Forge *forge = &atom_forge;
+        LV2_Atom_Forge_Frame frame;
+        auto *atom = reinterpret_cast<const LV2_Atom *>(atom_temp);
+        lv2_atom_forge_set_buffer(forge, atom_temp, sizeof(atom_temp));
+        if (lv2_atom_forge_object(forge, &frame, 0, patch_set_uri) &&
+            lv2_atom_forge_key(forge, patch_property_uri) &&
+            lv2_atom_forge_urid(forge, property) &&
+            lv2_atom_forge_key(forge, patch_value_uri) &&
+            lv2_atom_forge_float(forge, value))
+        {
+            lv2_atom_forge_pop(forge, &frame);
+            write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+        }
+    };
+
     switch (id) {
     case EditId::Volume:
         sendFloat(SFIZZ_VOLUME, v.to_float());
@@ -566,6 +582,11 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
         sendPath(sfizz_scala_file_uri, v.to_string());
         break;
     default:
+        if (editIdIsCC(id)) {
+            int cc = ccForEditId(id);
+            LV2_URID urid = sfizz_lv2_ccmap_map(ccmap.get(), cc);
+            sendController(urid, v.to_float());
+        }
         break;
     }
 }

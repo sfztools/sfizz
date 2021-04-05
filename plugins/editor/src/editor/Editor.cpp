@@ -306,6 +306,12 @@ void Editor::close()
     }
 }
 
+void Editor::sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    Impl& impl = *impl_;
+    impl.sendQueuedOSC(path, sig, args);
+}
+
 void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 {
     switch (id) {
@@ -1613,13 +1619,8 @@ void Editor::Impl::updateMemoryUsed(uint64_t mem)
 
 void Editor::Impl::performCCValueChange(unsigned cc, float value)
 {
-    // TODO(jpc) CC as parameters and automation
-
-    char pathBuf[256];
-    sprintf(pathBuf, "/cc%u/value", cc);
-    sfizz_arg_t args[1];
-    args[0].f = value;
-    sendQueuedOSC(pathBuf, "f", args);
+    EditorController& ctrl = *ctrl_;
+    ctrl.uiSendValue(editIdForCC(int(cc)), value);
 }
 
 void Editor::Impl::performCCBeginEdit(unsigned cc)
