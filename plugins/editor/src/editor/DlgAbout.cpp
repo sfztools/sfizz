@@ -67,9 +67,10 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setHoriAlign(align);
             lbl->setText(absl::StrCat(
-                u8"Maintainers: Paul Ferrand, Jean-Pierre Cimalando\n"""
+                u8"Maintainers: Paul Ferrand, Jean-Pierre Cimalando\n"
                 u8"Contributors: Andrea Zanellato, Alexander Mitchell, Michael Willis,\n"
-                u8"Tobiasz \"unfa\" Karoń, Kinwie, Atsushi Eno, Dominique Würtz et al."));
+                u8"Tobiasz \"unfa\" Karoń, Kinwie, Atsushi Eno, Dominique Würtz,\n"
+                u8"Even Brenden et al."));
             return lbl;
         };
 
@@ -95,20 +96,35 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             btn->setGradientHighlighted(nullptr);
             return btn;
         };
-        auto createButtonSfztools = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue000", bounds, tag, fontsize);
+        auto createButtonSfztools = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createGlyphButton(u8"\ue000", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this]() { lblHover_->setText("SFZTools Website"); };
+            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            return btn;
         };
-        auto createButtonGithub = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue001", bounds, tag, fontsize);
+        auto createButtonGithub = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createGlyphButton(u8"\ue001", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this]() { lblHover_->setText("GitHub Repository"); };
+            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            return btn;
         };
-        auto createButtonDiscord = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue002", bounds, tag, fontsize);
+        auto createButtonDiscord = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createGlyphButton(u8"\ue002", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this]() { lblHover_->setText("Discord Chat"); };
+            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            return btn;
         };
-        auto createButtonOpencollective = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue003", bounds, tag, fontsize);
+        auto createButtonOpencollective = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createGlyphButton(u8"\ue003", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this]() { lblHover_->setText("Support Us"); };
+            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            return btn;
         };
-        auto createButtonSfzformat = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue004", bounds, tag, fontsize);
+        auto createButtonSfzformat = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            STextButton* btn = createGlyphButton(u8"\ue004", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this]() { lblHover_->setText("SFZFormat Documentation"); };
+            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            return btn;
         };
 
         #include "layout/about.hpp"

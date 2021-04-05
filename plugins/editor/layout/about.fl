@@ -4,47 +4,47 @@ header_name {.h}
 code_name {.cxx}
 widget_class aboutView {
   label {About sfizz} open selected
-  xywh {536 183 800 475} type Double visible
+  xywh {527 165 800 475} type Double visible
 } {
-  Fl_Box {} {
-    image {../resources/logo_orange.png} xywh {200 80 400 180}
-    class Logo
+  Fl_Box lblHover_ {
+    xywh {200 80 400 25} labelsize 10
+    class HoverBox
   }
   Fl_Button {} {
     comment {tag=kTagButtonSfztools}
-    xywh {235 45 50 50} labelsize 30
+    xywh {235 45 35 35} labelsize 30
     class ButtonSfztools
   }
   Fl_Button {} {
     comment {tag=kTagButtonGithub}
-    xywh {305 45 50 50} labelsize 30
+    xywh {305 45 35 35} labelsize 30
     class ButtonGithub
   }
   Fl_Button {} {
     comment {tag=kTagButtonDiscord}
-    xywh {375 45 50 50} labelsize 30
+    xywh {375 45 35 35} labelsize 30
     class ButtonDiscord
   }
   Fl_Button {} {
     comment {tag=kTagButtonOpencollective}
-    xywh {445 45 50 50} labelsize 30
+    xywh {445 45 35 35} labelsize 30
     class ButtonOpencollective
   }
   Fl_Button {} {
     comment {tag=kTagButtonSfzformat}
-    xywh {515 45 50 50} labelsize 30
+    xywh {515 45 35 35} labelsize 30
     class ButtonSfzformat
   }
   Fl_Box {} {
-    xywh {260 260 280 80}
+    image {../resources/logo_orange.png} xywh {200 90 400 180}
+    class Logo
+  }
+  Fl_Box {} {
+    xywh {260 270 280 80}
     class InfoBox
   }
   Fl_Box {} {
     xywh {200 350 400 100}
     class DescriptionBox
-  }
-  Fl_Box lblHover_ {
-    xywh {320 10 160 25}
-    class HoverBox
   }
 }

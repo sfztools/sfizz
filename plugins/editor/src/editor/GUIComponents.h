@@ -196,6 +196,10 @@ public:
     CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override;
     CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override;
     void draw(CDrawContext* context) override;
+
+    std::function<void()> OnHoverEnter;
+    std::function<void()> OnHoverLeave;
+
 private:
     CColor hoverColor_;
     bool hovered_ { false };
