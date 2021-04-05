@@ -203,6 +203,9 @@ connect_port(LV2_Handle instance,
     case SFIZZ_NOTIFY:
         self->notify_port = (LV2_Atom_Sequence *)data;
         break;
+    case SFIZZ_AUTOMATE:
+        self->automate_port = (LV2_Atom_Sequence *)data;
+        break;
     case SFIZZ_LEFT:
         self->output_buffers[0] = (float *)data;
         break;
@@ -322,11 +325,12 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
     if (osc_size > OSC_TEMP_SIZE)
         return;
 
+    LV2_Atom_Forge* forge = &self->forge_notify;
     bool write_ok =
-        lv2_atom_forge_frame_time(&self->forge, 0) &&
-        lv2_atom_forge_atom(&self->forge, osc_size, self->sfizz_osc_blob_uri) &&
-        lv2_atom_forge_raw(&self->forge, osc_temp, osc_size);
-    lv2_atom_forge_pad(&self->forge, osc_size);
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_atom(forge, osc_size, self->sfizz_osc_blob_uri) &&
+        lv2_atom_forge_raw(forge, osc_temp, osc_size);
+    lv2_atom_forge_pad(forge, osc_size);
 
     (void)write_ok;
 }
@@ -428,7 +432,8 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_lv2_map_required_uris(self);
 
     // Initialize the forge
-    lv2_atom_forge_init(&self->forge, self->map);
+    lv2_atom_forge_init(&self->forge_notify, self->map);
+    lv2_atom_forge_init(&self->forge_automate, self->map);
     lv2_atom_forge_init(&self->forge_secondary, self->map);
 
     // Check the options for the block size and sample rate parameters
@@ -530,38 +535,38 @@ deactivate(LV2_Handle instance)
 }
 
 static void
-sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
+sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_Atom_Forge* forge, LV2_URID urid, const char *path)
 {
     LV2_Atom_Forge_Frame frame;
 
     bool write_ok =
-        lv2_atom_forge_frame_time(&self->forge, 0) &&
-        lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri) &&
-        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
-        lv2_atom_forge_urid(&self->forge, urid) &&
-        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
-        lv2_atom_forge_path(&self->forge, path, (uint32_t)strlen(path));
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(forge, urid) &&
+        lv2_atom_forge_key(forge, self->patch_value_uri) &&
+        lv2_atom_forge_path(forge, path, (uint32_t)strlen(path));
 
     if (write_ok)
-        lv2_atom_forge_pop(&self->forge, &frame);
+        lv2_atom_forge_pop(forge, &frame);
 }
 
 static void
-sfizz_lv2_send_controller(sfizz_plugin_t *self, unsigned cc, float value)
+sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_Atom_Forge* forge, unsigned cc, float value)
 {
     LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
     LV2_Atom_Forge_Frame frame;
 
     bool write_ok =
-        lv2_atom_forge_frame_time(&self->forge, 0) &&
-        lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri) &&
-        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
-        lv2_atom_forge_urid(&self->forge, urid) &&
-        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
-        lv2_atom_forge_float(&self->forge, value);
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(forge, urid) &&
+        lv2_atom_forge_key(forge, self->patch_value_uri) &&
+        lv2_atom_forge_float(forge, value);
 
     if (write_ok)
-        lv2_atom_forge_pop(&self->forge, &frame);
+        lv2_atom_forge_pop(forge, &frame);
 }
 
 static void
@@ -807,7 +812,7 @@ static void
 run(LV2_Handle instance, uint32_t sample_count)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    assert(self->control_port && self->notify_port);
+    assert(self->control_port && self->notify_port && self->automate_port);
 
     if (!spin_mutex_trylock(self->synth_mutex))
     {
@@ -816,13 +821,18 @@ run(LV2_Handle instance, uint32_t sample_count)
         return;
     }
 
-    // Set up forge to write directly to notify output port.
+    // Set up dedicated forges to write on their respective ports.
     const size_t notify_capacity = self->notify_port->atom.size;
-    lv2_atom_forge_set_buffer(&self->forge, (uint8_t *)self->notify_port, notify_capacity);
+    lv2_atom_forge_set_buffer(&self->forge_notify, (uint8_t *)self->notify_port, notify_capacity);
+    const size_t automate_capacity = self->automate_port->atom.size;
+    lv2_atom_forge_set_buffer(&self->forge_automate, (uint8_t *)self->automate_port, automate_capacity);
 
-    // Start a sequence in the notify output port.
+    // Start sequences in the respective output ports.
     LV2_Atom_Forge_Frame notify_frame;
-    if (!lv2_atom_forge_sequence_head(&self->forge, &notify_frame, 0))
+    if (!lv2_atom_forge_sequence_head(&self->forge_notify, &notify_frame, 0))
+        assert(false);
+    LV2_Atom_Forge_Frame automate_frame;
+    if (!lv2_atom_forge_sequence_head(&self->forge_automate, &automate_frame, 0))
         assert(false);
 
     LV2_ATOM_SEQUENCE_FOREACH(self->control_port, ev)
@@ -844,25 +854,25 @@ run(LV2_Handle instance, uint32_t sample_count)
                 lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
                 if (!property) // Send the full state
                 {
-                    sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
-                    sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_scala_file_uri, self->scala_file_path);
 
                     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc)
-                        sfizz_lv2_send_controller(self, cc, self->cc_current[cc]);
+                        sfizz_lv2_send_controller(self, &self->forge_notify, cc, self->cc_current[cc]);
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_sfz_file_uri, self->sfz_file_path);
                 }
                 else if (property->body == self->sfizz_scala_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_scala_file_uri, self->scala_file_path);
                 }
                 else
                 {
                     int cc = sfizz_lv2_ccmap_unmap(self->ccmap, property->body);
                     if (cc != -1)
-                        sfizz_lv2_send_controller(self, unsigned(cc), self->cc_current[cc]);
+                        sfizz_lv2_send_controller(self, &self->forge_notify, unsigned(cc), self->cc_current[cc]);
                 }
             }
             else if (obj->body.otype == self->time_position_uri)
@@ -1008,7 +1018,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
             absl::optional<float> value = self->ccauto[cc];
             if (value) {
-                sfizz_lv2_send_controller(self, cc, *value);
+                sfizz_lv2_send_controller(self, &self->forge_automate, cc, *value);
                 self->ccauto[cc] = absl::nullopt;
             }
         }
@@ -1017,7 +1027,8 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     spin_mutex_unlock(self->synth_mutex);
 
-    lv2_atom_forge_pop(&self->forge, &notify_frame);
+    lv2_atom_forge_pop(&self->forge_notify, &notify_frame);
+    lv2_atom_forge_pop(&self->forge_automate, &automate_frame);
 }
 
 static uint32_t
