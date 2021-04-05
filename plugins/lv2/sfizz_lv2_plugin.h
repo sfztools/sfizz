@@ -11,6 +11,7 @@
 #include <sfizz.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <absl/types/optional.h>
 #include <atomic>
 #include <mutex>
 
@@ -31,6 +32,7 @@ struct sfizz_plugin_t
     // Ports
     const LV2_Atom_Sequence *control_port {};
     LV2_Atom_Sequence *notify_port {};
+    LV2_Atom_Sequence *automate_port {};
     float *output_buffers[2] {};
     const float *volume_port {};
     const float *polyphony_port {};
@@ -48,7 +50,8 @@ struct sfizz_plugin_t
     float *num_samples_port {};
 
     // Atom forge
-    LV2_Atom_Forge forge {};              ///< Forge for writing atoms in run thread
+    LV2_Atom_Forge forge_notify {};       ///< Forge for writing notification atoms in run thread
+    LV2_Atom_Forge forge_automate {};     ///< Forge for writing automation atoms in run thread
     LV2_Atom_Forge forge_secondary {};    ///< Forge for writing into other buffers
 
     // Logger
@@ -92,6 +95,9 @@ struct sfizz_plugin_t
     LV2_URID time_beats_per_minute_uri {};
     LV2_URID time_speed_uri {};
 
+    // CC parameters
+    sfizz_lv2_ccmap* ccmap {};
+
     // Sfizz related data
     sfizz_synth_t *synth {};
     sfizz_client_t *client {};
@@ -108,12 +114,21 @@ struct sfizz_plugin_t
     int sample_counter {};
     float sample_rate {};
     std::atomic<int> must_update_midnam {};
+    volatile bool must_automate_cc {};
 
     // Current instrument description
     std::mutex *sfz_blob_mutex {};
     volatile int sfz_blob_serial {};
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
+
+    // Current CC values in the synth (synchronized by `synth_mutex`)
+    // updated by hdcc or file load
+    float *cc_current {};
+
+    // CC queued for automation on next run(). (synchronized by `synth_mutex`)
+    absl::optional<float>* ccauto {};
+    volatile bool have_ccauto {};
 
     // Timing data
     int bar {};

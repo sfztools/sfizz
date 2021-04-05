@@ -102,6 +102,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_Atom_Forge atom_forge;
     LV2_URID atom_event_transfer_uri;
     LV2_URID atom_object_uri;
+    LV2_URID atom_float_uri;
     LV2_URID atom_path_uri;
     LV2_URID atom_urid_uri;
     LV2_URID midi_event_uri;
@@ -112,6 +113,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_osc_blob_uri;
+    std::unique_ptr<sfizz_lv2_ccmap, sfizz_lv2_ccmap_delete> ccmap;
 
     uint8_t osc_temp[OSC_TEMP_SIZE];
     alignas(LV2_Atom) uint8_t atom_temp[ATOM_TEMP_SIZE];
@@ -201,6 +203,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     lv2_atom_forge_init(forge, map);
     self->atom_event_transfer_uri = map->map(map->handle, LV2_ATOM__eventTransfer);
     self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
+    self->atom_float_uri = map->map(map->handle, LV2_ATOM__Float);
     self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
     self->midi_event_uri = map->map(map->handle, LV2_MIDI__MidiEvent);
@@ -211,6 +214,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->ccmap.reset(sfizz_lv2_ccmap_create(map));
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path
@@ -348,7 +352,15 @@ port_event(LV2UI_Handle ui,
                 const LV2_URID prop_uri = reinterpret_cast<const LV2_Atom_URID *>(prop)->body;
                 auto *value_body = reinterpret_cast<const char *>(LV2_ATOM_BODY_CONST(value));
 
-                if (prop_uri == self->sfizz_sfz_file_uri && value->type == self->atom_path_uri) {
+                int cc = sfizz_lv2_ccmap_unmap(self->ccmap.get(), prop_uri);
+
+                if (cc != -1) {
+                    if (value->type == self->atom_float_uri) {
+                        float ccvalue = *reinterpret_cast<const float*>(value_body);
+                        self->uiReceiveValue(editIdForCC(cc), ccvalue);
+                    }
+                }
+                else if (prop_uri == self->sfizz_sfz_file_uri && value->type == self->atom_path_uri) {
                     std::string path(value_body, strnlen(value_body, value->size));
                     self->uiReceiveValue(EditId::SfzFile, path);
                 }
@@ -525,6 +537,22 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
         }
     };
 
+    auto sendController = [this](LV2_URID property, float value) {
+        LV2_Atom_Forge *forge = &atom_forge;
+        LV2_Atom_Forge_Frame frame;
+        auto *atom = reinterpret_cast<const LV2_Atom *>(atom_temp);
+        lv2_atom_forge_set_buffer(forge, atom_temp, sizeof(atom_temp));
+        if (lv2_atom_forge_object(forge, &frame, 0, patch_set_uri) &&
+            lv2_atom_forge_key(forge, patch_property_uri) &&
+            lv2_atom_forge_urid(forge, property) &&
+            lv2_atom_forge_key(forge, patch_value_uri) &&
+            lv2_atom_forge_float(forge, value))
+        {
+            lv2_atom_forge_pop(forge, &frame);
+            write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+        }
+    };
+
     switch (id) {
     case EditId::Volume:
         sendFloat(SFIZZ_VOLUME, v.to_float());
@@ -554,6 +582,11 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
         sendPath(sfizz_scala_file_uri, v.to_string());
         break;
     default:
+        if (editIdIsCC(id)) {
+            int cc = ccForEditId(id);
+            LV2_URID urid = sfizz_lv2_ccmap_map(ccmap.get(), cc);
+            sendController(urid, v.to_float());
+        }
         break;
     }
 }

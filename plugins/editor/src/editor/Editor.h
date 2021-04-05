@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include <sfizz_message.h>
 #include <memory>
 class EditorController;
 
@@ -23,6 +24,9 @@ public:
 
     void open(CFrame& frame);
     void close();
+
+    // TODO(jpc) remove me after doing parameter automations
+    void sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args);
 
 private:
     struct Impl;

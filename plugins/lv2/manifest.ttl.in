@@ -5,7 +5,7 @@
 <@LV2PLUGIN_URI@>
   a lv2:Plugin ;
   lv2:binary <Contents/Binary/@PROJECT_NAME@@CMAKE_SHARED_MODULE_SUFFIX@> ;
-  rdfs:seeAlso <@PROJECT_NAME@.ttl> .
+  rdfs:seeAlso <@PROJECT_NAME@.ttl>, <controllers.ttl> .
 
 @LV2PLUGIN_IF_ENABLE_UI@<@LV2PLUGIN_URI@#ui>
 @LV2PLUGIN_IF_ENABLE_UI@    a ui:@LV2_UI_TYPE@ ;

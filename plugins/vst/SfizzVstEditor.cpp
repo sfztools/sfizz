@@ -329,7 +329,18 @@ void SfizzVstEditor::processNoteEventQueue()
 ///
 void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
 {
-    if (id == EditId::SfzFile)
+    if (editIdIsCC(id)) {
+        int cc = ccForEditId(id);
+        // TODO(jpc) CC as parameters and automation
+        if (Editor* editor = editor_.get()) {
+            char pathBuf[256];
+            sprintf(pathBuf, "/cc%u/value", cc);
+            sfizz_arg_t args[1];
+            args[0].f = v.to_float();
+            editor->sendQueuedOSC(pathBuf, "f", args);
+        }
+    }
+    else if (id == EditId::SfzFile)
         loadSfzFile(v.to_string());
     else if (id == EditId::ScalaFile)
         loadScalaFile(v.to_string());

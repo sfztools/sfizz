@@ -42,6 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <memory>
+
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
 #define MIDI_STATUS(byte) (byte & ~CHANNEL_MASK)
@@ -201,6 +203,9 @@ connect_port(LV2_Handle instance,
     case SFIZZ_NOTIFY:
         self->notify_port = (LV2_Atom_Sequence *)data;
         break;
+    case SFIZZ_AUTOMATE:
+        self->automate_port = (LV2_Atom_Sequence *)data;
+        break;
     case SFIZZ_LEFT:
         self->output_buffers[0] = (float *)data;
         break;
@@ -320,11 +325,12 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
     if (osc_size > OSC_TEMP_SIZE)
         return;
 
+    LV2_Atom_Forge* forge = &self->forge_notify;
     bool write_ok =
-        lv2_atom_forge_frame_time(&self->forge, 0) &&
-        lv2_atom_forge_atom(&self->forge, osc_size, self->sfizz_osc_blob_uri) &&
-        lv2_atom_forge_raw(&self->forge, osc_temp, osc_size);
-    lv2_atom_forge_pad(&self->forge, osc_size);
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_atom(forge, osc_size, self->sfizz_osc_blob_uri) &&
+        lv2_atom_forge_raw(forge, osc_temp, osc_size);
+    lv2_atom_forge_pad(forge, osc_size);
 
     (void)write_ok;
 }
@@ -426,7 +432,8 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_lv2_map_required_uris(self);
 
     // Initialize the forge
-    lv2_atom_forge_init(&self->forge, self->map);
+    lv2_atom_forge_init(&self->forge_notify, self->map);
+    lv2_atom_forge_init(&self->forge_automate, self->map);
     lv2_atom_forge_init(&self->forge_secondary, self->map);
 
     // Check the options for the block size and sample rate parameters
@@ -476,6 +483,10 @@ instantiate(const LV2_Descriptor *descriptor,
         return NULL;
     }
 
+    self->ccmap = sfizz_lv2_ccmap_create(self->map);
+    self->cc_current = new float[sfz::config::numCCs]();
+    self->ccauto = new absl::optional<float>[sfz::config::numCCs];
+
     self->synth = sfizz_create_synth();
     self->client = sfizz_create_client(self);
     self->synth_mutex = spin_mutex_create();
@@ -501,6 +512,9 @@ cleanup(LV2_Handle instance)
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
+    delete[] self->ccauto;
+    delete[] self->cc_current;
+    sfizz_lv2_ccmap_free(self->ccmap);
     delete self;
 }
 
@@ -521,24 +535,42 @@ deactivate(LV2_Handle instance)
 }
 
 static void
-sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
+sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_Atom_Forge* forge, LV2_URID urid, const char *path)
 {
     LV2_Atom_Forge_Frame frame;
 
     bool write_ok =
-        lv2_atom_forge_frame_time(&self->forge, 0) &&
-        lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri) &&
-        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
-        lv2_atom_forge_urid(&self->forge, urid) &&
-        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
-        lv2_atom_forge_path(&self->forge, path, (uint32_t)strlen(path));
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(forge, urid) &&
+        lv2_atom_forge_key(forge, self->patch_value_uri) &&
+        lv2_atom_forge_path(forge, path, (uint32_t)strlen(path));
 
     if (write_ok)
-        lv2_atom_forge_pop(&self->forge, &frame);
+        lv2_atom_forge_pop(forge, &frame);
 }
 
 static void
-sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
+sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_Atom_Forge* forge, unsigned cc, float value)
+{
+    LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+    LV2_Atom_Forge_Frame frame;
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(forge, urid) &&
+        lv2_atom_forge_key(forge, self->patch_value_uri) &&
+        lv2_atom_forge_float(forge, value);
+
+    if (write_ok)
+        lv2_atom_forge_pop(forge, &frame);
+}
+
+static void
+sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Object *obj)
 {
     const LV2_Atom *property = NULL;
     lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
@@ -575,7 +607,15 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
         char body[MAX_PATH_SIZE];
     } sfizz_path_atom_buffer_t;
 
-    if (key == self->sfizz_sfz_file_uri)
+    int cc = sfizz_lv2_ccmap_unmap(self->ccmap, key);
+    if (cc != -1) {
+        if (atom->type == self->atom_float_uri && atom->size == sizeof(float)) {
+            float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
+            sfizz_send_hdcc(self->synth, delay, cc, value);
+            self->cc_current[cc] = value;
+        }
+    }
+    else if (key == self->sfizz_sfz_file_uri)
     {
         LV2_Atom_Forge *forge = &self->forge_secondary;
         sfizz_path_atom_buffer_t buffer;
@@ -629,12 +669,14 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                             (int)msg[1],
                             msg[2]);
         break;
-    case LV2_MIDI_MSG_CONTROLLER:
+    // Note(jpc) CC must be mapped by host, not handled here.
+    //           See LV2 midi:binding.
+    /*case LV2_MIDI_MSG_CONTROLLER:
         sfizz_send_cc(self->synth,
                       (int)ev->time.frames,
                       (int)msg[1],
                       msg[2]);
-        break;
+        break;*/
     case LV2_MIDI_MSG_CHANNEL_PRESSURE:
         sfizz_send_aftertouch(self->synth,
                       (int)ev->time.frames,
@@ -770,7 +812,7 @@ static void
 run(LV2_Handle instance, uint32_t sample_count)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    assert(self->control_port && self->notify_port);
+    assert(self->control_port && self->notify_port && self->automate_port);
 
     if (!spin_mutex_trylock(self->synth_mutex))
     {
@@ -779,13 +821,18 @@ run(LV2_Handle instance, uint32_t sample_count)
         return;
     }
 
-    // Set up forge to write directly to notify output port.
+    // Set up dedicated forges to write on their respective ports.
     const size_t notify_capacity = self->notify_port->atom.size;
-    lv2_atom_forge_set_buffer(&self->forge, (uint8_t *)self->notify_port, notify_capacity);
+    lv2_atom_forge_set_buffer(&self->forge_notify, (uint8_t *)self->notify_port, notify_capacity);
+    const size_t automate_capacity = self->automate_port->atom.size;
+    lv2_atom_forge_set_buffer(&self->forge_automate, (uint8_t *)self->automate_port, automate_capacity);
 
-    // Start a sequence in the notify output port.
+    // Start sequences in the respective output ports.
     LV2_Atom_Forge_Frame notify_frame;
-    if (!lv2_atom_forge_sequence_head(&self->forge, &notify_frame, 0))
+    if (!lv2_atom_forge_sequence_head(&self->forge_notify, &notify_frame, 0))
+        assert(false);
+    LV2_Atom_Forge_Frame automate_frame;
+    if (!lv2_atom_forge_sequence_head(&self->forge_automate, &automate_frame, 0))
         assert(false);
 
     LV2_ATOM_SEQUENCE_FOREACH(self->control_port, ev)
@@ -796,9 +843,10 @@ run(LV2_Handle instance, uint32_t sample_count)
         if (ev->body.type == self->atom_object_uri || ev->body.type == self->atom_blank_uri)
         {
             const LV2_Atom_Object *obj = (const LV2_Atom_Object *)&ev->body;
+
             if (obj->body.otype == self->patch_set_uri)
             {
-                sfizz_lv2_handle_atom_object(self, obj);
+                sfizz_lv2_handle_atom_object(self, delay, obj);
             }
             else if (obj->body.otype == self->patch_get_uri)
             {
@@ -806,16 +854,25 @@ run(LV2_Handle instance, uint32_t sample_count)
                 lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
                 if (!property) // Send the full state
                 {
-                    sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
-                    sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_scala_file_uri, self->scala_file_path);
+
+                    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc)
+                        sfizz_lv2_send_controller(self, &self->forge_notify, cc, self->cc_current[cc]);
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_sfz_file_uri, self->sfz_file_path);
                 }
                 else if (property->body == self->sfizz_scala_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_scala_file_uri, self->scala_file_path);
+                }
+                else
+                {
+                    int cc = sfizz_lv2_ccmap_unmap(self->ccmap, property->body);
+                    if (cc != -1)
+                        sfizz_lv2_send_controller(self, &self->forge_notify, unsigned(cc), self->cc_current[cc]);
                 }
             }
             else if (obj->body.otype == self->time_position_uri)
@@ -949,17 +1006,29 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
 
     // Request OSC updates
-    sfizz_send_message(self->synth, self->client, 0, "/cc/changed~", "", nullptr);
     sfizz_send_message(self->synth, self->client, 0, "/sw/last/current", "", nullptr);
-
-    spin_mutex_unlock(self->synth_mutex);
 
     if (self->midnam && self->must_update_midnam.exchange(0))
     {
         self->midnam->update(self->midnam->handle);
     }
 
-    lv2_atom_forge_pop(&self->forge, &notify_frame);
+    if (self->have_ccauto)
+    {
+        for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+            absl::optional<float> value = self->ccauto[cc];
+            if (value) {
+                sfizz_lv2_send_controller(self, &self->forge_automate, cc, *value);
+                self->ccauto[cc] = absl::nullopt;
+            }
+        }
+        self->have_ccauto = false;
+    }
+
+    spin_mutex_unlock(self->synth_mutex);
+
+    lv2_atom_forge_pop(&self->forge_notify, &notify_frame);
+    lv2_atom_forge_pop(&self->forge_automate, &automate_frame);
 }
 
 static uint32_t
@@ -1063,6 +1132,7 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
 {
     const std::string blob = getDescriptionBlob(self->synth);
 
+    // Update description blob that UI can fetch, thread-safely
     uint32_t size = uint32_t(blob.size());
     uint8_t *data = new uint8_t[size];
     memcpy(data, blob.data(), size);
@@ -1075,6 +1145,18 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
     self->sfz_blob_mutex->unlock();
 
     delete[] old_data;
+
+    //
+    const InstrumentDescription desc = parseDescriptionBlob(blob);
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        if (desc.ccUsed.test(cc)) {
+            // Mark all the used CCs for automation with default values
+            self->ccauto[cc] = desc.ccDefault[cc];
+            self->have_ccauto = true;
+            // Update the current CCs
+            self->cc_current[cc] = desc.ccDefault[cc];
+        }
+    }
 }
 
 static bool
@@ -1220,6 +1302,17 @@ restore(LV2_Handle instance,
         self->oversampling = oversampling;
     }
 
+    // Collect all CC values present in the state
+    std::unique_ptr<absl::optional<float>[]> cc_values(
+        new absl::optional<float>[sfz::config::numCCs]);
+
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+        value = retrieve(handle, urid, &size, &type, &val_flags);
+        if (value && type == self->atom_float_uri)
+            cc_values[cc] = *(const float *)value;
+    }
+
     // Sync the parameters to the synth
     spin_mutex_lock(self->synth_mutex);
 
@@ -1257,6 +1350,20 @@ restore(LV2_Handle instance,
 
     lv2_log_note(&self->logger, "[sfizz] Restoring the oversampling to %d\n", self->oversampling);
     sfizz_set_oversampling_factor(self->synth, self->oversampling);
+
+    // Override default automation values with these from the state file
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        absl::optional<float> value = cc_values[cc];
+        if (value) {
+            // Set CC in the synth
+            sfizz_send_hdcc(self->synth, 0, int(cc), *value);
+            // Mark CCs for automation with state values
+            self->ccauto[cc] = *value;
+            self->have_ccauto = true;
+            // Update the current CCs
+            self->cc_current[cc] = *value;
+        }
+    }
 
     spin_mutex_unlock(self->synth_mutex);
 
@@ -1327,7 +1434,7 @@ save(LV2_Handle instance,
           &self->num_voices,
           sizeof(int),
           self->atom_int_uri,
-          LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+          LV2_STATE_IS_POD);
 
     // Save the preload size
     store(handle,
@@ -1335,7 +1442,7 @@ save(LV2_Handle instance,
           &self->preload_size,
           sizeof(unsigned int),
           self->atom_int_uri,
-          LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+          LV2_STATE_IS_POD);
 
     // Save the preload size
     store(handle,
@@ -1343,7 +1450,25 @@ save(LV2_Handle instance,
           &self->oversampling,
           sizeof(int),
           self->atom_int_uri,
-          LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+          LV2_STATE_IS_POD);
+
+    // Save the CCs (used only)
+    self->sfz_blob_mutex->lock();
+    const InstrumentDescription desc = parseDescriptionBlob(
+        absl::string_view((const char*)self->sfz_blob_data, self->sfz_blob_size));
+    self->sfz_blob_mutex->unlock();
+
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        if (desc.ccUsed.test(cc)) {
+            LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+            store(handle,
+                  urid,
+                  &self->cc_current[cc],
+                  sizeof(float),
+                  self->atom_float_uri,
+                  LV2_STATE_IS_POD);
+        }
+    }
 
     return LV2_STATE_SUCCESS;
 }
