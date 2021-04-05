@@ -81,6 +81,55 @@ unsigned numPlayingVoices(const sfz::Synth& synth)
     });
 }
 
+const std::vector<std::string> playingSamples(const sfz::Synth& synth)
+{
+    std::vector<std::string> samples;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->releasedOrFree()) {
+            if (auto region = voice->getRegion())
+                samples.push_back(region->sampleId->filename());
+        }
+    }
+    return samples;
+}
+
+const std::vector<float> playingVelocities(const sfz::Synth& synth)
+{
+    std::vector<float> velocities;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->releasedOrFree())
+            velocities.push_back(voice->getTriggerEvent().value);
+    }
+    return velocities;
+}
+
+const std::vector<std::string> activeSamples(const sfz::Synth& synth)
+{
+    std::vector<std::string> samples;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->isFree()) {
+            const sfz::Region* region = voice->getRegion();
+            if (region)
+                samples.push_back(region->sampleId->filename());
+        }
+    }
+    return samples;
+}
+
+const std::vector<float> activeVelocities(const sfz::Synth& synth)
+{
+    std::vector<float> velocities;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->isFree())
+            velocities.push_back(voice->getTriggerEvent().value);
+    }
+    return velocities;
+}
+
 std::string createDefaultGraph(std::vector<std::string> lines, int numRegions)
 {
     for (int regionIdx = 0; regionIdx < numRegions; ++regionIdx) {

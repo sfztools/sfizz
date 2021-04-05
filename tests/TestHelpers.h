@@ -79,6 +79,38 @@ const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth);
 unsigned numPlayingVoices(const sfz::Synth& synth);
 
 /**
+ * @brief Get the playing samples
+ *
+ * @param synth
+ * @return unsigned
+ */
+const std::vector<std::string> playingSamples(const sfz::Synth& synth);
+
+/**
+ * @brief Get the playing notes velocities
+ *
+ * @param synth
+ * @return unsigned
+ */
+const std::vector<float> playingVelocities(const sfz::Synth& synth);
+
+/**
+ * @brief Get the active samples
+ *
+ * @param synth
+ * @return unsigned
+ */
+const std::vector<std::string> activeSamples(const sfz::Synth& synth);
+
+/**
+ * @brief Get the active notes velocities
+ *
+ * @param synth
+ * @return unsigned
+ */
+const std::vector<float> activeVelocities(const sfz::Synth& synth);
+
+/**
  * @brief Create the default dot graph representation for standard regions
  *
  */

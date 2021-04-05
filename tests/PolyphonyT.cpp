@@ -17,8 +17,6 @@
 using namespace Catch::literals;
 using namespace sfz::literals;
 
-constexpr int blockSize { 256 };
-
 TEST_CASE("[Polyphony] Polyphony in hierarchy")
 {
     sfz::Synth synth;
@@ -76,72 +74,72 @@ TEST_CASE("[Polyphony] Polyphony groups")
 TEST_CASE("[Polyphony] group polyphony limits")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> group=1 polyphony=2
         <region> sample=*sine key=65
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> polyphony=2
         <region> sample=*sine key=65
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (group)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> polyphony=2
         <region> sample=*sine key=65
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (master)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <master> polyphony=2
         <group> polyphony=5
         <region> sample=*sine key=65
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <master> polyphony=2
         <region> sample=*saw key=65
@@ -150,38 +148,37 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
         <region> sample=*sine key=66
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 66, 64);
-    synth.noteOn(0, 66, 64);
-    synth.noteOn(0, 66, 64);
-    REQUIRE( synth.getNumActiveVoices() == 6);
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
+    synth.noteOn(3, 66, 64);
+    synth.noteOn(4, 66, 64);
+    synth.noteOn(5, 66, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 6);
     REQUIRE( numPlayingVoices(synth) == 5); // One is releasing
 }
 
 TEST_CASE("[Polyphony] Hierarchy polyphony limits (global)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <global> polyphony=2
         <group> polyphony=5
         <region> sample=*sine key=65
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
 }
 
 TEST_CASE("[Polyphony] Polyphony in master")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
-    synth.setSamplesPerBlock(blockSize);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <master> polyphony=2
         <group> group=2
@@ -192,28 +189,28 @@ TEST_CASE("[Polyphony] Polyphony in master")
         <region> sample=*sine key=61
     )");
     synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    synth.noteOn(0, 65, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 65, 64);
+    synth.noteOn(2, 65, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
     synth.allSoundOff();
     synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 63, 64);
-    synth.noteOn(0, 63, 64);
-    synth.noteOn(0, 63, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 63, 64);
+    synth.noteOn(2, 63, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 2 ); // One is releasing
     synth.allSoundOff();
     synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 0);
     synth.noteOn(0, 61, 64);
-    synth.noteOn(0, 61, 64);
-    synth.noteOn(0, 61, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 );
+    synth.noteOn(1, 61, 64);
+    synth.noteOn(2, 61, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 3 );
 }
 
@@ -221,15 +218,15 @@ TEST_CASE("[Polyphony] Polyphony in master")
 TEST_CASE("[Polyphony] Self-masking")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*sine key=64 note_polyphony=2
     )");
     synth.noteOn(0, 64, 63 );
-    synth.noteOn(0, 64, 62 );
-    synth.noteOn(0, 64, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
+    synth.noteOn(1, 64, 62 );
+    synth.noteOn(2, 64, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
     REQUIRE( numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
@@ -242,15 +239,15 @@ TEST_CASE("[Polyphony] Self-masking")
 TEST_CASE("[Polyphony] Not self-masking")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*sine key=66 note_polyphony=2 note_selfmask=off
     )");
     synth.noteOn(0, 66, 63 );
-    synth.noteOn(0, 66, 62 );
-    synth.noteOn(0, 66, 64);
-    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
+    synth.noteOn(1, 66, 62 );
+    synth.noteOn(2, 66, 64);
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
     REQUIRE( numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree());
@@ -263,15 +260,15 @@ TEST_CASE("[Polyphony] Not self-masking")
 TEST_CASE("[Polyphony] Self-masking with the exact same velocity")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path(), R"(
         <region> sample=*sine key=64 note_polyphony=2
     )");
     synth.noteOn(0, 64, 64);
-    synth.noteOn(0, 64, 63 );
-    synth.noteOn(0, 64, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
+    synth.noteOn(1, 64, 63 );
+    synth.noteOn(2, 64, 63 );
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
     REQUIRE( numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
@@ -284,11 +281,13 @@ TEST_CASE("[Polyphony] Self-masking with the exact same velocity")
 TEST_CASE("[Polyphony] Self-masking only works from low to high")
 {
     sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*sine key=64 note_polyphony=1
     )");
     synth.noteOn(0, 64, 63 );
-    synth.noteOn(0, 64, 62 );
+    synth.noteOn(1, 64, 62 );
+    synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 ); // Both notes are playing
     REQUIRE( numPlayingVoices(synth) == 2 ); // id
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
@@ -300,14 +299,13 @@ TEST_CASE("[Polyphony] Self-masking only works from low to high")
 TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same polyphony group (default)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*saw key=64 note_polyphony=1
         <region> sample=*sine key=64 note_polyphony=1
     )");
     synth.noteOn(0, 64, 62 );
-    synth.noteOn(0, 64, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 4);
+    synth.noteOn(1, 64, 63 );
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 1 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 62_norm);
@@ -323,20 +321,21 @@ TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same po
 TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same polyphony group (default, with keyswitches)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <global> sw_lokey=36 sw_hikey=37 sw_default=36
         <region> sw_last=36 key=48 note_polyphony=1 sample=*saw
         <region> sw_last=37 key=48 transpose=12 note_polyphony=1 sample=*tri
     )");
     synth.noteOn(0, 48, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 1);
-    synth.cc(0, 64, 127);
-    synth.noteOn(0, 37, 127);
-    synth.noteOff(0, 37, 0);
-    synth.noteOn(0, 48, 64);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 1);
+    synth.cc(1, 64, 127);
+    synth.noteOn(2, 37, 127);
+    synth.noteOff(3, 37, 0);
+    synth.noteOn(4, 48, 64);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( numPlayingVoices(synth) == 1 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree());
@@ -348,15 +347,15 @@ TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same po
 TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> group=1 sample=*saw key=64 note_polyphony=1
         <region> group=2 sample=*sine key=64 note_polyphony=1
     )");
     synth.noteOn(0, 64, 62 );
-    synth.noteOn(0, 64, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 4); // Both notes are playing
+    synth.noteOn(1, 64, 63 );
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 4); // Both notes are playing
     REQUIRE(numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree()); // got killed
@@ -371,20 +370,21 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups")
 TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups (with keyswitches)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <global> sw_lokey=36 sw_hikey=37 sw_default=36
         <region> group=1 sw_last=36 key=48 note_polyphony=1 sample=*saw
         <region> group=2 sw_last=37 key=48 transpose=12 note_polyphony=1 sample=*tri
     )");
     synth.noteOn(0, 48, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 1);
-    synth.cc(0, 64, 127);
-    synth.noteOn(0, 37, 127);
-    synth.noteOff(0, 37, 0);
-    synth.noteOn(0, 48, 64);
-    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 1);
+    synth.cc(1, 64, 127);
+    synth.noteOn(2, 37, 127);
+    synth.noteOff(3, 37, 0);
+    synth.noteOn(4, 48, 64);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE(numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->releasedOrFree());
@@ -395,17 +395,18 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups (wi
 TEST_CASE("[Polyphony] Note polyphony operates on release voices")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> key=48 note_polyphony=1 sample=*saw trigger=release_key ampeg_attack=1 ampeg_decay=1
     )");
     synth.noteOn(0, 48, 63 );
     synth.noteOff(10, 48, 0 );
+    synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 1);
     synth.noteOn(20, 48, 65 );
     synth.noteOff(30, 48, 10 );
-    REQUIRE( synth.getNumActiveVoices() == 2 );
     synth.renderBlock(buffer);
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE(numPlayingVoices(synth) == 1 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE( synth.getVoiceView(0)->releasedOrFree());
@@ -416,16 +417,18 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices")
 TEST_CASE("[Polyphony] Note polyphony operates on release voices (masking works from low to high but takes into account the replaced velocity)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> key=48 note_polyphony=1 sample=*saw trigger=release_key ampeg_attack=1 ampeg_decay=1
     )");
     synth.noteOn(0, 48, 63 );
     synth.noteOff(10, 48, 0 );
+    synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 1);
     REQUIRE( numPlayingVoices(synth) == 1 );
     synth.noteOn(20, 48, 61 );
     synth.noteOff(30, 48, 10 );
+    synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     REQUIRE( numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
@@ -437,7 +440,7 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices (masking works 
 TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain pedal")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> key=48 sample=*sine
         <region> key=48 note_polyphony=1 sample=*saw trigger=release ampeg_attack=1 ampeg_decay=1
@@ -449,37 +452,21 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain ped
     synth.noteOff(3, 48, 0 );
     synth.noteOn(4, 48, 63 );
     synth.noteOff(5, 48, 0 );
-    REQUIRE( synth.getNumActiveVoices() == 3);
-    REQUIRE( synth.getVoiceView(0)->getRegion()->sampleId->filename() == "*sine");
-    REQUIRE( synth.getVoiceView(1)->getRegion()->sampleId->filename() == "*sine");
-    REQUIRE( synth.getVoiceView(2)->getRegion()->sampleId->filename() == "*sine");
     synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 3 );
+    std::vector<std::string> expectedSamples { "*sine", "*sine", "*sine" };
+    REQUIRE( playingSamples(synth) == expectedSamples );
     synth.cc(20, 64, 0);
-    REQUIRE( synth.getNumActiveVoices() == 6 );
-    REQUIRE( synth.getVoiceView(3)->getRegion()->sampleId->filename() == "*saw");
-    REQUIRE( synth.getVoiceView(4)->getRegion()->sampleId->filename() == "*saw");
-    REQUIRE( synth.getVoiceView(5)->getRegion()->sampleId->filename() == "*saw");
     synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 61_norm);
-    REQUIRE( synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
-    REQUIRE( synth.getVoiceView(1)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 63_norm);
-    REQUIRE( synth.getVoiceView(2)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(3)->getTriggerEvent().value == 61_norm);
-    REQUIRE( synth.getVoiceView(3)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(4)->getTriggerEvent().value == 62_norm);
-    REQUIRE( synth.getVoiceView(4)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(5)->getTriggerEvent().value == 63_norm);
-    REQUIRE(!synth.getVoiceView(5)->releasedOrFree());
+    std::vector<std::string> expectedSamples2 { "*saw" };
+    std::vector<float> expectedVelocities { 63_norm };
+    REQUIRE( playingSamples(synth) == expectedSamples2 );
+    REQUIRE( playingVelocities(synth) == expectedVelocities );
 }
 
 TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain pedal (masking)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> key=48 sample=*sine
         <region> key=48 note_polyphony=1 sample=*saw trigger=release ampeg_attack=1 ampeg_decay=1
@@ -491,75 +478,53 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain ped
     synth.noteOff(3, 48, 0 );
     synth.noteOn(4, 48, 61 );
     synth.noteOff(5, 48, 0 );
-    REQUIRE( synth.getNumActiveVoices() == 3);
-    REQUIRE( synth.getVoiceView(0)->getRegion()->sampleId->filename() == "*sine");
-    REQUIRE( synth.getVoiceView(1)->getRegion()->sampleId->filename() == "*sine");
-    REQUIRE( synth.getVoiceView(2)->getRegion()->sampleId->filename() == "*sine");
     synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 3 );
+    std::vector<std::string> expectedSamples { "*sine", "*sine", "*sine" };
+    REQUIRE( playingSamples(synth) == expectedSamples );
     synth.cc(20, 64, 0);
-    REQUIRE( synth.getNumActiveVoices() == 6 );
-    REQUIRE( synth.getVoiceView(3)->getRegion()->sampleId->filename() == "*saw");
-    REQUIRE( synth.getVoiceView(4)->getRegion()->sampleId->filename() == "*saw");
-    REQUIRE( synth.getVoiceView(5)->getRegion()->sampleId->filename() == "*saw");
     synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 3 );
-    REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
-    REQUIRE( synth.getVoiceView(0)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(1)->getTriggerEvent().value == 62_norm);
-    REQUIRE( synth.getVoiceView(1)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(2)->getTriggerEvent().value == 61_norm);
-    REQUIRE( synth.getVoiceView(2)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(3)->getTriggerEvent().value == 63_norm);
-    REQUIRE(!synth.getVoiceView(3)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(4)->getTriggerEvent().value == 62_norm);
-    REQUIRE(!synth.getVoiceView(4)->releasedOrFree());
-    REQUIRE( synth.getVoiceView(5)->getTriggerEvent().value == 61_norm);
-    REQUIRE(!synth.getVoiceView(5)->releasedOrFree());
+    std::vector<std::string> expectedSamples2 { "*saw", "*saw", "*saw" };
+    std::vector<float> expectedVelocities { 63_norm, 62_norm, 61_norm };
+    REQUIRE( playingSamples(synth) == expectedSamples2 );
+    REQUIRE( playingVelocities(synth) == expectedVelocities );
 }
 
 TEST_CASE("[Polyphony] Bi-directional choking (with polyphony)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> key=60 polyphony=1
         <region> sample=kick.wav loop_mode=one_shot
         <region> sample=snare.wav trigger=release
     )");
     synth.noteOn(0, 60, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 1);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "kick.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
     synth.noteOff(10, 60, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 2);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "snare.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "snare.wav" } );
     synth.noteOn(20, 60, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 3);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "kick.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
 }
 
 TEST_CASE("[Polyphony] Bi-directional choking (with note_polyphony)")
 {
     sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, blockSize };
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <group> key=60 note_polyphony=1
         <region> sample=kick.wav loop_mode=one_shot
         <region> sample=snare.wav trigger=release
     )");
     synth.noteOn(0, 60, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 1);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "kick.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
     synth.noteOff(10, 60, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 2);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "snare.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "snare.wav" } );
     synth.noteOn(20, 60, 63 );
-    REQUIRE( synth.getNumActiveVoices() == 3);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    REQUIRE( getPlayingVoices(synth).front()->getRegion()->sampleId->filename() == "kick.wav" );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
 }
