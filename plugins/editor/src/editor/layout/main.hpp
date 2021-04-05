@@ -9,7 +9,7 @@ auto* const view__2 = createLogicalGroup(CRect(0, 0, 800, 110), -1, "", kCenterT
 view__0->addView(view__2);
 auto* const view__3 = createRoundedGroup(CRect(5, 4, 180, 105), -1, "", kCenterText, 14);
 view__2->addView(view__3);
-auto* const view__4 = createSfizzMainButton(CRect(30, 5, 150, 65), kTagFirstChangePanel+kPanelGeneral, "", kCenterText, 14);
+auto* const view__4 = createAboutButton(CRect(30, 5, 150, 65), kTagAbout, "", kCenterText, 14);
 view__3->addView(view__4);
 auto* const view__5 = createHomeButton(CRect(31, 69, 63, 101), kTagFirstChangePanel+kPanelGeneral, "", kCenterText, 30);
 view__3->addView(view__5);

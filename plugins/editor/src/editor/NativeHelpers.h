@@ -8,6 +8,7 @@
 
 bool openFileInExternalEditor(const char *filename);
 bool openDirectoryInExplorer(const char *filename);
+bool openURLWithExternalProgram(const char *url);
 bool askQuestion(const char *text);
 
 #if !defined(_WIN32) && !defined(__APPLE__)

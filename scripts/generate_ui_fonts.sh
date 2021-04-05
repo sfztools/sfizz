@@ -9,6 +9,11 @@ fi
 root="`pwd`"
 fonts="$root/plugins/editor/resources/Fonts"
 
+cd scripts/misc-icons/
+./generate_icons_font.py
+mv -f sfizz-misc-icons.ttf "$fonts"
+cd ../../
+
 if test ! -d plugins/editor/external/fluentui-system-icons; then
   cd plugins/editor/external
   git clone https://github.com/sfztools/fluentui-system-icons.git

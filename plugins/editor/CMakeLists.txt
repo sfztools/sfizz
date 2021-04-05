@@ -3,6 +3,7 @@ include("cmake/Vstgui.cmake")
 
 set(EDITOR_RESOURCES
     logo.png
+    logo_orange.png
     logo_text.png
     logo_text_white.png
     logo_text_shaded.png
@@ -17,6 +18,7 @@ set(EDITOR_RESOURCES
     knob48@2x.png
     Fonts/sfizz-fluentui-system-r20.ttf
     Fonts/sfizz-fluentui-system-f20.ttf
+    Fonts/sfizz-misc-icons.ttf
     Fonts/Roboto-Regular.ttf
     PARENT_SCOPE)
 
@@ -27,6 +29,9 @@ function(copy_editor_resources SOURCE_DIR DESTINATION_DIR)
         file(COPY "${SOURCE_DIR}/${res}" DESTINATION "${DESTINATION_DIR}/${_dir}")
     endforeach()
 endfunction()
+
+set(UI_FILES layout/main.fl layout/about.fl)
+source_group("Editor UI" FILES ${UI_FILES})
 
 # editor
 add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
@@ -43,6 +48,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/GUIHelpers.cpp
     src/editor/GUIPiano.h
     src/editor/GUIPiano.cpp
+    src/editor/DlgAbout.h
+    src/editor/DlgAbout.cpp
     src/editor/ColorHelpers.h
     src/editor/ColorHelpers.cpp
     src/editor/ImageHelpers.h
@@ -50,14 +57,18 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/NativeHelpers.h
     src/editor/NativeHelpers.cpp
     src/editor/layout/main.hpp
+    src/editor/layout/about.hpp
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h
     src/editor/GitBuildId.h
+    ${UI_FILES}
     "${CMAKE_CURRENT_BINARY_DIR}/git-build-id/GitBuildId.c")
 add_library(sfizz::editor ALIAS sfizz_editor)
 target_include_directories(sfizz_editor PUBLIC "src")
 target_link_libraries(sfizz_editor PUBLIC sfizz::messaging sfizz::plugins-common)
 target_link_libraries(sfizz_editor PRIVATE sfizz::vstgui)
+target_compile_definitions(sfizz_editor PRIVATE
+    "SFIZZ_VERSION=\"${CMAKE_PROJECT_VERSION}\"")
 if(APPLE)
     find_library(APPLE_APPKIT_LIBRARY "AppKit")
     find_library(APPLE_CORESERVICES_LIBRARY "CoreServices")
@@ -101,12 +112,14 @@ if(NOT CMAKE_CROSSCOMPILING)
         "tools/layout-maker/sources/main.cpp")
     target_link_libraries(layout-maker PRIVATE absl::strings)
 
-    add_custom_command(
-        OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
-        COMMAND "$<TARGET_FILE:layout-maker>"
-        "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl"
-        > "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/main.hpp"
-        DEPENDS layout-maker "${CMAKE_CURRENT_SOURCE_DIR}/layout/main.fl")
+    foreach(_layout main about)
+        add_custom_command(
+            OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/${_layout}.hpp"
+            COMMAND "$<TARGET_FILE:layout-maker>"
+            "${CMAKE_CURRENT_SOURCE_DIR}/layout/${_layout}.fl"
+            > "${CMAKE_CURRENT_SOURCE_DIR}/src/editor/layout/${_layout}.hpp"
+            DEPENDS layout-maker "${CMAKE_CURRENT_SOURCE_DIR}/layout/${_layout}.fl")
+    endforeach()
 endif()
 
 # git build identifier

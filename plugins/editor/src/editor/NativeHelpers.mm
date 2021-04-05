@@ -32,6 +32,13 @@ bool openDirectoryInExplorer(const char *fileName)
     return openFileWithApplication(fileName, @"Finder");
 }
 
+bool openURLWithExternalProgram(const char *url)
+{
+    NSWorkspace* workspace = [NSWorkspace sharedWorkspace];
+    NSURL* urlNs = [NSURL URLWithString:[NSString stringWithUTF8String:url]];
+    return [workspace openURL:urlNs] == YES;
+}
+
 bool askQuestion(const char *text)
 {
     NSAlert *alert = [[NSAlert alloc] init];
