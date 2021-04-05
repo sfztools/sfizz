@@ -1355,8 +1355,11 @@ restore(LV2_Handle instance,
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         absl::optional<float> value = cc_values[cc];
         if (value) {
+            // Mark CCs for automation with state values
             self->ccauto[cc] = *value;
             self->have_ccauto = true;
+            // Update the current CCs
+            self->cc_current[cc] = *value;
         }
     }
 
