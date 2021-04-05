@@ -485,6 +485,7 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_set_receive_callback(self->client, &sfizz_lv2_receive_message);
 
     self->sfz_blob_mutex = new std::mutex;
+    self->sfz_desc_mutex = new std::mutex;
 
     sfizz_lv2_load_file(self, self->sfz_file_path);
     sfizz_lv2_load_scala_file(self, self->scala_file_path);
@@ -500,6 +501,8 @@ cleanup(LV2_Handle instance)
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     delete[] self->sfz_blob_data;
     delete self->sfz_blob_mutex;
+    delete self->sfz_desc;
+    delete self->sfz_desc_mutex;
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
@@ -541,7 +544,25 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID urid, const char *path)
 }
 
 static void
-sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
+sfizz_lv2_send_controller(sfizz_plugin_t *self, unsigned cc, float value)
+{
+    LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+    LV2_Atom_Forge_Frame frame;
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(&self->forge, 0) &&
+        lv2_atom_forge_object(&self->forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(&self->forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(&self->forge, urid) &&
+        lv2_atom_forge_key(&self->forge, self->patch_value_uri) &&
+        lv2_atom_forge_float(&self->forge, value);
+
+    if (write_ok)
+        lv2_atom_forge_pop(&self->forge, &frame);
+}
+
+static void
+sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Object *obj)
 {
     const LV2_Atom *property = NULL;
     lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
@@ -582,7 +603,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, const LV2_Atom_Object *obj)
     if (cc != -1) {
         if (atom->type == self->atom_float_uri && atom->size == sizeof(float)) {
             float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
-            // TODO: CC parameter arrived
+            sfizz_send_hdcc(self->synth, delay, cc, value);
         }
     }
     else if (key == self->sfizz_sfz_file_uri)
@@ -639,12 +660,14 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                             (int)msg[1],
                             msg[2]);
         break;
-    case LV2_MIDI_MSG_CONTROLLER:
+    // Note(jpc) CC must be mapped by host, not handled here.
+    //           See LV2 midi:binding.
+    /*case LV2_MIDI_MSG_CONTROLLER:
         sfizz_send_cc(self->synth,
                       (int)ev->time.frames,
                       (int)msg[1],
                       msg[2]);
-        break;
+        break;*/
     case LV2_MIDI_MSG_CHANNEL_PRESSURE:
         sfizz_send_aftertouch(self->synth,
                       (int)ev->time.frames,
@@ -809,7 +832,7 @@ run(LV2_Handle instance, uint32_t sample_count)
 
             if (obj->body.otype == self->patch_set_uri)
             {
-                sfizz_lv2_handle_atom_object(self, obj);
+                sfizz_lv2_handle_atom_object(self, delay, obj);
             }
             else if (obj->body.otype == self->patch_get_uri)
             {
@@ -970,6 +993,19 @@ run(LV2_Handle instance, uint32_t sample_count)
         self->midnam->update(self->midnam->handle);
     }
 
+    if (self->must_automate_cc && self->sfz_desc_mutex->try_lock())
+    {
+        if (self->must_automate_cc) {
+            const InstrumentDescription* desc = self->sfz_desc;
+            for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+                if (desc->ccUsed.test(cc))
+                    sfizz_lv2_send_controller(self, cc, desc->ccDefault[cc]);
+            }
+            self->must_automate_cc = false;
+        }
+        self->sfz_desc_mutex->unlock();
+    }
+
     lv2_atom_forge_pop(&self->forge, &notify_frame);
 }
 
@@ -1074,6 +1110,7 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
 {
     const std::string blob = getDescriptionBlob(self->synth);
 
+    // Update description blob that UI can fetch, thread-safely
     uint32_t size = uint32_t(blob.size());
     uint8_t *data = new uint8_t[size];
     memcpy(data, blob.data(), size);
@@ -1086,6 +1123,14 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
     self->sfz_blob_mutex->unlock();
 
     delete[] old_data;
+
+    // Keep a copy of the instrument description
+    const InstrumentDescription* desc = new InstrumentDescription(parseDescriptionBlob(blob));
+    self->sfz_desc_mutex->lock();
+    delete self->sfz_desc;
+    self->sfz_desc = desc;
+    self->must_automate_cc = true; // mark all CC for automation
+    self->sfz_desc_mutex->unlock();
 }
 
 static bool

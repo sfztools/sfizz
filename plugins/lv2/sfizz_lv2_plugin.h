@@ -14,6 +14,8 @@
 #include <atomic>
 #include <mutex>
 
+struct InstrumentDescription;
+
 #define DEFAULT_SCALA_FILE  "Contents/Resources/DefaultScale.scl"
 #define DEFAULT_SFZ_FILE    "Contents/Resources/DefaultInstrument.sfz"
 // This assumes that the longest path is the default sfz file; if not, change it
@@ -111,12 +113,16 @@ struct sfizz_plugin_t
     int sample_counter {};
     float sample_rate {};
     std::atomic<int> must_update_midnam {};
+    volatile bool must_automate_cc {};
 
     // Current instrument description
     std::mutex *sfz_blob_mutex {};
     volatile int sfz_blob_serial {};
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
+
+    std::mutex *sfz_desc_mutex {};
+    const InstrumentDescription* sfz_desc {};
 
     // Timing data
     int bar {};
