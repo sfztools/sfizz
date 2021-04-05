@@ -300,6 +300,9 @@ SFIZZ_SOURCES += \
 # absl::city
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/hash/internal/city.cc
+# absl::wyhash
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/hash/internal/wyhash.cc
 # absl::int128
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/numeric/int128.cc
