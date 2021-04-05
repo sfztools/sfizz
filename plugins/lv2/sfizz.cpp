@@ -42,6 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <memory>
+
 #define CHANNEL_MASK 0x0F
 #define MIDI_CHANNEL(byte) (byte & CHANNEL_MASK)
 #define MIDI_STATUS(byte) (byte & ~CHANNEL_MASK)
@@ -477,7 +479,7 @@ instantiate(const LV2_Descriptor *descriptor,
     }
 
     self->ccmap = sfizz_lv2_ccmap_create(self->map);
-
+    self->cc_current = new float[sfz::config::numCCs]();
     self->ccauto = new absl::optional<float>[sfz::config::numCCs];
 
     self->synth = sfizz_create_synth();
@@ -506,6 +508,7 @@ cleanup(LV2_Handle instance)
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
     delete[] self->ccauto;
+    delete[] self->cc_current;
     sfizz_lv2_ccmap_free(self->ccmap);
     delete self;
 }
@@ -604,6 +607,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
         if (atom->type == self->atom_float_uri && atom->size == sizeof(float)) {
             float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
             sfizz_send_hdcc(self->synth, delay, cc, value);
+            self->cc_current[cc] = value;
         }
     }
     else if (key == self->sfizz_sfz_file_uri)
@@ -842,6 +846,11 @@ run(LV2_Handle instance, uint32_t sample_count)
                 {
                     sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
                     sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+
+                    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+                        LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+                        sfizz_lv2_send_controller(self, urid, self->cc_current[cc]);
+                    }
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
@@ -850,6 +859,12 @@ run(LV2_Handle instance, uint32_t sample_count)
                 else if (property->body == self->sfizz_scala_file_uri)
                 {
                     sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
+                }
+                else
+                {
+                    int cc = sfizz_lv2_ccmap_unmap(self->ccmap, property->body);
+                    if (cc != -1)
+                        sfizz_lv2_send_controller(self, property->body, self->cc_current[cc]);
                 }
             }
             else if (obj->body.otype == self->time_position_uri)
@@ -1122,12 +1137,15 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
 
     delete[] old_data;
 
-    // Mark all the used CCs for automation with default values
+    //
     const InstrumentDescription desc = parseDescriptionBlob(blob);
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc)) {
+            // Mark all the used CCs for automation with default values
             self->ccauto[cc] = desc.ccDefault[cc];
             self->have_ccauto = true;
+            // Update the current CCs
+            self->cc_current[cc] = desc.ccDefault[cc];
         }
     }
 }
@@ -1275,6 +1293,17 @@ restore(LV2_Handle instance,
         self->oversampling = oversampling;
     }
 
+    // Collect all CC values present in the state
+    std::unique_ptr<absl::optional<float>[]> cc_values(
+        new absl::optional<float>[sfz::config::numCCs]);
+
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+        value = retrieve(handle, urid, &size, &type, &val_flags);
+        if (value && type == self->atom_float_uri)
+            cc_values[cc] = *(const float *)value;
+    }
+
     // Sync the parameters to the synth
     spin_mutex_lock(self->synth_mutex);
 
@@ -1312,6 +1341,15 @@ restore(LV2_Handle instance,
 
     lv2_log_note(&self->logger, "[sfizz] Restoring the oversampling to %d\n", self->oversampling);
     sfizz_set_oversampling_factor(self->synth, self->oversampling);
+
+    // Override default automation values with these from the state file
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        absl::optional<float> value = cc_values[cc];
+        if (value) {
+            self->ccauto[cc] = *value;
+            self->have_ccauto = true;
+        }
+    }
 
     spin_mutex_unlock(self->synth_mutex);
 
@@ -1382,7 +1420,7 @@ save(LV2_Handle instance,
           &self->num_voices,
           sizeof(int),
           self->atom_int_uri,
-          LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+          LV2_STATE_IS_POD);
 
     // Save the preload size
     store(handle,
@@ -1390,7 +1428,7 @@ save(LV2_Handle instance,
           &self->preload_size,
           sizeof(unsigned int),
           self->atom_int_uri,
-          LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+          LV2_STATE_IS_POD);
 
     // Save the preload size
     store(handle,
@@ -1398,7 +1436,25 @@ save(LV2_Handle instance,
           &self->oversampling,
           sizeof(int),
           self->atom_int_uri,
-          LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+          LV2_STATE_IS_POD);
+
+    // Save the CCs (used only)
+    self->sfz_blob_mutex->lock();
+    const InstrumentDescription desc = parseDescriptionBlob(
+        absl::string_view((const char*)self->sfz_blob_data, self->sfz_blob_size));
+    self->sfz_blob_mutex->unlock();
+
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        if (desc.ccUsed.test(cc)) {
+            LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
+            store(handle,
+                  urid,
+                  &self->cc_current[cc],
+                  sizeof(float),
+                  self->atom_float_uri,
+                  LV2_STATE_IS_POD);
+        }
+    }
 
     return LV2_STATE_SUCCESS;
 }

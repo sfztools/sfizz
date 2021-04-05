@@ -120,6 +120,10 @@ struct sfizz_plugin_t
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
 
+    // Current CC values in the synth (synchronized by `synth_mutex`)
+    // updated by hdcc or file load
+    float *cc_current {};
+
     // CC queued for automation on next run(). (synchronized by `synth_mutex`)
     absl::optional<float>* ccauto {};
     volatile bool have_ccauto {};
