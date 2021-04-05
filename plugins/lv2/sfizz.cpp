@@ -847,10 +847,8 @@ run(LV2_Handle instance, uint32_t sample_count)
                     sfizz_lv2_send_file_path(self, self->sfizz_sfz_file_uri, self->sfz_file_path);
                     sfizz_lv2_send_file_path(self, self->sfizz_scala_file_uri, self->scala_file_path);
 
-                    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-                        LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
-                        sfizz_lv2_send_controller(self, urid, self->cc_current[cc]);
-                    }
+                    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc)
+                        sfizz_lv2_send_controller(self, cc, self->cc_current[cc]);
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
@@ -864,7 +862,7 @@ run(LV2_Handle instance, uint32_t sample_count)
                 {
                     int cc = sfizz_lv2_ccmap_unmap(self->ccmap, property->body);
                     if (cc != -1)
-                        sfizz_lv2_send_controller(self, property->body, self->cc_current[cc]);
+                        sfizz_lv2_send_controller(self, unsigned(cc), self->cc_current[cc]);
                 }
             }
             else if (obj->body.otype == self->time_position_uri)
