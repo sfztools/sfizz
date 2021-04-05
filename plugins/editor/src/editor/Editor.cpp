@@ -486,11 +486,14 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateCCValue(unsigned(ccForEditId(id)), v.to_float());
         }
         else if (editIdIsCCUsed(id)) {
-            updateCCUsed(ccUsedForEditId(id), v.to_float() != 0);
+            bool used = v.to_float() != 0;
+            updateCCUsed(ccUsedForEditId(id), used);
             // TODO(jpc) remove value requests, when implementing CC automation
-            char pathBuf[256];
-            sprintf(pathBuf, "/cc%u/value", ccUsedForEditId(id));
-            sendQueuedOSC(pathBuf, "", nullptr);
+            if (used) {
+                char pathBuf[256];
+                sprintf(pathBuf, "/cc%u/value", ccUsedForEditId(id));
+                sendQueuedOSC(pathBuf, "", nullptr);
+            }
         }
         else if (editIdIsCCDefault(id)) {
             updateCCDefaultValue(ccDefaultForEditId(id), v.to_float());
