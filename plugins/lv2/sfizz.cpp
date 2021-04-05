@@ -478,6 +478,8 @@ instantiate(const LV2_Descriptor *descriptor,
 
     self->ccmap = sfizz_lv2_ccmap_create(self->map);
 
+    self->ccauto = new absl::optional<float>[sfz::config::numCCs];
+
     self->synth = sfizz_create_synth();
     self->client = sfizz_create_client(self);
     self->synth_mutex = spin_mutex_create();
@@ -485,7 +487,6 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_set_receive_callback(self->client, &sfizz_lv2_receive_message);
 
     self->sfz_blob_mutex = new std::mutex;
-    self->sfz_desc_mutex = new std::mutex;
 
     sfizz_lv2_load_file(self, self->sfz_file_path);
     sfizz_lv2_load_scala_file(self, self->scala_file_path);
@@ -501,11 +502,10 @@ cleanup(LV2_Handle instance)
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
     delete[] self->sfz_blob_data;
     delete self->sfz_blob_mutex;
-    delete self->sfz_desc;
-    delete self->sfz_desc_mutex;
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
+    delete[] self->ccauto;
     sfizz_lv2_ccmap_free(self->ccmap);
     delete self;
 }
@@ -985,25 +985,24 @@ run(LV2_Handle instance, uint32_t sample_count)
     // Request OSC updates
     sfizz_send_message(self->synth, self->client, 0, "/sw/last/current", "", nullptr);
 
-    spin_mutex_unlock(self->synth_mutex);
-
     if (self->midnam && self->must_update_midnam.exchange(0))
     {
         self->midnam->update(self->midnam->handle);
     }
 
-    if (self->must_automate_cc && self->sfz_desc_mutex->try_lock())
+    if (self->have_ccauto)
     {
-        if (self->must_automate_cc) {
-            const InstrumentDescription* desc = self->sfz_desc;
-            for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-                if (desc->ccUsed.test(cc))
-                    sfizz_lv2_send_controller(self, cc, desc->ccDefault[cc]);
+        for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+            absl::optional<float> value = self->ccauto[cc];
+            if (value) {
+                sfizz_lv2_send_controller(self, cc, *value);
+                self->ccauto[cc] = absl::nullopt;
             }
-            self->must_automate_cc = false;
         }
-        self->sfz_desc_mutex->unlock();
+        self->have_ccauto = false;
     }
+
+    spin_mutex_unlock(self->synth_mutex);
 
     lv2_atom_forge_pop(&self->forge, &notify_frame);
 }
@@ -1123,13 +1122,14 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
 
     delete[] old_data;
 
-    // Keep a copy of the instrument description
-    const InstrumentDescription* desc = new InstrumentDescription(parseDescriptionBlob(blob));
-    self->sfz_desc_mutex->lock();
-    delete self->sfz_desc;
-    self->sfz_desc = desc;
-    self->must_automate_cc = true; // mark all CC for automation
-    self->sfz_desc_mutex->unlock();
+    // Mark all the used CCs for automation with default values
+    const InstrumentDescription desc = parseDescriptionBlob(blob);
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        if (desc.ccUsed.test(cc)) {
+            self->ccauto[cc] = desc.ccDefault[cc];
+            self->have_ccauto = true;
+        }
+    }
 }
 
 static bool

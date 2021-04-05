@@ -11,10 +11,9 @@
 #include <sfizz.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <absl/types/optional.h>
 #include <atomic>
 #include <mutex>
-
-struct InstrumentDescription;
 
 #define DEFAULT_SCALA_FILE  "Contents/Resources/DefaultScale.scl"
 #define DEFAULT_SFZ_FILE    "Contents/Resources/DefaultInstrument.sfz"
@@ -121,8 +120,9 @@ struct sfizz_plugin_t
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
 
-    std::mutex *sfz_desc_mutex {};
-    const InstrumentDescription* sfz_desc {};
+    // CC queued for automation on next run(). (synchronized by `synth_mutex`)
+    absl::optional<float>* ccauto {};
+    volatile bool have_ccauto {};
 
     // Timing data
     int bar {};
