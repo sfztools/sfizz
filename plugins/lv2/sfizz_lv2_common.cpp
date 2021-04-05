@@ -93,7 +93,7 @@ void sfizz_lv2_ccmap_free(sfizz_lv2_ccmap *ccmap)
     }
 }
 
-LV2_URID sfizz_lv2_ccmap_map(sfizz_lv2_ccmap *ccmap, int cc)
+LV2_URID sfizz_lv2_ccmap_map(const sfizz_lv2_ccmap *ccmap, int cc)
 {
     LV2_URID urid = 0;
     if (cc >= 0 && cc < sfz::config::numCCs)
