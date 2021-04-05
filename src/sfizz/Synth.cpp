@@ -1951,7 +1951,11 @@ void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
 
 void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, const Region& region)
 {
+    collectUsedCCsFromCCMap(usedCCs, region.delayCC);
     collectUsedCCsFromCCMap(usedCCs, region.offsetCC);
+    collectUsedCCsFromCCMap(usedCCs, region.endCC);
+    collectUsedCCsFromCCMap(usedCCs, region.loopStartCC);
+    collectUsedCCsFromCCMap(usedCCs, region.loopEndCC);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccRelease);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDecay);
@@ -1976,6 +1980,11 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccHold);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
+    }
+    for (const LFODescription& lfo : region.lfos) {
+        collectUsedCCsFromCCMap(usedCCs, lfo.phaseCC);
+        collectUsedCCsFromCCMap(usedCCs, lfo.delayCC);
+        collectUsedCCsFromCCMap(usedCCs, lfo.fadeCC);
     }
     collectUsedCCsFromCCMap(usedCCs, region.ccConditions);
     collectUsedCCsFromCCMap(usedCCs, region.ccTriggers);
