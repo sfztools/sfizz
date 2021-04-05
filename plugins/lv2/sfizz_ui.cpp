@@ -112,6 +112,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_osc_blob_uri;
+    std::unique_ptr<sfizz_lv2_ccmap, sfizz_lv2_ccmap_delete> ccmap;
 
     uint8_t osc_temp[OSC_TEMP_SIZE];
     alignas(LV2_Atom) uint8_t atom_temp[ATOM_TEMP_SIZE];
@@ -211,6 +212,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->ccmap.reset(sfizz_lv2_ccmap_create(map));
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path

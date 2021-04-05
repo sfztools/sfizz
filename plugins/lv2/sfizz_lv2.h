@@ -92,3 +92,7 @@ sfizz_lv2_ccmap *sfizz_lv2_ccmap_create(LV2_URID_Map* map);
 void sfizz_lv2_ccmap_free(sfizz_lv2_ccmap *ccmap);
 LV2_URID sfizz_lv2_ccmap_map(const sfizz_lv2_ccmap *ccmap, int cc);
 int sfizz_lv2_ccmap_unmap(const sfizz_lv2_ccmap *ccmap, LV2_URID urid);
+
+struct sfizz_lv2_ccmap_delete {
+    void operator()(sfizz_lv2_ccmap* ccmap) const noexcept { sfizz_lv2_ccmap_free(ccmap); }
+};
