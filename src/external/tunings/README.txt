@@ -1,2 +1,2 @@
-Based on the Surge tuning library, revision a5f2879, with small modifications
+Based on the Surge tuning library, revision d9660ef, with small modifications
 https://github.com/surge-synthesizer/tuning-library
