@@ -83,7 +83,7 @@ namespace Tunings
         {
             lineno ++;
 
-            if (line.empty() || line[0] == '!')
+            if ((state == read_note && line.empty()) || line[0] == '!')
             {
                 continue;
             }
@@ -209,7 +209,7 @@ namespace Tunings
         while (std::getline(inf, line))
         {
             lineno ++;
-            if (line.empty() || line[0] == '!')
+            if (!line.empty() && line[0] == '!')
             {
                 continue;
             }
