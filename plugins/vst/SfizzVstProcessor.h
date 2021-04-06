@@ -52,6 +52,7 @@ private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
     Steinberg::IPtr<Vst::IMessage> _loadedSfzMessage;
+    Steinberg::IPtr<Vst::IMessage> _automateMessage;
     bool _isActive = false;
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
@@ -62,7 +63,7 @@ private:
     void receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     // misc
-    void loadSfzFileOrDefault(const std::string& filePath);
+    void loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState);
 
     // note event tracking
     std::array<float, 128> _noteEventsCurrentCycle; // 0: off, >0: on, <0: no change

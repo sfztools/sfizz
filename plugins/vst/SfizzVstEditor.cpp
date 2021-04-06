@@ -188,11 +188,13 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
             if (NoteEventsVec* queue = noteEventQueue_.get())
                 std::copy(events, events + count, std::back_inserter(*queue));
         }
+        return;
     }
 
     if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
         uiReceiveValue(EditId::SfzFile, path);
+        return;
     }
 
     if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
@@ -227,24 +229,13 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
                 uiReceiveValue(editIdForCCLabel(int(cc)), desc.ccLabel[cc]);
             }
         }
+        return;
     }
 
     if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
         uiReceiveValue(EditId::ScalaFile, path);
-    }
-
-    if (ProcessorStateUpdate* update = FCast<ProcessorStateUpdate>(changedUnknown)) {
-        const SfizzVstState state = update->getState();
-        uiReceiveValue(EditId::SfzFile, state.sfzFile);
-        uiReceiveValue(EditId::Volume, state.volume);
-        uiReceiveValue(EditId::Polyphony, state.numVoices);
-        uiReceiveValue(EditId::Oversampling, float(1u << state.oversamplingLog2));
-        uiReceiveValue(EditId::PreloadSize, state.preloadSize);
-        uiReceiveValue(EditId::ScalaFile, state.scalaFile);
-        uiReceiveValue(EditId::ScalaRootKey, state.scalaRootKey);
-        uiReceiveValue(EditId::TuningFrequency, state.tuningFrequency);
-        uiReceiveValue(EditId::StretchTuning, state.stretchedTuning);
+        return;
     }
 
     if (PlayStateUpdate* update = FCast<PlayStateUpdate>(changedUnknown)) {
@@ -278,6 +269,12 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
             break;
         case kPidStretchedTuning:
             uiReceiveValue(EditId::StretchTuning, range.denormalize(value));
+            break;
+        default:
+            if (id >= kPidCC0 && id <= kPidCCLast) {
+                int cc = int(id - kPidCC0);
+                uiReceiveValue(editIdForCC(cc), range.denormalize(value));
+            }
             break;
         }
         return;
@@ -329,18 +326,7 @@ void SfizzVstEditor::processNoteEventQueue()
 ///
 void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
 {
-    if (editIdIsCC(id)) {
-        int cc = ccForEditId(id);
-        // TODO(jpc) CC as parameters and automation
-        if (Editor* editor = editor_.get()) {
-            char pathBuf[256];
-            sprintf(pathBuf, "/cc%u/value", cc);
-            sfizz_arg_t args[1];
-            args[0].f = v.to_float();
-            editor->sendQueuedOSC(pathBuf, "f", args);
-        }
-    }
-    else if (id == EditId::SfzFile)
+    if (id == EditId::SfzFile)
         loadSfzFile(v.to_string());
     else if (id == EditId::ScalaFile)
         loadScalaFile(v.to_string());
@@ -384,6 +370,8 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             break;
 
         default:
+            if (editIdIsCC(id))
+                normalizeAndSet(kPidCC0 + ccForEditId(id), v.to_float());
             break;
         }
     }
@@ -482,6 +470,9 @@ Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
     case EditId::ScalaRootKey: return kPidScalaRootKey;
     case EditId::TuningFrequency: return kPidTuningFrequency;
     case EditId::StretchTuning: return kPidStretchedTuning;
-    default: return Vst::kNoParamId;
+    default:
+        if (editIdIsCC(id))
+            return kPidCC0 + ccForEditId(id);
+        return Vst::kNoParamId;
     }
 }

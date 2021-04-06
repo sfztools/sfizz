@@ -306,12 +306,6 @@ void Editor::close()
     }
 }
 
-void Editor::sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args)
-{
-    Impl& impl = *impl_;
-    impl.sendQueuedOSC(path, sig, args);
-}
-
 void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 {
     switch (id) {
@@ -488,12 +482,6 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         else if (editIdIsCCUsed(id)) {
             bool used = v.to_float() != 0;
             updateCCUsed(ccUsedForEditId(id), used);
-            // TODO(jpc) remove value requests, when implementing CC automation
-            if (used) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/cc%u/value", ccUsedForEditId(id));
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
         }
         else if (editIdIsCCDefault(id)) {
             updateCCDefaultValue(ccDefaultForEditId(id), v.to_float());
@@ -509,22 +497,7 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
 {
     unsigned indices[8];
 
-    if (Messages::matchOSC("/cc/changed~", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned cc = 0; cc < numBits; ++cc) {
-            bool changed = bits.test(cc);
-            if (changed) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/cc%u/value", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
-        }
-    }
-    else if (Messages::matchOSC("/cc&/value", path, indices) && !strcmp(sig, "f")) {
-        updateCCValue(indices[0], args[0].f);
-    }
-    else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
+    if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
         updateSWLastCurrent(args[0].i);
     }
     else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "N")) {

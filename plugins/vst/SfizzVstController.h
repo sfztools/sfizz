@@ -33,7 +33,6 @@ public:
     tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized) override;
 
     tresult setParam(Vst::ParamID tag, float value);
-    tresult PLUGIN_API setParamNormalized(Vst::ParamID tag, Vst::ParamValue value) override;
     tresult PLUGIN_API setComponentState(IBStream* stream) override;
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
@@ -50,7 +49,6 @@ protected:
     Steinberg::IPtr<SfzUpdate> sfzUpdate_;
     Steinberg::IPtr<SfzDescriptionUpdate> sfzDescriptionUpdate_;
     Steinberg::IPtr<ScalaUpdate> scalaUpdate_;
-    Steinberg::IPtr<ProcessorStateUpdate> processorStateUpdate_;
     Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
     Vst::ParamID midiMapping_[Vst::kCountCtrlNumber] {};
 };

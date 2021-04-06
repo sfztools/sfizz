@@ -25,9 +25,6 @@ public:
     void open(CFrame& frame);
     void close();
 
-    // TODO(jpc) remove me after doing parameter automations
-    void sendQueuedOSC(const char* path, const char* sig, const sfizz_arg_t* args);
-
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

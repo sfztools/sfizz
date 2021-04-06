@@ -58,7 +58,26 @@ tresult SfizzVstState::load(IBStream* state)
         stretchedTuning = defaults.stretchedTuning;
     }
 
-    if (version > 1)
+    controllers.clear();
+    if (version >= 2) {
+        uint32 count;
+        if (!s.readInt32u(count))
+            return kResultFalse;
+        controllers.resize(0x10000);
+        uint32 size = 0;
+        for (uint32 i = 0; i < count; ++i) {
+            uint16 cc;
+            float value;
+            if (!s.readInt16u(cc) || !s.readFloat(value))
+                return kResultFalse;
+            controllers[cc] = value;
+            size = std::max(size, uint32(cc) + 1);
+        }
+        controllers.resize(size);
+        controllers.shrink_to_fit();
+    }
+
+    if (version > 2)
         return kResultFalse;
 
     return kResultTrue;
@@ -97,6 +116,21 @@ tresult SfizzVstState::store(IBStream* state) const
 
     if (!s.writeFloat(stretchedTuning))
         return kResultFalse;
+
+    {
+        uint32 ccCount = 0;
+        uint32 ccLimit = uint32(std::min(controllers.size(), size_t(0x10000)));
+        for (uint32_t cc = 0; cc < ccLimit; ++cc)
+            ccCount += controllers[cc] != absl::nullopt;
+        if (!s.writeInt32u(ccCount))
+            return kResultFalse;
+        for (uint32_t cc = 0; cc < ccLimit; ++cc) {
+            if (absl::optional<float> ccValue = controllers[cc]) {
+                if (!s.writeInt16u(uint16(cc)) || !s.writeFloat(*ccValue))
+                    return kResultFalse;
+            }
+        }
+    }
 
     return kResultTrue;
 }
