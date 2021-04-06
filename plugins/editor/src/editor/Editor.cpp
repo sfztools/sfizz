@@ -406,6 +406,9 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::PluginFormat:
         aboutDialog_->setPluginFormat(v.to_string());
         break;
+    case EditId::PluginHost:
+        aboutDialog_->setPluginHost(v.to_string());
+        break;
     case EditId::UINumCurves:
         {
             const int value = static_cast<int>(v.to_float());

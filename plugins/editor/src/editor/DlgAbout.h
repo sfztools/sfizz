@@ -27,6 +27,7 @@ public:
     explicit SAboutDialog(const CRect& bounds);
 
     void setPluginFormat(const std::string& pluginFormat);
+    void setPluginHost(const std::string& pluginHost);
 
 protected:
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;

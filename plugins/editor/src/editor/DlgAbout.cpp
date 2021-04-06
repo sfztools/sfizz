@@ -141,6 +141,11 @@ void SAboutDialog::setPluginFormat(const std::string& pluginFormat)
     // TODO
 }
 
+void SAboutDialog::setPluginHost(const std::string& pluginHost)
+{
+    // TODO
+}
+
 CMouseEventResult SAboutDialog::onMouseDown(CPoint& where, const CButtonState& buttons)
 {
     CMouseEventResult result = CViewContainer::onMouseDown(where, buttons);
