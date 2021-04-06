@@ -281,7 +281,7 @@ namespace Tunings
 
         if( ! ( state == keys || state == trailing ) )
         {
-            throw TuningError( "Incomplete KBM file. Ubable to get to keys section of file." );
+            throw TuningError( "Incomplete KBM file. Unable to get to keys section of file." );
         }
 
         if( key_index != res.count )
