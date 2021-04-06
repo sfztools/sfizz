@@ -1,3 +1,6 @@
+# This option is for MIDI CC support in absence of host midi:binding support
+option(SFIZZ_LV2_PSA "Enable plugin-side MIDI automations" OFF)
+
 # Configuration for this plugin
 # TODO: generate version from git
 set(LV2PLUGIN_VERSION_MINOR   6)
@@ -61,7 +64,7 @@ sfizz:cc${_i}
   rdfs:label \"Controller ${_i}\" ;
   rdfs:range atom:Float")
 
-        if(_i LESS 128)
+        if(_i LESS 128 AND NOT SFIZZ_LV2_PSA)
             math(EXPR _digit1 "${_i}>>4")
             math(EXPR _digit2 "${_i}&15")
             string(SUBSTRING "0123456789ABCDEF" "${_digit1}" 1 _digit1)

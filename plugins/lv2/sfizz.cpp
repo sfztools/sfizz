@@ -613,6 +613,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
             float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
             sfizz_send_hdcc(self->synth, delay, cc, value);
             self->cc_current[cc] = value;
+            self->ccauto[cc] = absl::nullopt;
         }
     }
     else if (key == self->sfizz_sfz_file_uri)
@@ -671,12 +672,21 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         break;
     // Note(jpc) CC must be mapped by host, not handled here.
     //           See LV2 midi:binding.
-    /*case LV2_MIDI_MSG_CONTROLLER:
-        sfizz_send_cc(self->synth,
-                      (int)ev->time.frames,
-                      (int)msg[1],
-                      msg[2]);
-        break;*/
+#if defined(SFIZZ_LV2_PSA)
+    case LV2_MIDI_MSG_CONTROLLER:
+        {
+            unsigned cc = msg[1];
+            float value = float(msg[2]) * (1.0f / 127.0f);
+            sfizz_send_hdcc(self->synth,
+                            (int)ev->time.frames,
+                            (int)cc,
+                            value);
+            self->cc_current[cc] = value;
+            self->ccauto[cc] = value;
+            self->have_ccauto = true;
+        }
+        break;
+#endif
     case LV2_MIDI_MSG_CHANNEL_PRESSURE:
         sfizz_send_aftertouch(self->synth,
                       (int)ev->time.frames,

@@ -33,6 +33,11 @@ if(SFIZZ_LV2_UI)
     target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE sfizz::editor sfizz::vstgui sfizz::plugins-common)
 endif()
 
+if(SFIZZ_LV2_PSA)
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME} PRIVATE "SFIZZ_LV2_PSA=1")
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "SFIZZ_LV2_PSA=1")
+endif()
+
 # Explicitely strip all symbols on Linux but lv2_descriptor()
 # MacOS linker does not support this apparently https://bugs.webkit.org/show_bug.cgi?id=144555
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
