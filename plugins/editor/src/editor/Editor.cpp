@@ -403,6 +403,9 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             fallbackFilesDir_ = v.to_string();
             break;
         }
+    case EditId::PluginFormat:
+        aboutDialog_->setPluginFormat(v.to_string());
+        break;
     case EditId::UINumCurves:
         {
             const int value = static_cast<int>(v.to_float());

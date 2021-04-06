@@ -97,6 +97,9 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     for (FObject* update : continuousUpdates_)
         update->deferUpdate();
 
+    // let the editor know about plugin format
+    uiReceiveValue(EditId::PluginFormat, std::string("VST3"));
+
     absl::optional<fs::path> userFilesDir = SfizzPaths::getSfzConfigDefaultPath();
     uiReceiveValue(EditId::CanEditUserFilesDir, 1);
     uiReceiveValue(EditId::UserFilesDir, userFilesDir.value_or(fs::path()).u8string());

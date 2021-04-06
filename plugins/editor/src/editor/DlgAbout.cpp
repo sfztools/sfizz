@@ -136,6 +136,11 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
     aboutView->setViewSize(aboutBounds);
 }
 
+void SAboutDialog::setPluginFormat(const std::string& pluginFormat)
+{
+    // TODO
+}
+
 CMouseEventResult SAboutDialog::onMouseDown(CPoint& where, const CButtonState& buttons)
 {
     CMouseEventResult result = CViewContainer::onMouseDown(where, buttons);
