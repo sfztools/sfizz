@@ -35,5 +35,14 @@ protected:
     // IControlListener
     void valueChanged(CControl* ctl) override;
 
+private:
+    void updateSysInfo();
+
+    void buttonHoverEnter(CControl* btn, const char* text);
+    void buttonHoverLeave(CControl* btn);
+
     CTextLabel* lblHover_ = {};
+    CTextLabel* lblSysInfoValue_ = {};
+    std::string sysInfoTemplate_;
+    std::map<std::string, std::string> sysInfoVariables_;
 };
