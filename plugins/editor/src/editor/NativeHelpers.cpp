@@ -22,6 +22,17 @@ static WCHAR *stringToWideChar(const char *str, int strCch = -1)
     return strW.release();
 }
 
+static char* stringToUTF8(const wchar_t *strW, int strWCch = -1)
+{
+    unsigned strSize = WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, nullptr, 0, nullptr, nullptr);
+    if (strSize == 0)
+        return {};
+    std::unique_ptr<char[]> str(new char[strSize]);
+    if (WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, str.get(), strSize, nullptr, nullptr) == 0)
+        return {};
+    return str.release();
+}
+
 bool openFileInExternalEditor(const char *filename)
 {
     std::wstring path = stringToWideChar(filename);
@@ -74,12 +85,39 @@ bool askQuestion(const char *text)
     int ret = MessageBoxW(nullptr, stringToWideChar(text), L"Question", MB_YESNO);
     return ret == IDYES;
 }
+
+std::string getOperatingSystemName()
+{
+    LSTATUS status;
+    HKEY key = nullptr;
+    const WCHAR keyPath[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion";
+    const WCHAR valueName[] = L"ProductName";
+    const char fallbackName[] = "Windows (unknown)";
+
+    status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, KEY_QUERY_VALUE, &key);
+    if (status != ERROR_SUCCESS)
+        return fallbackName;
+
+    DWORD valueSize = 32768 * sizeof(WCHAR);
+    std::unique_ptr<WCHAR[]> valueW(new WCHAR[(valueSize / sizeof(WCHAR)) + 1]());
+    DWORD valueType;
+    status = RegQueryValueExW(
+        key, valueName, nullptr,
+        &valueType, reinterpret_cast<LPBYTE>(valueW.get()), &valueSize);
+    RegCloseKey(key);
+    if (status != ERROR_SUCCESS || (valueType != REG_SZ && valueType != REG_EXPAND_SZ))
+        return fallbackName;
+
+    std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
+    return valueUTF8.get();
+}
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
 #include <gio/gio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 #include <vector>
 #include <cstring>
@@ -172,5 +210,41 @@ bool askQuestion(const char *text)
 bool isZenityAvailable()
 {
     return access(zenityPath, X_OK) == 0;
+}
+
+std::string getOperatingSystemName()
+{
+    std::string name;
+    name.reserve(256);
+
+#if GLIB_CHECK_VERSION(2, 64, 0)
+    if (char *osName = g_get_os_info(G_OS_INFO_KEY_NAME)) {
+        name.append(osName);
+        g_free(osName);
+    }
+    else {
+        name.append("Unknown");
+    }
+
+    if (char *osVersion = g_get_os_info(G_OS_INFO_KEY_VERSION_ID)) {
+        name.push_back(' ');
+        name.append(osVersion);
+        g_free(osVersion);
+    }
+#else
+    utsname un {};
+    int ret = uname(&un);
+    if (ret != -1 && un.sysname[0] != '\0')
+        name.append(un.sysname);
+    else {
+        name.append("Unknown");
+    }
+    if (ret != -1 && un.release[0] != '\0') {
+        name.push_back(' ');
+        name.append(un.release);
+    }
+#endif
+
+    return name;
 }
 #endif
