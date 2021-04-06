@@ -256,6 +256,9 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->editor.reset(editor);
     editor->open(*uiFrame);
 
+    // let the editor know about plugin format
+    self->uiReceiveValue(EditId::PluginFormat, std::string("LV2"));
+
     // user files dir is not relevant to LV2 (not yet?)
     // LV2 has its own path management mechanism
     self->uiReceiveValue(EditId::CanEditUserFilesDir, 0);

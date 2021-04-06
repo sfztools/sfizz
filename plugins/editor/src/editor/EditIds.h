@@ -46,6 +46,9 @@ enum class EditId : int {
     //
     BackgroundImage,
     //
+    PluginFormat,
+    PluginHost,
+    //
     #undef KEY_RANGE
     #undef CC_RANGE
 };
