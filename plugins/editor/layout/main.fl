@@ -356,6 +356,17 @@ widget_class mainView {open
         class ValueMenu
       }
     }
+    Fl_Group {} {
+      label Theme open
+      xywh {40 270 105 100} box ROUNDED_BOX labelsize 12 align 17 hide
+      class TitleGroup
+    } {
+      Fl_Spinner themeMenu_ {
+        comment {tag=kTagThemeMenu}
+        xywh {60 330 65 25} labelsize 12 textsize 12
+        class OptionMenu
+      }
+    }
   }
   Fl_Box piano_ {
     xywh {5 400 790 70} labelsize 12

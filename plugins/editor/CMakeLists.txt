@@ -20,6 +20,7 @@ set(EDITOR_RESOURCES
     Fonts/sfizz-fluentui-system-f20.ttf
     Fonts/sfizz-misc-icons.ttf
     Fonts/Roboto-Regular.ttf
+    Themes/Default/theme.xml
     PARENT_SCOPE)
 
 function(copy_editor_resources SOURCE_DIR DESTINATION_DIR)
@@ -50,6 +51,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/GUIPiano.cpp
     src/editor/DlgAbout.h
     src/editor/DlgAbout.cpp
+    src/editor/Theme.h
+    src/editor/Theme.cpp
     src/editor/ColorHelpers.h
     src/editor/ColorHelpers.cpp
     src/editor/ImageHelpers.h
@@ -104,7 +107,8 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::stb_image sfizz::bit_array sfizz::filesystem)
+target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::stb_image
+    sfizz::bit_array sfizz::filesystem sfizz::pugixml)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)

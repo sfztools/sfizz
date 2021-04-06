@@ -8,6 +8,7 @@
 #include "utility/vstgui_before.h"
 #include "vstgui/lib/ccolor.h"
 #include "utility/vstgui_after.h"
+#include <absl/strings/string_view.h>
 
 using namespace VSTGUI;
 
@@ -33,3 +34,5 @@ struct SColorHCY {
 
     float h {}, c {}, y {}, a { 1.0 };
 };
+
+bool colorFromHex(absl::string_view hex, CColor& color);
