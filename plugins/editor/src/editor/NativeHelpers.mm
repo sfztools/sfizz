@@ -48,4 +48,15 @@ bool askQuestion(const char *text)
     NSInteger button = [alert runModal];
     return button == NSAlertFirstButtonReturn;
 }
+
+std::string getOperatingSystemName()
+{
+#if TARGET_OS_IOS
+    NSString *osName = @"iOS";
+#elif TARGET_OS_MAC
+    NSString *osName = @"macOS";
+#endif
+    NSString *osVersion = [[NSProcessInfo processInfo] operatingSystemVersionString];
+    return [[NSString stringWithFormat:@"%@ %@", osName, osVersion] UTF8String];
+}
 #endif
