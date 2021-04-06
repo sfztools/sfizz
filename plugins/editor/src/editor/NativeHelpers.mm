@@ -10,6 +10,9 @@
 #import <AppKit/AppKit.h>
 #import <CoreServices/CoreServices.h>
 #import <Foundation/Foundation.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <cstring>
 
 static bool openFileWithApplication(const char *fileName, NSString *application)
 {
@@ -58,5 +61,21 @@ std::string getOperatingSystemName()
 #endif
     NSString *osVersion = [[NSProcessInfo processInfo] operatingSystemVersionString];
     return [[NSString stringWithFormat:@"%@ %@", osName, osVersion] UTF8String];
+}
+
+std::string getProcessorName()
+{
+    char nameBuf[256];
+    size_t size = sizeof(nameBuf);
+    const char* fallbackName = "Unknown";
+
+    if (sysctlbyname("machdep.cpu.brand_string", nameBuf, &size, nullptr, 0) == -1)
+        return fallbackName;
+
+    size = strnlen(nameBuf, sizeof(nameBuf));
+    if (size == 0)
+        return fallbackName;
+
+    return std::string(nameBuf, size);
 }
 #endif

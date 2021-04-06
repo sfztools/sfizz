@@ -111,6 +111,32 @@ std::string getOperatingSystemName()
     std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
     return valueUTF8.get();
 }
+
+std::string getProcessorName()
+{
+    LSTATUS status;
+    HKEY key = nullptr;
+    const WCHAR keyPath[] = L"Hardware\\Description\\System\\CentralProcessor\\0";
+    const WCHAR valueName[] = L"ProcessorNameString";
+    const char fallbackName[] = "Unknown";
+
+    status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, KEY_QUERY_VALUE, &key);
+    if (status != ERROR_SUCCESS)
+        return fallbackName;
+
+    DWORD valueSize = 32768 * sizeof(WCHAR);
+    std::unique_ptr<WCHAR[]> valueW(new WCHAR[(valueSize / sizeof(WCHAR)) + 1]());
+    DWORD valueType;
+    status = RegQueryValueExW(
+        key, valueName, nullptr,
+        &valueType, reinterpret_cast<LPBYTE>(valueW.get()), &valueSize);
+    RegCloseKey(key);
+    if (status != ERROR_SUCCESS || (valueType != REG_SZ && valueType != REG_EXPAND_SZ))
+        return fallbackName;
+
+    std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
+    return valueUTF8.get();
+}
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
@@ -120,6 +146,8 @@ std::string getOperatingSystemName()
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <vector>
+#include <regex>
+#include <fstream>
 #include <cstring>
 #include <cerrno>
 extern "C" { extern char **environ; }
@@ -244,6 +272,27 @@ std::string getOperatingSystemName()
         name.append(un.release);
     }
 #endif
+
+    return name;
+}
+
+std::string getProcessorName()
+{
+    std::string name;
+    std::string line;
+    std::ifstream in("/proc/cpuinfo", std::ios::binary);
+    std::regex re("^model name\\s*:\\s*(.*)");
+
+    line.reserve(256);
+
+    while (name.empty() && std::getline(in, line) && !line.empty()) {
+        std::smatch match;
+        if (std::regex_match(line, match, re))
+            name = match[1];
+    }
+
+    if (name.empty())
+        name = "Unknown";
 
     return name;
 }
