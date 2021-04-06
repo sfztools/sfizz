@@ -55,7 +55,7 @@ namespace Tunings
 
             if( t.ratio_n == 0 || t.ratio_d == 0 )
             {
-                std::string s = "Invalid Tone in SCL file.";
+                std::string s = "Invalid tone in SCL file.";
                 if( lineno >= 0 )
                     s += "Line " + std::to_string(lineno) + ".";
                 s += " Line is '" + line + "'.";
@@ -112,13 +112,13 @@ namespace Tunings
 
         if( ! ( state == read_note || state == trailing ) )
         {
-            throw TuningError( "Incomplete SCL file. Found no notes section in the file" );
+            throw TuningError( "Incomplete SCL file. Found no notes section in the file." );
         }
 
         if( tone_index != res.count )
         {
-            std::string s = "Read fewer notes than count in file. Count=" + std::to_string( res.count )
-                + " notes array size=" + std::to_string( tone_index );
+            std::string s = "Read fewer notes than count in file. Count = " + std::to_string( res.count )
+                + " notes. Array size = " + std::to_string( tone_index );
             throw TuningError(s);
 
         }
@@ -231,7 +231,7 @@ namespace Tunings
                 }
                 if( ! validLine )
                 {
-                    throw TuningError( "Invalid line " + std::to_string( lineno ) + ". line='" + line + "'. Bad char is '" +
+                    throw TuningError( "Invalid line " + std::to_string( lineno ) + ". line='" + line + "'. Bad character is '" +
                                        badChar + "/" + std::to_string( (int)badChar ) + "'" );
                 }
             }
@@ -281,7 +281,7 @@ namespace Tunings
 
         if( ! ( state == keys || state == trailing ) )
         {
-            throw TuningError( "Incomplete KBM file. Ubable to get to keys section of file" );
+            throw TuningError( "Incomplete KBM file. Ubable to get to keys section of file." );
         }
 
         if( key_index != res.count )
