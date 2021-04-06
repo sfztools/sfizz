@@ -117,6 +117,7 @@ std::string getOperatingSystemName()
 #include <gio/gio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 #include <vector>
 #include <cstring>
@@ -216,6 +217,7 @@ std::string getOperatingSystemName()
     std::string name;
     name.reserve(256);
 
+#if GLIB_CHECK_VERSION(2, 64, 0)
     if (char *osName = g_get_os_info(G_OS_INFO_KEY_NAME)) {
         name.append(osName);
         g_free(osName);
@@ -229,6 +231,19 @@ std::string getOperatingSystemName()
         name.append(osVersion);
         g_free(osVersion);
     }
+#else
+    utsname un {};
+    int ret = uname(&un);
+    if (ret != -1 && un.sysname[0] != '\0')
+        name.append(un.sysname);
+    else {
+        name.append("Unknown");
+    }
+    if (ret != -1 && un.release[0] != '\0') {
+        name.push_back(' ');
+        name.append(un.release);
+    }
+#endif
 
     return name;
 }
