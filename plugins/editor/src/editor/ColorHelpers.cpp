@@ -44,3 +44,38 @@ SColorHCY::SColorHCY(const SColorRGB &rgb)
     y = vhcy[2];
     a = rgb.a;
 }
+
+static int hexDigitFromChar(char c)
+{
+    return (c >= '0' && c <= '9') ? (c - '0') :
+        (c >= 'a' && c <= 'z') ? (c - 'a' + 10) :
+        (c >= 'A' && c <= 'Z') ? (c - 'A' + 10) : -1;
+}
+
+bool colorFromHex(absl::string_view hex, CColor& color)
+{
+    if (hex.empty() || hex[0] != '#')
+        return false;
+
+    hex = hex.substr(1, hex.size());
+    size_t length = hex.size();
+    uint32_t rgba = 0;
+    if (length == 6 || length == 8) {
+        for (size_t i = 0; i < length; ++i) {
+            int d = hexDigitFromChar(hex[i]);
+            if (d == -1)
+                return false;
+
+            rgba = (rgba << 4) | d;
+        }
+    }
+    if (length == 6)
+        rgba = (rgba << 8) | 0xff;
+
+    color.red = rgba >> 24;
+    color.green = (rgba >> 16) & 0xff;
+    color.blue = (rgba >> 8) & 0xff;
+    color.alpha = rgba & 0xff;
+
+    return true;
+}
