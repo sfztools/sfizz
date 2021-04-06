@@ -236,15 +236,16 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void controlEndEdit(CControl* ctl) override;
 
     // Misc
-    static std::string getUnicodeNoteName(unsigned key)
+    static UTF8String getUnicodeNoteName(unsigned key)
     {
-        const char* keyNames[12] = {
-            u8"C", u8"C♯", u8"D", u8"D♯", u8"E",
-            u8"F", u8"F♯", u8"G", u8"G♯", u8"A", u8"A♯", u8"B",
+
+        const UTF8String keyNames[12] = {
+            "C", "C♯", "D", "D♯", "E",
+            "F", "F♯", "G", "G♯", "A", "A♯", "B",
         };
         int octave = static_cast<int>(key / 12) - 1;
-        const char* keyName = keyNames[key % 12];
-        return std::string(keyName) + ' ' + std::to_string(octave);
+        const UTF8String keyName = keyNames[key % 12];
+        return keyName + " " + toString(octave);
     }
 };
 
