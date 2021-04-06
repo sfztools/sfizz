@@ -272,7 +272,7 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
             break;
         default:
             if (id >= kPidCC0 && id <= kPidCCLast) {
-                int cc = id - kPidCC0;
+                int cc = int(id - kPidCC0);
                 uiReceiveValue(editIdForCC(cc), range.denormalize(value));
             }
             break;
