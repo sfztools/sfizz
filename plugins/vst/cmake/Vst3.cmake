@@ -36,9 +36,6 @@ function(plugin_add_vst3sdk NAME)
             "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp"
             "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp"
             "${VST3SDK_BASEDIR}/public.sdk/source/main/dllmain.cpp")
-        if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
-            set_property(TARGET "${NAME}" PROPERTY CXX_STANDARD 14)
-        endif()
     elseif(APPLE)
         target_sources("${NAME}" PRIVATE
             "${VST3SDK_BASEDIR}/public.sdk/source/main/macmain.cpp")

@@ -14,6 +14,14 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
+# Set C++ compatibility level
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" AND CMAKE_CXX_STANDARD LESS 17)
+    set(CMAKE_CXX_STANDARD 17)
+elseif((SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU) AND CMAKE_CXX_STANDARD LESS 14)
+    # if the UI is part of the build, make it 14
+    set(CMAKE_CXX_STANDARD 14)
+endif()
+
 # Process sources as UTF-8
 if(MSVC)
     add_compile_options("/utf-8")
@@ -57,7 +65,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         endif()
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(CMAKE_CXX_STANDARD 17)
     add_compile_options(/Zc:__cplusplus)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
