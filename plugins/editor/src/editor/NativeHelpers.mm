@@ -12,6 +12,7 @@
 #import <Foundation/Foundation.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 #include <cstring>
 
 static bool openFileWithApplication(const char *fileName, NSString *application)
@@ -77,5 +78,15 @@ std::string getProcessorName()
         return fallbackName;
 
     return std::string(nameBuf, size);
+}
+
+std::string getCurrentProcessName()
+{
+    kinfo_proc proc {};
+    size_t size = sizeof(kinfo_proc);
+    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, int(getpid()) };
+    if (sysctl(name, 4, &proc, &size, nullptr, 0) == -1)
+        return {};
+    return proc.kp_proc.p_comm;
 }
 #endif

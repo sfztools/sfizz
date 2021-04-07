@@ -161,9 +161,12 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
 
     ///
     sysInfoTemplate_ = lblSysInfoValue_->getText();
+    sysInfoVariables_["%Pluginformat%"] = {};
     sysInfoVariables_["%HostOS%"] = getOperatingSystemName();
     sysInfoVariables_["%HostCPU%"] = getProcessorName();
     sysInfoVariables_["%HostBits%"] = std::to_string(8 * sizeof(void*));
+    sysInfoVariables_["%HostProgram%"] = getCurrentProcessName();
+    updateSysInfo();
 }
 
 void SAboutDialog::setPluginFormat(const std::string& pluginFormat)

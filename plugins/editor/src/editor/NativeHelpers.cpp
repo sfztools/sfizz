@@ -137,6 +137,24 @@ std::string getProcessorName()
     std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
     return valueUTF8.get();
 }
+
+std::string getCurrentProcessName()
+{
+    DWORD size = 32768;
+    std::unique_ptr<WCHAR[]> buffer(new WCHAR[size]());
+
+    if (!GetModuleFileNameW(nullptr, buffer.get(), size))
+        return {};
+
+    buffer[size - 1] = L'\0';
+    const WCHAR* name = buffer.get();
+
+    if (const WCHAR* pos = wcsrchr(name, L'\\'))
+        name = pos + 1;
+
+    std::unique_ptr<char[]> nameUTF8(stringToUTF8(name));
+    return nameUTF8.get();
+}
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
@@ -151,6 +169,7 @@ std::string getProcessorName()
 #include <cstring>
 #include <cerrno>
 extern "C" { extern char **environ; }
+extern "C" { extern char *__progname; }
 
 static bool openFileByMimeType(const char *filename, const char *mimetype)
 {
@@ -294,6 +313,14 @@ std::string getProcessorName()
     if (name.empty())
         name = "Unknown";
 
+    return name;
+}
+
+std::string getCurrentProcessName()
+{
+    const char* name = __progname;
+    if (!name)
+        return std::string();
     return name;
 }
 #endif
