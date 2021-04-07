@@ -424,7 +424,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("hint_min_samplerate"):
 	    {
-		if (stoi(member.value) / sampleRate_ > 1)
+		if (float(stoi(member.value)) / sampleRate_ > 1.0f)
 			overSampled = true;
 		resources_.synthConfig.OSFactor = int(std::min(128.0f, std::max(1.0f, float(stoi(member.value)) / sampleRate_)));
     		for (auto& voice : voiceManager_) {
