@@ -77,11 +77,35 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
         auto createHoverBox = [](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
-            lbl->setFontColor(CColor(0xff, 0xff, 0xff, 0xff));
+            lbl->setFontColor(CColor(0xfd, 0x98, 0x00, 0xff));
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setHoriAlign(align);
             lbl->setFont(font);
+            return lbl;
+        };
+
+        auto createSysInfoKeyBox = [](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CMultiLineTextLabel* lbl = new CMultiLineTextLabel(bounds);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize, kBoldFace);
+            lbl->setFont(font);
+            lbl->setFontColor(CColor(0xfd, 0x98, 0x00, 0xff));
+            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setHoriAlign(align);
+            lbl->setText(label);
+            return lbl;
+        };
+
+        auto createSysInfoValueBox = [](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CMultiLineTextLabel* lbl = new CMultiLineTextLabel(bounds);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            lbl->setFont(font);
+            lbl->setFontColor(CColor(0xff, 0xff, 0xff, 0xff));
+            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setHoriAlign(align);
+            lbl->setText(label);
             return lbl;
         };
 
@@ -98,32 +122,32 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
         };
         auto createButtonSfztools = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createGlyphButton(u8"\ue000", bounds, tag, fontsize);
-            btn->OnHoverEnter = [this]() { lblHover_->setText("SFZTools Website"); };
-            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "SFZ Tools"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
             return btn;
         };
         auto createButtonGithub = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createGlyphButton(u8"\ue001", bounds, tag, fontsize);
-            btn->OnHoverEnter = [this]() { lblHover_->setText("GitHub Repository"); };
-            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Source code"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
             return btn;
         };
         auto createButtonDiscord = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createGlyphButton(u8"\ue002", bounds, tag, fontsize);
-            btn->OnHoverEnter = [this]() { lblHover_->setText("Discord Chat"); };
-            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Community chat"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
             return btn;
         };
         auto createButtonOpencollective = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createGlyphButton(u8"\ue003", bounds, tag, fontsize);
-            btn->OnHoverEnter = [this]() { lblHover_->setText("Support Us"); };
-            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Support us"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
             return btn;
         };
         auto createButtonSfzformat = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             STextButton* btn = createGlyphButton(u8"\ue004", bounds, tag, fontsize);
-            btn->OnHoverEnter = [this]() { lblHover_->setText("SFZFormat Documentation"); };
-            btn->OnHoverLeave = [this]() { lblHover_->setText(""); };
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "SFZ Format"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
             return btn;
         };
 
@@ -134,16 +158,54 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
     CRect aboutBounds = aboutView->getViewSize();
     aboutBounds.centerInside(CRect(bounds).originize());
     aboutView->setViewSize(aboutBounds);
+
+    ///
+    sysInfoTemplate_ = lblSysInfoValue_->getText();
+    sysInfoVariables_["%HostOS%"] = getOperatingSystemName();
+    sysInfoVariables_["%HostCPU%"] = getProcessorName();
+    sysInfoVariables_["%HostBits%"] = std::to_string(8 * sizeof(void*));
 }
 
 void SAboutDialog::setPluginFormat(const std::string& pluginFormat)
 {
-    // TODO
+    sysInfoVariables_["%PluginFormat%"] = pluginFormat;
+    updateSysInfo();
 }
 
 void SAboutDialog::setPluginHost(const std::string& pluginHost)
 {
-    // TODO
+    sysInfoVariables_["%HostProgram%"] = pluginHost;
+    updateSysInfo();
+}
+
+void SAboutDialog::updateSysInfo()
+{
+    std::string text = sysInfoTemplate_;
+    for (const auto& infoKeyValue : sysInfoVariables_) {
+        size_t pos = text.find(infoKeyValue.first);
+        if (pos != text.npos)
+            text.replace(pos, infoKeyValue.first.size(), infoKeyValue.second);
+    }
+    lblSysInfoValue_->setText(UTF8String(text));
+}
+
+void SAboutDialog::buttonHoverEnter(CControl* btn, const char* text)
+{
+    CRect rect = lblHover_->getViewSize();
+    CRect btnRect = btn->getViewSize();
+    rect.left = btnRect.left - 100;
+    rect.right = btnRect.right + 100;
+    lblHover_->setViewSize(rect);
+
+    lblHover_->setText(text);
+    lblHover_->setVisible(true);
+    lblHover_->invalid();
+}
+
+void SAboutDialog::buttonHoverLeave(CControl* btn)
+{
+    (void)btn;
+    lblHover_->setVisible(false);
 }
 
 CMouseEventResult SAboutDialog::onMouseDown(CPoint& where, const CButtonState& buttons)
