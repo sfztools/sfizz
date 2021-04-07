@@ -10,8 +10,8 @@
 #include "Region.h"
 #include "Resources.h"
 #include "AudioSpan.h"
-#include "LeakDetector.h"
 #include "utility/NumericId.h"
+#include "utility/LeakDetector.h"
 #include <memory>
 
 namespace sfz {
@@ -102,8 +102,9 @@ public:
      * @param region
      * @param delay
      * @param evebt
+     * @return bool
      */
-    void startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
+    bool startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
 
     /**
      * @brief Get the sample quality determined by the active region.
@@ -306,6 +307,24 @@ public:
      */
     void setFilterEGEnabledPerVoice(bool haveFilterEG);
     /**
+     * @brief Set whether SFZv1 amplitude LFO is enabled on this voice
+     *
+     * @param haveAmplitudeLFO
+     */
+    void setAmplitudeLFOEnabledPerVoice(bool haveAmplitudeLFO);
+    /**
+     * @brief Set whether SFZv1 pitch LFO is enabled on this voice
+     *
+     * @param havePitchLFO
+     */
+    void setPitchLFOEnabledPerVoice(bool havePitchLFO);
+    /**
+     * @brief Set whether SFZv1 filter LFO is enabled on this voice
+     *
+     * @param haveFilterLFO
+     */
+    void setFilterLFOEnabledPerVoice(bool haveFilterLFO);
+    /**
      * @brief Release the voice after a given delay
      *
      * @param delay
@@ -334,6 +353,19 @@ public:
     Duration getLastPanningDuration() const noexcept;
 
     /**
+     * @brief Get the SFZv1 amplitude LFO, if existing
+     */
+    LFO* getAmplitudeLFO();
+    /**
+     * @brief Get the SFZv1 pitch LFO, if existing
+     */
+    LFO* getPitchLFO();
+    /**
+     * @brief Get the SFZv1 filter LFO, if existing
+     */
+    LFO* getFilterLFO();
+
+    /**
      * @brief Get the SFZv1 amplitude EG, if existing
      */
     ADSREnvelope* getAmplitudeEG();
@@ -351,6 +383,13 @@ public:
      */
     const TriggerEvent& getTriggerEvent();
     sfz::Filter downsampleFilter;
+
+public:
+    /**
+     * @brief Check if the voice already belongs to a sister ring
+     */
+    bool isInSisterRing() const noexcept { return this != nextSisterVoice_; }
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

@@ -13,7 +13,6 @@
 #include "FlexEnvelope.h"
 #include "Interpolators.h"
 #include "LFO.h"
-#include "Macros.h"
 #include "MathHelpers.h"
 #include "ModifierHelpers.h"
 #include "modulations/ModId.h"
@@ -25,6 +24,7 @@
 #include "SfzHelpers.h"
 #include "SIMDHelpers.h"
 #include "Smoothers.h"
+#include "utility/Macros.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <random>
@@ -202,6 +202,10 @@ struct Voice::Impl
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
+    enum class SustainState { Up, Sustaining };
+    SustainState sustainState_ { SustainState::Up };
+    enum class SostenutoState { Up, Sustaining, PreviouslyDown };
+    SostenutoState sostenutoState_ { SostenutoState::Up };
 
     TriggerEvent triggerEvent_;
     absl::optional<int> triggerDelay_;
@@ -240,6 +244,10 @@ struct Voice::Impl
     std::vector<EQHolder> equalizers_;
     std::vector<std::unique_ptr<LFO>> lfos_;
     std::vector<std::unique_ptr<FlexEnvelope>> flexEGs_;
+
+    std::unique_ptr<LFO> lfoAmplitude_;
+    std::unique_ptr<LFO> lfoPitch_;
+    std::unique_ptr<LFO> lfoFilter_;
 
     ADSREnvelope egAmplitude_;
     std::unique_ptr<ADSREnvelope> egPitch_;
@@ -354,18 +362,21 @@ Voice::Impl::Impl(int voiceNumber, Resources& resources)
     getSCurve();
 }
 
-void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
+bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
     impl.region_ = region;
-    if (region->disabled())
-        return;
 
     impl.triggerEvent_ = event;
     if (impl.triggerEvent_.type == TriggerEventType::CC)
         impl.triggerEvent_.number = region->pitchKeycenter;
+
+    if (region->disabled()) {
+        impl.switchState(State::cleanMeUp);
+        return false;
+    }
 
     impl.switchState(State::playing);
 
@@ -410,7 +421,7 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
         impl.currentPromise_ = impl.resources_.filePool.getFilePromise(region->sampleId);
         if (!impl.currentPromise_) {
             impl.switchState(State::cleanMeUp);
-            return;
+            return false;
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
@@ -451,6 +462,22 @@ void Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
 
     impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
     impl.saveModulationTargets(region);
+
+    if (region->checkSustain) {
+        const bool sustainPressed =
+            impl.resources_.midiState.getCCValue(region->sustainCC) >= region->sustainThreshold;
+        impl.sustainState_ =
+            sustainPressed ? Impl::SustainState::Sustaining : Impl::SustainState::Up;
+    }
+
+    if (region->checkSostenuto) {
+        const bool sostenutoPressed =
+            impl.resources_.midiState.getCCValue(region->sostenutoCC) >= region->sostenutoThreshold;
+        impl.sostenutoState_ =
+            sostenutoPressed ? Impl::SostenutoState::PreviouslyDown : Impl::SostenutoState::Up;
+    }
+
+    return true;
 }
 
 int Voice::Impl::getCurrentSampleQuality() const noexcept
@@ -534,8 +561,13 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
         if (impl.region_->loopMode == LoopMode::one_shot)
             return;
 
-        if (!impl.region_->checkSustain
-            || impl.resources_.midiState.getCCValue(impl.region_->sustainCC) < impl.region_->sustainThreshold)
+        const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+            || impl.sustainState_ != Impl::SustainState::Sustaining;
+
+        const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+            || impl.sostenutoState_ != Impl::SostenutoState::Sustaining;
+
+        if (sustainPedalReleaseCondition && sostenutoPedalReleaseCondition)
             release(delay);
     }
 }
@@ -550,10 +582,29 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (impl.state_ != State::playing)
         return;
 
-    if (impl.region_->checkSustain
-        && impl.noteIsOff_
-        && ccNumber == impl.region_->sustainCC
-        && ccValue < impl.region_->sustainThreshold)
+    if (impl.region_->checkSustain && (ccNumber == impl.region_->sostenutoCC)) {
+        if (ccValue < impl.region_->sostenutoThreshold) {
+            impl.sostenutoState_ = Impl::SostenutoState::Up;
+        } else if (impl.sostenutoState_ == Impl::SostenutoState::Up) {
+            impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
+        }
+    }
+
+    if (impl.region_->checkSostenuto && (ccNumber == impl.region_->sustainCC)) {
+        if (ccValue < impl.region_->sustainThreshold) {
+            impl.sustainState_ = Impl::SustainState::Up;
+        } else {
+            impl.sustainState_ = Impl::SustainState::Sustaining;
+        }
+    }
+
+    const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+        || (impl.sustainState_ != Impl::SustainState::Sustaining);
+
+    const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+        || (impl.sostenutoState_ != Impl::SostenutoState::Sustaining);
+
+    if (impl.noteIsOff_ && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
 }
 
@@ -595,6 +646,12 @@ void Voice::setSampleRate(float sampleRate) noexcept
 
     for (auto& lfo : impl.lfos_)
         lfo->setSampleRate(impl.sampleRate_);
+    if (auto* lfo = impl.lfoAmplitude_.get())
+        lfo->setSampleRate(impl.sampleRate_);
+    if (auto* lfo = impl.lfoPitch_.get())
+        lfo->setSampleRate(impl.sampleRate_);
+    if (auto* lfo = impl.lfoFilter_.get())
+        lfo->setSampleRate(impl.sampleRate_);
 
     for (auto& filter : impl.filters_)
         filter.setSampleRate(impl.sampleRate_);
@@ -622,7 +679,8 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);
     buffer.fill(0.0f);
 
-    if (impl.region_ == nullptr)
+    const Region* region = impl.region_;
+    if (region == nullptr || region->disabled())
         return;
     AudioBuffer<float> interBuffer(buffer.getNumChannels(), buffer.getNumFrames() * impl.resources_.synthConfig.OSFactor);
     AudioSpan<float> downsampled_buffer(interBuffer);
@@ -634,13 +692,13 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Fill buffer with raw data
         ScopedTiming logger { impl.dataDuration_ };
-        if (impl.region_->isOscillator())
+        if (region->isOscillator())
             impl.fillWithGenerator(delayed_buffer);
         else
             impl.fillWithData(delayed_buffer);
     }
 
-    if (impl.region_->isStereo()) {
+    if (region->isStereo()) {
         impl.ampStageStereo(downsampled_buffer);
         impl.panStageStereo(downsampled_buffer);
         impl.filterStageStereo(downsampled_buffer);
@@ -650,7 +708,7 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
         impl.panStageMono(downsampled_buffer);
     }
 
-	if (impl.resources_.synthConfig.OSFactor > 1)
+    if (impl.resources_.synthConfig.OSFactor > 1)
 	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48 * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor / impl.resources_.synthConfig.OSFactor, 0.0, 0.0, downsampled_buffer.getNumFrames());
 
     for (size_t i = 0; i < buffer.getNumChannels(); ++i)
@@ -665,12 +723,12 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 }
 }
 
-    if (!impl.region_->flexAmpEG) {
+    if (!region->flexAmpEG) {
         if (!impl.egAmplitude_.isSmoothing())
             impl.switchState(State::cleanMeUp);
     }
     else {
-        if (impl.flexEGs_[*impl.region_->flexAmpEG]->isFinished())
+        if (impl.flexEGs_[*region->flexAmpEG]->isFinished())
             impl.switchState(State::cleanMeUp);
     }
 
@@ -933,6 +991,11 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             return;
 
         fill(*jumps, pitchRatio_ * speedRatio_);
+
+        // Take the first sample if the voice just started
+        if (age_ == 0)
+            jumps->front() = 0.0f;
+
         pitchEnvelope(*jumps);
 
         jumps->front() += floatPositionOffset_;
@@ -1061,7 +1124,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                     off(i, true);
 
                 fill<int>(indices->subspan(i), sampleEnd);
-                fill<float>(coeffs->subspan(i), 1.0f);
+                fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
                 break;
             }
         }
@@ -1081,7 +1144,6 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
         absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
-
 	float mod = 1.0;
 
         if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
@@ -1493,12 +1555,13 @@ bool Voice::Impl::released() const noexcept
 bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
 {
     Impl& impl = *impl_;
-    if (impl.region_ == nullptr || other == nullptr)
+    const Region* region = impl.region_;
+    if (region == nullptr || other == nullptr)
         return false;
 
     if (impl.triggerEvent_.type == TriggerEventType::NoteOn
-        && impl.region_->offBy == other->group
-        && (impl.region_->group != other->group || noteNumber != impl.triggerEvent_.number)) {
+        && region->offBy == other->group
+        && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
     }
@@ -1517,6 +1580,7 @@ void Voice::reset() noexcept
     impl.count_ = 1;
     impl.floatPositionOffset_ = 0.0f;
     impl.noteIsOff_ = false;
+    impl.sostenutoState_ = Impl::SostenutoState::Up;
 
     impl.resetLoopInformation();
 
@@ -1558,6 +1622,8 @@ void Voice::Impl::updateLoopInformation() noexcept
     loop_.start = static_cast<int>(region_->loopStart(factor));
     loop_.size = loop_.end + 1 - loop_.start;
     loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
+    // Clamp the crossfade to the part available before the loop starts
+    loop_.xfSize = min(loop_.start, loop_.xfSize);
     loop_.xfOutStart = loop_.end + 1 - loop_.xfSize;
     loop_.xfInStart = loop_.start - loop_.xfSize;
 }
@@ -1632,8 +1698,7 @@ void Voice::setMaxLFOsPerVoice(size_t numLFOs)
     impl.lfos_.resize(numLFOs);
 
     for (size_t i = 0; i < numLFOs; ++i) {
-        const NumericId<LFO> id { static_cast<int>(i) };
-        auto lfo = absl::make_unique<LFO>(id, resources.bufferPool, &resources.beatClock, &resources.modMatrix);
+        auto lfo = absl::make_unique<LFO>(resources.bufferPool, &resources.beatClock, &resources.modMatrix);
         lfo->setSampleRate(impl.sampleRate_);
         impl.lfos_[i] = std::move(lfo);
     }
@@ -1667,6 +1732,45 @@ void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
         impl.egFilter_.reset(new ADSREnvelope);
     else
         impl.egFilter_.reset();
+}
+
+void Voice::setAmplitudeLFOEnabledPerVoice(bool haveAmplitudeLFO)
+{
+    Impl& impl = *impl_;
+    Resources& res = impl.resources_;
+    if (haveAmplitudeLFO) {
+        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        impl.lfoAmplitude_.reset(lfo);
+        lfo->setSampleRate(impl.sampleRate_);
+    }
+    else
+        impl.lfoAmplitude_.reset();
+}
+
+void Voice::setPitchLFOEnabledPerVoice(bool havePitchLFO)
+{
+    Impl& impl = *impl_;
+    Resources& res = impl.resources_;
+    if (havePitchLFO) {
+        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        impl.lfoPitch_.reset(lfo);
+        lfo->setSampleRate(impl.sampleRate_);
+    }
+    else
+        impl.lfoPitch_.reset();
+}
+
+void Voice::setFilterLFOEnabledPerVoice(bool haveFilterLFO)
+{
+    Impl& impl = *impl_;
+    Resources& res = impl.resources_;
+    if (haveFilterLFO) {
+        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        impl.lfoFilter_.reset(lfo);
+        lfo->setSampleRate(impl.sampleRate_);
+    }
+    else
+        impl.lfoFilter_.reset();
 }
 
 void Voice::Impl::setupOscillatorUnison()
@@ -1882,6 +1986,24 @@ Duration Voice::getLastPanningDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.panningDuration_;
+}
+
+LFO* Voice::getAmplitudeLFO()
+{
+    Impl& impl = *impl_;
+    return impl.lfoAmplitude_.get();
+}
+
+LFO* Voice::getPitchLFO()
+{
+    Impl& impl = *impl_;
+    return impl.lfoPitch_.get();
+}
+
+LFO* Voice::getFilterLFO()
+{
+    Impl& impl = *impl_;
+    return impl.lfoFilter_.get();
 }
 
 ADSREnvelope* Voice::getAmplitudeEG()
