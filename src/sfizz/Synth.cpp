@@ -426,7 +426,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 	    {
 		if (stoi(member.value) / sampleRate_ > 1)
 			overSampled = true;
-		resources_.synthConfig.OSFactor = int(std::min(128.0f, std::max(1, stoi(member.value) / sampleRate_)));
+		resources_.synthConfig.OSFactor = int(std::min(128.0f, std::max(1.0f, stoi(member.value) / sampleRate_)));
     		for (auto& voice : voiceManager_) {
         		voice.setSampleRate(sampleRate_);
         		voice.setSamplesPerBlock(samplesPerBlock_);
