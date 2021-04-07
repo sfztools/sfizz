@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include <sfizz_message.h>
 #include <memory>
 class EditorController;
 

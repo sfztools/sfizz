@@ -86,7 +86,7 @@ int process(jack_nframes_t numFrames, void* arg)
             synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
-            // Not implemented
+            synth->polyAftertouch(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::controlChange:
             synth->cc(event.time, event.buffer[1], event.buffer[2]);

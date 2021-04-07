@@ -378,7 +378,7 @@ TEST_CASE("[Files] wrong (overlapping) replacement for defines")
     const ModKey target = ModKey::createNXYZ(ModId::Amplitude, synth.getRegionView(2)->getId());
     const RegionCCView view(*synth.getRegionView(2), target);
     REQUIRE(!view.empty());
-    REQUIRE(view.valueAt(10) == 34.0f);
+    REQUIRE(view.valueAt(10) == Approx(0.34f).margin(1e-3));
 }
 
 TEST_CASE("[Files] Specific bug: relative path with backslashes")
@@ -500,10 +500,14 @@ TEST_CASE("[Files] Note and octave offsets")
 TEST_CASE("[Files] Off modes")
 {
     Synth synth;
+    AudioBuffer<float> buffer { 2, 256 };
     synth.setSamplesPerBlock(256);
+
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/off_mode.sfz");
     REQUIRE( synth.getNumRegions() == 3 );
+
     synth.noteOn(0, 64, 63);
+    synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 );
     const auto* fastVoice =
         synth.getVoiceView(0)->getRegion()->offMode == OffMode::fast ?
@@ -514,9 +518,10 @@ TEST_CASE("[Files] Off modes")
             synth.getVoiceView(1) :
             synth.getVoiceView(0) ;
     synth.noteOn(100, 63, 63);
+    synth.renderBlock(buffer);
+
     REQUIRE( synth.getNumActiveVoices() == 3 );
     REQUIRE( numPlayingVoices(synth) == 1 );
-    AudioBuffer<float> buffer { 2, 256 };
     for (unsigned i = 0; i < 20; ++i) // Not enough for the "normal" voice to die
         synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 2 );
@@ -535,9 +540,9 @@ TEST_CASE("[Files] Looped regions taken from files and possibly overriden")
     REQUIRE( synth.getRegionView(1)->loopMode == LoopMode::no_loop );
     REQUIRE( synth.getRegionView(2)->loopMode == LoopMode::loop_continuous );
 
-    REQUIRE(synth.getRegionView(0)->loopRange == Range<uint32_t> { 77554, 186581 });
-    REQUIRE(synth.getRegionView(1)->loopRange == Range<uint32_t> { 77554, 186581 });
-    REQUIRE(synth.getRegionView(2)->loopRange == Range<uint32_t> { 4, 124 });
+    REQUIRE(synth.getRegionView(0)->loopRange == Range<int64_t> { 77554, 186581 });
+    REQUIRE(synth.getRegionView(1)->loopRange == Range<int64_t> { 77554, 186581 });
+    REQUIRE(synth.getRegionView(2)->loopRange == Range<int64_t> { 4, 124 });
 }
 
 TEST_CASE("[Files] Looped regions can start at 0")
@@ -548,7 +553,7 @@ TEST_CASE("[Files] Looped regions can start at 0")
     )");
     REQUIRE( synth.getNumRegions() == 1 );
     REQUIRE( synth.getRegionView(0)->loopMode == LoopMode::loop_continuous );
-    REQUIRE( synth.getRegionView(0)->loopRange == Range<uint32_t> { 0, synth.getRegionView(0)->sampleEnd } );
+    REQUIRE( synth.getRegionView(0)->loopRange == Range<int64_t> { 0, synth.getRegionView(0)->sampleEnd } );
 }
 
 TEST_CASE("[Synth] Release triggers automatically sets the loop mode")

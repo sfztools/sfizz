@@ -6,6 +6,7 @@
 
 #pragma once
 #include "Defaults.h"
+#include "CCMap.h"
 #include "modulations/ModKey.h"
 #include <absl/types/optional.h>
 #include <vector>
@@ -19,8 +20,11 @@ struct LFODescription {
     float freq  { Default::lfoFreq }; // lfoN_freq
     float beats { Default::lfoBeats }; // lfoN_beats
     float phase0 { Default::lfoPhase }; // lfoN_phase
+    CCMap<float> phaseCC { Default::lfoPhaseMod }; // lfoN_phase_cc
     float delay { Default::lfoDelay }; // lfoN_delay
+    CCMap<float> delayCC { Default::lfoDelayMod }; // lfoN_phase_cc
     float fade { Default::lfoFade }; // lfoN_fade
+    CCMap<float> fadeCC { Default::lfoFadeMod }; // lfoN_phase_cc
     unsigned count { Default::lfoCount }; // lfoN_count
     struct Sub {
         LFOWave wave { Default::lfoWave }; // lfoN_wave[X]
@@ -37,6 +41,7 @@ struct LFODescription {
     // modulations
     ModKey beatsKey;
     ModKey freqKey;
+    ModKey phaseKey;
 };
 
 } // namespace sfz

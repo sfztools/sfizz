@@ -448,6 +448,8 @@ void STextButton::draw(CDrawContext* context)
 CMouseEventResult STextButton::onMouseEntered (CPoint& where, const CButtonState& buttons)
 {
     hovered_ = true;
+    if (OnHoverEnter)
+        OnHoverEnter();
     invalid();
     return CTextButton::onMouseEntered(where, buttons);
 }
@@ -455,6 +457,8 @@ CMouseEventResult STextButton::onMouseEntered (CPoint& where, const CButtonState
 CMouseEventResult STextButton::onMouseExited (CPoint& where, const CButtonState& buttons)
 {
     hovered_ = false;
+    if (OnHoverLeave)
+        OnHoverLeave();
     invalid();
     return CTextButton::onMouseExited(where, buttons);
 }

@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Voice.h"
+#include "Layer.h"
 #include "AudioBuffer.h"
 #include "Config.h"
 #include "Defaults.h"
@@ -15,6 +16,7 @@
 #include "LFO.h"
 #include "MathHelpers.h"
 #include "ModifierHelpers.h"
+#include "TriggerEvent.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -195,10 +197,16 @@ struct Voice::Impl
      */
     void off(int delay, bool fast = false) noexcept;
 
+    /**
+     * @brief Setup the extended CC values for the voice
+     *
+     */
+    void updateExtendedCCValues() noexcept;
+
     const NumericId<Voice> id_;
     StateListener* stateListener_ = nullptr;
 
-    Region* region_ { nullptr };
+    const Region* region_ { nullptr };
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
@@ -215,12 +223,14 @@ struct Voice::Impl
     float baseVolumedB_ { 0.0 };
     float baseGain_ { 1.0 };
     float baseFrequency_ { 440.0 };
+    uint8_t pitchKeycenter_ { Default::key };
 
     float floatPositionOffset_ { 0.0f };
     int sourcePosition_ { 0 };
     int initialDelay_ { 0 };
     int age_ { 0 };
     uint32_t count_ { 1 };
+    int sampleEnd_ { 0 };
     int sampleSize_ { 0 };
 
     struct {
@@ -287,6 +297,10 @@ struct Voice::Impl
 
     bool followPower_ { false };
     PowerFollower powerFollower_;
+
+    ExtendedCCValues extendedCCValues_;
+    fast_real_distribution<float> unipolarDist { 0.0f, 1.0f };
+    fast_real_distribution<float> bipolarDist { -1.0f, 1.0f };
 };
 
 Voice::Voice(int voiceNumber, Resources& resources)
@@ -362,55 +376,77 @@ Voice::Impl::Impl(int voiceNumber, Resources& resources)
     getSCurve();
 }
 
-bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
+const ExtendedCCValues& Voice::getExtendedCCValues() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.extendedCCValues_;
+}
+
+void Voice::Impl::updateExtendedCCValues() noexcept
+{
+    extendedCCValues_.unipolar = unipolarDist(Random::randomGenerator);
+    extendedCCValues_.bipolar = bipolarDist(Random::randomGenerator);
+    extendedCCValues_.alternate = resources_.midiState.getAlternateState();
+    extendedCCValues_.noteGate = resources_.midiState.getActiveNotes() > 0 ? 1.0f : 0.0f;
+}
+
+bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
-    impl.region_ = region;
+    Resources& resources = impl.resources_;
+
+    const Region& region = layer->getRegion();
+    impl.region_ = &region;
 
     impl.triggerEvent_ = event;
     if (impl.triggerEvent_.type == TriggerEventType::CC)
-        impl.triggerEvent_.number = region->pitchKeycenter;
+        impl.triggerEvent_.number = region.pitchKeycenter;
 
-    if (region->disabled()) {
+    if (region.velocityOverride == VelocityOverride::previous)
+        impl.triggerEvent_.value = resources.midiState.getLastVelocity();
+
+    if (region.disabled()) {
         impl.switchState(State::cleanMeUp);
         return false;
     }
 
     impl.switchState(State::playing);
 
+    impl.updateExtendedCCValues();
+
     ASSERT(delay >= 0);
     if (delay < 0)
         delay = 0;
 
-    if (region->isOscillator()) {
+    if (region.isOscillator()) {
         const WavetableMulti* wave = nullptr;
-        if (!region->isGenerator())
-            wave = impl.resources_.wavePool.getFileWave(region->sampleId->filename());
+        if (!region.isGenerator())
+            wave = resources.wavePool.getFileWave(region.sampleId->filename());
         else {
-            switch (hash(region->sampleId->filename())) {
+            switch (hash(region.sampleId->filename())) {
             default:
             case hash("*silence"):
                 break;
             case hash("*sine"):
-                wave = impl.resources_.wavePool.getWaveSin();
+                wave = resources.wavePool.getWaveSin();
                 break;
             case hash("*triangle"): // fallthrough
             case hash("*tri"):
-                wave = impl.resources_.wavePool.getWaveTriangle();
+                wave = resources.wavePool.getWaveTriangle();
                 break;
             case hash("*square"):
-                wave = impl.resources_.wavePool.getWaveSquare();
+                wave = resources.wavePool.getWaveSquare();
                 break;
             case hash("*saw"):
-                wave = impl.resources_.wavePool.getWaveSaw();
+                wave = resources.wavePool.getWaveSaw();
                 break;
             }
         }
-        const float phase = region->getPhase();
+        const float phase = region.getPhase();
         const int quality =
-            region->oscillatorQuality.value_or(Default::oscillatorQuality);
+            region.oscillatorQuality.value_or(Default::oscillatorQuality);
         for (WavetableOscillator& osc : impl.waveOscillators_) {
             osc.setWavetable(wave);
             osc.setPhase(phase);
@@ -418,61 +454,64 @@ bool Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noe
         }
         impl.setupOscillatorUnison();
     } else {
-        impl.currentPromise_ = impl.resources_.filePool.getFilePromise(region->sampleId);
+        impl.currentPromise_ = resources.filePool.getFilePromise(region.sampleId);
         if (!impl.currentPromise_) {
             impl.switchState(State::cleanMeUp);
             return false;
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
-        impl.sourcePosition_ = region->getOffset(impl.resources_.filePool.getOversamplingFactor());
+        impl.sourcePosition_ = region.getOffset(resources.midiState, resources.filePool.getOversamplingFactor());
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
-    const float numberRetuned = impl.resources_.tuning.getKeyFractional12TET(impl.triggerEvent_.number);
+    const float numberRetuned = resources.tuning.getKeyFractional12TET(impl.triggerEvent_.number);
 
-    impl.pitchRatio_ = region->getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
+    impl.pitchRatio_ = region.getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
 
     // apply stretch tuning if set
-    if (impl.resources_.stretch)
-        impl.pitchRatio_ *= impl.resources_.stretch->getRatioForFractionalKey(numberRetuned);
+    if (resources.stretch)
+        impl.pitchRatio_ *= resources.stretch->getRatioForFractionalKey(numberRetuned);
 
-    impl.baseVolumedB_ = region->getBaseVolumedB(impl.triggerEvent_.number);
-    impl.baseGain_ = region->getBaseGain();
-    if (impl.triggerEvent_.type != TriggerEventType::CC)
-        impl.baseGain_ *= region->getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
+    impl.pitchKeycenter_ = region.pitchKeycenter;
+    impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
+    impl.baseGain_ = region.getBaseGain();
+    if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
+        impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
+
     impl.gainSmoother_.reset();
     impl.resetCrossfades();
 
-    for (unsigned i = 0; i < region->filters.size(); ++i) {
-        impl.filters_[i].setup(*region, i, impl.triggerEvent_.number, impl.triggerEvent_.value);
+    for (unsigned i = 0; i < region.filters.size(); ++i) {
+        impl.filters_[i].setup(region, i, impl.triggerEvent_.number, impl.triggerEvent_.value);
     }
 
-    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
-        impl.equalizers_[i].setup(*region, i, impl.triggerEvent_.value);
+    for (unsigned i = 0; i < region.equalizers.size(); ++i) {
+        impl.equalizers_[i].setup(region, i, impl.triggerEvent_.value);
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(region->getDelay() * impl.sampleRate_);
-    impl.baseFrequency_ = impl.resources_.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleSize_ = region->trueSampleEnd(impl.resources_.filePool.getOversamplingFactor()) - impl.sourcePosition_ - 1;
-    impl.bendStepFactor_ = centsFactor(region->bendStep);
-    impl.bendSmoother_.setSmoothing(region->bendSmooth, impl.sampleRate_);
-    impl.bendSmoother_.reset(centsFactor(region->getBendInCents(impl.resources_.midiState.getPitchBend())));
+    impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
+    impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
+    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()));
+    impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
+    impl.bendStepFactor_ = centsFactor(region.bendStep);
+    impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
+    impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
 
-    impl.resources_.modMatrix.initVoice(impl.id_, region->getId(), impl.initialDelay_);
-    impl.saveModulationTargets(region);
+    resources.modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
+    impl.saveModulationTargets(&region);
 
-    if (region->checkSustain) {
+    if (region.checkSustain) {
         const bool sustainPressed =
-            impl.resources_.midiState.getCCValue(region->sustainCC) >= region->sustainThreshold;
+            resources.midiState.getCCValue(region.sustainCC) >= region.sustainThreshold;
         impl.sustainState_ =
             sustainPressed ? Impl::SustainState::Sustaining : Impl::SustainState::Up;
     }
 
-    if (region->checkSostenuto) {
+    if (region.checkSostenuto) {
         const bool sostenutoPressed =
-            impl.resources_.midiState.getCCValue(region->sostenutoCC) >= region->sostenutoThreshold;
+            resources.midiState.getCCValue(region.sostenutoCC) >= region.sostenutoThreshold;
         impl.sostenutoState_ =
             sostenutoPressed ? Impl::SostenutoState::PreviouslyDown : Impl::SostenutoState::Up;
     }
@@ -574,37 +613,42 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
 
 void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 {
-    ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
     Impl& impl = *impl_;
     if (impl.region_ == nullptr)
         return;
 
+    const Region& region = *impl.region_;
+
     if (impl.state_ != State::playing)
         return;
 
-    if (impl.region_->checkSustain && (ccNumber == impl.region_->sostenutoCC)) {
-        if (ccValue < impl.region_->sostenutoThreshold) {
+    if (ccNumber != region.sustainCC && ccNumber != region.sostenutoCC)
+        return;
+
+    if (region.checkSustain && (ccNumber == region.sostenutoCC)) {
+        if (ccValue < region.sostenutoThreshold) {
             impl.sostenutoState_ = Impl::SostenutoState::Up;
         } else if (impl.sostenutoState_ == Impl::SostenutoState::Up) {
             impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
         }
     }
 
-    if (impl.region_->checkSostenuto && (ccNumber == impl.region_->sustainCC)) {
-        if (ccValue < impl.region_->sustainThreshold) {
+    if (region.checkSostenuto && (ccNumber == region.sustainCC)) {
+        if (ccValue < region.sustainThreshold) {
             impl.sustainState_ = Impl::SustainState::Up;
         } else {
             impl.sustainState_ = Impl::SustainState::Sustaining;
         }
     }
 
-    const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+    const bool sustainPedalReleaseCondition = !region.checkSustain
         || (impl.sustainState_ != Impl::SustainState::Sustaining);
 
-    const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+    const bool sostenutoPedalReleaseCondition = !region.checkSostenuto
         || (impl.sostenutoState_ != Impl::SostenutoState::Sustaining);
 
-    if (impl.noteIsOff_ && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
+    if (impl.noteIsOff_ && region.loopMode != LoopMode::one_shot
+        && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
 }
 
@@ -617,8 +661,23 @@ void Voice::registerPitchWheel(int delay, float pitch) noexcept
     UNUSED(pitch);
 }
 
-void Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
+void Voice::registerAftertouch(int delay, float aftertouch) noexcept
 {
+    // TODO
+    UNUSED(delay);
+    UNUSED(aftertouch);
+}
+
+void Voice::registerPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept
+{
+    Impl& impl = *impl_;
+    if (impl.state_ != State::playing)
+        return;
+
+    if (!(impl.triggerEvent_.type == TriggerEventType::NoteOn || impl.triggerEvent_.type == TriggerEventType::NoteOff)
+        || impl.triggerEvent_.number != noteNumber)
+        return;
+
     // TODO
     UNUSED(delay);
     UNUSED(aftertouch);
@@ -819,7 +878,7 @@ void Voice::Impl::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
     applyGain1<float>(baseGain_, modulationSpan);
     if (float* mod = mm.getModulation(amplitudeTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            modulationSpan[i] *= normalizePercents(mod[i]);
+            modulationSpan[i] *= mod[i];
     }
 
     // Volume envelope
@@ -884,7 +943,7 @@ void Voice::Impl::panStageMono(AudioSpan<float> buffer) noexcept
     fill(*modulationSpan, region_->pan);
     if (float* mod = mm.getModulation(panTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
@@ -906,7 +965,7 @@ void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
     fill(*modulationSpan, region_->pan);
     if (float* mod = mm.getModulation(panTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
@@ -914,14 +973,14 @@ void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
     fill(*modulationSpan, region_->width);
     if (float* mod = mm.getModulation(widthTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     width(*modulationSpan, leftBuffer, rightBuffer);
 
     fill(*modulationSpan, region_->position);
     if (float* mod = mm.getModulation(positionTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
@@ -1004,7 +1063,8 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         add1<int>(sourcePosition_, *indices);
     }
 
-    // calculate loop characteristics
+    // Update loop characteristics with the current CC state
+    updateLoopInformation();
     const auto loop = this->loop_;
 
     // Looping logic
@@ -1052,11 +1112,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         numPartitions = 1;
     }
 
-    const auto sampleEnd = min(
-            int(region_->trueSampleEnd(resources_.filePool.getOversamplingFactor())),
-            int(currentPromise_->information.end),
-            int(source.getNumFrames()))
-            - 1;
+    const auto sampleEnd = min( int(sampleEnd_), int(currentPromise_->information.end), int(source.getNumFrames())) - 1;
 
     int blockRestarts { 0 };
     int oldIndex {};
@@ -1121,7 +1177,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                 }
 
                 if (!released())
-                    off(i, true);
+                    off(int(i), true);
 
                 fill<int>(indices->subspan(i), sampleEnd);
                 fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
@@ -1163,8 +1219,8 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
             // compute crossfade positions
             for (unsigned i = 0; i < ptSize; ++i) {
-                float pos = ptIndices[i] + ptCoeffs[i];
-                xfCurvePos[i] = (pos - loop.xfOutStart) / loop.xfSize;
+                float pos = float(ptIndices[i]) + ptCoeffs[i];
+                xfCurvePos[i] = (pos - float(loop.xfOutStart)) / float(loop.xfSize);
             }
 
             //----------------------------------------------------------------//
@@ -1386,8 +1442,8 @@ const Curve& Voice::Impl::getSCurve()
         constexpr unsigned N = Curve::NumValues;
         float values[N];
         for (unsigned i = 0; i < N; ++i) {
-            double x = i / static_cast<double>(N - 1);
-            values[i] = (1.0 - std::cos(M_PI * x)) * 0.5;
+            double x = i / double(N - 1);
+            values[i] = float((1.0 - std::cos(M_PI * x)) * 0.5);
         }
         return Curve::buildFromPoints(values);
     }();
@@ -1421,7 +1477,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         if (!frequencies)
             return;
 
-        float keycenterFrequency = midiNoteFrequency(region_->pitchKeycenter);
+        float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
         fill(*frequencies, pitchRatio_ * keycenterFrequency);
         pitchEnvelope(*frequencies);
 
@@ -1507,7 +1563,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
                 applyGain1(oscillatorModDepth, *modulatorSpan);
             const float* modDepthMod = resources_.modMatrix.getModulation(oscillatorModDepthTarget_);
             if (modDepthMod)
-                multiplyMul1(0.01f, absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
+                applyGain(absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
 
             // compute carrier×modulator
             switch (region_->oscillatorMode) {
@@ -1559,8 +1615,11 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if (region == nullptr || other == nullptr)
         return false;
 
+    if (impl.released())
+        return false;
+
     if (impl.triggerEvent_.type == TriggerEventType::NoteOn
-        && region->offBy == other->group
+        && region->offBy && *region->offBy == other->group
         && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
@@ -1614,12 +1673,14 @@ void Voice::Impl::updateLoopInformation() noexcept
 
     if (!region_->shouldLoop())
         return;
-    const auto& info = currentPromise_->information;
-    const auto factor = resources_.filePool.getOversamplingFactor();
-    const auto rate = info.sampleRate;
 
-    loop_.end = static_cast<int>(region_->loopEnd(factor));
-    loop_.start = static_cast<int>(region_->loopStart(factor));
+    Resources& resources = resources_;
+    const FileInformation& info = currentPromise_->information;
+    const Oversampling factor = resources_.filePool.getOversamplingFactor();
+    const double rate = info.sampleRate;
+
+    loop_.start = static_cast<int>(region_->loopStart(resources.midiState, factor));
+    loop_.end = max(static_cast<int>(region_->loopEnd(resources.midiState, factor)), loop_.start);
     loop_.size = loop_.end + 1 - loop_.start;
     loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
     // Clamp the crossfade to the part available before the loop starts
@@ -1698,7 +1759,7 @@ void Voice::setMaxLFOsPerVoice(size_t numLFOs)
     impl.lfos_.resize(numLFOs);
 
     for (size_t i = 0; i < numLFOs; ++i) {
-        auto lfo = absl::make_unique<LFO>(resources.bufferPool, &resources.beatClock, &resources.modMatrix);
+        auto lfo = absl::make_unique<LFO>(resources);
         lfo->setSampleRate(impl.sampleRate_);
         impl.lfos_[i] = std::move(lfo);
     }
@@ -1739,7 +1800,7 @@ void Voice::setAmplitudeLFOEnabledPerVoice(bool haveAmplitudeLFO)
     Impl& impl = *impl_;
     Resources& res = impl.resources_;
     if (haveAmplitudeLFO) {
-        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        LFO* lfo = new LFO(res);
         impl.lfoAmplitude_.reset(lfo);
         lfo->setSampleRate(impl.sampleRate_);
     }
@@ -1752,7 +1813,7 @@ void Voice::setPitchLFOEnabledPerVoice(bool havePitchLFO)
     Impl& impl = *impl_;
     Resources& res = impl.resources_;
     if (havePitchLFO) {
-        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        LFO* lfo = new LFO(res);
         impl.lfoPitch_.reset(lfo);
         lfo->setSampleRate(impl.sampleRate_);
     }
@@ -1765,7 +1826,7 @@ void Voice::setFilterLFOEnabledPerVoice(bool haveFilterLFO)
     Impl& impl = *impl_;
     Resources& res = impl.resources_;
     if (haveFilterLFO) {
-        LFO* lfo = new LFO(res.bufferPool, &res.beatClock, &res.modMatrix);
+        LFO* lfo = new LFO(res);
         impl.lfoFilter_.reset(lfo);
         lfo->setSampleRate(impl.sampleRate_);
     }

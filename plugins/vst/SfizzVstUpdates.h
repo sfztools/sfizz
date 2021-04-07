@@ -67,21 +67,10 @@ private:
 };
 
 /**
- * @brief Update which notifies a change of file path pseudo-parameter
- * The message ID is used to indicate which path it is.
+ * @brief Update which notifies a change of SFZ file.
  */
-class FilePathUpdate : public Steinberg::FObject {
+class SfzUpdate : public Steinberg::FObject {
 public:
-    explicit FilePathUpdate(int32 type)
-        : type_(type)
-    {
-    }
-
-    int32 getType() const noexcept
-    {
-        return type_;
-    }
-
     void setPath(std::string newPath)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -94,47 +83,58 @@ public:
         return path_;
     }
 
-    OBJ_METHODS(FilePathUpdate, FObject)
+    OBJ_METHODS(SfzUpdate, FObject)
 
 private:
-    int32 type_ {};
     std::string path_;
     mutable std::mutex mutex_;
 };
 
-enum {
-    kFilePathUpdateSfz,
-    kFilePathUpdateScala,
+/**
+ * @brief Update which notifies a change of SFZ description.
+ */
+class SfzDescriptionUpdate : public Steinberg::FObject {
+public:
+    void setDescription(std::string newDescription)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        description_ = std::move(newDescription);
+    }
+
+    std::string getDescription() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return description_;
+    }
+
+    OBJ_METHODS(SfzDescriptionUpdate, FObject)
+
+private:
+    std::string description_;
+    mutable std::mutex mutex_;
 };
 
 /**
- * @brief Update which indicates the processor status.
+ * @brief Update which notifies a change of scala file.
  */
-class ProcessorStateUpdate : public Steinberg::FObject {
+class ScalaUpdate : public Steinberg::FObject {
 public:
-    void setState(SfizzVstState newState)
+    void setPath(std::string newPath)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        state_ = std::move(newState);
+        path_ = std::move(newPath);
     }
 
-    SfizzVstState getState() const
+    std::string getPath() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        return state_;
+        return path_;
     }
 
-    template <class F>
-    void access(F&& fn)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        fn(state_);
-    }
-
-    OBJ_METHODS(ProcessorStateUpdate, FObject)
+    OBJ_METHODS(ScalaUpdate, FObject)
 
 private:
-    SfizzVstState state_;
+    std::string path_;
     mutable std::mutex mutex_;
 };
 

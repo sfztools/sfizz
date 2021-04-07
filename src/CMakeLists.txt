@@ -27,6 +27,7 @@ set(SFIZZ_HEADERS
     sfizz/utility/Debug.h
     sfizz/utility/LeakDetector.h
     sfizz/utility/Macros.h
+    sfizz/utility/MemoryHelpers.h
     sfizz/utility/NumericId.h
     sfizz/utility/StringViewHelpers.h
     sfizz/utility/SwapAndPop.h
@@ -38,6 +39,7 @@ set(SFIZZ_HEADERS
     sfizz/modulations/ModGenerator.h
     sfizz/modulations/sources/ADSREnvelope.h
     sfizz/modulations/sources/ChannelAftertouch.h
+    sfizz/modulations/sources/PolyAftertouch.h
     sfizz/modulations/sources/Controller.h
     sfizz/modulations/sources/FlexEnvelope.h
     sfizz/modulations/sources/LFO.h
@@ -75,6 +77,7 @@ set(SFIZZ_HEADERS
     sfizz/HistoricalBuffer.h
     sfizz/Interpolators.h
     sfizz/Interpolators.hpp
+    sfizz/Layer.h
     sfizz/Logger.h
     sfizz/LFO.h
     sfizz/LFOCommon.h
@@ -157,12 +160,14 @@ set(SFIZZ_SOURCES
     sfizz/SynthMessaging.cpp
     sfizz/WindowedSinc.cpp
     sfizz/Interpolators.cpp
+    sfizz/Layer.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
     sfizz/modulations/ModMatrix.cpp
     sfizz/modulations/sources/ADSREnvelope.cpp
     sfizz/modulations/sources/ChannelAftertouch.cpp
+    sfizz/modulations/sources/PolyAftertouch.cpp
     sfizz/modulations/sources/Controller.cpp
     sfizz/modulations/sources/FlexEnvelope.cpp
     sfizz/modulations/sources/LFO.cpp
@@ -283,8 +288,8 @@ add_library(sfizz::internal ALIAS sfizz_internal)
 target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES})
 target_include_directories(sfizz_internal PUBLIC "." "sfizz")
 target_link_libraries(sfizz_internal
-    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex sfizz::bit_array sfizz::simde sfizz::hiir
-    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::jsl sfizz::atomic)
+    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex sfizz::bit_array sfizz::simde sfizz::hiir sfizz::jsl
+    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::atomic)
 if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
     target_link_libraries(sfizz_internal PUBLIC st_audiofile)
@@ -296,6 +301,14 @@ if(SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
 sfizz_enable_fast_math(sfizz_internal)
+
+# Check that sfizz and cmake-side definitions are matching
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp" "
+#include \"Config.h\"
+static_assert(sfz::config::numCCs == ${SFIZZ_NUM_CCS}, \"SFIZZ_NUM_CCS did not match\");
+")
+add_library(sfizz_match_definitions STATIC "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp")
+target_link_libraries(sfizz_match_definitions PRIVATE sfizz::internal)
 
 # Sfizz static library
 add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sfizz_private.hpp)

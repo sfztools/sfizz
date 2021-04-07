@@ -325,10 +325,11 @@ SFIZZ_EXPORTED_API void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample
 
 /**
  * @brief Send a note on event to the synth.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
@@ -342,12 +343,14 @@ SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int 
 
 /**
  * @brief Send a note off event to the synth.
+ * @since 0.2.0
  *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
  * As per the SFZ spec the velocity of note-off events is usually replaced by
  * the note-on velocity.
- * @since 0.2.0
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
@@ -361,10 +364,11 @@ SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int
 
 /**
  * @brief Send a CC event to the synth.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth      The synth.
  * @param delay      The delay of the event in the block, in samples.
@@ -378,10 +382,11 @@ SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_nu
 
 /**
  * @brief Send a high precision CC event to the synth.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.4.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth       The synth.
  * @param delay       The delay of the event in the block, in samples.
@@ -395,13 +400,14 @@ SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_
 
 /**
  * @brief Send a high precision CC automation to the synth.
+ * @since 0.6.0
  *
  * This updates the CC value known to the synth, but without performing
  * additional MIDI-specific interpretations. (eg. the CC 120 and up)
  *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
- * @since 0.6.0
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth       The synth.
  * @param delay       The delay of the event in the block, in samples.
@@ -415,10 +421,11 @@ SFIZZ_EXPORTED_API void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int
 
 /**
  * @brief Send a pitch wheel event.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.4.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth  The synth.
  * @param delay  The delay.
@@ -430,8 +437,12 @@ SFIZZ_EXPORTED_API void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int
 SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch);
 
 /**
- * @brief Send an aftertouch event. (CURRENTLY UNIMPLEMENTED)
+ * @brief Send an aftertouch event.
  * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth      The synth.
  * @param delay      The delay at which the event occurs; this should be lower
@@ -444,7 +455,32 @@ SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, 
 SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
 
 /**
+ * @brief Send a polyphonic aftertouch event. This feature is experimental and needs more testing
+ *          in the internal engine.
+ * @since 0.6.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth         The synth.
+ * @param delay         The delay at which the event occurs; this should be lower
+ *                      than the size of the block in the next call to renderBlock().
+ * @param note_number   The note number.
+ * @param aftertouch    The aftertouch value.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch);
+
+/**
  * @brief Send a tempo event.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.2.0
  *
  * @param synth             The synth.
@@ -458,6 +494,11 @@ SFIZZ_EXPORTED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float 
 
 /**
  * @brief Send the time signature.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.5.0
  *
  * @param synth          The synth.
@@ -472,6 +513,11 @@ SFIZZ_EXPORTED_API void sfizz_send_time_signature(sfizz_synth_t* synth, int dela
 
 /**
  * @brief Send the time position.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.5.0
  *
  * @param synth     The synth.
@@ -486,6 +532,11 @@ SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay
 
 /**
  * @brief Send the playback state.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.5.0
  *
  * @param synth           The synth.
@@ -505,6 +556,7 @@ SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int dela
  * for the block (midi notes, CCs, ...) before rendering each block.
  * The synth will memorize the inputs and render sample accurates envelopes
  * depending on the input events passed to it.
+ *
  * @since 0.2.0
  *
  * @param synth         The synth.
@@ -823,7 +875,7 @@ SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
  * @brief Index out of bound error for the requested CC/key label.
  * @since 0.4.0
  */
-#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX -1
+#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX (-1)
 
 /**
  * @brief Get the number of key labels registered in the current sfz file.

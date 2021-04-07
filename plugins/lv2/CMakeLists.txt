@@ -20,15 +20,22 @@ source_group("Turtle Files" FILES
 )
 add_library(${LV2PLUGIN_PRJ_NAME} MODULE
     ${PROJECT_NAME}.cpp
+    ${PROJECT_NAME}_lv2_common.cpp
     ${LV2PLUGIN_TTL_SRC_FILES})
 target_link_libraries(${LV2PLUGIN_PRJ_NAME} PRIVATE sfizz::sfizz sfizz::import sfizz::plugins-common)
 
 if(SFIZZ_LV2_UI)
     add_library(${LV2PLUGIN_PRJ_NAME}_ui MODULE
         ${PROJECT_NAME}_ui.cpp
+        ${PROJECT_NAME}_lv2_common.cpp
         vstgui_helpers.h
         vstgui_helpers.cpp)
     target_link_libraries(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE sfizz::editor sfizz::vstgui sfizz::plugins-common)
+endif()
+
+if(SFIZZ_LV2_PSA)
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME} PRIVATE "SFIZZ_LV2_PSA=1")
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "SFIZZ_LV2_PSA=1")
 endif()
 
 # Explicitely strip all symbols on Linux but lv2_descriptor()
@@ -79,6 +86,9 @@ configure_file(LICENSE.md.in ${PROJECT_BINARY_DIR}/LICENSE.md)
 if(SFIZZ_USE_VCPKG OR SFIZZ_STATIC_DEPENDENCIES OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     file(COPY "lgpl-3.0.txt" DESTINATION ${PROJECT_BINARY_DIR})
 endif()
+
+# Generate controllers.ttl
+sfizz_lv2_generate_controllers_ttl("${PROJECT_BINARY_DIR}/controllers.ttl")
 
 # Copy resource files into the bundle
 set(LV2_RESOURCES

@@ -35,6 +35,7 @@
 #include "Logger.h"
 #include "SpinMutex.h"
 #include "utility/LeakDetector.h"
+#include "utility/MemoryHelpers.h"
 #include <ghc/fs_std.hpp>
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
@@ -43,6 +44,7 @@
 #include <chrono>
 #include <thread>
 #include <future>
+#include <memory>
 class ThreadPool;
 
 namespace sfz {
@@ -51,10 +53,10 @@ using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
 using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
-    uint32_t end { Default::sampleEnd };
-    uint32_t maxOffset { 0 };
-    uint32_t loopStart { Default::loopStart };
-    uint32_t loopEnd { Default::loopEnd };
+    int64_t end { Default::sampleEnd };
+    int64_t maxOffset { 0 };
+    int64_t loopStart { Default::loopStart };
+    int64_t loopEnd { Default::loopEnd };
     bool hasLoop { false };
     double sampleRate { config::defaultSampleRate };
     int numChannels { 0 };
@@ -348,10 +350,13 @@ private:
         FileData* data { nullptr };
         TimePoint queuedTime {};
     };
-    atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices> filesToLoad;
+
+    using FileQueue = atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices>;
+    aligned_unique_ptr<FileQueue> filesToLoad;
+
     void dispatchingJob() noexcept;
     void garbageJob() noexcept;
-    void loadingJob(QueuedFileData data) noexcept;
+    void loadingJob(const QueuedFileData& data) noexcept;
     std::mutex loadingJobsMutex;
     std::vector<std::future<void>> loadingJobs;
     std::thread dispatchThread { &FilePool::dispatchingJob, this };

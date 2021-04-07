@@ -44,12 +44,16 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice;
     case ModId::ChannelAftertouch:
         return kModIsPerCycle;
+    case ModId::PolyAftertouch:
+        return kModIsPerVoice;
+    case ModId::PerVoiceController:
+        return kModIsPerVoice;
 
         // targets
     case ModId::MasterAmplitude:
-        return kModIsPerVoice|kModIsPercentMultiplicative;
+        return kModIsPerVoice|kModIsMultiplicative;
     case ModId::Amplitude:
-        return kModIsPerVoice|kModIsPercentMultiplicative;
+        return kModIsPerVoice|kModIsMultiplicative;
     case ModId::Pan:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::Width:
@@ -75,7 +79,7 @@ int ModIds::flags(ModId id) noexcept
     case ModId::OscillatorDetune:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::OscillatorModDepth:
-        return kModIsPerVoice|kModIsPercentMultiplicative;
+        return kModIsPerVoice|kModIsMultiplicative;
     case ModId::PitchEGDepth:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::FilEGDepth:
@@ -95,6 +99,56 @@ int ModIds::flags(ModId id) noexcept
     case ModId::LFOFrequency:
         return kModIsPerVoice|kModIsAdditive;
     case ModId::LFOBeats:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOPhase:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOAmplitudeDepth:
+        return kModIsPerVoice|kModIsMultiplicative;
+    case ModId::LFOPanDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOWidthDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOPositionDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOPitchDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOVolumeDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOFilCutoffDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOFilResonanceDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOFilGainDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOEqGainDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOEqFrequencyDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::LFOEqBandwidthDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGAmplitudeDepth:
+        return kModIsPerVoice|kModIsMultiplicative;
+    case ModId::EGPanDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGWidthDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGPositionDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGPitchDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGVolumeDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGFilCutoffDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGFilResonanceDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGFilGainDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGEqGainDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGEqFrequencyDepth:
+        return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGEqBandwidthDepth:
         return kModIsPerVoice|kModIsAdditive;
 
         // unknown

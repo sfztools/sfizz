@@ -18,6 +18,15 @@ namespace sfz {
 enum InterpolatorModel : int;
 class LFO;
 class FlexEnvelope;
+struct Layer;
+
+struct ExtendedCCValues {
+    float unipolar {};
+    float bipolar {};
+    float noteGate {};
+    float alternate {};
+};
+
 /**
  * @brief The SFZ voice are the polyphony holders. They get activated by the synth
  * and tasked to play a given region until the end, stopping on note-offs, off-groups
@@ -99,12 +108,12 @@ public:
     /**
      * @brief Start playing a region after a short delay for different triggers (note on, off, cc)
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param evebt
      * @return bool
      */
-    bool startVoice(Region* region, int delay, const TriggerEvent& event) noexcept;
+    bool startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept;
 
     /**
      * @brief Get the sample quality determined by the active region.
@@ -144,7 +153,17 @@ public:
      * @param delay
      * @param aftertouch
      */
-    void registerAftertouch(int delay, uint8_t aftertouch) noexcept;
+    void registerAftertouch(int delay, float aftertouch) noexcept;
+
+    /**
+     * @brief Register a polyphonic aftertouch event; for now this does nothing
+     *
+     * @param delay
+     * @param noteNumber
+     * @param aftertouch
+     */
+    void registerPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept;
+
     /**
      * @brief Register a tempo event; for now this does nothing
      *
@@ -383,6 +402,13 @@ public:
      */
     const TriggerEvent& getTriggerEvent();
     sfz::Filter downsampleFilter;
+
+    /**
+     * @brief Get the extended CC values
+     *
+     * @return const ExtendedCCValues&
+     */
+    const ExtendedCCValues& getExtendedCCValues() const noexcept;
 
 public:
     /**

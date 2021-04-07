@@ -37,6 +37,7 @@
 #include "editor/Editor.h"
 #include "editor/EditorController.h"
 #include "editor/EditIds.h"
+#include "plugin/InstrumentDescription.h"
 #include <lv2/ui/ui.h>
 #include <lv2/atom/atom.h>
 #include <lv2/atom/forge.h>
@@ -44,6 +45,8 @@
 #include <lv2/midi/midi.h>
 #include <lv2/patch/patch.h>
 #include <lv2/urid/urid.h>
+#include <lv2/instance-access/instance-access.h>
+#include <ghc/fs_std.hpp>
 #include <string>
 #include <memory>
 #include <cstring>
@@ -86,6 +89,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID_Unmap *unmap = nullptr;
     LV2UI_Resize *resize = nullptr;
     LV2UI_Touch *touch = nullptr;
+    sfizz_plugin_t *plugin = nullptr;
     FrameHolder uiFrame;
     std::unique_ptr<Editor> editor;
 #if LINUX
@@ -98,6 +102,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_Atom_Forge atom_forge;
     LV2_URID atom_event_transfer_uri;
     LV2_URID atom_object_uri;
+    LV2_URID atom_float_uri;
     LV2_URID atom_path_uri;
     LV2_URID atom_urid_uri;
     LV2_URID midi_event_uri;
@@ -108,9 +113,13 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_osc_blob_uri;
+    std::unique_ptr<sfizz_lv2_ccmap, sfizz_lv2_ccmap_delete> ccmap;
 
     uint8_t osc_temp[OSC_TEMP_SIZE];
     alignas(LV2_Atom) uint8_t atom_temp[ATOM_TEMP_SIZE];
+
+    int sfz_serial = 0;
+    bool valid_sfz_serial = false;
 
 protected:
     void uiSendValue(EditId id, const EditValue& v) override;
@@ -178,16 +187,23 @@ instantiate(const LV2UI_Descriptor *descriptor,
             self->touch = (LV2UI_Touch*)(**f).data;
         else if (!strcmp((**f).URI, LV2_UI__parent))
             parentWindowId = (**f).data;
+        else if (!strcmp((**f).URI, LV2_INSTANCE_ACCESS_URI))
+            self->plugin = (sfizz_plugin_t *)(**f).data;
     }
 
     // The map feature is required
     if (!map || !unmap)
         return nullptr;
 
+    // The instance-access feature is required
+    if (!self->plugin)
+        return nullptr;
+
     LV2_Atom_Forge *forge = &self->atom_forge;
     lv2_atom_forge_init(forge, map);
     self->atom_event_transfer_uri = map->map(map->handle, LV2_ATOM__eventTransfer);
     self->atom_object_uri = map->map(map->handle, LV2_ATOM__Object);
+    self->atom_float_uri = map->map(map->handle, LV2_ATOM__Float);
     self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
     self->midi_event_uri = map->map(map->handle, LV2_MIDI__MidiEvent);
@@ -198,6 +214,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->ccmap.reset(sfizz_lv2_ccmap_create(map));
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path
@@ -238,6 +255,9 @@ instantiate(const LV2UI_Descriptor *descriptor,
     Editor *editor = new Editor(*self);
     self->editor.reset(editor);
     editor->open(*uiFrame);
+
+    // let the editor know about plugin format
+    self->uiReceiveValue(EditId::PluginFormat, std::string("LV2"));
 
     // user files dir is not relevant to LV2 (not yet?)
     // LV2 has its own path management mechanism
@@ -335,7 +355,15 @@ port_event(LV2UI_Handle ui,
                 const LV2_URID prop_uri = reinterpret_cast<const LV2_Atom_URID *>(prop)->body;
                 auto *value_body = reinterpret_cast<const char *>(LV2_ATOM_BODY_CONST(value));
 
-                if (prop_uri == self->sfizz_sfz_file_uri && value->type == self->atom_path_uri) {
+                int cc = sfizz_lv2_ccmap_unmap(self->ccmap.get(), prop_uri);
+
+                if (cc != -1) {
+                    if (value->type == self->atom_float_uri) {
+                        float ccvalue = *reinterpret_cast<const float*>(value_body);
+                        self->uiReceiveValue(editIdForCC(cc), ccvalue);
+                    }
+                }
+                else if (prop_uri == self->sfizz_sfz_file_uri && value->type == self->atom_path_uri) {
                     std::string path(value_body, strnlen(value_body, value->size));
                     self->uiReceiveValue(EditId::SfzFile, path);
                 }
@@ -358,10 +386,69 @@ port_event(LV2UI_Handle ui,
     (void)buffer_size;
 }
 
+static void
+sfizz_ui_update_description(sfizz_ui_t *self, const InstrumentDescription& desc)
+{
+    self->uiReceiveValue(EditId::UINumCurves, desc.numCurves);
+    self->uiReceiveValue(EditId::UINumMasters, desc.numMasters);
+    self->uiReceiveValue(EditId::UINumGroups, desc.numGroups);
+    self->uiReceiveValue(EditId::UINumRegions, desc.numRegions);
+    self->uiReceiveValue(EditId::UINumPreloadedSamples, desc.numSamples);
+
+    const fs::path rootPath = fs::u8path(desc.rootPath);
+    const fs::path imagePath = rootPath / fs::u8path(desc.image);
+    self->uiReceiveValue(EditId::BackgroundImage, imagePath.u8string());
+
+    for (unsigned key = 0; key < 128; ++key) {
+        bool keyUsed = desc.keyUsed.test(key);
+        bool keyswitchUsed = desc.keyswitchUsed.test(key);
+        self->uiReceiveValue(editIdForKeyUsed(key), float(keyUsed));
+        self->uiReceiveValue(editIdForKeyswitchUsed(key), float(keyswitchUsed));
+        if (keyUsed)
+            self->uiReceiveValue(editIdForKeyLabel(key), desc.keyLabel[key]);
+        if (keyswitchUsed)
+            self->uiReceiveValue(editIdForKeyswitchLabel(key), desc.keyswitchLabel[key]);
+    }
+
+    for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
+        bool ccUsed = desc.ccUsed.test(cc);
+        self->uiReceiveValue(editIdForCCUsed(cc), float(ccUsed));
+        if (ccUsed) {
+            self->uiReceiveValue(editIdForCCDefault(cc), desc.ccDefault[cc]);
+            self->uiReceiveValue(editIdForCCLabel(cc), desc.ccLabel[cc]);
+        }
+    }
+}
+
+static void
+sfizz_ui_check_sfz_update(sfizz_ui_t *self)
+{
+    uint8_t *data = nullptr;
+    uint32_t size = 0;
+    int new_serial = 0;
+    const int *serial = self->valid_sfz_serial ? &self->sfz_serial : nullptr;
+
+    bool update = sfizz_lv2_fetch_description(
+        self->plugin, serial, &data, &size, &new_serial);
+
+    if (update) {
+        std::unique_ptr<uint8_t[]> cleanup(data);
+        self->sfz_serial = new_serial;
+        self->valid_sfz_serial = true;
+
+        const InstrumentDescription desc = parseDescriptionBlob(
+            absl::string_view(reinterpret_cast<char*>(data), size));
+        sfizz_ui_update_description(self, desc);
+    }
+}
+
 static int
 idle(LV2UI_Handle ui)
 {
     sfizz_ui_t *self = (sfizz_ui_t *)ui;
+
+    // check if there are news regarding the current SFZ
+    sfizz_ui_check_sfz_update(self);
 
 #if LINUX
    self->runLoop->execIdle();
@@ -453,6 +540,22 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
         }
     };
 
+    auto sendController = [this](LV2_URID property, float value) {
+        LV2_Atom_Forge *forge = &atom_forge;
+        LV2_Atom_Forge_Frame frame;
+        auto *atom = reinterpret_cast<const LV2_Atom *>(atom_temp);
+        lv2_atom_forge_set_buffer(forge, atom_temp, sizeof(atom_temp));
+        if (lv2_atom_forge_object(forge, &frame, 0, patch_set_uri) &&
+            lv2_atom_forge_key(forge, patch_property_uri) &&
+            lv2_atom_forge_urid(forge, property) &&
+            lv2_atom_forge_key(forge, patch_value_uri) &&
+            lv2_atom_forge_float(forge, value))
+        {
+            lv2_atom_forge_pop(forge, &frame);
+            write(con, SFIZZ_CONTROL, lv2_atom_total_size(atom), atom_event_transfer_uri, atom);
+        }
+    };
+
     switch (id) {
     case EditId::Volume:
         sendFloat(SFIZZ_VOLUME, v.to_float());
@@ -482,6 +585,11 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
         sendPath(sfizz_scala_file_uri, v.to_string());
         break;
     default:
+        if (editIdIsCC(id)) {
+            int cc = ccForEditId(id);
+            LV2_URID urid = sfizz_lv2_ccmap_map(ccmap.get(), cc);
+            sendController(urid, v.to_float());
+        }
         break;
     }
 }

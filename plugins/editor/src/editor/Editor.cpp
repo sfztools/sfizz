@@ -10,6 +10,8 @@
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
+#include "DlgAbout.h"
+#include "ImageHelpers.h"
 #include "NativeHelpers.h"
 #include "BitArray.h"
 #include "plugin/MessageUtils.h"
@@ -85,6 +87,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
+        kTagAbout,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -122,6 +125,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* infoSamplesLabel_ = nullptr;
     CTextLabel* infoVoicesLabel_ = nullptr;
 
+    CViewContainer* imageContainer_ = nullptr;
+
     CTextLabel* memoryLabel_ = nullptr;
 
     SActionMenu* fileOperationsMenu_ = nullptr;
@@ -132,6 +137,11 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
+
+    SAboutDialog* aboutDialog_ = nullptr;
+
+    SharedPointer<CBitmap> backgroundBitmap_;
+    SharedPointer<CBitmap> defaultBackgroundBitmap_;
 
     CControl* getSecondaryCCControl(unsigned cc)
     {
@@ -197,6 +207,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateKeyswitchNameLabel();
 
     void updateKeyUsed(unsigned key, bool used);
+    void updateKeyLabel(unsigned key, const char* label);
     void updateKeyswitchUsed(unsigned key, bool used);
     void updateCCUsed(unsigned cc, bool used);
     void updateCCValue(unsigned cc, float value);
@@ -204,6 +215,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void updateCCLabel(unsigned cc, const char* label);
     void updateSWLastCurrent(int sw);
     void updateSWLastLabel(unsigned sw, const char* label);
+    void updateBackgroundImage(const char* filepath);
     void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
@@ -212,6 +224,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void performCCEndEdit(unsigned cc);
 
     void setActivePanel(unsigned panelId);
+    void applyBackgroundForCurrentPanel();
 
     static void formatLabel(CTextLabel* label, const char* fmt, ...);
     static void vformatLabel(CTextLabel* label, const char* fmt, va_list ap);
@@ -274,11 +287,6 @@ void Editor::open(CFrame& frame)
     impl.oscSendQueueTimer_ = makeOwned<CVSTGUITimer>(
         [this](CVSTGUITimer* timer) { impl_->tickOSCQueue(timer); },
         oscSendInterval, false);
-
-    // request the whole Key and CC information
-    impl.sendQueuedOSC("/key/slots", "", nullptr);
-    impl.sendQueuedOSC("/sw/last/slots", "", nullptr);
-    impl.sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
 void Editor::close()
@@ -306,11 +314,6 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             const std::string& value = v.to_string();
             currentSfzFile_ = value;
             updateSfzFileLabel(value);
-
-            // request the whole Key and CC information
-            sendQueuedOSC("/key/slots", "", nullptr);
-            sendQueuedOSC("/sw/last/slots", "", nullptr);
-            sendQueuedOSC("/cc/slots", "", nullptr);
         }
         break;
     case EditId::Volume:
@@ -400,6 +403,12 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             fallbackFilesDir_ = v.to_string();
             break;
         }
+    case EditId::PluginFormat:
+        aboutDialog_->setPluginFormat(v.to_string());
+        break;
+    case EditId::PluginHost:
+        aboutDialog_->setPluginHost(v.to_string());
+        break;
     case EditId::UINumCurves:
         {
             const int value = static_cast<int>(v.to_float());
@@ -448,12 +457,43 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             setActivePanel(value);
         }
         break;
+    case EditId::BackgroundImage:
+        {
+            const std::string& value = v.to_string();
+            updateBackgroundImage(value.c_str());
+        }
+        break;
     default:
         if (editIdIsKey(id)) {
             const int key = keyForEditId(id);
             const float value = v.to_float();
             if (SPiano* piano = piano_)
                 piano->setKeyValue(key, value);
+        }
+        else if (editIdIsKeyUsed(id)) {
+            updateKeyUsed(keyUsedForEditId(id), v.to_float() != 0);
+        }
+        else if (editIdIsKeyLabel(id)) {
+            updateKeyLabel(keyLabelForEditId(id), v.to_string().c_str());
+        }
+        else if (editIdIsKeyswitchUsed(id)) {
+            updateKeyswitchUsed(keyswitchUsedForEditId(id), v.to_float() != 0);
+        }
+        else if (editIdIsKeyswitchLabel(id)) {
+            updateSWLastLabel(keyswitchLabelForEditId(id), v.to_string().c_str());
+        }
+        else if (editIdIsCC(id)) {
+            updateCCValue(unsigned(ccForEditId(id)), v.to_float());
+        }
+        else if (editIdIsCCUsed(id)) {
+            bool used = v.to_float() != 0;
+            updateCCUsed(ccUsedForEditId(id), used);
+        }
+        else if (editIdIsCCDefault(id)) {
+            updateCCDefaultValue(ccDefaultForEditId(id), v.to_float());
+        }
+        else if (editIdIsCCLabel(id)) {
+            updateCCLabel(ccLabelForEditId(id), v.to_string().c_str());
         }
         break;
     }
@@ -463,71 +503,11 @@ void Editor::Impl::uiReceiveMessage(const char* path, const char* sig, const sfi
 {
     unsigned indices[8];
 
-    if (Messages::matchOSC("/key/slots", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned key = 0; key < 128; ++key) {
-            bool used = key < numBits && bits.test(key);
-            updateKeyUsed(key, used);
-        }
-    }
-    else if (Messages::matchOSC("/sw/last/slots", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned key = 0; key < 128; ++key) {
-            bool used = key < numBits && bits.test(key);
-            updateKeyswitchUsed(key, used);
-            if (used) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/sw/last/%u/label", key);
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
-        }
-        sendQueuedOSC("/sw/last/current", "", nullptr);
-    }
-    else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned cc = 0; cc < numBits; ++cc) {
-            bool used = bits.test(cc);
-            updateCCUsed(cc, used);
-            if (used) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/cc%u/value", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-                sprintf(pathBuf, "/cc%u/default", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-                sprintf(pathBuf, "/cc%u/label", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
-        }
-    }
-    else if (Messages::matchOSC("/cc/changed", path, indices) && !strcmp(sig, "b")) {
-        size_t numBits = 8 * args[0].b->size;
-        ConstBitSpan bits { args[0].b->data, numBits };
-        for (unsigned cc = 0; cc < numBits; ++cc) {
-            bool changed = bits.test(cc);
-            if (changed) {
-                char pathBuf[256];
-                sprintf(pathBuf, "/cc%u/value", cc);
-                sendQueuedOSC(pathBuf, "", nullptr);
-            }
-        }
-    }
-    else if (Messages::matchOSC("/cc&/value", path, indices) && !strcmp(sig, "f")) {
-        updateCCValue(indices[0], args[0].f);
-    }
-    else if (Messages::matchOSC("/cc&/default", path, indices) && !strcmp(sig, "f")) {
-        updateCCDefaultValue(indices[0], args[0].f);
-    }
-    else if (Messages::matchOSC("/cc&/label", path, indices) && !strcmp(sig, "s")) {
-        updateCCLabel(indices[0], args[0].s);
-    }
-    else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
+    if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "i")) {
         updateSWLastCurrent(args[0].i);
     }
-    else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s")) {
-        updateSWLastLabel(indices[0], args[0].s);
+    else if (Messages::matchOSC("/sw/last/current", path, indices) && !strcmp(sig, "N")) {
+        updateSWLastCurrent(-1);
     }
     else if (Messages::matchOSC("/mem/buffers", path, indices) && !strcmp(sig, "h")) {
         updateMemoryUsed(args[0].h);
@@ -579,6 +559,9 @@ void Editor::Impl::createFrameContents()
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
+
+    defaultBackgroundBitmap_ = background;
+    backgroundBitmap_ = background;
 
     {
         const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
@@ -653,7 +636,7 @@ void Editor::Impl::createFrameContents()
             box->setTitleFont(font);
             return box;
         };
-        auto createSfizzMainButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+        auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CKickButton(bounds, this, tag, iconShaded);
         };
         auto createLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -899,6 +882,12 @@ void Editor::Impl::createFrameContents()
     }
 
     ///
+    SAboutDialog* aboutDialog = new SAboutDialog(mainView->getViewSize());
+    mainView->addView(aboutDialog);
+    aboutDialog_ = aboutDialog;
+    aboutDialog->setVisible(false);
+
+    ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
 
     fileDropTarget->setFileDropFunction([this](const std::string& file) {
@@ -1061,6 +1050,8 @@ void Editor::Impl::createFrameContents()
 
         panel->setVisible(currentPanel == activePanel_);
     }
+
+    applyBackgroundForCurrentPanel();
 }
 
 void Editor::Impl::chooseSfzFile()
@@ -1143,11 +1134,6 @@ void Editor::Impl::changeSfzFile(const std::string& filePath)
     ctrl_->uiSendValue(EditId::SfzFile, filePath);
     currentSfzFile_ = filePath;
     updateSfzFileLabel(filePath);
-
-    // request the whole Key and CC information
-    sendQueuedOSC("/key/slots", "", nullptr);
-    sendQueuedOSC("/sw/last/slots", "", nullptr);
-    sendQueuedOSC("/cc/slots", "", nullptr);
 }
 
 void Editor::Impl::changeToNextSfzFile(long offset)
@@ -1510,6 +1496,13 @@ void Editor::Impl::updateKeyUsed(unsigned key, bool used)
         piano->setKeyUsed(key, used);
 }
 
+void Editor::Impl::updateKeyLabel(unsigned key, const char* label)
+{
+    // TODO nothing done with this info currently
+    (void)key;
+    (void)label;
+}
+
 void Editor::Impl::updateKeyswitchUsed(unsigned key, bool used)
 {
     if (SPiano* piano = piano_)
@@ -1563,6 +1556,28 @@ void Editor::Impl::updateSWLastLabel(unsigned sw, const char* label)
         updateKeyswitchNameLabel();
 }
 
+void Editor::Impl::updateBackgroundImage(const char* filepath)
+{
+    backgroundBitmap_ = loadAnyFormatImage(filepath);
+
+    if (!backgroundBitmap_)
+        backgroundBitmap_ = defaultBackgroundBitmap_;
+
+    applyBackgroundForCurrentPanel();
+}
+
+void Editor::Impl::applyBackgroundForCurrentPanel()
+{
+    CBitmap* bitmap;
+    if (activePanel_ == kPanelGeneral)
+        bitmap = backgroundBitmap_;
+    else
+        bitmap = defaultBackgroundBitmap_;
+
+    downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
+    imageContainer_->setBackground(bitmap);
+}
+
 void Editor::Impl::updateMemoryUsed(uint64_t mem)
 {
     if (CTextLabel* label = memoryLabel_) {
@@ -1586,13 +1601,8 @@ void Editor::Impl::updateMemoryUsed(uint64_t mem)
 
 void Editor::Impl::performCCValueChange(unsigned cc, float value)
 {
-    // TODO(jpc) CC as parameters and automation
-
-    char pathBuf[256];
-    sprintf(pathBuf, "/cc%u/value", cc);
-    sfizz_arg_t args[1];
-    args[0].f = value;
-    sendQueuedOSC(pathBuf, "f", args);
+    EditorController& ctrl = *ctrl_;
+    ctrl.uiSendValue(editIdForCC(int(cc)), value);
 }
 
 void Editor::Impl::performCCBeginEdit(unsigned cc)
@@ -1617,6 +1627,7 @@ void Editor::Impl::setActivePanel(unsigned panelId)
         if (subPanels_[panelId])
             subPanels_[panelId]->setVisible(true);
         activePanel_ = panelId;
+        applyBackgroundForCurrentPanel();
     }
 }
 
@@ -1760,6 +1771,13 @@ void Editor::Impl::valueChanged(CControl* ctl)
             break;
 
         Call::later([this]() { chooseUserFilesDir(); });
+        break;
+
+    case kTagAbout:
+        if (value != 1)
+            break;
+
+        Call::later([this]() { aboutDialog_->setVisible(true); });
         break;
 
     default:

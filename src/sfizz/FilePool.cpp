@@ -117,7 +117,9 @@ void streamFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampl
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
-    : logger(logger), threadPool(globalThreadPool())
+    : logger(logger),
+      filesToLoad(alignedNew<FileQueue>()),
+      threadPool(globalThreadPool())
 {
     loadingJobs.reserve(config::maxVoices);
     lastUsedFiles.reserve(config::maxVoices);
@@ -232,7 +234,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     FileInformation returnedValue;
     returnedValue.end = static_cast<uint32_t>(reader->frames()) - 1;
     returnedValue.sampleRate = static_cast<double>(reader->sampleRate());
-    returnedValue.numChannels = reader->channels();
+    returnedValue.numChannels = static_cast<int>(reader->channels());
 
     InstrumentInfo instrumentInfo {};
     bool haveInstrumentInfo = reader->getInstrument(&instrumentInfo);
@@ -256,7 +258,8 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
         if (haveInstrumentInfo && instrumentInfo.loop_count > 0) {
             returnedValue.hasLoop = true;
             returnedValue.loopStart = instrumentInfo.loops[0].start;
-            returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
+            returnedValue.loopEnd =
+                min(returnedValue.end, static_cast<int64_t>(instrumentInfo.loops[0].end - 1));
         }
     } else {
         // TODO loops ignored when reversed
@@ -264,7 +267,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     }
 
     if (haveInstrumentInfo)
-        returnedValue.rootKey = clamp<int8_t>(instrumentInfo.basenote, 0, 127);
+        returnedValue.rootKey = clamp<uint8_t>(instrumentInfo.basenote, 0, 127);
 
     return returnedValue;
 }
@@ -349,8 +352,8 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
         return {};
     }
     QueuedFileData queuedData { fileId, &preloaded->second, std::chrono::high_resolution_clock::now() };
-    if (!filesToLoad.try_push(queuedData)) {
-        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad.capacity() << ")");
+    if (!filesToLoad->try_push(queuedData)) {
+        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
         return {};
     }
 
@@ -376,7 +379,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     }
 }
 
-void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
+void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
 {
     raiseCurrentThreadPriority();
 
@@ -493,17 +496,17 @@ bool is_ready(std::future<R> const& f)
 
 void sfz::FilePool::dispatchingJob() noexcept
 {
-    QueuedFileData queuedData;
     while (dispatchBarrier.wait(), dispatchFlag) {
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
-        if (filesToLoad.try_pop(queuedData)) {
+        QueuedFileData queuedData;
+        if (filesToLoad->try_pop(queuedData)) {
             if (queuedData.id.expired()) {
                 // file ID was nulled, it means the region was deleted, ignore
             }
             else
                 loadingJobs.push_back(
-                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, std::move(queuedData)));
         }
 
         // Clear finished jobs

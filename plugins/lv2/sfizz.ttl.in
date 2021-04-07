@@ -104,29 +104,38 @@ midnam:update a lv2:Feature .
     a lv2:OutputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
     atom:supports patch:Message, <@LV2PLUGIN_URI@:OSCBlob> ;
-    lv2:designation lv2:control ;
     lv2:index 1 ;
     lv2:symbol "notify" ;
     lv2:name "Notify",
       "Notification"@fr ;
     rsz:minimumSize 65536 ;
   ] , [
-    a lv2:AudioPort, lv2:OutputPort ;
+    a lv2:OutputPort, atom:AtomPort ;
+    atom:bufferType atom:Sequence ;
+    atom:supports patch:Message ;
+    lv2:designation lv2:control ;
     lv2:index 2 ;
+    lv2:symbol "automate" ;
+    lv2:name "Automate",
+      "Automatisation"@fr ;
+    rsz:minimumSize 65536 ;
+  ] , [
+    a lv2:AudioPort, lv2:OutputPort ;
+    lv2:index 3 ;
     lv2:symbol "out_left" ;
     lv2:name "Left Output",
       "Sortie gauche"@fr ,
       "Uscita Sinistra"@it
   ] , [
     a lv2:AudioPort, lv2:OutputPort ;
-    lv2:index 3 ;
+    lv2:index 4 ;
     lv2:symbol "out_right" ;
     lv2:name "Right Output",
       "Sortie droite"@fr ,
       "Uscita Destra"@it
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 4 ;
+    lv2:index 5 ;
     lv2:symbol "volume" ;
     lv2:name "Volume" ;
     lv2:default 0.0 ;
@@ -135,7 +144,7 @@ midnam:update a lv2:Feature .
     units:unit units:db
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 5 ;
+    lv2:index 6 ;
     lv2:symbol "num_voices" ;
     lv2:name "Polyphony",
       "Polyphonie"@fr ,
@@ -180,7 +189,7 @@ midnam:update a lv2:Feature .
     ] ;
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 6 ;
+    lv2:index 7 ;
     lv2:symbol "oversampling" ;
     lv2:name "Internal oversampling factor",
       "Facteur de suréchantillonnage interne"@fr ,
@@ -215,7 +224,7 @@ midnam:update a lv2:Feature .
     ] ;
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 7 ;
+    lv2:index 8 ;
     lv2:symbol "preload_size" ;
     lv2:name "Preload size",
       "Taille préchargée"@fr ,
@@ -258,7 +267,7 @@ midnam:update a lv2:Feature .
     ] ;
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 8 ;
+    lv2:index 9 ;
     lv2:symbol "freewheeling" ;
     lv2:name "Freewheeling",
       "En roue libre (freewheeling)"@fr ,
@@ -270,7 +279,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 1 ;
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 9 ;
+    lv2:index 10 ;
     lv2:symbol "scala_root_key" ;
     lv2:name "Scala root key",
       "Tonalité de base Scala"@fr ,
@@ -283,7 +292,7 @@ midnam:update a lv2:Feature .
     units:unit units:midiNote
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 10 ;
+    lv2:index 11 ;
     lv2:symbol "tuning_frequency" ;
     lv2:name "Tuning frequency",
       "Fréquence d'accordage"@fr ,
@@ -295,7 +304,7 @@ midnam:update a lv2:Feature .
     units:unit units:hz
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
-    lv2:index 11 ;
+    lv2:index 12 ;
     lv2:symbol "stretched_tuning" ;
     lv2:name "Stretched tuning",
       "Accordage étiré"@fr ,
@@ -307,7 +316,7 @@ midnam:update a lv2:Feature .
     units:unit units:coef
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 12 ;
+    lv2:index 13 ;
     lv2:symbol "active_voices" ;
     lv2:name "Active voices",
       "Voix utilisées"@fr ;
@@ -318,7 +327,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 256 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 13 ;
+    lv2:index 14 ;
     lv2:symbol "num_curves" ;
     lv2:name "Number of curves",
       "Nombre de courbes"@fr ;
@@ -329,7 +338,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 14 ;
+    lv2:index 15 ;
     lv2:symbol "num_masters" ;
     lv2:name "Number of masters",
       "Nombre de maîtres"@fr ;
@@ -340,7 +349,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 15 ;
+    lv2:index 16 ;
     lv2:symbol "num_groups" ;
     lv2:name "Number of groups",
       "Nombre de groupes"@fr ;
@@ -351,7 +360,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 16 ;
+    lv2:index 17 ;
     lv2:symbol "num_regions" ;
     lv2:name "Number of regions",
       "Nombre de régions"@fr ;
@@ -362,7 +371,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 17 ;
+    lv2:index 18 ;
     lv2:symbol "num_samples" ;
     lv2:name "Number of samples",
       "Nombre d'échantillons"@fr ;
@@ -371,4 +380,6 @@ midnam:update a lv2:Feature .
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 65535 ;
-  ] .
+  ] ;
+
+  rdfs:seeAlso <controllers.ttl> .

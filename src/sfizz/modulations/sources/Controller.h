@@ -6,6 +6,7 @@
 
 #pragma once
 #include "../ModGenerator.h"
+#include "../../VoiceManager.h"
 #include <memory>
 
 namespace sfz {
@@ -14,7 +15,7 @@ struct Resources;
 
 class ControllerSource : public ModGenerator {
 public:
-    explicit ControllerSource(Resources& res);
+    explicit ControllerSource(Resources& res, VoiceManager& manager);
     ~ControllerSource();
     void setSampleRate(double sampleRate) override;
     void setSamplesPerBlock(unsigned count) override;

@@ -6,7 +6,9 @@
 
 #pragma once
 #include "base/source/fstreamer.h"
+#include <absl/types/optional.h>
 #include <string>
+#include <vector>
 
 using namespace Steinberg;
 
@@ -23,18 +25,14 @@ public:
     int32 scalaRootKey = 60;
     float tuningFrequency = 440.0;
     float stretchedTuning = 0.0;
+    std::vector<absl::optional<float>> controllers;
 
-    static constexpr uint64 currentStateVersion = 1;
+    static constexpr uint64 currentStateVersion = 2;
 
     tresult load(IBStream* state);
     tresult store(IBStream* state) const;
 };
 
 struct SfizzPlayState {
-    uint32 curves;
-    uint32 masters;
-    uint32 groups;
-    uint32 regions;
-    uint32 preloadedSamples;
     uint32 activeVoices;
 };

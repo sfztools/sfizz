@@ -13,8 +13,6 @@ namespace SfizzPaths {
 
 fs::path getAriaPathSetting(const char* name)
 {
-    fs::path path;
-
     std::unique_ptr<WCHAR[]> nameW;
     unsigned nameSize = MultiByteToWideChar(CP_UTF8, 0, name, -1, nullptr, 0);
     if (nameSize == 0)
@@ -30,17 +28,17 @@ fs::path getAriaPathSetting(const char* name)
     if (status != ERROR_SUCCESS)
         return {};
 
-    WCHAR valueW[32768];
-    DWORD valueSize = sizeof(valueW);
+    DWORD valueSize = 32768 * sizeof(WCHAR);
+    std::unique_ptr<WCHAR[]> valueW(new WCHAR[(valueSize / sizeof(WCHAR)) + 1]());
     DWORD valueType;
     status = RegQueryValueExW(
         key, nameW.get(), nullptr,
-        &valueType, reinterpret_cast<LPBYTE>(valueW), &valueSize);
+        &valueType, reinterpret_cast<LPBYTE>(valueW.get()), &valueSize);
     RegCloseKey(key);
     if (status != ERROR_SUCCESS || (valueType != REG_SZ && valueType != REG_EXPAND_SZ))
         return {};
 
-    return fs::path(valueW);
+    return fs::path(valueW.get());
 }
 #elif defined(__APPLE__)
     // implementation in SfizzForeignPaths.mm

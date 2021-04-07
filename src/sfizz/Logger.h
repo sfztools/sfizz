@@ -7,6 +7,7 @@
 #pragma once
 #include "Config.h"
 #include "utility/LeakDetector.h"
+#include "utility/MemoryHelpers.h"
 #include <atomic_queue/atomic_queue.h>
 #include <absl/strings/string_view.h>
 #include <vector>
@@ -14,6 +15,7 @@
 #include <chrono>
 #include <functional>
 #include <thread>
+#include <memory>
 
 namespace sfz
 {
@@ -131,8 +133,11 @@ private:
     bool loggingEnabled { config::loggingEnabled };
     std::string prefix { "" };
 
-    atomic_queue::AtomicQueue2<CallbackTime, config::loggerQueueSize, true, true, false, true> callbackTimeQueue;
-    atomic_queue::AtomicQueue2<FileTime, config::loggerQueueSize, true, true, false, true> fileTimeQueue;
+    using CallbackTimeQueue = atomic_queue::AtomicQueue2<CallbackTime, config::loggerQueueSize, true, true, false, true>;
+    using FileTimeQueue = atomic_queue::AtomicQueue2<FileTime, config::loggerQueueSize, true, true, false, true>;
+
+    aligned_unique_ptr<CallbackTimeQueue> callbackTimeQueue;
+    aligned_unique_ptr<FileTimeQueue> fileTimeQueue;
     std::vector<CallbackTime> callbackTimes;
     std::vector<FileTime> fileTimes;
 

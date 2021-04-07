@@ -37,6 +37,7 @@ We invite you to check out the [GOVERNANCE](GOVERNANCE.md) file to see how the o
 ## Dependencies and licenses
 
 The sfizz library makes primary use of:
+
 - [libsndfile], licensed under the GNU Lesser General Public License v2.1
 - [Abseil], licensed under the Apache License 2.0
 - [atomic_queue] by Maxim Egorushkin, licensed under the MIT license
@@ -49,6 +50,7 @@ The sfizz library makes primary use of:
 - [cpuid] by Steinwurf ApS, licensed under the BSD 3-Clause license
 
 The sfizz library also uses in some subprojects:
+
 - [Catch2], licensed under the Boost Software License 1.0
 - [benchmark], licensed under the Apache License 2.0
 - [LV2], licensed under the ISC license
@@ -57,6 +59,7 @@ The sfizz library also uses in some subprojects:
 - [fmidi] by Jean Pierre Cimalando, licensed under the Boost Software License 1.0
 - [libsamplerate], licensed under the BSD 2-Clause license
 - [GLSL-Color-Spaces] by tobspr, licensed under the MIT license
+- [stb_image] by Sean Barrett, licensed as public domain or MIT license
 
 [Abseil]:       https://abseil.io/
 [atomic_queue]: https://github.com/max0x7ba/atomic_queue
@@ -76,6 +79,7 @@ The sfizz library also uses in some subprojects:
 [libsndfile]:   http://www.mega-nerd.com/libsndfile/
 [LV2]:          https://lv2plug.in/
 [GLSL-Color-Spaces]: https://github.com/tobspr/GLSL-Color-Spaces
+[stb_image]:    https://github.com/nothings/stb
 [our website]:  https://sfz.tools/sfizz
 [releases]:     https://github.com/sfztools/sfizz/releases
 [Carla]:     https://kx.studio/Applications:Carla

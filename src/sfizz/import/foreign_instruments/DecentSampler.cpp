@@ -58,6 +58,11 @@ std::string DecentSamplerInstrumentImporter::convertToSfz(const fs::path& path) 
         return {};
     }
 
+    pugi::xml_node uiNode(rootNode.child("ui"));
+    const char* image = uiNode.attribute("bgImage").as_string();
+    if (image[0] != '\0')
+        os << "<control> image=" << image << '\n';
+
     pugi::xml_node globalNode(rootNode.child("groups"));
     os << "<global>\n";
     emitRegionalOpcodes(os, globalNode);

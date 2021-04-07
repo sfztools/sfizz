@@ -59,11 +59,12 @@ Synth::Impl::Impl()
     resetVoices(config::numVoices);
 
     // modulation sources
-    genController_.reset(new ControllerSource(resources_));
+    genController_.reset(new ControllerSource(resources_, voiceManager_));
     genLFO_.reset(new LFOSource(voiceManager_));
     genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
     genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
     genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, resources_.midiState));
+    genPolyAftertouch_.reset(new PolyAftertouchSource(voiceManager_, resources_.midiState));
 }
 
 Synth::Impl::~Impl()
@@ -136,8 +137,10 @@ void Synth::Impl::onParseWarning(const SourceRange& range, const std::string& me
 
 void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
-    int regionNumber = static_cast<int>(regions_.size());
-    auto lastRegion = absl::make_unique<Region>(regionNumber, resources_.midiState, defaultPath_);
+    int regionNumber = static_cast<int>(layers_.size());
+    Layer* lastLayer = new Layer(regionNumber, defaultPath_, resources_.midiState);
+    layers_.emplace_back(lastLayer);
+    Region* lastRegion = &lastLayer->getRegion();
 
     //
     auto parseOpcodes = [&](const std::vector<Opcode>& opcodes) {
@@ -171,22 +174,22 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
         lastRegion->offsetAllKeys(octaveOffset_ * 12 + noteOffset_);
 
     if (lastRegion->lastKeyswitch)
-        lastKeyswitchLists_[*lastRegion->lastKeyswitch].push_back(lastRegion.get());
+        lastKeyswitchLists_[*lastRegion->lastKeyswitch].push_back(lastLayer);
 
     if (lastRegion->lastKeyswitchRange) {
         auto& range = *lastRegion->lastKeyswitchRange;
         for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
-            lastKeyswitchLists_[note].push_back(lastRegion.get());
+            lastKeyswitchLists_[note].push_back(lastLayer);
     }
 
     if (lastRegion->upKeyswitch)
-        upKeyswitchLists_[*lastRegion->upKeyswitch].push_back(lastRegion.get());
+        upKeyswitchLists_[*lastRegion->upKeyswitch].push_back(lastLayer);
 
     if (lastRegion->downKeyswitch)
-        downKeyswitchLists_[*lastRegion->downKeyswitch].push_back(lastRegion.get());
+        downKeyswitchLists_[*lastRegion->downKeyswitch].push_back(lastLayer);
 
     if (lastRegion->previousKeyswitch)
-        previousKeyswitchLists_.push_back(lastRegion.get());
+        previousKeyswitchLists_.push_back(lastLayer);
 
     if (lastRegion->defaultSwitch)
         currentSwitch_ = *lastRegion->defaultSwitch;
@@ -201,18 +204,19 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
     if (currentSet_ != nullptr) {
         lastRegion->parent = currentSet_;
-        currentSet_->addRegion(lastRegion.get());
+        currentSet_->addRegion(lastRegion);
     }
 
     // Adapt the size of the delayed releases to avoid allocating later on
     if (lastRegion->trigger == Trigger::release) {
         const auto keyLength = static_cast<unsigned>(lastRegion->keyRange.length());
         const auto size = max(config::delayedReleaseVoices, keyLength);
-        lastRegion->delayedSustainReleases.reserve(size);
-        lastRegion->delayedSostenutoReleases.reserve(size);
+        lastLayer->delayedSustainReleases_.reserve(size);
+        lastLayer->delayedSostenutoReleases_.reserve(size);
     }
 
-    regions_.push_back(std::move(lastRegion));
+    // Initialize status of Key switches, CC switches, etc
+    lastLayer->initializeActivations();
 }
 
 void Synth::Impl::clear()
@@ -235,7 +239,7 @@ void Synth::Impl::clear()
 
     currentSet_ = nullptr;
     sets_.clear();
-    regions_.clear();
+    layers_.clear();
     effectBuses_.clear();
     effectBuses_.emplace_back(new EffectBus);
     effectBuses_[0]->setGainToMain(1.0);
@@ -243,17 +247,19 @@ void Synth::Impl::clear()
     effectBuses_[0]->setSampleRate(sampleRate_);
     effectBuses_[0]->clearInputs(samplesPerBlock_);
     resources_.clear();
+    rootPath_.clear();
     numGroups_ = 0;
     numMasters_ = 0;
     currentSwitch_ = absl::nullopt;
-    currentSwitchChanged_ = true;
     defaultPath_ = "";
+    image_ = "";
     resources_.midiState.reset();
     resources_.filePool.clear();
     resources_.filePool.setRamLoading(config::loadInRam);
     clearCCLabels();
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
+    changedCCsLastCycle_.clear();
     clearKeyLabels();
     keySlots_.clear();
     swLastSlots_.clear();
@@ -383,6 +389,9 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("default_path"):
             defaultPath_ = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
             DBG("Changing default sample path to " << defaultPath_);
+            break;
+        case hash("image"):
+            image_ = absl::StrCat(defaultPath_, absl::StrReplaceAll(trim(member.value), { { "\\", "/" } }));
             break;
         case hash("note_offset"):
             noteOffset_ = member.read(Default::noteOffset);
@@ -522,7 +531,7 @@ bool Synth::loadSfzFile(const fs::path& file)
     if (!loaderParsesPermissively)
         success = parser.getErrorCount() == 0;
 
-    success = success && !impl.regions_.empty();
+    success = success && !impl.layers_.empty();
 
     if (!success) {
         parser.clear();
@@ -547,7 +556,7 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
     if (!loaderParsesPermissively)
         success = parser.getErrorCount() == 0;
 
-    success = success && !impl.regions_.empty();
+    success = success && !impl.layers_.empty();
 
     if (!success) {
         parser.clear();
@@ -560,14 +569,19 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 
 void Synth::Impl::finalizeSfzLoad()
 {
-    resources_.filePool.setRootDirectory(parser_.originalDirectory());
+    const fs::path& rootDirectory = parser_.originalDirectory();
+    resources_.filePool.setRootDirectory(rootDirectory);
+
+    // a string representation used for OSC purposes
+    rootPath_ = rootDirectory.u8string();
 
     size_t currentRegionIndex = 0;
-    size_t currentRegionCount = regions_.size();
+    size_t currentRegionCount = layers_.size();
 
     auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
-        DBG("Removing the region with sample " << *regions_[currentRegionIndex]->sampleId);
-        regions_.erase(regions_.begin() + currentRegionIndex);
+        const Region& region = layers_[currentRegionIndex]->getRegion();
+        DBG("Removing the region with sample " << *region.sampleId);
+        layers_.erase(layers_.begin() + currentRegionIndex);
         --currentRegionCount;
     };
 
@@ -584,155 +598,156 @@ void Synth::Impl::finalizeSfzLoad()
     FlexEGs::clearUnusedCurves();
 
     while (currentRegionIndex < currentRegionCount) {
-        auto region = regions_[currentRegionIndex].get();
+        Layer& layer = *layers_[currentRegionIndex];
+        Region& region = layer.getRegion();
 
         absl::optional<FileInformation> fileInformation;
 
-        if (!region->isGenerator()) {
-            if (!resources_.filePool.checkSampleId(*region->sampleId)) {
+        if (!region.isGenerator()) {
+            if (!resources_.filePool.checkSampleId(*region.sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            fileInformation = resources_.filePool.getFileInformation(*region->sampleId);
+            fileInformation = resources_.filePool.getFileInformation(*region.sampleId);
             if (!fileInformation) {
                 removeCurrentRegion();
                 continue;
             }
 
-            region->hasWavetableSample = fileInformation->wavetable ||
+            region.hasWavetableSample = fileInformation->wavetable ||
                 fileInformation->end < config::wavetableMaxFrames;
         }
 
-        if (!region->isOscillator()) {
-            region->sampleEnd = std::min(region->sampleEnd, fileInformation->end);
+        if (!region.isOscillator()) {
+            region.sampleEnd = min(region.sampleEnd, fileInformation->end);
 
             if (fileInformation->hasLoop) {
-                if (region->loopRange.getStart() == Default::loopStart)
-                    region->loopRange.setStart(fileInformation->loopStart);
+                if (region.loopRange.getStart() == Default::loopStart)
+                    region.loopRange.setStart(fileInformation->loopStart);
 
-                if (region->loopRange.getEnd() == Default::loopEnd)
-                    region->loopRange.setEnd(fileInformation->loopEnd);
+                if (region.loopRange.getEnd() == Default::loopEnd)
+                    region.loopRange.setEnd(fileInformation->loopEnd);
 
-                if (!region->loopMode)
-                    region->loopMode = LoopMode::loop_continuous;
+                if (!region.loopMode)
+                    region.loopMode = LoopMode::loop_continuous;
             }
 
-            if (region->isRelease() && !region->loopMode)
-                region->loopMode = LoopMode::one_shot;
+            if (region.isRelease() && !region.loopMode)
+                region.loopMode = LoopMode::one_shot;
 
-            if (region->loopRange.getEnd() == Default::loopEnd)
-                region->loopRange.setEnd(region->sampleEnd);
+            if (region.loopRange.getEnd() == Default::loopEnd)
+                region.loopRange.setEnd(region.sampleEnd);
 
             // if range is invalid, disable the loop
-            if (!region->loopRange.isValid())
-                region->loopMode = absl::nullopt;
+            if (!region.loopRange.isValid())
+                region.loopMode = absl::nullopt;
 
             if (fileInformation->numChannels == 2)
-                region->hasStereoSample = true;
+                region.hasStereoSample = true;
 
-            if (region->pitchKeycenterFromSample)
-                region->pitchKeycenter = fileInformation->rootKey;
+            if (region.pitchKeycenterFromSample)
+                region.pitchKeycenter = fileInformation->rootKey;
 
             // TODO: adjust with LFO targets
             const auto maxOffset = [region]() {
-                uint64_t sumOffsetCC = region->offset + region->offsetRandom;
-                for (const auto& offsets : region->offsetCC)
+                uint64_t sumOffsetCC = region.offset + region.offsetRandom;
+                for (const auto& offsets : region.offsetCC)
                     sumOffsetCC += offsets.data;
                 return Default::offsetMod.bounds.clamp(sumOffsetCC);
             }();
 
-            if (!resources_.filePool.preloadFile(*region->sampleId, maxOffset))
+            if (!resources_.filePool.preloadFile(*region.sampleId, maxOffset))
                 removeCurrentRegion();
         }
-        else if (!region->isGenerator()) {
-            if (!resources_.wavePool.createFileWave(resources_.filePool, std::string(region->sampleId->filename()))) {
+        else if (!region.isGenerator()) {
+            if (!resources_.wavePool.createFileWave(resources_.filePool, std::string(region.sampleId->filename()))) {
                 removeCurrentRegion();
                 continue;
             }
         }
 
-        if (region->lastKeyswitch) {
+        if (region.lastKeyswitch) {
             if (currentSwitch_)
-                region->keySwitched = (*currentSwitch_ == *region->lastKeyswitch);
+                layer.keySwitched_ = (*currentSwitch_ == *region.lastKeyswitch);
 
-            if (region->keyswitchLabel)
-                setKeyswitchLabel(*region->lastKeyswitch, *region->keyswitchLabel);
+            if (region.keyswitchLabel)
+                setKeyswitchLabel(*region.lastKeyswitch, *region.keyswitchLabel);
         }
 
-        if (region->lastKeyswitchRange) {
-            auto& range = *region->lastKeyswitchRange;
+        if (region.lastKeyswitchRange) {
+            auto& range = *region.lastKeyswitchRange;
             if (currentSwitch_)
-                region->keySwitched = range.containsWithEnd(*currentSwitch_);
+                layer.keySwitched_ = range.containsWithEnd(*currentSwitch_);
 
-            if (region->keyswitchLabel) {
+            if (region.keyswitchLabel) {
                 for (uint8_t note = range.getStart(), end = range.getEnd(); note <= end; note++)
-                    setKeyswitchLabel(note, *region->keyswitchLabel);
+                    setKeyswitchLabel(note, *region.keyswitchLabel);
             }
         }
 
         for (auto note = 0; note < 128; note++) {
-            if (region->keyRange.containsWithEnd(note))
-                noteActivationLists_[note].push_back(region);
+            if (region.keyRange.containsWithEnd(note))
+                noteActivationLists_[note].push_back(&layer);
         }
 
         for (int cc = 0; cc < config::numCCs; cc++) {
-            if (region->ccTriggers.contains(cc)
-                || region->ccConditions.contains(cc)
-                || (cc == region->sustainCC && region->trigger == Trigger::release)
-                || (cc == region->sostenutoCC && region->trigger == Trigger::release))
-                ccActivationLists_[cc].push_back(region);
+            if (region.ccTriggers.contains(cc)
+                || region.ccConditions.contains(cc)
+                || (cc == region.sustainCC && region.trigger == Trigger::release)
+                || (cc == region.sostenutoCC && region.trigger == Trigger::release))
+                ccActivationLists_[cc].push_back(&layer);
         }
 
         // Defaults
         for (int cc = 0; cc < config::numCCs; cc++) {
-            region->registerCC(cc, resources_.midiState.getCCValue(cc));
+            layer.registerCC(cc, resources_.midiState.getCCValue(cc));
         }
 
 
         // Set the default frequencies on equalizers if needed
-        if (region->equalizers.size() > 0
-            && region->equalizers[0].frequency == Default::eqFrequency) {
-            region->equalizers[0].frequency = Default::defaultEQFreq[0];
-            if (region->equalizers.size() > 1
-                && region->equalizers[1].frequency == Default::eqFrequency) {
-                region->equalizers[1].frequency = Default::defaultEQFreq[1];
-                if (region->equalizers.size() > 2
-                    && region->equalizers[2].frequency == Default::eqFrequency) {
-                    region->equalizers[2].frequency = Default::defaultEQFreq[2];
+        if (region.equalizers.size() > 0
+            && region.equalizers[0].frequency == Default::eqFrequency) {
+            region.equalizers[0].frequency = Default::defaultEQFreq[0];
+            if (region.equalizers.size() > 1
+                && region.equalizers[1].frequency == Default::eqFrequency) {
+                region.equalizers[1].frequency = Default::defaultEQFreq[1];
+                if (region.equalizers.size() > 2
+                    && region.equalizers[2].frequency == Default::eqFrequency) {
+                    region.equalizers[2].frequency = Default::defaultEQFreq[2];
                 }
             }
         }
 
-        if (!region->velocityPoints.empty())
-            region->velCurve = Curve::buildFromVelcurvePoints(
-                region->velocityPoints, Curve::Interpolator::Linear);
+        if (!region.velocityPoints.empty())
+            region.velCurve = Curve::buildFromVelcurvePoints(
+                region.velocityPoints, Curve::Interpolator::Linear);
 
-        region->registerPitchWheel(0);
-        region->registerAftertouch(0);
-        region->registerTempo(2.0f);
-        maxFilters = max(maxFilters, region->filters.size());
-        maxEQs = max(maxEQs, region->equalizers.size());
-        maxLFOs = max(maxLFOs, region->lfos.size());
-        maxFlexEGs = max(maxFlexEGs, region->flexEGs.size());
-        havePitchEG = havePitchEG || region->pitchEG != absl::nullopt;
-        haveFilterEG = haveFilterEG || region->filterEG != absl::nullopt;
-        haveAmplitudeLFO = haveAmplitudeLFO || region->amplitudeLFO != absl::nullopt;
-        havePitchLFO = havePitchLFO || region->pitchLFO != absl::nullopt;
-        haveFilterLFO = haveFilterLFO || region->filterLFO != absl::nullopt;
+        layer.registerPitchWheel(0);
+        layer.registerAftertouch(0);
+        layer.registerTempo(2.0f);
+        maxFilters = max(maxFilters, region.filters.size());
+        maxEQs = max(maxEQs, region.equalizers.size());
+        maxLFOs = max(maxLFOs, region.lfos.size());
+        maxFlexEGs = max(maxFlexEGs, region.flexEGs.size());
+        havePitchEG = havePitchEG || region.pitchEG != absl::nullopt;
+        haveFilterEG = haveFilterEG || region.filterEG != absl::nullopt;
+        haveAmplitudeLFO = haveAmplitudeLFO || region.amplitudeLFO != absl::nullopt;
+        havePitchLFO = havePitchLFO || region.pitchLFO != absl::nullopt;
+        haveFilterLFO = haveFilterLFO || region.filterLFO != absl::nullopt;
 
         ++currentRegionIndex;
     }
-    if (currentRegionCount < regions_.size()) {
-        DBG("Removing " << (regions_.size() - currentRegionCount)
-            << " out of " << regions_.size() << " regions");
+    if (currentRegionCount < layers_.size()) {
+        DBG("Removing " << (layers_.size() - currentRegionCount)
+            << " out of " << layers_.size() << " regions");
     }
-    regions_.resize(currentRegionCount);
+    layers_.resize(currentRegionCount);
 
     // collect all CCs used in regions, with matrix not yet connected
     BitArray<config::numCCs> usedCCs;
-    for (const RegionPtr& regionPtr : regions_) {
-        const Region& region = *regionPtr;
+    for (const LayerPtr& layerPtr : layers_) {
+        const Region& region = layerPtr->getRegion();
         collectUsedCCsFromRegion(usedCCs, region);
         for (const Region::Connection& connection : region.connections) {
             if (connection.source.id() == ModId::Controller)
@@ -740,23 +755,23 @@ void Synth::Impl::finalizeSfzLoad()
         }
     }
     // connect default controllers, except if these CC are already used
-    for (const RegionPtr& regionPtr : regions_) {
-        Region& region = *regionPtr;
+    for (const LayerPtr& layerPtr : layers_) {
+        Region& region = layerPtr->getRegion();
         constexpr unsigned defaultSmoothness = 10;
         if (!usedCCs.test(7)) {
             region.getOrCreateConnection(
                 ModKey::createCC(7, 4, defaultSmoothness, 0),
-                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 100.0f;
+                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 1.0f;
         }
         if (!usedCCs.test(10)) {
             region.getOrCreateConnection(
                 ModKey::createCC(10, 1, defaultSmoothness, 0),
-                ModKey::createNXYZ(ModId::Pan, region.id)).sourceDepth = 100.0f;
+                ModKey::createNXYZ(ModId::Pan, region.id)).sourceDepth = 1.0f;
         }
         if (!usedCCs.test(11)) {
             region.getOrCreateConnection(
                 ModKey::createCC(11, 4, defaultSmoothness, 0),
-                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 100.0f;
+                ModKey::createNXYZ(ModId::Amplitude, region.id)).sourceDepth = 1.0f;
         }
     }
 
@@ -780,27 +795,27 @@ void Synth::Impl::finalizeSfzLoad()
     currentUsedCCs_ = collectAllUsedCCs();
 
     // cache the set of keys assigned
-    for (const RegionPtr& regionPtr : regions_) {
-        UncheckedRange<uint8_t> keyRange = regionPtr->keyRange;
+    for (const LayerPtr& layerPtr : layers_) {
+        const Region& region = layerPtr->getRegion();
+        UncheckedRange<uint8_t> keyRange = region.keyRange;
         unsigned loKey = keyRange.getStart();
         unsigned hiKey = keyRange.getEnd();
         for (unsigned key = loKey; key <= hiKey; ++key)
             keySlots_.set(key);
     }
     // cache the set of keyswitches assigned
-    for (const RegionPtr& regionPtr : regions_) {
-        if (absl::optional<uint8_t> sw = regionPtr->lastKeyswitch) {
+    for (const LayerPtr& layerPtr : layers_) {
+        const Region& region = layerPtr->getRegion();
+        if (absl::optional<uint8_t> sw = region.lastKeyswitch) {
             swLastSlots_.set(*sw);
         }
-        else if (absl::optional<UncheckedRange<uint8_t>> swRange = regionPtr->lastKeyswitchRange) {
+        else if (absl::optional<UncheckedRange<uint8_t>> swRange = region.lastKeyswitchRange) {
             unsigned loKey = swRange->getStart();
             unsigned hiKey = swRange->getEnd();
             for (unsigned key = loKey; key <= hiKey; ++key)
                 swLastSlots_.set(key);
         }
     }
-    // resend current keyswitch
-    currentSwitchChanged_ = true;
 }
 
 bool Synth::loadScalaFile(const fs::path& path)
@@ -902,6 +917,26 @@ void Synth::setSampleRate(float sampleRate) noexcept
     }
 }
 
+void Synth::Impl::updateRegions() noexcept
+{
+    std::unique_lock<SpinMutex> lock { regionUpdatesMutex_, std::try_to_lock };
+    if (!lock.owns_lock())
+        return;
+
+    absl::c_sort(regionUpdates_, [](const OpcodeUpdate& lhs, const OpcodeUpdate& rhs) {
+        return lhs.delay < rhs.delay;
+    });
+
+    for (auto& update: regionUpdates_) {
+        if (!update.region)
+            continue;
+
+        update.region->parseOpcode(update.opcode, false);
+    }
+
+    regionUpdates_.clear();
+}
+
 void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     Impl& impl = *impl_;
@@ -930,6 +965,8 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         impl.lastGarbageCollection_ = now;
         impl.resources_.filePool.triggerGarbageCollection();
     }
+
+    impl.updateRegions();
 
     auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
@@ -1027,24 +1064,9 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // Advance the clock to the end of cycle
     bc.endCycle();
 
-    // Send the set of changed CCs
-    Client broadcaster = impl.getBroadcaster();
-    const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
-    if (broadcaster.canReceive()) {
-            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
-            broadcaster.receive<'b'>(numFrames - 1, "/cc/changed", &blob);
-    }
+    // Update sets of changed CCs
+    impl.changedCCsLastCycle_ = impl.changedCCsThisCycle_;
     impl.changedCCsThisCycle_.clear();
-    // Send the changed keyswitch
-    if (impl.currentSwitchChanged_) {
-        if (broadcaster.canReceive()) {
-            int32_t value = -1;
-            if (impl.currentSwitch_)
-                value = *impl.currentSwitch_;
-            broadcaster.receive<'i'>(numFrames - 1, "/sw/last/current", value);
-        }
-        impl.currentSwitchChanged_ = false;
-    }
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1096,16 +1118,28 @@ void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
     impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 }
 
-void Synth::Impl::startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
 {
-    voiceManager_.checkPolyphony(region, delay, triggerEvent);
+    const Region& region = layer->getRegion();
+
+    voiceManager_.checkPolyphony(&region, delay, triggerEvent);
     Voice* selectedVoice = voiceManager_.findFreeVoice();
     if (selectedVoice == nullptr)
         return;
 
     ASSERT(selectedVoice->isFree());
-    if (selectedVoice->startVoice(region, delay, triggerEvent))
+    if (selectedVoice->startVoice(layer, delay, triggerEvent))
         ring.addVoiceToRing(selectedVoice);
+}
+
+void Synth::Impl::checkOffGroups(const Region* region, int delay, int number)
+{
+    for (auto& voice : voiceManager_) {
+        if (voice.checkOffGroup(region, delay, number)) {
+            const TriggerEvent& event = voice.getTriggerEvent();
+            noteOffDispatch(delay, event.number, event.value);
+        }
+    }
 }
 
 void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
@@ -1114,18 +1148,20 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
     SisterVoiceRingBuilder ring;
     const TriggerEvent triggerEvent { TriggerEventType::NoteOff, noteNumber, velocity };
 
-    for (auto& region : upKeyswitchLists_[noteNumber])
-        region->keySwitched = true;
+    for (Layer* layer : upKeyswitchLists_[noteNumber])
+        layer->keySwitched_ = true;
 
-    for (auto& region : downKeyswitchLists_[noteNumber])
-        region->keySwitched = false;
+    for (Layer* layer : downKeyswitchLists_[noteNumber])
+        layer->keySwitched_ = false;
 
-    for (auto& region : noteActivationLists_[noteNumber]) {
-        if (region->registerNoteOff(noteNumber, velocity, randValue)) {
-            if (region->trigger == Trigger::release && !region->rtDead && !voiceManager_.playingAttackVoice(region))
+    for (Layer* layer : noteActivationLists_[noteNumber]) {
+        const Region& region = layer->getRegion();
+        if (layer->registerNoteOff(noteNumber, velocity, randValue)) {
+            if (region.trigger == Trigger::release && !region.rtDead && !voiceManager_.playingAttackVoice(&region))
                 continue;
 
-            startVoice(region, delay, triggerEvent, ring);
+            checkOffGroups(&region, delay, noteNumber);
+            startVoice(layer, delay, triggerEvent, ring);
         }
     }
 }
@@ -1137,70 +1173,67 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 
     if (!lastKeyswitchLists_[noteNumber].empty()) {
         if (currentSwitch_ && *currentSwitch_ != noteNumber) {
-            for (auto& region : lastKeyswitchLists_[*currentSwitch_])
-                region->keySwitched = false;
+            for (Layer* layer : lastKeyswitchLists_[*currentSwitch_])
+                layer->keySwitched_ = false;
         }
         currentSwitch_ = noteNumber;
-        currentSwitchChanged_ = true;
     }
 
-    for (auto& region : lastKeyswitchLists_[noteNumber])
-        region->keySwitched = true;
+    for (Layer* layer : lastKeyswitchLists_[noteNumber])
+        layer->keySwitched_ = true;
 
-    for (auto& region : upKeyswitchLists_[noteNumber])
-        region->keySwitched = false;
+    for (Layer* layer : upKeyswitchLists_[noteNumber])
+        layer->keySwitched_ = false;
 
-    for (auto& region : downKeyswitchLists_[noteNumber])
-        region->keySwitched = true;
+    for (Layer* layer : downKeyswitchLists_[noteNumber])
+        layer->keySwitched_ = true;
 
-    for (auto& region : noteActivationLists_[noteNumber]) {
-        if (region->registerNoteOn(noteNumber, velocity, randValue)) {
-            for (auto& voice : voiceManager_) {
-                if (voice.checkOffGroup(region, delay, noteNumber)) {
-                    const TriggerEvent& event = voice.getTriggerEvent();
-                    noteOffDispatch(delay, event.number, event.value);
-                }
-            }
-
+    for (Layer* layer : noteActivationLists_[noteNumber]) {
+        if (layer->registerNoteOn(noteNumber, velocity, randValue)) {
+            const Region& region = layer->getRegion();
+            checkOffGroups(&region, delay, noteNumber);
             TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
-            if (region->velocityOverride == VelocityOverride::previous)
-                triggerEvent.value = resources_.midiState.getLastVelocity();
-
-            startVoice(region, delay, triggerEvent, ring);
+            startVoice(layer, delay, triggerEvent, ring);
         }
     }
 
-    for (auto& region : previousKeyswitchLists_)
-        region->previousKeySwitched = (*region->previousKeyswitch == noteNumber);
+    for (Layer* layer : previousKeyswitchLists_) {
+        const Region& region = layer->getRegion();
+        layer->previousKeySwitched_ = (region.previousKeyswitch == noteNumber);
+    }
 }
 
-void Synth::Impl::startDelayedSustainReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startDelayedSustainReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
-        region->delayedSustainReleases.clear();
+    const Region& region = layer->getRegion();
+
+    if (!region.rtDead && !voiceManager_.playingAttackVoice(&region)) {
+        layer->delayedSustainReleases_.clear();
         return;
     }
 
-    for (auto& note: region->delayedSustainReleases) {
+    for (auto& note: layer->delayedSustainReleases_) {
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
-        startVoice(region, delay, noteOffEvent, ring);
+        startVoice(layer, delay, noteOffEvent, ring);
     }
 
-    region->delayedSustainReleases.clear();
+    layer->delayedSustainReleases_.clear();
 }
 
-void Synth::Impl::startDelayedSostenutoReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept
+void Synth::Impl::startDelayedSostenutoReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept
 {
-    if (!region->rtDead && !voiceManager_.playingAttackVoice(region)) {
-        region->delayedSostenutoReleases.clear();
+    const Region& region = layer->getRegion();
+
+    if (!region.rtDead && !voiceManager_.playingAttackVoice(&region)) {
+        layer->delayedSostenutoReleases_.clear();
         return;
     }
 
-    for (auto& note: region->delayedSostenutoReleases) {
+    for (auto& note: layer->delayedSostenutoReleases_) {
         const TriggerEvent noteOffEvent { TriggerEventType::NoteOff, note.first, note.second };
-        startVoice(region, delay, noteOffEvent, ring);
+        startVoice(layer, delay, noteOffEvent, ring);
     }
-    region->delayedSostenutoReleases.clear();
+    layer->delayedSostenutoReleases_.clear();
 }
 
 void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
@@ -1212,24 +1245,28 @@ void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
 void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
 {
     SisterVoiceRingBuilder ring;
-    const TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
-    for (auto& region : ccActivationLists_[ccNumber]) {
-        if (region->checkSustain && ccNumber == region->sustainCC && value < region->sustainThreshold)
-            startDelayedSustainReleases(region, delay, ring);
+    TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
+    for (Layer* layer : ccActivationLists_[ccNumber]) {
+        const Region& region = layer->getRegion();
 
-        if (region->checkSostenuto && ccNumber == region->sostenutoCC && value < region->sostenutoThreshold) {
-            if (region->sustainPressed) {
-                for (const auto& v: region->delayedSostenutoReleases)
-                    region->delaySustainRelease(v.first, v.second);
+        if (region.checkSustain && ccNumber == region.sustainCC && value < region.sustainThreshold)
+            startDelayedSustainReleases(layer, delay, ring);
 
-                region->delayedSostenutoReleases.clear();
+        if (region.checkSostenuto && ccNumber == region.sostenutoCC && value < region.sostenutoThreshold) {
+            if (layer->sustainPressed_) {
+                for (const auto& v: layer->delayedSostenutoReleases_)
+                    layer->delaySustainRelease(v.first, v.second);
+
+                layer->delayedSostenutoReleases_.clear();
             } else {
-                startDelayedSostenutoReleases(region, delay, ring);
+                startDelayedSostenutoReleases(layer, delay, ring);
             }
         }
 
-        if (region->registerCC(ccNumber, value))
-            startVoice(region, delay, triggerEvent, ring);
+        if (layer->registerCC(ccNumber, value)) {
+            checkOffGroups(&region, delay, ccNumber);
+            startVoice(layer, delay, triggerEvent, ring);
+        }
     }
 }
 
@@ -1309,13 +1346,15 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.resources_.midiState.pitchBendEvent(delay, normalizedPitch);
 
-    for (auto& region : impl.regions_) {
-        region->registerPitchWheel(normalizedPitch);
+    for (const Impl::LayerPtr& layer : impl.layers_) {
+        layer->registerPitchWheel(normalizedPitch);
     }
 
     for (auto& voice : impl.voiceManager_) {
         voice.registerPitchWheel(delay, normalizedPitch);
     }
+
+    impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
 
 void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
@@ -1331,8 +1370,8 @@ void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
 
     impl.resources_.midiState.channelAftertouchEvent(delay, normAftertouch);
 
-    for (auto& region : impl.regions_) {
-        region->registerAftertouch(normAftertouch);
+    for (const Impl::LayerPtr& layerPtr : impl.layers_) {
+        layerPtr->registerAftertouch(normAftertouch);
     }
 
     for (auto& voice : impl.voiceManager_) {
@@ -1340,6 +1379,26 @@ void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
     }
 
     impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
+}
+
+void Synth::polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept
+{
+    const float normalizedAftertouch = normalize7Bits(aftertouch);
+    hdPolyAftertouch(delay, noteNumber, normalizedAftertouch);
+}
+
+void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) noexcept
+{
+    Impl& impl = *impl_;
+    ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+
+    impl.resources_.midiState.polyAftertouchEvent(delay, noteNumber, normAftertouch);
+
+    for (auto& voice : impl.voiceManager_)
+        voice.registerPolyAftertouch(delay, noteNumber, normAftertouch);
+
+    // Note information is lost on this CC
+    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false);
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
@@ -1386,7 +1445,7 @@ void Synth::playbackState(int delay, int playbackState)
 int Synth::getNumRegions() const noexcept
 {
     Impl& impl = *impl_;
-    return static_cast<int>(impl.regions_.size());
+    return static_cast<int>(impl.layers_.size());
 }
 
 int Synth::getNumGroups() const noexcept
@@ -1511,10 +1570,16 @@ std::string Synth::exportMidnam(absl::string_view model) const
     return std::move(writer.str());
 }
 
-const Region* Synth::getRegionView(int idx) const noexcept
+const Layer* Synth::getLayerView(int idx) const noexcept
 {
     Impl& impl = *impl_;
-    return (size_t)idx < impl.regions_.size() ? impl.regions_[idx].get() : nullptr;
+    return (size_t)idx < impl.layers_.size() ? impl.layers_[idx].get() : nullptr;
+}
+
+const Region* Synth::getRegionView(int idx) const noexcept
+{
+    const Layer* layer = getLayerView(idx);
+    return layer ? &layer->getRegion() : nullptr;
 }
 
 const EffectBus* Synth::getEffectBusView(int idx) const noexcept
@@ -1535,10 +1600,10 @@ const PolyphonyGroup* Synth::getPolyphonyGroupView(int idx) const noexcept
     return impl.voiceManager_.getPolyphonyGroupView(idx);
 }
 
-const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
+Layer* Synth::getLayerById(NumericId<Region> id) noexcept
 {
     Impl& impl = *impl_;
-    const size_t size = impl.regions_.size();
+    const size_t size = impl.layers_.size();
 
     if (size == 0 || !id.valid())
         return nullptr;
@@ -1547,10 +1612,17 @@ const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
     size_t index = static_cast<size_t>(id.number());
     index = std::min(index, size - 1);
 
-    while (index > 0 && impl.regions_[index]->getId().number() > id.number())
+    while (index > 0 && impl.layers_[index]->getRegion().getId().number() > id.number())
         --index;
 
-    return (impl.regions_[index]->getId() == id) ? impl.regions_[index].get() : nullptr;
+    return (impl.layers_[index]->getRegion().getId() == id) ?
+        impl.layers_[index].get() : nullptr;
+}
+
+const Region* Synth::getRegionById(NumericId<Region> id) const noexcept
+{
+    Layer* layer = const_cast<Synth*>(this)->getLayerById(id);
+    return layer ? &layer->getRegion() : nullptr;
 }
 
 const Voice* Synth::getVoiceView(int idx) const noexcept
@@ -1674,8 +1746,10 @@ void Synth::Impl::setupModMatrix()
 {
     ModMatrix& mm = resources_.modMatrix;
 
-    for (const RegionPtr& region : regions_) {
-        for (const Region::Connection& conn : region->connections) {
+    for (const LayerPtr& layerPtr : layers_) {
+        const Region& region = layerPtr->getRegion();
+
+        for (const Region::Connection& conn : region.connections) {
             ModGenerator* gen = nullptr;
 
             ModKey sourceKey = conn.source;
@@ -1684,13 +1758,14 @@ void Synth::Impl::setupModMatrix()
             // normalize the stepcc to 0-1
             if (sourceKey.id() == ModId::Controller) {
                 ModKey::Parameters p = sourceKey.parameters();
-                p.step = (conn.sourceDepth == 0.0f) ? 0.0f :
+                p.step = (conn.sourceDepth <= 0.0f) ? 0.0f :
                     (p.step / conn.sourceDepth);
                 sourceKey = ModKey::createCC(p.cc, p.curve, p.smooth, p.step);
             }
 
             switch (sourceKey.id()) {
             case ModId::Controller:
+            case ModId::PerVoiceController:
                 gen = genController_.get();
                 break;
             case ModId::AmpLFO:
@@ -1709,6 +1784,9 @@ void Synth::Impl::setupModMatrix()
                 break;
             case ModId::ChannelAftertouch:
                 gen = genChannelAftertouch_.get();
+                break;
+            case ModId::PolyAftertouch:
+                gen = genPolyAftertouch_.get();
                 break;
             default:
                 DBG("[sfizz] Have unknown type of source generator");
@@ -1810,9 +1888,10 @@ void Synth::Impl::resetAllControllers(int delay) noexcept
             voice.registerCC(delay, cc, 0.0f);
     }
 
-    for (auto& region : regions_) {
+    for (const LayerPtr& layerPtr : layers_) {
+        Layer& layer = *layerPtr;
         for (int cc = 0; cc < config::numCCs; ++cc)
-            region->registerCC(cc, 0.0f);
+            layer.registerCC(cc, 0.0f);
     }
 }
 
@@ -1893,7 +1972,11 @@ void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
 
 void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, const Region& region)
 {
+    collectUsedCCsFromCCMap(usedCCs, region.delayCC);
     collectUsedCCsFromCCMap(usedCCs, region.offsetCC);
+    collectUsedCCsFromCCMap(usedCCs, region.endCC);
+    collectUsedCCsFromCCMap(usedCCs, region.loopStartCC);
+    collectUsedCCsFromCCMap(usedCCs, region.loopEndCC);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccAttack);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccRelease);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccDecay);
@@ -1918,6 +2001,11 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccHold);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
+    }
+    for (const LFODescription& lfo : region.lfos) {
+        collectUsedCCsFromCCMap(usedCCs, lfo.phaseCC);
+        collectUsedCCsFromCCMap(usedCCs, lfo.delayCC);
+        collectUsedCCsFromCCMap(usedCCs, lfo.fadeCC);
     }
     collectUsedCCsFromCCMap(usedCCs, region.ccConditions);
     collectUsedCCsFromCCMap(usedCCs, region.ccTriggers);
@@ -1950,8 +2038,8 @@ void Synth::Impl::collectUsedCCsFromModulations(BitArray<config::numCCs>& usedCC
 BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
 {
     BitArray<config::numCCs> used;
-    for (const Impl::RegionPtr& region : regions_)
-        collectUsedCCsFromRegion(used, *region);
+    for (const LayerPtr& layerPtr : layers_)
+        collectUsedCCsFromRegion(used, layerPtr->getRegion());
     collectUsedCCsFromModulations(used, resources_.modMatrix);
     return used;
 }

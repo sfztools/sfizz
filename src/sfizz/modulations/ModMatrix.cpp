@@ -39,6 +39,7 @@ struct ModMatrix::Impl {
     struct ConnectionData {
         float sourceDepth_ {};
         ModKey sourceDepthMod_ {};
+        TargetId sourceDepthModId_ {};
         float velToDepth_ {};
     };
 
@@ -207,6 +208,10 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth,
     Impl::ConnectionData& conn = target.connectedSources[sourceIndex];
     conn.sourceDepth_ = sourceDepth;
     conn.sourceDepthMod_ = sourceDepthMod;
+
+    if (sourceDepthMod)
+        conn.sourceDepthModId_ = registerTarget(sourceDepthMod);
+
     conn.velToDepth_ = velToDepth;
 
     return true;
@@ -414,7 +419,7 @@ float* ModMatrix::getModulation(TargetId targetId)
                 sourceDepth += triggerValue * velToDepth;
             }
 
-            const float* sourceDepthMod = getModulationByKey(sourcesPos->second.sourceDepthMod_);
+            const float* sourceDepthMod = getModulation(sourcesPos->second.sourceDepthModId_);
 
             if (isFirstSource) {
                 if (sourceDepth == 1 && !sourceDepthMod)
@@ -423,7 +428,12 @@ float* ModMatrix::getModulation(TargetId targetId)
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] = sourceDepth * sourceBuffer[i];
                 }
+                else if (targetFlags & kModIsMultiplicative) {
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] = (sourceDepth * sourceDepthMod[i]) * sourceBuffer[i];
+                }
                 else {
+                    ASSERT(targetFlags & kModIsAdditive);
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] = (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
                 }
@@ -435,15 +445,7 @@ float* ModMatrix::getModulation(TargetId targetId)
                         multiplyMul1<float>(sourceDepth, sourceBuffer, buffer);
                     else {
                         for (uint32_t i = 0; i < numFrames; ++i)
-                            buffer[i] *= (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
-                    }
-                }
-                else if (targetFlags & kModIsPercentMultiplicative) {
-                    if (!sourceDepthMod)
-                        multiplyMul1<float>(0.01f * sourceDepth, sourceBuffer, buffer);
-                    else {
-                        for (uint32_t i = 0; i < numFrames; ++i)
-                            buffer[i] *= 0.01f * (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
+                            buffer[i] *= (sourceDepth * sourceDepthMod[i]) * sourceBuffer[i];
                     }
                 }
                 else {
@@ -465,8 +467,6 @@ float* ModMatrix::getModulation(TargetId targetId)
     if (isFirstSource) {
         if (targetFlags & kModIsMultiplicative)
             fill(buffer, 1.0f);
-        else if (targetFlags & kModIsPercentMultiplicative)
-            fill(buffer, 100.0f);
         else {
             ASSERT(targetFlags & kModIsAdditive);
             fill(buffer, 0.0f);

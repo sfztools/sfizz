@@ -53,6 +53,52 @@ static Metadata metadata_from_comment(absl::string_view comment)
 }
 
 ///
+static std::string cstrQuote(absl::string_view text)
+{
+    std::string cstr;
+    cstr.reserve(2 * text.size() + 2);
+
+    cstr.push_back('"');
+
+    for (char c : text) {
+        switch (c) {
+        case '\a' :
+            cstr.append("\\a");
+            break;
+        case '\b' :
+            cstr.append("\\b");
+            break;
+        case '\t' :
+            cstr.append("\\t");
+            break;
+        case '\n' :
+            cstr.append("\\n");
+            break;
+        case '\v' :
+            cstr.append("\\v");
+            break;
+        case '\f' :
+            cstr.append("\\f");
+            break;
+        case '\r' :
+            cstr.append("\\r");
+            break;
+        case '"':
+        case '\\':
+            cstr.push_back('\\');
+            cstr.push_back(c);
+            break;
+        default:
+            cstr.push_back(c);
+            break;
+        }
+    }
+
+    cstr.push_back('"');
+    return cstr;
+}
+
+///
 static void codegen_item(int& idCounter, int parentId, int parentX, int parentY, const LayoutItem& item, absl::string_view oldTheme)
 {
     const Metadata md = metadata_from_comment(item.comment);
@@ -95,7 +141,7 @@ static void codegen_item(int& idCounter, int parentId, int parentX, int parentY,
     else if (item.align & 8)
         align = "kRightText";
 
-    std::cout << "auto"/*item.classname*/ << "* const view__" << id << " = create" << item.classname << "(CRect(" << relX << ", " << relY << ", " << (relX + item.w) << ", " << (relY + item.h) <<  "), " << tag << ", \"" << label << "\", " << align << ", " << item.labelsize << ");\n";
+    std::cout << "auto"/*item.classname*/ << "* const view__" << id << " = create" << item.classname << "(CRect(" << relX << ", " << relY << ", " << (relX + item.w) << ", " << (relY + item.h) <<  "), " << tag << ", " << cstrQuote(label) << ", " << align << ", " << item.labelsize << ");\n";
 
     if (!item.id.empty())
         std::cout << item.id << " = view__" << id << ";\n";

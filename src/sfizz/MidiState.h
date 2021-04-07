@@ -114,11 +114,25 @@ public:
     void channelAftertouchEvent(int delay, float aftertouch) noexcept;
 
     /**
+     * @brief Register a channel aftertouch event
+     *
+     * @param aftertouch
+     */
+    void polyAftertouchEvent(int delay, int noteNumber, float aftertouch) noexcept;
+
+    /**
      * @brief Get the channel aftertouch status
 
      * @return int
      */
     float getChannelAftertouch() const noexcept;
+
+    /**
+     * @brief Get the polyphonic aftertouch status
+
+     * @return int
+     */
+    float getPolyAftertouch(int noteNumber) const noexcept;
 
     /**
      * @brief Register a CC event
@@ -172,8 +186,16 @@ public:
     void resetAllControllers(int delay) noexcept;
 
     const EventVector& getCCEvents(int ccIdx) const noexcept;
+    const EventVector& getPolyAftertouchEvents(int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
+
+    /**
+     * @brief Get the alternate state value, for extended CC 137
+     *
+     * @return float
+     */
+    float getAlternateState() const noexcept { return alternate; }
 
 private:
 
@@ -223,7 +245,7 @@ private:
      * @brief Current known values for the CCs.
      *
      */
-    std::array<EventVector, config::numCCs> cc;
+    std::array<EventVector, config::numCCs> ccEvents;
 
     /**
      * @brief Null event
@@ -241,8 +263,14 @@ private:
      */
     EventVector channelAftertouchEvents;
 
+    /**
+     * @brief Polyphonic aftertouch status.
+     */
+    std::array<EventVector, 128> polyAftertouchEvents;
+
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
+    float alternate { 0.0f };
     unsigned internalClock { 0 };
 };
 }

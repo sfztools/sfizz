@@ -15,7 +15,6 @@
 #include "LFODescription.h"
 #include "Opcode.h"
 #include "AudioBuffer.h"
-#include "MidiState.h"
 #include "FileId.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
@@ -29,6 +28,7 @@
 namespace sfz {
 
 class RegionSet;
+class MidiState;
 
 /**
  * @brief Regions are the basic building blocks for the SFZ parsing and handling code.
@@ -43,7 +43,7 @@ class RegionSet;
  *
  */
 struct Region {
-    Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath = "");
+    explicit Region(int regionNumber, absl::string_view defaultPath = "");
     Region(const Region&) = default;
     ~Region() = default;
 
@@ -98,65 +98,6 @@ struct Region {
      * @return false
      */
     bool shouldLoop() const noexcept { return (loopMode == LoopMode::loop_continuous || loopMode == LoopMode::loop_sustain); }
-    /**
-     * @brief Given the current midi state, is the region switched on?
-     *
-     * @return true
-     * @return false
-     */
-    bool isSwitchedOn() const noexcept;
-    /**
-     * @brief Register a new note on event. The region may be switched on or off using keys so
-     * this function updates the keyswitches state.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
-     *                  and vary the samples
-     * @return true if the region should trigger on this event.
-     * @return false
-     */
-    bool registerNoteOn(int noteNumber, float velocity, float randValue) noexcept;
-    /**
-     * @brief Register a new note off event. The region may be switched on or off using keys so
-     * this function updates the keyswitches state.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @param randValue a random value between 0 and 1 used to randomize a bit the region activations
-     *                  and vary the samples
-     * @return true if the region should trigger on this event.
-     * @return false
-     */
-    bool registerNoteOff(int noteNumber, float velocity, float randValue) noexcept;
-    /**
-     * @brief Register a new CC event. The region may be switched on or off using CCs so
-     * this function checks if it indeeds need to activate or not.
-     *
-     * @param ccNumber
-     * @param ccValue
-     * @return true if the region should trigger on this event
-     * @return false
-     */
-    bool registerCC(int ccNumber, float ccValue) noexcept;
-    /**
-     * @brief Register a new pitch wheel event.
-     *
-     * @param pitch
-     */
-    void registerPitchWheel(float pitch) noexcept;
-    /**
-     * @brief Register a new aftertouch event.
-     *
-     * @param aftertouch
-     */
-    void registerAftertouch(float aftertouch) noexcept;
-    /**
-     * @brief Register tempo
-     *
-     * @param secondsPerQuarter
-     */
-    void registerTempo(float secondsPerQuarter) noexcept;
 
     /**
      * @brief Get the base pitch of the region depending on which note has been
@@ -180,18 +121,19 @@ struct Region {
      * @brief Get the additional crossfade gain of the region depending on the
      * CC values
      *
-     * @param ccState
+     * @param midiState
      * @return float
      */
-    float getCrossfadeGain() const noexcept;
+    float getCrossfadeGain(const MidiState& midiState) const noexcept;
     /**
      * @brief Get the base volume of the region depending on which note has been
      * pressed to trigger the region.
      *
+     * @param midiState
      * @param noteNumber
      * @return float
      */
-    float getBaseVolumedB(int noteNumber) const noexcept;
+    float getBaseVolumedB(const MidiState& midiState, int noteNumber) const noexcept;
     /**
      * @brief Get the base gain of the region.
      *
@@ -221,31 +163,34 @@ struct Region {
     /**
      * @brief Get the region offset in samples
      *
+     * @param midiState
      * @return uint32_t
      */
-    uint64_t getOffset(Oversampling factor = Oversampling::x1) const noexcept;
+    uint64_t getOffset(const MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Get the region delay in seconds
      *
+     * @param midiState
      * @return float
      */
-    float getDelay() const noexcept;
+    float getDelay(const MidiState& midiState) const noexcept;
     /**
      * @brief Get the index of the sample end, either natural end or forced
      * loop.
      *
      * @return uint32_t
      */
-    uint32_t trueSampleEnd(Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t getSampleEnd(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
     /**
      * @brief Parse a new opcode into the region to fill in the proper parameters.
      * This must be called multiple times for each opcode applying to this region.
      *
      * @param opcode
+     * @param cleanOpcode whether the opcode should be canonicalized
      * @return true if the opcode was properly read and stored.
      * @return false
      */
-    bool parseOpcode(const Opcode& opcode);
+    bool parseOpcode(const Opcode& opcode, bool cleanOpcode = true);
     /**
      * @brief Parse a opcode which is specific to a particular SFZv1 LFO:
      * amplfo, pitchlfo, fillfo.
@@ -315,8 +260,8 @@ struct Region {
 
     void offsetAllKeys(int offset) noexcept;
 
-    uint32_t loopStart(Oversampling factor = Oversampling::x1) const noexcept;
-    uint32_t loopEnd(Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t loopStart(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t loopEnd(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
 
     /**
      * @brief Get the gain this region contributes into the input of the Nth
@@ -361,10 +306,13 @@ struct Region {
     int64_t offset { Default::offset }; // offset
     int64_t offsetRandom { Default::offsetRandom }; // offset_random
     CCMap<int64_t> offsetCC { Default::offsetMod };
-    uint32_t sampleEnd { Default::sampleEnd }; // end
+    int64_t sampleEnd { Default::sampleEnd }; // end
+    CCMap<int64_t> endCC { Default::sampleEndMod };
     absl::optional<uint32_t> sampleCount {}; // count
     absl::optional<LoopMode> loopMode {}; // loopmode
-    UncheckedRange<uint32_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    UncheckedRange<int64_t> loopRange { Default::loopStart, Default::loopEnd }; //loopstart and loopend
+    CCMap<int64_t> loopStartCC { Default::sampleEndMod };
+    CCMap<int64_t> loopEndCC { Default::sampleEndMod };
     absl::optional<uint32_t> loopCount {}; // count
     float loopCrossfade { Default::loopCrossfade }; // loop_crossfade
 
@@ -410,12 +358,18 @@ struct Region {
     float sustainThreshold { Default::sustainThreshold }; // sustain_cc
     float sostenutoThreshold { Default::sostenutoThreshold }; // sustain_cc
 
+    bool usesKeySwitches { false };
+    bool usesPreviousKeySwitches { false };
+
     // Region logic: internal conditions
     UncheckedRange<float> aftertouchRange { Default::loChannelAftertouch, Default::hiChannelAftertouch }; // hichanaft and lochanaft
+    UncheckedRange<float> polyAftertouchRange { Default::loPolyAftertouch, Default::hiPolyAftertouch }; // hipolyaft and lopolyaft
     UncheckedRange<float> bpmRange { Default::loBPM, Default::hiBPM }; // hibpm and lobpm
     UncheckedRange<float> randRange { Default::loNormalized, Default::hiNormalized }; // hirand and lorand
     uint8_t sequenceLength { Default::sequence }; // seq_length
     uint8_t sequencePosition { Default::sequence }; // seq_position
+
+    bool usesSequenceSwitches { false };
 
     // Region logic: triggers
     Trigger trigger { Default::trigger }; // trigger
@@ -507,29 +461,8 @@ struct Region {
     // Parent
     RegionSet* parent { nullptr };
 
-    // Started notes
-    bool sustainPressed { false };
-    bool sostenutoPressed { false };
-    std::vector<std::pair<int, float>> delayedSustainReleases;
-    std::vector<std::pair<int, float>> delayedSostenutoReleases;
-    void delaySustainRelease(int noteNumber, float velocity) noexcept;
-    void delaySostenutoRelease(int noteNumber, float velocity) noexcept;
-    void storeSostenutoNotes() noexcept;
-    void removeFromSostenutoReleases(int noteNumber) noexcept;
-    bool isNoteSustained(int noteNumber) const noexcept;
-    bool isNoteSostenutoed(int noteNumber) const noexcept;
+    std::string defaultPath;
 
-    const MidiState& midiState;
-    bool keySwitched { true };
-    bool previousKeySwitched { true };
-    bool sequenceSwitched { true };
-    bool pitchSwitched { true };
-    bool bpmSwitched { true };
-    bool aftertouchSwitched { true };
-    std::bitset<config::numCCs> ccSwitched;
-    std::string defaultPath { "" };
-
-    int sequenceCounter { 0 };
     LEAK_DETECTOR(Region);
 };
 

@@ -1,0 +1,68 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0305
+header_name {.h}
+code_name {.cxx}
+widget_class aboutView {
+  label {About sfizz} open
+  xywh {527 165 800 475} type Double visible
+} {
+  Fl_Box {} {
+    image {../resources/logo_orange.png} xywh {200 0 400 180}
+    class Logo
+  }
+  Fl_Box {} {
+    xywh {260 180 280 80}
+    class InfoBox
+  }
+  Fl_Box {} {
+    xywh {200 260 400 100}
+    class DescriptionBox
+  }
+  Fl_Box lblHover_ {selected
+    xywh {465 435 315 25} labelsize 12 hide
+    class HoverBox
+  }
+  Fl_Button {} {
+    comment {tag=kTagButtonSfztools} selected
+    xywh {465 405 40 40} labelsize 30
+    class ButtonSfztools
+  }
+  Fl_Button {} {
+    comment {tag=kTagButtonGithub} selected
+    xywh {535 405 40 40} labelsize 30
+    class ButtonGithub
+  }
+  Fl_Button {} {
+    comment {tag=kTagButtonDiscord} selected
+    xywh {605 405 40 40} labelsize 30
+    class ButtonDiscord
+  }
+  Fl_Button {} {
+    comment {tag=kTagButtonOpencollective} selected
+    xywh {675 405 40 40} labelsize 30
+    class ButtonOpencollective
+  }
+  Fl_Button {} {
+    comment {tag=kTagButtonSfzformat} selected
+    xywh {745 405 40 40} labelsize 30
+    class ButtonSfzformat
+  }
+  Fl_Box {} {
+    label {Format
+Host
+Processor
+Address
+System}
+    xywh {15 375 90 90} align 20
+    class SysInfoKeyBox
+  }
+  Fl_Box lblSysInfoValue_ {
+    label {%PluginFormat%
+%HostProgram%
+%HostCPU%
+%HostBits% bits
+%HostOS%}
+    xywh {105 375 345 90} align 20
+    class SysInfoValueBox
+  }
+}

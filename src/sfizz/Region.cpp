@@ -6,6 +6,7 @@
 
 #include "Region.h"
 #include "Opcode.h"
+#include "MidiState.h"
 #include "MathHelpers.h"
 #include "utility/SwapAndPop.h"
 #include "utility/StringViewHelpers.h"
@@ -35,11 +36,9 @@ bool extendIfNecessary(std::vector<T>& vec, unsigned size, unsigned defaultCapac
     return true;
 }
 
-sfz::Region::Region(int regionNumber, const MidiState& midiState, absl::string_view defaultPath)
-: id{regionNumber}, midiState(midiState), defaultPath(defaultPath)
+sfz::Region::Region(int regionNumber, absl::string_view defaultPath)
+: id{regionNumber}, defaultPath(defaultPath)
 {
-    ccSwitched.set();
-
     gainToEffect.reserve(5); // sufficient room for main and fx1-4
     gainToEffect.push_back(1.0); // contribute 100% into the main bus
 
@@ -54,9 +53,9 @@ sfz::Region::Region(int regionNumber, const MidiState& midiState, absl::string_v
     case hash(x "_stepcc&"):   \
     case hash(x "_smoothcc&")
 
-bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
+bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
 {
-    const Opcode opcode = rawOpcode.cleanUp(kOpcodeScopeRegion);
+    const Opcode opcode = cleanOpcode ? rawOpcode.cleanUp(kOpcodeScopeRegion) : rawOpcode;
 
     switch (opcode.lettersOnlyHash) {
 
@@ -109,6 +108,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("end"):
         sampleEnd = opcode.read(Default::sampleEnd);
         break;
+    case hash("end_oncc&"): // also end_cc&
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        endCC[opcode.parameters.back()] = opcode.read(Default::sampleEndMod);
+        break;
     case hash("count"):
         sampleCount = opcode.readOptional(Default::sampleCount);
         loopMode = LoopMode::one_shot;
@@ -124,6 +129,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("loop_start"): // also loopstart
         loopRange.setStart(opcode.read(Default::loopStart));
+        break;
+    case hash("loop_start_oncc&"): // also loop_start_cc&
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        loopStartCC[opcode.parameters.back()] = opcode.read(Default::loopMod);
+        break;
+    case hash("loop_end_oncc&"): // also loop_end_cc&
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        loopEndCC[opcode.parameters.back()] = opcode.read(Default::loopMod);
         break;
     case hash("loop_crossfade"):
         loopCrossfade = opcode.read(Default::loopCrossfade);
@@ -260,7 +277,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("sw_last"):
         if (!lastKeyswitchRange) {
             lastKeyswitch = opcode.readOptional(Default::key);
-            keySwitched = !lastKeyswitch.has_value();
+            usesKeySwitches = lastKeyswitch.has_value();
         }
         break;
     case hash("sw_lolast"):
@@ -271,7 +288,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             else
                 lastKeyswitchRange->setStart(value);
 
-            keySwitched = false;
+            usesKeySwitches = true;
             lastKeyswitch = absl::nullopt;
         }
         break;
@@ -283,7 +300,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             else
                 lastKeyswitchRange->setEnd(value);
 
-            keySwitched = false;
+            usesKeySwitches = true;
             lastKeyswitch = absl::nullopt;
         }
         break;
@@ -292,14 +309,14 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("sw_down"):
         downKeyswitch = opcode.readOptional(Default::key);
-        keySwitched = !downKeyswitch.has_value();
+        usesKeySwitches = downKeyswitch.has_value();
         break;
     case hash("sw_up"):
         upKeyswitch = opcode.readOptional(Default::key);
         break;
     case hash("sw_previous"):
         previousKeyswitch = opcode.readOptional(Default::key);
-        previousKeySwitched = !previousKeyswitch.has_value();
+        usesPreviousKeySwitches = previousKeyswitch.has_value();
         break;
     case hash("sw_vel"):
         velocityOverride =
@@ -331,6 +348,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
     case hash("hichanaft"):
         aftertouchRange.setEnd(opcode.read(Default::hiChannelAftertouch));
         break;
+    case hash("lopolyaft"):
+        polyAftertouchRange.setStart(opcode.read(Default::loPolyAftertouch));
+        break;
+    case hash("hipolyaft"):
+        polyAftertouchRange.setEnd(opcode.read(Default::hiPolyAftertouch));
+        break;
     case hash("lobpm"):
         bpmRange.setStart(opcode.read(Default::loBPM));
         break;
@@ -348,7 +371,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
         break;
     case hash("seq_position"):
         sequencePosition = opcode.read(Default::sequence);
-        sequenceSwitched = false;
+        usesSequenceSwitches = true;
         break;
     // Region logic: triggers
     case hash("trigger"):
@@ -787,7 +810,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (parseEGOpcode(opcode, filterEG)) {
                 getOrCreateConnection(
                     ModKey::createNXYZ(ModId::FilEG, id),
-                    ModKey::createNXYZ(ModId::FilCutoff, id));
+                    ModKey::createNXYZ(ModId::FilCutoff, id, 0));
                 return true;
             }
         }
@@ -815,7 +838,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode)
             if (parseLFOOpcode(opcode, filterLFO)) {
                 getOrCreateConnection(
                     ModKey::createNXYZ(ModId::FilLFO, id),
-                    ModKey::createNXYZ(ModId::FilCutoff, id));
+                    ModKey::createNXYZ(ModId::FilCutoff, id, 0));
                 return true;
             }
         }
@@ -880,7 +903,7 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
     else if (absl::StartsWith(opcode.name, "fillfo_")) {
         sourceKey = ModKey::createNXYZ(ModId::FilLFO, id);
         sourceDepthKey = ModKey::createNXYZ(ModId::FilLFODepth, id);
-        targetKey = ModKey::createNXYZ(ModId::FilCutoff, id);
+        targetKey = ModKey::createNXYZ(ModId::FilCutoff, id, 0);
         lfo.freqKey = ModKey::createNXYZ(ModId::FilLFOFrequency, id);
         depthSpec = Default::filLFODepth;
         depthModSpec = Default::filterCutoffMod;
@@ -904,10 +927,14 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         processGenericCc(opcode, depthModSpec, sourceDepthKey);
         break;
     case_any_lfo("depthchanaft"):
-        // TODO(jpc) LFO v1
+        getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
+        getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), sourceDepthKey).sourceDepth
+            = opcode.read(depthModSpec);
         break;
-    case_any_lfo("depthpolyaft"):
-        // TODO(jpc) LFO v1
+    case_any_lfo("depthpolyaft"): // NOLINT bugprone-branch-clone
+        getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
+        getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), sourceDepthKey).sourceDepth
+            = opcode.read(depthModSpec);
         break;
     case_any_lfo("fade"):
         lfo.fade = opcode.read(Default::lfoFade);
@@ -918,11 +945,13 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
     case_any_lfo_any_ccN("freq"): // also freqcc&
         processGenericCc(opcode, Default::lfoFreqMod, lfo.freqKey);
         break;
-    case_any_lfo("freqchanaft"):
-        // TODO(jpc) LFO v1
+    case_any_lfo("freqchanaft"): // NOLINT bugprone-branch-clone
+        getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), lfo.freqKey).sourceDepth
+            = opcode.read(Default::lfoFreqMod);
         break;
-    case_any_lfo("freqpolyaft"):
-        // TODO(jpc) LFO v1
+    case_any_lfo("freqpolyaft"): // NOLINT bugprone-branch-clone
+        getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), lfo.freqKey).sourceDepth
+            = opcode.read(Default::lfoFreqMod);
         break;
 
     // sfizz extension
@@ -1059,7 +1088,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case hash("fileg_depth"):
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepth = opcode.read(Default::egDepth);
+            ModKey::createNXYZ(ModId::FilCutoff, id, 0)).sourceDepth = opcode.read(Default::egDepth);
         break;
 
     case hash("pitcheg_veltodepth"): // also pitcheg_vel2depth
@@ -1070,7 +1099,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case hash("fileg_veltodepth"): // also fileg_vel2depth
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).velToDepth = opcode.read(Default::egVel2Depth);
+            ModKey::createNXYZ(ModId::FilCutoff, id, 0)).velToDepth = opcode.read(Default::egVel2Depth);
         break;
 
     case_any_ccN("pitcheg_depth"):
@@ -1082,7 +1111,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case_any_ccN("fileg_depth"):
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::FilEG, id),
-            ModKey::createNXYZ(ModId::FilCutoff, id)).sourceDepthMod = ModKey::createNXYZ(ModId::FilEGDepth, id);
+            ModKey::createNXYZ(ModId::FilCutoff, id, 0)).sourceDepthMod = ModKey::createNXYZ(ModId::FilEGDepth, id);
         processGenericCc(opcode, Default::filterCutoffMod, ModKey::createNXYZ(ModId::FilEGDepth, id));
         break;
 
@@ -1123,6 +1152,7 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
     //
     lfo.beatsKey = ModKey::createNXYZ(ModId::LFOBeats, id, lfoNumber);
     lfo.freqKey = ModKey::createNXYZ(ModId::LFOFrequency, id, lfoNumber);
+    lfo.phaseKey = ModKey::createNXYZ(ModId::LFOPhase, id, lfoNumber);
 
     //
     auto getOrCreateLFOStep = [&opcode, &lfo]() -> float* {
@@ -1143,14 +1173,29 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
             return nullptr;
         return &lfo.sub[subNumber1Based - 1];
     };
-    auto LFO_EG_filter_EQ_target = [this, &opcode, lfoNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
-        const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
-        if (!extendIfNecessary(filters, index + 1, Default::numFilters))
-            return false;
-        const ModKey source = ModKey::createNXYZ(sourceId, id, lfoNumber);
-        const ModKey target = ModKey::createNXYZ(targetId, id, index);
+    auto LFO_target = [this, &opcode, lfoNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
         getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
         return true;
+    };
+    auto LFO_target_cc = [this, &opcode, lfoNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
+        const ModKey depth = ModKey::getSourceDepthKey(source, target);
+        ASSERT(depth);
+        Connection& conn = getOrCreateConnection(source, target);
+        conn.sourceDepthMod = depth;
+        processGenericCc(opcode, spec, depth);
+        return true;
+    };
+    auto ensureFilter = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(filters, index + 1, Default::numFilters);
+    };
+    auto ensureEQ = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(equalizers, index + 1, Default::numEQs);
     };
 
     //
@@ -1172,11 +1217,26 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
     case hash("lfo&_phase"):
         lfo.phase0 = opcode.read(Default::lfoPhase);
         break;
+    case_any_ccN("lfo&_phase"):
+        processGenericCc(opcode, Default::lfoPhaseMod, ModKey::createNXYZ(ModId::LFOPhase, id, lfoNumber));
+        break;
     case hash("lfo&_delay"):
         lfo.delay = opcode.read(Default::lfoDelay);
         break;
+    case hash("lfo&_delay_oncc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        lfo.delayCC[opcode.parameters.back()] = opcode.read(Default::lfoDelayMod);
+        break;
     case hash("lfo&_fade"):
         lfo.fade = opcode.read(Default::lfoFade);
+        break;
+    case hash("lfo&_fade_oncc&"):
+        if (opcode.parameters.back() > config::numCCs)
+            return false;
+
+        lfo.fadeCC[opcode.parameters.back()] = opcode.read(Default::lfoFadeMod);
         break;
     case hash("lfo&_count"):
         lfo.count = opcode.read(Default::lfoCount);
@@ -1219,71 +1279,100 @@ bool sfz::Region::parseLFOOpcodeV2(const Opcode& opcode)
 
     // Modulation: LFO (targets)
     case hash("lfo&_amplitude"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::amplitudeMod);
-        }
+        LFO_target(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
+        break;
+    case_any_ccN("lfo&_amplitude"):
+        LFO_target_cc(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
         break;
     case hash("lfo&_pan"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::panMod);
-        }
+        LFO_target(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
+        break;
+    case_any_ccN("lfo&_pan"):
+        LFO_target_cc(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
         break;
     case hash("lfo&_width"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::widthMod);
-        }
+        LFO_target(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
+        break;
+    case_any_ccN("lfo&_width"):
+        LFO_target_cc(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
         break;
     case hash("lfo&_position"): // sfizz extension
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::positionMod);
-        }
+        LFO_target(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
+        break;
+    case_any_ccN("lfo&_position"): // sfizz extension
+        LFO_target_cc(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
         break;
     case hash("lfo&_pitch"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::pitchMod);
-        }
+        LFO_target(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
+        break;
+    case_any_ccN("lfo&_pitch"):
+        LFO_target_cc(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
         break;
     case hash("lfo&_volume"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::LFO, id, lfoNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::volumeMod);
-        }
+        LFO_target(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
-
+    case_any_ccN("lfo&_volume"):
+        LFO_target_cc(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
+        break;
     case hash("lfo&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilCutoff, Default::filterCutoffMod);
+        if (!ensureFilter())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
+        break;
+    case_any_ccN("lfo&_cutoff&"):
+        if (!ensureFilter())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
         break;
     case hash("lfo&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilResonance, Default::filterResonanceMod);
+        if (!ensureFilter())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
+        break;
+    case_any_ccN("lfo&_resonance&"):
+        if (!ensureFilter())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
         break;
     case hash("lfo&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::FilGain, Default::filterGainMod);
+        if (!ensureFilter())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
+        break;
+    case_any_ccN("lfo&_fil&gain"):
+        if (!ensureFilter())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
         break;
     case hash("lfo&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqGain, Default::eqGainMod);
+        if (!ensureEQ())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
+        break;
+    case_any_ccN("lfo&_eq&gain"):
+        if (!ensureEQ())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
         break;
     case hash("lfo&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqFrequency, Default::eqFrequencyMod);
+        if (!ensureEQ())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
+        break;
+    case_any_ccN("lfo&_eq&freq"):
+        if (!ensureEQ())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
         break;
     case hash("lfo&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::LFO, ModId::EqBandwidth, Default::eqBandwidthMod);
+        if (!ensureEQ())
+            return false;
+        LFO_target(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
+        break;
+    case_any_ccN("lfo&_eq&bw"):
+        if (!ensureEQ())
+            return false;
+        LFO_target_cc(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
         break;
 
     default:
@@ -1311,14 +1400,29 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
             return nullptr;
         return &eg.points[pointNumber];
     };
-    auto LFO_EG_filter_EQ_target = [this, &opcode, egNumber](ModId sourceId, ModId targetId, const OpcodeSpec<float>& spec) -> bool {
-        const unsigned index = opcode.parameters.size() == 2 ? opcode.parameters.back() - 1 : 0;
-        if (!extendIfNecessary(filters, index + 1, Default::numFilters))
-            return false;
-        const ModKey source = ModKey::createNXYZ(sourceId, id, egNumber);
-        const ModKey target = ModKey::createNXYZ(targetId, id, index);
+    auto EG_target = [this, &opcode, egNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
         getOrCreateConnection(source, target).sourceDepth = opcode.read(spec);
         return true;
+    };
+    auto EG_target_cc = [this, &opcode, egNumber](const ModKey& target, const OpcodeSpec<float>& spec) -> bool {
+        const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
+        const ModKey depth = ModKey::getSourceDepthKey(source, target);
+        ASSERT(depth);
+        Connection& conn = getOrCreateConnection(source, target);
+        conn.sourceDepthMod = depth;
+        processGenericCc(opcode, spec, depth);
+        return true;
+    };
+    auto ensureFilter = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(filters, index + 1, Default::numFilters);
+    };
+    auto ensureEQ = [this, &opcode]() {
+        ASSERT(opcode.parameters.size() >= 2);
+        const unsigned index = opcode.parameters[1] - 1;
+        return extendIfNecessary(equalizers, index + 1, Default::numEQs);
     };
 
     //
@@ -1352,70 +1456,100 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
 
     // Modulation: Flex EG (targets)
     case hash("eg&_amplitude"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Amplitude, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::amplitudeMod);
-        }
+        EG_target(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
+        break;
+    case_any_ccN("eg&_amplitude"):
+        EG_target_cc(ModKey::createNXYZ(ModId::Amplitude, id), Default::amplitudeMod);
         break;
     case hash("eg&_pan"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pan, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::panMod);
-        }
+        EG_target(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
+        break;
+    case_any_ccN("eg&_pan"):
+        EG_target_cc(ModKey::createNXYZ(ModId::Pan, id), Default::panMod);
         break;
     case hash("eg&_width"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Width, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::widthMod);
-        }
+        EG_target(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
+        break;
+    case_any_ccN("eg&_width"):
+        EG_target_cc(ModKey::createNXYZ(ModId::Width, id), Default::widthMod);
         break;
     case hash("eg&_position"): // sfizz extension
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Position, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::positionMod);
-        }
+        EG_target(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
+        break;
+    case_any_ccN("eg&_position"): // sfizz extension
+        EG_target_cc(ModKey::createNXYZ(ModId::Position, id), Default::positionMod);
         break;
     case hash("eg&_pitch"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Pitch, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::pitchMod);
-        }
+        EG_target(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
+        break;
+    case_any_ccN("eg&_pitch"):
+        EG_target_cc(ModKey::createNXYZ(ModId::Pitch, id), Default::pitchMod);
         break;
     case hash("eg&_volume"):
-        {
-            const ModKey source = ModKey::createNXYZ(ModId::Envelope, id, egNumber);
-            const ModKey target = ModKey::createNXYZ(ModId::Volume, id);
-            getOrCreateConnection(source, target).sourceDepth =
-                opcode.read(Default::volumeMod);
-        }
+        EG_target(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
+        break;
+    case_any_ccN("eg&_volume"):
+        EG_target_cc(ModKey::createNXYZ(ModId::Volume, id), Default::volumeMod);
         break;
     case hash("eg&_cutoff&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilCutoff, Default::filterCutoffMod);
+        if (!ensureFilter())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
+        break;
+    case_any_ccN("eg&_cutoff&"):
+        if (!ensureFilter())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::FilCutoff, id, opcode.parameters[1] - 1), Default::filterCutoffMod);
         break;
     case hash("eg&_resonance&"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilResonance, Default::filterResonanceMod);
+        if (!ensureFilter())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
+        break;
+    case_any_ccN("eg&_resonance&"):
+        if (!ensureFilter())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::FilResonance, id, opcode.parameters[1] - 1), Default::filterResonanceMod);
         break;
     case hash("eg&_fil&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::FilGain, Default::filterGainMod);
+        if (!ensureFilter())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
+        break;
+    case_any_ccN("eg&_fil&gain"):
+        if (!ensureFilter())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::FilGain, id, opcode.parameters[1] - 1), Default::filterGainMod);
         break;
     case hash("eg&_eq&gain"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqGain, Default::eqGainMod);
+        if (!ensureEQ())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
+        break;
+    case_any_ccN("eg&_eq&gain"):
+        if (!ensureEQ())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::EqGain, id, opcode.parameters[1] - 1), Default::eqGainMod);
         break;
     case hash("eg&_eq&freq"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqFrequency, Default::eqFrequencyMod);
+        if (!ensureEQ())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
+        break;
+    case_any_ccN("eg&_eq&freq"):
+        if (!ensureEQ())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::EqFrequency, id, opcode.parameters[1] - 1), Default::eqFrequencyMod);
         break;
     case hash("eg&_eq&bw"):
-        LFO_EG_filter_EQ_target(ModId::Envelope, ModId::EqBandwidth, Default::eqBandwidthMod);
+        if (!ensureEQ())
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
+        break;
+    case_any_ccN("eg&_eq&bw"):
+        if (!ensureEQ())
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::EqBandwidth, id, opcode.parameters[1] - 1), Default::eqBandwidthMod);
         break;
 
     case hash("eg&_ampeg"):
@@ -1480,10 +1614,8 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
             break;
         case kOpcodeStepCcN:
             {
-                const float maxStep =
-                    max(std::abs(spec.bounds.getStart()), std::abs(spec.bounds.getEnd()));
-                const OpcodeSpec<float> stepCC { 0.0f, Range<float>(0.0f, maxStep), 0 };
-                p.step = opcode.read(stepCC);
+                const OpcodeSpec<float> stepCC { 0.0f, {}, kPermissiveBounds };
+                p.step = spec.normalizeInput(opcode.read(stepCC));
             }
             break;
         case kOpcodeSmoothCcN:
@@ -1493,195 +1625,24 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
             assert(false);
             break;
         }
-        conn->source = ModKey(ModId::Controller, {}, p);
+
+        switch (p.cc) {
+        case ExtendedCCs::noteOnVelocity: // fallthrough
+        case ExtendedCCs::noteOffVelocity: // fallthrough
+        case ExtendedCCs::keyboardNoteNumber: // fallthrough
+        case ExtendedCCs::keyboardNoteGate: // fallthrough
+        case ExtendedCCs::unipolarRandom: // fallthrough
+        case ExtendedCCs::bipolarRandom: // fallthrough
+        case ExtendedCCs::alternate:
+            conn->source = ModKey(ModId::PerVoiceController, id, p);
+            break;
+        default:
+            conn->source = ModKey(ModId::Controller, {}, p);
+            break;
+        }
     }
 
     return true;
-}
-
-bool sfz::Region::isSwitchedOn() const noexcept
-{
-    return keySwitched && previousKeySwitched && sequenceSwitched && pitchSwitched && bpmSwitched && aftertouchSwitched && ccSwitched.all();
-}
-
-void sfz::Region::delaySustainRelease(int noteNumber, float velocity) noexcept
-{
-    if (delayedSustainReleases.size() == delayedSustainReleases.capacity())
-        return;
-
-    delayedSustainReleases.emplace_back(noteNumber, velocity);
-}
-
-void sfz::Region::delaySostenutoRelease(int noteNumber, float velocity) noexcept
-{
-    if (delayedSostenutoReleases.size() == delayedSostenutoReleases.capacity())
-        return;
-
-    delayedSostenutoReleases.emplace_back(noteNumber, velocity);
-}
-
-void sfz::Region::removeFromSostenutoReleases(int noteNumber) noexcept
-{
-    swapAndPopFirst(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
-        return p.first == noteNumber;
-    });
-}
-
-void sfz::Region::storeSostenutoNotes() noexcept
-{
-    ASSERT(delayedSostenutoReleases.empty());
-    for (int note = keyRange.getStart(); note <= keyRange.getEnd(); ++note) {
-        if (midiState.isNotePressed(note))
-            delaySostenutoRelease(note, midiState.getNoteVelocity(note));
-    }
-}
-
-
-bool sfz::Region::isNoteSustained(int noteNumber) const noexcept
-{
-    return absl::c_find_if(delayedSustainReleases, [=](const std::pair<int, float>& p) {
-        return p.first == noteNumber;
-    }) != delayedSustainReleases.end();
-}
-
-bool sfz::Region::isNoteSostenutoed(int noteNumber) const noexcept
-{
-    return absl::c_find_if(delayedSostenutoReleases, [=](const std::pair<int, float>& p) {
-        return p.first == noteNumber;
-    }) != delayedSostenutoReleases.end();
-}
-
-bool sfz::Region::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    const bool keyOk = keyRange.containsWithEnd(noteNumber);
-    if (keyOk) {
-        // Sequence activation
-        sequenceSwitched =
-            ((sequenceCounter++ % sequenceLength) == sequencePosition - 1);
-    }
-
-    if (!isSwitchedOn())
-        return false;
-
-    if (!triggerOnNote)
-        return false;
-
-    if (velocityOverride == VelocityOverride::previous)
-        velocity = midiState.getLastVelocity();
-
-    const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue) || (randValue >= 1.0f && randRange.isValid() && randRange.getEnd() >= 1.0f);
-    const bool firstLegatoNote = (trigger == Trigger::first && midiState.getActiveNotes() == 1);
-    const bool attackTrigger = (trigger == Trigger::attack);
-    const bool notFirstLegatoNote = (trigger == Trigger::legato && midiState.getActiveNotes() > 1);
-
-    return keyOk && velOk && randOk && (attackTrigger || firstLegatoNote || notFirstLegatoNote);
-}
-
-bool sfz::Region::registerNoteOff(int noteNumber, float velocity, float randValue) noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    if (!isSwitchedOn())
-        return false;
-
-    if (!triggerOnNote)
-        return false;
-
-    // Prerequisites
-
-    const bool keyOk = keyRange.containsWithEnd(noteNumber);
-    const bool velOk = velocityRange.containsWithEnd(velocity);
-    const bool randOk = randRange.contains(randValue) || (randValue >= 1.0f && randRange.isValid() && randRange.getEnd() >= 1.0f);
-
-    if (!(velOk && keyOk && randOk))
-        return false;
-
-    // Release logic
-
-    if (trigger == Trigger::release_key)
-        return true;
-
-    if (trigger == Trigger::release) {
-        const bool sostenutoed = isNoteSostenutoed(noteNumber);
-
-        if (sostenutoed && !sostenutoPressed) {
-            removeFromSostenutoReleases(noteNumber);
-            if (sustainPressed)
-                delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
-        }
-
-        if (!sostenutoPressed || !sostenutoed) {
-            if (sustainPressed)
-                delaySustainRelease(noteNumber, midiState.getNoteVelocity(noteNumber));
-            else
-                return true;
-        }
-    }
-
-    return false;
-}
-
-bool sfz::Region::registerCC(int ccNumber, float ccValue) noexcept
-{
-    ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
-
-    if (ccNumber == sustainCC)
-        sustainPressed = checkSustain && ccValue >= sustainThreshold;
-
-    if (ccNumber == sostenutoCC) {
-        const bool newState = checkSostenuto && ccValue >= sostenutoThreshold;
-        if (!sostenutoPressed && newState)
-            storeSostenutoNotes();
-
-        if (!newState && sostenutoPressed)
-            delayedSostenutoReleases.clear();
-
-        sostenutoPressed = newState;
-    }
-
-    if (ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
-        ccSwitched.set(ccNumber, true);
-    else
-        ccSwitched.set(ccNumber, false);
-
-    if (!isSwitchedOn())
-        return false;
-
-    if (!triggerOnCC)
-        return false;
-
-    if (ccTriggers.contains(ccNumber) && ccTriggers[ccNumber].containsWithEnd(ccValue))
-        return true;
-
-    return false;
-}
-
-void sfz::Region::registerPitchWheel(float pitch) noexcept
-{
-    if (bendRange.containsWithEnd(pitch))
-        pitchSwitched = true;
-    else
-        pitchSwitched = false;
-}
-
-void sfz::Region::registerAftertouch(float aftertouch) noexcept
-{
-    if (aftertouchRange.containsWithEnd(aftertouch))
-        aftertouchSwitched = true;
-    else
-        aftertouchSwitched = false;
-}
-
-void sfz::Region::registerTempo(float secondsPerQuarter) noexcept
-{
-    const float bpm = 60.0f / secondsPerQuarter;
-    if (bpmRange.containsWithEnd(bpm))
-        bpmSwitched = true;
-    else
-        bpmSwitched = false;
 }
 
 float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const noexcept
@@ -1689,7 +1650,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
     fast_real_distribution<float> pitchDistribution { 0.0f, pitchRandom };
-    float pitchVariationInCents = pitchKeytrack * (noteNumber - pitchKeycenter); // note difference with pitch center
+    float pitchVariationInCents = pitchKeytrack * (noteNumber - float(pitchKeycenter)); // note difference with pitch center
     pitchVariationInCents += pitch; // sample tuning
     pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
     pitchVariationInCents += velocity * pitchVeltrack; // track velocity
@@ -1697,7 +1658,7 @@ float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const
     return centsFactor(pitchVariationInCents);
 }
 
-float sfz::Region::getBaseVolumedB(int noteNumber) const noexcept
+float sfz::Region::getBaseVolumedB(const MidiState& midiState, int noteNumber) const noexcept
 {
     fast_real_distribution<float> volumeDistribution { 0.0f, ampRandom };
     auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
@@ -1732,41 +1693,55 @@ float sfz::Region::getPhase() const noexcept
     return phase;
 }
 
-uint64_t sfz::Region::getOffset(Oversampling factor) const noexcept
+uint64_t sfz::Region::getOffset(const MidiState& midiState, Oversampling factor) const noexcept
 {
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
         finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
+
     return Default::offset.bounds.clamp(finalOffset) * static_cast<uint64_t>(factor);
 }
 
-float sfz::Region::getDelay() const noexcept
+float sfz::Region::getDelay(const MidiState& midiState) const noexcept
 {
     fast_real_distribution<float> delayDistribution { 0, delayRandom };
     float finalDelay { delay };
     finalDelay += delayDistribution(Random::randomGenerator);
     for (const auto& mod: delayCC)
         finalDelay += mod.data * midiState.getCCValue(mod.cc);
+
     return Default::delay.bounds.clamp(finalDelay);
 }
 
-uint32_t sfz::Region::trueSampleEnd(Oversampling factor) const noexcept
+uint32_t sfz::Region::getSampleEnd(MidiState& midiState, Oversampling factor) const noexcept
 {
-    if (sampleEnd <= 0)
-        return 0;
+    int64_t end = sampleEnd;
+    for (const auto& mod: endCC)
+        end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
-    return static_cast<uint32_t>(sampleEnd) * static_cast<uint32_t>(factor);
+    end = clamp(end, int64_t { 0 }, sampleEnd);
+    return static_cast<uint32_t>(end) * static_cast<uint32_t>(factor);
 }
 
-uint32_t sfz::Region::loopStart(Oversampling factor) const noexcept
+uint32_t sfz::Region::loopStart(MidiState& midiState, Oversampling factor) const noexcept
 {
-    return loopRange.getStart() * static_cast<uint32_t>(factor);
+    auto start = loopRange.getStart();
+    for (const auto& mod: loopStartCC)
+        start += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
+
+    start = clamp(start, int64_t { 0 }, sampleEnd);
+    return static_cast<uint32_t>(start) * static_cast<uint32_t>(factor);
 }
 
-uint32_t sfz::Region::loopEnd(Oversampling factor) const noexcept
+uint32_t sfz::Region::loopEnd(MidiState& midiState, Oversampling factor) const noexcept
 {
-    return loopRange.getEnd() * static_cast<uint32_t>(factor);
+    auto end = loopRange.getEnd();
+    for (const auto& mod: loopEndCC)
+        end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
+
+    end = clamp(end, int64_t { 0 }, sampleEnd);
+    return static_cast<uint32_t>(end) * static_cast<uint32_t>(factor);
 }
 
 float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
@@ -1792,7 +1767,7 @@ float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
     return baseGain;
 }
 
-float sfz::Region::getCrossfadeGain() const noexcept
+float sfz::Region::getCrossfadeGain(const MidiState& midiState) const noexcept
 {
     float gain { 1.0f };
 

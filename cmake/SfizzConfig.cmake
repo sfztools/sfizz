@@ -14,6 +14,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
+# Process sources as UTF-8
+if(MSVC)
+    add_compile_options("/utf-8")
+endif()
+
 # Set Windows compatibility level to 7
 if(WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
@@ -50,10 +55,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         if(NOT ANDROID)
             add_compile_options(-mfloat-abi=hard)
         endif()
-    endif()
-    check_cxx_compiler_flag(-faligned-new SFIZZ_HAVE_FALIGNED_NEW)
-    if(SFIZZ_HAVE_FALIGNED_NEW)
-        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-faligned-new>)
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_STANDARD 17)

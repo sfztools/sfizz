@@ -5,11 +5,13 @@
 #include "SisterVoiceRing.h"
 #include "TriggerEvent.h"
 #include "VoiceManager.h"
+#include "Layer.h"
 #include "BitArray.h"
 #include "modulations/sources/ADSREnvelope.h"
 #include "modulations/sources/Controller.h"
 #include "modulations/sources/FlexEnvelope.h"
 #include "modulations/sources/ChannelAftertouch.h"
+#include "modulations/sources/PolyAftertouch.h"
 #include "modulations/sources/LFO.h"
 
 namespace sfz {
@@ -147,36 +149,42 @@ struct Synth::Impl final: public Parser::Listener {
      * @brief Start a voice for a specific region.
      * This will do the needed polyphony checks and voice stealing.
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param triggerEvent
      * @param ring
      */
-    void startVoice(Region* region, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
+    void startVoice(Layer* layer, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Start all delayed sustain release voices of the region if necessary
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param ring
      */
-    void startDelayedSustainReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    void startDelayedSustainReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Start all delayed sostenuto release voices of the region if necessary
      *
-     * @param region
+     * @param layer
      * @param delay
      * @param ring
      */
-    void startDelayedSostenutoReleases(Region* region, int delay, SisterVoiceRingBuilder& ring) noexcept;
+    void startDelayedSostenutoReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
      * @brief Finalize SFZ loading, following a successful execution of the
      *        parsing step.
      */
     void finalizeSfzLoad();
+
+    /**
+     * @brief Update the regions with the opcodes received through OSC if necessary
+     *
+     */
+    void updateRegions() noexcept;
 
     template<class T>
     static void collectUsedCCsFromCCMap(BitArray<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
@@ -218,6 +226,16 @@ struct Synth::Impl final: public Parser::Listener {
      */
     void setDefaultHdcc(int ccNumber, float value);
 
+    /**
+     * @brief Check if we have to kill any voice when starting a new one
+     *      on the specified region with the specified note/cc number
+     *
+     * @param region
+     * @param delay
+     * @param number
+     */
+    void checkOffGroups(const Region* region, int delay, int number);
+
     int numGroups_ { 0 };
     int numMasters_ { 0 };
 
@@ -239,25 +257,26 @@ struct Synth::Impl final: public Parser::Listener {
 
     // Set as sw_default if present in the file
     absl::optional<uint8_t> currentSwitch_;
-    bool currentSwitchChanged_ = true;
     std::vector<std::string> unknownOpcodes_;
     using RegionViewVector = std::vector<Region*>;
+    using LayerViewVector = std::vector<Layer*>;
     using VoiceViewVector = std::vector<Voice*>;
+    using LayerPtr = std::unique_ptr<Layer>;
     using RegionPtr = std::unique_ptr<Region>;
     using RegionSetPtr = std::unique_ptr<RegionSet>;
-    std::vector<RegionPtr> regions_;
+    std::vector<LayerPtr> layers_;
     VoiceManager voiceManager_;
 
     // These are more general "groups" than sfz and encapsulates the full hierarchy
     RegionSet* currentSet_ { nullptr };
     std::vector<RegionSetPtr> sets_;
 
-    std::array<RegionViewVector, 128> lastKeyswitchLists_;
-    std::array<RegionViewVector, 128> downKeyswitchLists_;
-    std::array<RegionViewVector, 128> upKeyswitchLists_;
-    RegionViewVector previousKeyswitchLists_;
-    std::array<RegionViewVector, 128> noteActivationLists_;
-    std::array<RegionViewVector, config::numCCs> ccActivationLists_;
+    std::array<LayerViewVector, 128> lastKeyswitchLists_;
+    std::array<LayerViewVector, 128> downKeyswitchLists_;
+    std::array<LayerViewVector, 128> upKeyswitchLists_;
+    LayerViewVector previousKeyswitchLists_;
+    std::array<LayerViewVector, 128> noteActivationLists_;
+    std::array<LayerViewVector, config::numCCs> ccActivationLists_;
 
     // Effect factory and buses
     EffectFactory effectFactory_;
@@ -276,8 +295,12 @@ struct Synth::Impl final: public Parser::Listener {
     // Singletons passed as references to the voices
     Resources resources_;
 
+    // Root path
+    std::string rootPath_;
+
     // Control opcodes
     std::string defaultPath_ { "" };
+    std::string image_ { "" };
     int noteOffset_ { Default::noteOffset };
     int octaveOffset_ { Default::octaveOffset };
 
@@ -287,6 +310,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::unique_ptr<FlexEnvelopeSource> genFlexEnvelope_;
     std::unique_ptr<ADSREnvelopeSource> genADSREnvelope_;
     std::unique_ptr<ChannelAftertouchSource> genChannelAftertouch_;
+    std::unique_ptr<PolyAftertouchSource> genPolyAftertouch_;
 
     // Settings per voice
     struct {
@@ -311,6 +335,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::array<float, config::numCCs> defaultCCValues_;
     BitArray<config::numCCs> currentUsedCCs_;
     BitArray<config::numCCs> changedCCsThisCycle_;
+    BitArray<config::numCCs> changedCCsLastCycle_;
 
     // Messaging
     sfizz_receive_t* broadcastReceiver = nullptr;
@@ -324,6 +349,16 @@ struct Synth::Impl final: public Parser::Listener {
     }
 
     bool playheadMoved_ { false };
+
+    struct OpcodeUpdate
+    {
+        int delay;
+        Region* region;
+        Opcode opcode;
+    };
+
+    std::vector<OpcodeUpdate> regionUpdates_;
+    SpinMutex regionUpdatesMutex_;
 };
 
 } // namespace sfz

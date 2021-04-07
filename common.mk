@@ -59,6 +59,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModMatrix.cpp \
 	src/sfizz/modulations/sources/ADSREnvelope.cpp \
 	src/sfizz/modulations/sources/ChannelAftertouch.cpp \
+	src/sfizz/modulations/sources/PolyAftertouch.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
 	src/sfizz/modulations/sources/FlexEnvelope.cpp \
 	src/sfizz/modulations/sources/LFO.cpp \
@@ -89,6 +90,7 @@ SFIZZ_SOURCES = \
 	src/sfizz/FlexEGDescription.cpp \
 	src/sfizz/FlexEnvelope.cpp \
 	src/sfizz/Interpolators.cpp \
+	src/sfizz/Layer.cpp \
 	src/sfizz/Logger.cpp \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \
@@ -214,9 +216,6 @@ SFIZZ_SOURCES += \
 # absl::exponential_biased
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/exponential_biased.cc
-# absl::dynamic_annotations
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/dynamic_annotations.cc
 # absl::malloc_internal
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/low_level_alloc.cc
@@ -301,6 +300,9 @@ SFIZZ_SOURCES += \
 # absl::city
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/hash/internal/city.cc
+# absl::wyhash
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/hash/internal/wyhash.cc
 # absl::int128
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/numeric/int128.cc

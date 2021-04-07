@@ -6,12 +6,10 @@
 
 #include "LFO.h"
 #include "LFODescription.h"
-#include "BeatClock.h"
-#include "BufferPool.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
 #include "Config.h"
-#include "modulations/ModMatrix.h"
+#include "Resources.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModId.h"
 #include <array>
@@ -21,33 +19,33 @@
 namespace sfz {
 
 struct LFO::Impl {
-    explicit Impl(BufferPool& bufferPool, BeatClock* beatClock, ModMatrix* modMatrix)
-        : bufferPool_(bufferPool),
-          beatClock_(beatClock),
-          modMatrix_(modMatrix),
+    explicit Impl(Resources& resources)
+        : resources_(resources),
           sampleRate_(config::defaultSampleRate),
           desc_(&LFODescription::getDefault())
     {
     }
 
-    BufferPool& bufferPool_;
-    BeatClock* beatClock_ = nullptr;
-    ModMatrix* modMatrix_ = nullptr;
+    Resources& resources_;
     float sampleRate_ = 0;
 
     // control
     const LFODescription* desc_ = nullptr;
+    ModMatrix::TargetId beatsKeyId;
+    ModMatrix::TargetId freqKeyId;
+    ModMatrix::TargetId phaseKeyId;
 
     // state
     size_t delayFramesLeft_ = 0;
+    float fadeTime_ = 0;
     float fadePosition_ = 0;
     std::array<float, config::maxLFOSubs> subPhases_ {{}};
     std::array<float, config::maxLFOSubs> sampleHoldMem_ {{}};
     std::array<int, config::maxLFOSubs> sampleHoldState_ {{}};
 };
 
-LFO::LFO(BufferPool& bufferPool, BeatClock* beatClock, ModMatrix* modMatrix)
-    : impl_(new Impl(bufferPool, beatClock, modMatrix))
+LFO::LFO(Resources& resources)
+    : impl_(new Impl(resources))
 {
 }
 
@@ -62,7 +60,12 @@ void LFO::setSampleRate(double sampleRate)
 
 void LFO::configure(const LFODescription* desc)
 {
-    impl_->desc_ = desc ? desc : &LFODescription::getDefault();
+    Impl& impl = *impl_;
+    ModMatrix& modMatrix = impl.resources_.modMatrix;
+    impl.desc_ = desc ? desc : &LFODescription::getDefault();
+    impl.beatsKeyId = modMatrix.findTarget(desc->beatsKey);
+    impl.freqKeyId = modMatrix.findTarget(desc->freqKey);
+    impl.phaseKeyId = modMatrix.findTarget(desc->phaseKey);
 }
 
 void LFO::start(unsigned triggerDelay)
@@ -70,16 +73,25 @@ void LFO::start(unsigned triggerDelay)
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
     const float sampleRate = impl.sampleRate_;
+    const MidiState& state = impl.resources_.midiState;
 
     impl.subPhases_.fill(0.0f);
     impl.sampleHoldMem_.fill(0.0f);
     impl.sampleHoldState_.fill(0);
 
-    const float delay = desc.delay;
+    float delay = desc.delay;
+    for (const auto& mod: desc.delayCC)
+        delay += mod.data * state.getCCValue(mod.cc);
+
     size_t delayFrames = (delay > 0) ? static_cast<size_t>(std::ceil(sampleRate * delay)) : 0u;
     impl.delayFramesLeft_ = triggerDelay + delayFrames;
 
-    impl.fadePosition_ = (desc.fade > 0) ? 0.0f : 1.0f;
+    float fade = desc.fade;
+    for (const auto& mod: desc.fadeCC)
+        fade += mod.data * state.getCCValue(mod.cc);
+
+    impl.fadeTime_ = fade;
+    impl.fadePosition_ = (fade > 0) ? 0.0f : 1.0f;
 }
 
 template <>
@@ -218,6 +230,7 @@ void LFO::process(absl::Span<float> out)
 {
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
+    BufferPool& pool = impl.resources_.bufferPool;
     size_t numFrames = out.size();
 
     fill(out, 0.0f);
@@ -235,7 +248,7 @@ void LFO::process(absl::Span<float> out)
     if (countSubs < 1)
         return;
 
-    auto phasesTemp = impl.bufferPool_.getBuffer(numFrames);
+    auto phasesTemp = pool.getBuffer(numFrames);
     if (!phasesTemp) {
         ASSERTFALSE;
         fill(out, 0.0f);
@@ -289,7 +302,6 @@ void LFO::process(absl::Span<float> out)
 void LFO::processFadeIn(absl::Span<float> out)
 {
     Impl& impl = *impl_;
-    const LFODescription& desc = *impl.desc_;
     const float samplePeriod = 1.0f / impl.sampleRate_;
     size_t numFrames = out.size();
 
@@ -297,7 +309,7 @@ void LFO::processFadeIn(absl::Span<float> out)
     if (fadePosition >= 1.0f)
         return;
 
-    const float fadeTime = desc.fade;
+    const float fadeTime = impl.fadeTime_;
     const float fadeStep = samplePeriod / fadeTime;
 
     for (size_t i = 0; i < numFrames && fadePosition < 1; ++i) {
@@ -311,9 +323,9 @@ void LFO::processFadeIn(absl::Span<float> out)
 void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
 {
     Impl& impl = *impl_;
-    BufferPool& bufferPool = impl.bufferPool_;
-    BeatClock* beatClock = impl.beatClock_;
-    ModMatrix* modMatrix = impl.modMatrix_;
+    BufferPool& bufferPool = impl.resources_.bufferPool;
+    BeatClock& beatClock = impl.resources_.beatClock;
+    ModMatrix& modMatrix = impl.resources_.modMatrix;
     const LFODescription& desc = *impl.desc_;
     const LFODescription::Sub& sub = desc.sub[nth];
     const float samplePeriod = 1.0f / impl.sampleRate_;
@@ -329,39 +341,39 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
     // modulations
     const float* beatsMod = nullptr;
     const float* freqMod = nullptr;
-    if (modMatrix) {
-        // Note(jpc) we might switch between beats and frequency, if host
-        //           switches play state on and off; continually generate both.
-        beatsMod = modMatrix->getModulationByKey(desc.beatsKey);
-        freqMod = modMatrix->getModulationByKey(desc.freqKey);
-    }
+    const float* phaseMod = nullptr;
+    // Note(jpc) we might switch between beats and frequency, if host
+    //           switches play state on and off; continually generate both.
+    beatsMod = modMatrix.getModulation(impl.beatsKeyId);
+    freqMod = modMatrix.getModulation(impl.freqKeyId);
+    phaseMod = modMatrix.getModulation(impl.phaseKeyId);
 
-    if (beatClock && beatClock->isPlaying() && beats > 0) {
+    if (beatClock.isPlaying() && beats > 0) {
         // generate using the beat clock
         float beatRatio = (ratio > 0) ? (1.0f / ratio) : 0.0f;
 
         if (!beatsMod)
-            beatClock->calculatePhase(beats * beatRatio, phases.data());
+            beatClock.calculatePhase(beats * beatRatio, phases.data());
         else {
             auto temp = bufferPool.getBuffer(numFrames);
             if (!temp) {
                 ASSERTFALSE;
-                beatClock->calculatePhase(beats * beatRatio, phases.data());
+                beatClock.calculatePhase(beats * beatRatio, phases.data());
             }
             else {
                 fill(*temp, beats);
                 add(absl::MakeConstSpan(beatsMod, numFrames), *temp);
                 applyGain1(beatRatio, *temp);
-                beatClock->calculatePhaseModulated(temp->data(), phases.data());
+                beatClock.calculatePhaseModulated(temp->data(), phases.data());
             }
         }
     }
     else {
         // generate using the frequency
         if (!freqMod) {
+            float incr = ratio * samplePeriod * baseFreq;
             for (size_t i = 0; i < numFrames; ++i) {
                 phases[i] = phase;
-                float incr = ratio * samplePeriod * baseFreq;
                 phase = wrapPhase(phase + incr);
             }
         }
@@ -372,13 +384,16 @@ void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
                 phase = wrapPhase(phase + incr);
             }
         }
+
     }
 
     // apply phase offsets
-    for (size_t i = 0; i < numFrames; ++i) {
-        float withOffset = phases[i] + phaseOffset;
-        withOffset -= (int)withOffset;
-        phases[i] = withOffset;
+    if (!phaseMod) {
+        for (size_t i = 0; i < numFrames; ++i)
+            phases[i] = wrapPhase(phases[i] + phaseOffset);
+    } else {
+        for (size_t i = 0; i < numFrames; ++i)
+            phases[i] = wrapPhase(phases[i] + phaseOffset + phaseMod[i]);
     }
 
     impl.subPhases_[nth] = phase;

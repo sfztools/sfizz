@@ -22,9 +22,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     // create update objects
     oscUpdate_ = Steinberg::owned(new OSCUpdate);
     noteUpdate_ = Steinberg::owned(new NoteUpdate);
-    sfzPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateSfz));
-    scalaPathUpdate_ = Steinberg::owned(new FilePathUpdate(kFilePathUpdateScala));
-    processorStateUpdate_ = Steinberg::owned(new ProcessorStateUpdate);
+    sfzUpdate_ = Steinberg::owned(new SfzUpdate);
+    sfzDescriptionUpdate_ = Steinberg::owned(new SfzDescriptionUpdate);
+    scalaUpdate_ = Steinberg::owned(new ScalaUpdate);
     playStateUpdate_ = Steinberg::owned(new PlayStateUpdate);
 
     // Parameters
@@ -72,8 +72,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         shortTitle.printf("CC%u", i);
 
         parameters.addParameter(
-            title, nullptr, 0, 0, Vst::ParameterInfo::kNoFlags,
-            pid++, Vst::kRootUnitId, shortTitle);
+            SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
+                title, pid++, nullptr, 0, Vst::ParameterInfo::kCanAutomate,
+                Vst::kRootUnitId, shortTitle));
     }
 
     // Initial MIDI mapping
@@ -157,42 +158,6 @@ tresult SfizzVstControllerNoUi::setParam(Vst::ParamID tag, float value)
     return setParamNormalized(tag, range.normalize(value));
 }
 
-tresult PLUGIN_API SfizzVstControllerNoUi::setParamNormalized(Vst::ParamID tag, Vst::ParamValue normValue)
-{
-    tresult r = EditController::setParamNormalized(tag, normValue);
-    if (r != kResultTrue)
-        return r;
-
-    processorStateUpdate_->access([tag, normValue](SfizzVstState& state) {
-        const SfizzRange range = SfizzRange::getForParameter(tag);
-        switch (tag) {
-        case kPidVolume:
-            state.volume = range.denormalize(normValue);
-            break;
-        case kPidNumVoices:
-            state.numVoices = (int32)range.denormalize(normValue);
-            break;
-        case kPidOversampling:
-            state.oversamplingLog2 = (int32)range.denormalize(normValue);
-            break;
-        case kPidPreloadSize:
-            state.preloadSize = (int32)range.denormalize(normValue);
-            break;
-        case kPidScalaRootKey:
-            state.scalaRootKey = (int32)range.denormalize(normValue);
-            break;
-        case kPidTuningFrequency:
-            state.tuningFrequency = (float)range.denormalize(normValue);
-            break;
-        case kPidStretchedTuning:
-            state.stretchedTuning = range.denormalize(normValue);
-            break;
-        }
-    });
-
-    return kResultTrue;
-}
-
 tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
 {
     SfizzVstState s;
@@ -200,8 +165,6 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     tresult r = s.load(stream);
     if (r != kResultTrue)
         return r;
-
-    processorStateUpdate_->setState(s);
 
     setParam(kPidVolume, s.volume);
     setParam(kPidNumVoices, s.numVoices);
@@ -211,10 +174,16 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     setParam(kPidTuningFrequency, s.tuningFrequency);
     setParam(kPidStretchedTuning, s.stretchedTuning);
 
-    sfzPathUpdate_->setPath(s.sfzFile);
-    sfzPathUpdate_->deferUpdate();
-    scalaPathUpdate_->setPath(s.scalaFile);
-    scalaPathUpdate_->deferUpdate();
+    uint32 ccLimit = uint32(std::min(s.controllers.size(), size_t(sfz::config::numCCs)));
+    for (uint32 cc = 0; cc < ccLimit; ++cc) {
+        if (absl::optional<float> value = s.controllers[cc])
+            setParam(kPidCC0 + cc, *value);
+    }
+
+    sfzUpdate_->setPath(s.sfzFile);
+    sfzUpdate_->deferUpdate();
+    scalaUpdate_->setPath(s.scalaFile);
+    scalaUpdate_->deferUpdate();
 
     return kResultTrue;
 }
@@ -230,35 +199,43 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
     const char* id = message->getMessageID();
     Vst::IAttributeList* attr = message->getAttributes();
 
-    if (!strcmp(id, "LoadedSfz")) {
+    ///
+    auto stringFromBinaryAttribute = [attr](const char* id, absl::string_view& string) -> tresult {
         const void* data = nullptr;
         uint32 size = 0;
-        result = attr->getBinary("File", data, size);
+        tresult result = attr->getBinary(id, data, size);
+        if (result == kResultTrue)
+            string = absl::string_view(reinterpret_cast<const char*>(data), size);
+        return result;
+    };
 
+    ///
+    if (!strcmp(id, "LoadedSfz")) {
+        absl::string_view sfzFile;
+        absl::string_view sfzDescriptionBlob;
+
+        result = stringFromBinaryAttribute("File", sfzFile);
         if (result != kResultTrue)
             return result;
 
-        std::string sfzFile(static_cast<const char *>(data), size);
-        processorStateUpdate_->access([&sfzFile](SfizzVstState& state) {
-            state.sfzFile = sfzFile;
-        });
-        sfzPathUpdate_->setPath(std::move(sfzFile));
-        sfzPathUpdate_->deferUpdate();
+        result = stringFromBinaryAttribute("Description", sfzDescriptionBlob);
+        if (result != kResultTrue)
+            return result;
+
+        sfzUpdate_->setPath(std::string(sfzFile));
+        sfzUpdate_->deferUpdate();
+        sfzDescriptionUpdate_->setDescription(std::string(sfzDescriptionBlob));
+        sfzDescriptionUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "LoadedScala")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("File", data, size);
+        absl::string_view scalaFile;
 
+        result = stringFromBinaryAttribute("File", scalaFile);
         if (result != kResultTrue)
             return result;
 
-        std::string scalaFile(static_cast<const char *>(data), size);
-        processorStateUpdate_->access([&scalaFile](SfizzVstState& state) {
-            state.scalaFile = scalaFile;
-        });
-        scalaPathUpdate_->setPath(std::move(scalaFile));
-        scalaPathUpdate_->deferUpdate();
+        scalaUpdate_->setPath(std::string(scalaFile));
+        scalaUpdate_->deferUpdate();
     }
     else if (!strcmp(id, "NotifiedPlayState")) {
         const void* data = nullptr;
@@ -298,6 +275,25 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         noteUpdate_->changed();
         noteUpdate_->clear();
     }
+    else if (!strcmp(id, "Automate")) {
+        const void* data = nullptr;
+        uint32 size = 0;
+        result = attr->getBinary("Data", data, size);
+
+        if (result != kResultTrue)
+            return result;
+
+        const uint8* pos = reinterpret_cast<const uint8*>(data);
+        const uint8* end = pos + size;
+
+        while (end - pos >= sizeof(uint32) + sizeof(float)) {
+            Vst::ParamID pid = *reinterpret_cast<const uint32*>(pos);
+            pos += sizeof(uint32);
+            float value = *reinterpret_cast<const float*>(pos);
+            pos += sizeof(float);
+            setParam(pid, value);
+        }
+    }
 
     return result;
 }
@@ -314,8 +310,9 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
         return nullptr;
 
     std::vector<FObject*> continuousUpdates;
-    continuousUpdates.push_back(sfzPathUpdate_);
-    continuousUpdates.push_back(scalaPathUpdate_);
+    continuousUpdates.push_back(sfzUpdate_);
+    continuousUpdates.push_back(sfzDescriptionUpdate_);
+    continuousUpdates.push_back(scalaUpdate_);
     continuousUpdates.push_back(playStateUpdate_);
     for (uint32 i = 0, n = parameters.getParameterCount(); i < n; ++i)
         continuousUpdates.push_back(parameters.getParameterByIndex(i));

@@ -68,6 +68,10 @@ struct OpcodeSpec
     Range<T> bounds;
     int flags;
 
+    template <class U>
+    using IsNormalizable = std::integral_constant<
+        bool, std::is_arithmetic<U>::value && !std::is_same<U, bool>::value>;
+
     /**
      * @brief Normalizes an input as needed for the spec
      *
@@ -76,7 +80,7 @@ struct OpcodeSpec
      * @return U
      */
     template<class U=T>
-    typename std::enable_if<std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    typename std::enable_if<IsNormalizable<U>::value, U>::type normalizeInput(U input) const
     {
         constexpr int needsOperation {
             kNormalizePercent |
@@ -107,7 +111,7 @@ struct OpcodeSpec
      * @return U
      */
     template<class U=T>
-    typename std::enable_if<!std::is_arithmetic<U>::value, U>::type normalizeInput(U input) const
+    typename std::enable_if<!IsNormalizable<U>::value, U>::type normalizeInput(U input) const
     {
         return input;
     }
@@ -123,10 +127,12 @@ namespace Default
     extern const OpcodeSpec<int64_t> offset;
     extern const OpcodeSpec<int64_t> offsetMod;
     extern const OpcodeSpec<int64_t> offsetRandom;
-    extern const OpcodeSpec<uint32_t> sampleEnd;
+    extern const OpcodeSpec<int64_t> sampleEnd;
+    extern const OpcodeSpec<int64_t> sampleEndMod;
     extern const OpcodeSpec<uint32_t> sampleCount;
-    extern const OpcodeSpec<uint32_t> loopStart;
-    extern const OpcodeSpec<uint32_t> loopEnd;
+    extern const OpcodeSpec<int64_t> loopStart;
+    extern const OpcodeSpec<int64_t> loopEnd;
+    extern const OpcodeSpec<int64_t> loopMod;
     extern const OpcodeSpec<uint32_t> loopCount;
     extern const OpcodeSpec<float> loopCrossfade;
     extern const OpcodeSpec<float> oscillatorPhase;
@@ -157,6 +163,8 @@ namespace Default
     extern const OpcodeSpec<float> hiBipolar;
     extern const OpcodeSpec<float> loChannelAftertouch;
     extern const OpcodeSpec<float> hiChannelAftertouch;
+    extern const OpcodeSpec<float> loPolyAftertouch;
+    extern const OpcodeSpec<float> hiPolyAftertouch;
     extern const OpcodeSpec<uint16_t> ccNumber;
     extern const OpcodeSpec<uint8_t> curveCC;
     extern const OpcodeSpec<uint16_t> smoothCC;
@@ -219,8 +227,11 @@ namespace Default
     extern const OpcodeSpec<float> lfoBeats;
     extern const OpcodeSpec<float> lfoBeatsMod;
     extern const OpcodeSpec<float> lfoPhase;
+    extern const OpcodeSpec<float> lfoPhaseMod;
     extern const OpcodeSpec<float> lfoDelay;
+    extern const OpcodeSpec<float> lfoDelayMod;
     extern const OpcodeSpec<float> lfoFade;
+    extern const OpcodeSpec<float> lfoFadeMod;
     extern const OpcodeSpec<uint32_t> lfoCount;
     extern const OpcodeSpec<uint32_t> lfoSteps;
     extern const OpcodeSpec<float> lfoStepX;
@@ -231,6 +242,7 @@ namespace Default
     extern const OpcodeSpec<float> egTime;
     extern const OpcodeSpec<float> egRelease;
     extern const OpcodeSpec<float> egTimeMod;
+    extern const OpcodeSpec<float> egSustain;
     extern const OpcodeSpec<float> egPercent;
     extern const OpcodeSpec<float> egPercentMod;
     extern const OpcodeSpec<float> egDepth;

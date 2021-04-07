@@ -9,6 +9,7 @@ include(Catch)
 set(SFIZZ_TEST_SOURCES
     DirectRegionT.cpp
     RegionValuesT.cpp
+    RegionValuesSetT.cpp
     TestHelpers.h
     TestHelpers.cpp
     ParsingT.cpp

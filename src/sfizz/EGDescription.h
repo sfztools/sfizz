@@ -71,8 +71,8 @@ struct EGDescription {
     float delay { Default::egTime };
     float hold { Default::egTime };
     float release { Default::egTime };
-    float start { Default::egPercent.bounds.getStart() };
-    float sustain { Default::egPercent.bounds.getEnd() };
+    float start { Default::egPercent };
+    float sustain { Default::egSustain };
     float depth { Default::egDepth };
     float vel2attack { Default::egTimeMod };
     float vel2decay { Default::egTimeMod };
@@ -104,7 +104,7 @@ struct EGDescription {
         for (auto& mod: ccAttack) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTime.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the decay with possibly a CC modifier and a velocity modifier
@@ -120,7 +120,7 @@ struct EGDescription {
         for (auto& mod: ccDecay) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTime.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the delay with possibly a CC modifier and a velocity modifier
@@ -136,7 +136,7 @@ struct EGDescription {
         for (auto& mod: ccDelay) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTime.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
@@ -152,7 +152,7 @@ struct EGDescription {
         for (auto& mod: ccHold) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTime.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the release duration with possibly a CC modifier and a velocity modifier
@@ -168,7 +168,7 @@ struct EGDescription {
         for (auto& mod: ccRelease) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTime.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the starting level with possibly a CC modifier and a velocity modifier
@@ -184,7 +184,7 @@ struct EGDescription {
         for (auto& mod: ccStart) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egPercent.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the sustain level with possibly a CC modifier and a velocity modifier
@@ -200,7 +200,7 @@ struct EGDescription {
         for (auto& mod: ccSustain) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egPercent.bounds.clamp(returnedValue);
+        return returnedValue;
     }
     LEAK_DETECTOR(EGDescription);
 };

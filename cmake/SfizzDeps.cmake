@@ -6,9 +6,22 @@ find_package(OpenMP)
 if(OPENMP_FOUND)
     add_library(sfizz_openmp INTERFACE)
     add_library(sfizz::openmp ALIAS sfizz_openmp)
+
+    # OpenMP flags are provided as a space-separated string, we need a list
+    if(NOT CMAKE_VERSION VERSION_LESS 3.9)
+        separate_arguments(SFIZZ_OpenMP_C_OPTIONS NATIVE_COMMAND "${OpenMP_C_FLAGS}")
+        separate_arguments(SFIZZ_OpenMP_CXX_OPTIONS NATIVE_COMMAND "${OpenMP_CXX_FLAGS}")
+    elseif(CMAKE_HOST_WIN32)
+        separate_arguments(SFIZZ_OpenMP_C_OPTIONS WINDOWS_COMMAND "${OpenMP_C_FLAGS}")
+        separate_arguments(SFIZZ_OpenMP_CXX_OPTIONS WINDOWS_COMMAND "${OpenMP_CXX_FLAGS}")
+    else()
+        separate_arguments(SFIZZ_OpenMP_C_OPTIONS UNIX_COMMAND "${OpenMP_C_FLAGS}")
+        separate_arguments(SFIZZ_OpenMP_CXX_OPTIONS UNIX_COMMAND "${OpenMP_CXX_FLAGS}")
+    endif()
+
     target_compile_options(sfizz_openmp INTERFACE
-        $<$<COMPILE_LANGUAGE:C>:${OpenMP_C_FLAGS}>
-        $<$<COMPILE_LANGUAGE:CXX>:${OpenMP_CXX_FLAGS}>)
+        $<$<COMPILE_LANGUAGE:C>:${SFIZZ_OpenMP_C_OPTIONS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${SFIZZ_OpenMP_CXX_OPTIONS}>)
 endif()
 
 # Find macOS system libraries
