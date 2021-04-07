@@ -330,7 +330,8 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
         lv2_atom_forge_frame_time(forge, 0) &&
         lv2_atom_forge_atom(forge, osc_size, self->sfizz_osc_blob_uri) &&
         lv2_atom_forge_raw(forge, osc_temp, osc_size);
-    lv2_atom_forge_pad(forge, osc_size);
+    if (write_ok)
+        lv2_atom_forge_pad(forge, osc_size);
 
     (void)write_ok;
 }
