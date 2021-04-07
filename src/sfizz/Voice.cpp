@@ -693,7 +693,7 @@ void Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void Voice::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
-    impl.sampleRate_ = sampleRate * impl.resources_.synthConfig.OSFactor;
+    impl.sampleRate_ = sampleRate * float(impl.resources_.synthConfig.OSFactor);
     impl.gainSmoother_.setSmoothing(config::gainSmoothing, impl.sampleRate_);
     impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, impl.sampleRate_);
 
@@ -722,7 +722,7 @@ void Voice::setSampleRate(float sampleRate) noexcept
     downsampleFilter.setType(FilterType::kFilterLpf6p);
     downsampleFilter.setChannels(2);
     downsampleFilter.init(sampleRate);
-    downsampleFilter.prepare(0.48 * sampleRate / impl.resources_.synthConfig.OSFactor, 0.0, 0.0);
+    downsampleFilter.prepare(0.48f * sampleRate / impl.resources_.synthConfig.OSFactor, 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -768,7 +768,7 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     if (impl.resources_.synthConfig.OSFactor > 1)
-	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48 * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor / impl.resources_.synthConfig.OSFactor, 0.0, 0.0, downsampled_buffer.getNumFrames());
+	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48f * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor / impl.resources_.synthConfig.OSFactor, 0.0, 0.0, downsampled_buffer.getNumFrames());
 
     for (size_t i = 0; i < buffer.getNumChannels(); ++i)
 {
@@ -778,7 +778,7 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     if (impl.resources_.synthConfig.OSFactor > 1)
     for (int k = 1; k < impl.resources_.synthConfig.OSFactor; ++k)
          buffer[i][j] += downsampled_buffer[i][j * impl.resources_.synthConfig.OSFactor + k];
-    buffer[i][j] /= impl.resources_.synthConfig.OSFactor;
+    buffer[i][j] /= float(impl.resources_.synthConfig.OSFactor);
 }
 }
 
@@ -1202,8 +1202,8 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 	float mod = 1.0;
 
-        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5 / resources_.synthConfig.OSFactor)
-            mod = 0.5 / (pitchRatio_ * speedRatio_);
+        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5f / resources_.synthConfig.OSFactor)
+            mod = 0.5f / (pitchRatio_ * speedRatio_);
 
         fillInterpolatedWithQuality<false>(
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality, mod);
