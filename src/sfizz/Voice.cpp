@@ -768,7 +768,7 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     if (impl.resources_.synthConfig.OSFactor > 1)
-	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48f * impl.sampleRate_ / impl.resources_.synthConfig.OSFactor / float(impl.resources_.synthConfig.OSFactor), 0.0, 0.0, downsampled_buffer.getNumFrames());
+	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.synthConfig.OSFactor) / float(impl.resources_.synthConfig.OSFactor), 0.0, 0.0, downsampled_buffer.getNumFrames());
 
     for (size_t i = 0; i < buffer.getNumChannels(); ++i)
 {
