@@ -99,7 +99,7 @@ midnam:update a lv2:Feature .
     lv2:symbol "control" ;
     lv2:name "Control",
       "Contrôle"@fr ;
-    rsz:minimumSize 65536 ;
+    rsz:minimumSize 524288 ;
   ] , [
     a lv2:OutputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
@@ -108,7 +108,7 @@ midnam:update a lv2:Feature .
     lv2:symbol "notify" ;
     lv2:name "Notify",
       "Notification"@fr ;
-    rsz:minimumSize 65536 ;
+    rsz:minimumSize 524288 ;
   ] , [
     a lv2:OutputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
@@ -118,7 +118,7 @@ midnam:update a lv2:Feature .
     lv2:symbol "automate" ;
     lv2:name "Automate",
       "Automatisation"@fr ;
-    rsz:minimumSize 65536 ;
+    rsz:minimumSize 524288 ;
   ] , [
     a lv2:AudioPort, lv2:OutputPort ;
     lv2:index 3 ;
