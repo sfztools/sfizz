@@ -14,6 +14,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
+# Process sources as UTF-8
+if(MSVC)
+    add_compile_options("/utf-8")
+endif()
+
 # Set Windows compatibility level to 7
 if(WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
