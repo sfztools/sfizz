@@ -21,6 +21,7 @@ clients/sfzprint
 
 /plugins/vst/download/
 /plugins/vst/external/vstsdk2.4/
+/plugins/vst/external/CoreAudioUtilityClasses/
 
 /plugins/editor/external/fluentui-system-icons/
 
