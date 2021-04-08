@@ -11,7 +11,7 @@ widget_class mainView {open
     class Background
   }
   Fl_Group {} {
-    comment {theme=darkTheme} open
+    comment {palette=invertedPalette} open
     xywh {0 0 800 110}
     class LogicalGroup
   } {
