@@ -56,6 +56,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/ImageHelpers.cpp
     src/editor/NativeHelpers.h
     src/editor/NativeHelpers.cpp
+    src/editor/VSTGUIHelpers.h
+    src/editor/VSTGUIHelpers.cpp
     src/editor/layout/main.hpp
     src/editor/layout/about.hpp
     src/editor/utility/vstgui_after.h
@@ -74,7 +76,8 @@ if(APPLE)
     find_library(APPLE_CORESERVICES_LIBRARY "CoreServices")
     find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
     target_sources(sfizz_editor PRIVATE
-        src/editor/NativeHelpers.mm)
+        src/editor/NativeHelpers.mm
+        src/editor/VSTGUIHelpers.mm)
     target_link_libraries(sfizz_editor PRIVATE
         "${APPLE_APPKIT_LIBRARY}"
         "${APPLE_CORESERVICES_LIBRARY}"
