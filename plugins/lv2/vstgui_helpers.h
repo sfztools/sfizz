@@ -87,3 +87,15 @@ private:
 };
 }
 #endif
+
+namespace VSTGUI
+{
+class VSTGUIInitializer {
+public:
+    VSTGUIInitializer();
+    ~VSTGUIInitializer();
+private:
+    VSTGUIInitializer(const VSTGUIInitializer&) = delete;
+    VSTGUIInitializer& operator=(const VSTGUIInitializer&) = delete;
+};
+}

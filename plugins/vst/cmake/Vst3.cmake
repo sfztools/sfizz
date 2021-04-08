@@ -57,6 +57,9 @@ endif()
 
 function(plugin_add_vst3sdk NAME)
     target_link_libraries("${NAME}" PRIVATE vst3sdk)
+    target_sources("${NAME}" PRIVATE
+        "${VST3SDK_BASEDIR}/public.sdk/source/main/moduleinit.cpp"
+        "${VST3SDK_BASEDIR}/public.sdk/source/main/pluginfactory.cpp")
     if(WIN32)
         target_sources("${NAME}" PRIVATE
             "${VST3SDK_BASEDIR}/public.sdk/source/main/dllmain.cpp")
@@ -98,9 +101,9 @@ add_library(vst3sdk_vstgui STATIC EXCLUDE_FROM_ALL
 if(WIN32)
     target_sources(vst3sdk_vstgui PRIVATE
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp")
+    target_compile_definitions(vst3sdk_vstgui PRIVATE "SMTG_MODULE_IS_BUNDLE=1")
 endif()
 target_link_libraries(vst3sdk_vstgui PUBLIC vst3sdk sfizz::vstgui)
-target_compile_definitions(vst3sdk_vstgui PRIVATE "SMTG_MODULE_IS_BUNDLE=1")
 
 function(plugin_add_vstgui NAME)
     target_link_libraries("${NAME}" PRIVATE vst3sdk_vstgui)

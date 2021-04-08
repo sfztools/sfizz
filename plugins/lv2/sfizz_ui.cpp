@@ -57,8 +57,10 @@
 #include "editor/utility/vstgui_before.h"
 #include "vstgui/lib/cframe.h"
 #include "vstgui/lib/platform/iplatformframe.h"
+#include "vstgui/lib/platform/platformfactory.h"
 #if defined(_WIN32)
 #include "vstgui/lib/platform/platform_win32.h"
+#include "vstgui/lib/platform/win32/win32factory.h"
 #endif
 #include "editor/utility/vstgui_after.h"
 using namespace VSTGUI;
@@ -83,6 +85,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
 #if MAC
     BundleRefInitializer bundleRefInitializer;
 #endif
+    VSTGUIInitializer vstguiInitializer;
     LV2UI_Write_Function write = nullptr;
     LV2UI_Controller con = nullptr;
     LV2_URID_Map *map = nullptr;
@@ -229,8 +232,9 @@ instantiate(const LV2UI_Descriptor *descriptor,
     if (!fixBundlePath(realBundlePath))
         return nullptr;
 
+    const Win32Factory* winFactory = VSTGUI::getPlatformFactory().asWin32Factory();
     std::string resourcePath = realBundlePath + "\\Contents\\Resources\\";
-    IWin32PlatformFrame::setResourceBasePath(resourcePath.c_str());
+    winFactory->setResourceBasePath(resourcePath.c_str());
 #endif
 
     // makes labels refresh correctly
@@ -249,7 +253,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     config = &x11Config;
 #endif
 
-    if (!uiFrame->open(parentWindowId, kDefaultNative, config))
+    if (!uiFrame->open(parentWindowId, PlatformType::kDefaultNative, config))
         return nullptr;
 
     Editor *editor = new Editor(*self);

@@ -334,8 +334,10 @@ FUnknown* SfizzVstController::createInstance(void*)
     return static_cast<Vst::IEditController*>(new SfizzVstController);
 }
 
-/*
-  Note(jpc) Generated at random with uuidgen.
-  Can't find docs on it... maybe it's to register somewhere?
- */
+template <>
+FUnknown* createInstance<SfizzVstController>(void* context)
+{
+    return SfizzVstController::createInstance(context);
+}
+
 FUID SfizzVstController::cid = SfizzVstController_cid;
