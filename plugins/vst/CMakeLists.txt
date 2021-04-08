@@ -235,12 +235,7 @@ elseif(SFIZZ_AU)
         "${CA_UTILITY_BASEDIR}/CoreAudio/PublicUtility")
 
     # Add VST hosting classes
-    target_sources(${AUPLUGIN_PRJ_NAME} PRIVATE
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/eventlist.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/hostclasses.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/parameterchanges.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/processdata.cpp")
+    target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE vst3sdk_hosting)
 
     # Add generated source
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")

@@ -68,6 +68,29 @@ function(plugin_add_vst3sdk NAME)
     endif()
 endfunction()
 
+# --- VST3SDK hosting ---
+add_library(vst3sdk_hosting STATIC EXCLUDE_FROM_ALL
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/connectionproxy.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/eventlist.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/hostclasses.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/parameterchanges.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/plugprovider.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/processdata.cpp")
+if(FALSE)
+    if(WIN32)
+        target_sources(vst3sdk_hosting PRIVATE
+            "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_win32.cpp")
+    elseif(APPLE)
+        target_sources(vst3sdk_hosting PRIVATE
+            "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_mac.mm")
+    else()
+        target_sources(vst3sdk_hosting PRIVATE
+            "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_linux.cpp")
+    endif()
+endif()
+target_link_libraries(vst3sdk_hosting PUBLIC vst3sdk)
+
 # --- VSTGUI ---
 add_library(vst3sdk_vstgui STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstguieditor.cpp")
