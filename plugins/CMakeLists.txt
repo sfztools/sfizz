@@ -35,6 +35,8 @@ add_library(sfizz::plugins-common ALIAS plugins-common)
 # Link system dependencies
 if(WIN32)
 elseif(APPLE)
+    target_link_libraries(plugins-common PRIVATE
+        "${APPLE_FOUNDATION_LIBRARY}")
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GLIB REQUIRED glib-2.0)
