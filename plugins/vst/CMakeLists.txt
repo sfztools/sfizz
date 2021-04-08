@@ -145,18 +145,9 @@ else()
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    gw_target_warn(${VSTPLUGIN_PRJ_NAME} PRIVATE
-        "-Wno-extra"
-        "-Wno-multichar"
-        "-Wno-reorder"
-        "-Wno-class-memaccess"
-        "-Wno-ignored-qualifiers"
-        "-Wno-unknown-pragmas"
-        "-Wno-unused-function"
-        "-Wno-unused-parameter"
-        "-Wno-unused-variable")
-endif()
+gw_target_warn(${VSTPLUGIN_PRJ_NAME} PRIVATE
+    "-Wno-ignored-qualifiers"
+    "-Wno-unused-parameter")
 
 # To help debugging the link only
 if(FALSE)
@@ -323,18 +314,9 @@ elseif(SFIZZ_AU)
             "${AUWRAPPER_BASEDIR}/auresource.r")
     endif()
 
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        gw_target_warn(${AUPLUGIN_PRJ_NAME} PRIVATE
-            "-Wno-extra"
-            "-Wno-multichar"
-            "-Wno-reorder"
-            "-Wno-class-memaccess"
-            "-Wno-ignored-qualifiers"
-            "-Wno-unknown-pragmas"
-            "-Wno-unused-function"
-            "-Wno-unused-parameter"
-            "-Wno-unused-variable")
-    endif()
+    gw_target_warn(${AUPLUGIN_PRJ_NAME} PRIVATE
+        "-Wno-ignored-qualifiers"
+        "-Wno-unused-parameter")
 
     # Installation
     if(AUPLUGIN_INSTALL_DIR)
