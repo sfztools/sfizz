@@ -318,9 +318,21 @@ std::string getProcessorName()
 
 std::string getCurrentProcessName()
 {
-    const char* name = __progname;
-    if (!name)
-        return std::string();
+    std::string name;
+
+    const std::string commPath = "/proc/" + std::to_string(getpid()) + "/comm";
+
+    if (std::ifstream in { commPath, std::ios::binary }) {
+        name.reserve(256);
+        for (int c; (c = in.get()) != std::char_traits<char>::eof() && c != '\n'; )
+            name.push_back(static_cast<unsigned char>(c));
+    }
+
+    if (name.empty()) {
+        if (const char* progname = __progname)
+            name.assign(progname);
+    }
+
     return name;
 }
 #endif
