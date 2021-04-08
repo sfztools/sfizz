@@ -38,6 +38,8 @@ add_library(sfizz-vst3-core STATIC
     SfizzVstUpdates.h
     SfizzVstUpdates.cpp
     SfizzVstIDs.h
+    OrderedEventProcessor.h
+    OrderedEventProcessor.cpp
     IdleUpdateHandler.h
     X11RunLoop.h
     X11RunLoop.cpp)

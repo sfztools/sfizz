@@ -227,6 +227,7 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
     if (state) {
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
+        initializeEventProcessor(processSetup, kNumParameters);
         startBackgroundWork();
     } else {
         stopBackgroundWork();
@@ -241,16 +242,22 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 {
     sfz::Sfizz& synth = *_synth;
 
+    std::unique_lock<SpinMutex> lock(_processMutex, std::defer_lock);
+    if (data.processMode == Vst::kOffline)
+        lock.lock();
+    else
+        lock.try_lock();
+
     if (data.processContext)
         updateTimeInfo(*data.processContext);
 
-    if (Vst::IParameterChanges* pc = data.inputParameterChanges)
-        processParameterChanges(*pc);
+    const uint32 numFrames = data.numSamples;
+    _canPerformEventsAndParameters = lock.owns_lock();
+    processUnorderedEvents(numFrames, data.inputParameterChanges, data.inputEvents);
 
     if (data.numOutputs < 1)  // flush mode
         return kResultTrue;
 
-    uint32 numFrames = data.numSamples;
     constexpr uint32 numChannels = 2;
     float* outputs[numChannels];
 
@@ -258,8 +265,6 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
 
     for (unsigned c = 0; c < numChannels; ++c)
         outputs[c] = data.outputs[0].channelBuffers32[c];
-
-    std::unique_lock<SpinMutex> lock(_processMutex, std::try_to_lock);
 
     if (!lock.owns_lock()) {
         for (unsigned c = 0; c < numChannels; ++c)
@@ -274,12 +279,6 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         synth.disableFreeWheeling();
 
     processMessagesFromUi();
-
-    if (Vst::IParameterChanges* pc = data.inputParameterChanges)
-        processControllerChanges(*pc);
-
-    if (Vst::IEventList* events = data.inputEvents)
-        processEvents(*events);
 
     synth.setVolume(_state.volume);
     synth.setScalaRootKey(_state.scalaRootKey);
@@ -336,153 +335,105 @@ void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
     synth.playbackState(0, (context.state & context.kPlaying) != 0);
 }
 
-void SfizzVstProcessor::processParameterChanges(Vst::IParameterChanges& pc)
+void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id, Vst::ParamValue value)
 {
-    uint32 paramCount = pc.getParameterCount();
+    if (!_canPerformEventsAndParameters)
+        return;
 
-    for (uint32 paramIndex = 0; paramIndex < paramCount; ++paramIndex) {
-        Vst::IParamValueQueue* vq = pc.getParameterData(paramIndex);
-        if (!vq)
-            continue;
+    sfz::Sfizz& synth = *_synth;
+    const SfizzRange range = SfizzRange::getForParameter(id);
 
-        const Vst::ParamID id = vq->getParameterId();
-        const SfizzRange range = SfizzRange::getForParameter(id);
-
-        uint32 pointCount = vq->getPointCount();
-        int32 sampleOffset;
-        Vst::ParamValue value;
-
-        switch (id) {
-        case kPidVolume:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.volume = range.denormalize(value);
-            break;
-        case kPidNumVoices:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                int32 data = static_cast<int32>(range.denormalize(value));
-                _state.numVoices = data;
-                if (writeWorkerMessage(kMsgIdSetNumVoices, &data, sizeof(data)))
-                    _semaToWorker.post();
-            }
-            break;
-        case kPidOversampling:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                int32 data = static_cast<int32>(range.denormalize(value));
-                _state.oversamplingLog2 = data;
-                if (writeWorkerMessage(kMsgIdSetOversampling, &data, sizeof(data)))
-                    _semaToWorker.post();
-            }
-            break;
-        case kPidPreloadSize:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue) {
-                int32 data = static_cast<int32>(range.denormalize(value));
-                _state.preloadSize = data;
-                if (writeWorkerMessage(kMsgIdSetPreloadSize, &data, sizeof(data)))
-                    _semaToWorker.post();
-            }
-            break;
-        case kPidScalaRootKey:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.scalaRootKey = static_cast<int32>(range.denormalize(value));
-            break;
-        case kPidTuningFrequency:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.tuningFrequency = range.denormalize(value);
-            break;
-        case kPidStretchedTuning:
-            if (pointCount > 0 && vq->getPoint(pointCount - 1, sampleOffset, value) == kResultTrue)
-                _state.stretchedTuning = range.denormalize(value);
-            break;
+    switch (id) {
+    case kPidVolume:
+        _state.volume = range.denormalize(value);
+        break;
+    case kPidNumVoices:
+        {
+            int32 data = static_cast<int32>(range.denormalize(value));
+            _state.numVoices = data;
+            if (writeWorkerMessage(kMsgIdSetNumVoices, &data, sizeof(data)))
+                _semaToWorker.post();
         }
+        break;
+    case kPidOversampling:
+        {
+            int32 data = static_cast<int32>(range.denormalize(value));
+            _state.oversamplingLog2 = data;
+            if (writeWorkerMessage(kMsgIdSetOversampling, &data, sizeof(data)))
+                _semaToWorker.post();
+        }
+        break;
+    case kPidPreloadSize:
+        {
+            int32 data = static_cast<int32>(range.denormalize(value));
+            _state.preloadSize = data;
+            if (writeWorkerMessage(kMsgIdSetPreloadSize, &data, sizeof(data)))
+                _semaToWorker.post();
+        }
+        break;
+    case kPidScalaRootKey:
+        _state.scalaRootKey = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidTuningFrequency:
+        _state.tuningFrequency = range.denormalize(value);
+        break;
+    case kPidStretchedTuning:
+        _state.stretchedTuning = range.denormalize(value);
+        break;
+    case kPidAftertouch:
+        synth.aftertouch(sampleOffset, fastRound(value * 127.0));
+        break;
+    case kPidPitchBend:
+        synth.pitchWheel(sampleOffset, fastRound(value * 16383) - 8192);
+        break;
+    default:
+        if (id >= kPidCC0 && id <= kPidCCLast) {
+            int32 ccNumber = static_cast<int32>(id - kPidCC0);
+            synth.hdcc(sampleOffset, ccNumber, value);
+            _state.controllers[ccNumber] = value;
+        }
+        break;
     }
 }
 
-void SfizzVstProcessor::processControllerChanges(Vst::IParameterChanges& pc)
+void SfizzVstProcessor::playOrderedEvent(const Vst::Event& event)
 {
+    if (!_canPerformEventsAndParameters)
+        return;
+
     sfz::Sfizz& synth = *_synth;
-    uint32 paramCount = pc.getParameterCount();
+    const int32 sampleOffset = event.sampleOffset;
 
-    for (uint32 paramIndex = 0; paramIndex < paramCount; ++paramIndex) {
-        Vst::IParamValueQueue* vq = pc.getParameterData(paramIndex);
-        if (!vq)
-            continue;
-
-        Vst::ParamID id = vq->getParameterId();
-        uint32 pointCount = vq->getPointCount();
-        int32 sampleOffset;
-        Vst::ParamValue value;
-
-        switch (id) {
-        default:
-            if (id >= kPidCC0 && id <= kPidCCLast) {
-                auto ccNumber = static_cast<int>(id - kPidCC0);
-                for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
-                    if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue) {
-                        synth.hdcc(sampleOffset, ccNumber, value);
-                        _state.controllers[ccNumber] = value;
-                    }
-                }
-            }
+    switch (event.type) {
+    case Vst::Event::kNoteOnEvent: {
+        int pitch = event.noteOn.pitch;
+        if (pitch < 0 || pitch >= 128)
             break;
-
-        case kPidAftertouch:
-            for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
-                if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                    synth.aftertouch(sampleOffset, fastRound(value * 127.0));
-            }
-            break;
-
-        case kPidPitchBend:
-            for (uint32 pointIndex = 0; pointIndex < pointCount; ++pointIndex) {
-                if (vq->getPoint(pointIndex, sampleOffset, value) == kResultTrue)
-                    synth.pitchWheel(sampleOffset, fastRound(value * 16383) - 8192);
-            }
-            break;
-        }
-    }
-}
-
-void SfizzVstProcessor::processEvents(Vst::IEventList& events)
-{
-    sfz::Sfizz& synth = *_synth;
-    uint32 numEvents = events.getEventCount();
-
-    for (uint32 i = 0; i < numEvents; i++) {
-        Vst::Event e;
-        if (events.getEvent(i, e) != kResultTrue)
-            continue;
-
-        switch (e.type) {
-        case Vst::Event::kNoteOnEvent: {
-            int pitch = e.noteOn.pitch;
-            if (pitch < 0 || pitch >= 128)
-                break;
-            if (e.noteOn.velocity <= 0.0f) {
-                synth.noteOff(e.sampleOffset, pitch, 0);
-                _noteEventsCurrentCycle[pitch] = 0.0f;
-            }
-            else {
-                synth.noteOn(e.sampleOffset, pitch, convertVelocityFromFloat(e.noteOn.velocity));
-                _noteEventsCurrentCycle[pitch] = e.noteOn.velocity;
-            }
-            break;
-        }
-        case Vst::Event::kNoteOffEvent: {
-            int pitch = e.noteOn.pitch;
-            if (pitch < 0 || pitch >= 128)
-                break;
-            synth.noteOff(e.sampleOffset, pitch, convertVelocityFromFloat(e.noteOff.velocity));
+        if (event.noteOn.velocity <= 0.0f) {
+            synth.noteOff(sampleOffset, pitch, 0);
             _noteEventsCurrentCycle[pitch] = 0.0f;
+        }
+        else {
+            synth.noteOn(sampleOffset, pitch, convertVelocityFromFloat(event.noteOn.velocity));
+            _noteEventsCurrentCycle[pitch] = event.noteOn.velocity;
+        }
+        break;
+    }
+    case Vst::Event::kNoteOffEvent: {
+        int pitch = event.noteOn.pitch;
+        if (pitch < 0 || pitch >= 128)
             break;
-        }
-        case Vst::Event::kPolyPressureEvent: {
-            int pitch = e.polyPressure.pitch;
-            if (pitch < 0 || pitch >= 128)
-                break;
-            synth.polyAftertouch(e.sampleOffset, pitch, convertVelocityFromFloat(e.polyPressure.pressure));
+        synth.noteOff(sampleOffset, pitch, convertVelocityFromFloat(event.noteOff.velocity));
+        _noteEventsCurrentCycle[pitch] = 0.0f;
+        break;
+    }
+    case Vst::Event::kPolyPressureEvent: {
+        int pitch = event.polyPressure.pitch;
+        if (pitch < 0 || pitch >= 128)
             break;
-        }
-        }
+        synth.polyAftertouch(sampleOffset, pitch, convertVelocityFromFloat(event.polyPressure.pressure));
+        break;
+    }
     }
 }
 
