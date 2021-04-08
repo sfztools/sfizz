@@ -48,7 +48,6 @@ add_library(sfizz-vst3-core STATIC
     FileTrie.cpp
     NativeHelpers.h
     NativeHelpers.cpp
-    VstPluginFactory.cpp
     IdleUpdateHandler.h
     X11RunLoop.h
     X11RunLoop.cpp)
@@ -92,10 +91,12 @@ else()
 endif()
 
 # Build the plugin
-add_library(${VSTPLUGIN_PRJ_NAME} MODULE)
+add_library(${VSTPLUGIN_PRJ_NAME} MODULE "VstPluginFactory.cpp")
 if(WIN32)
     target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
 endif()
+target_include_directories(${VSTPLUGIN_PRJ_NAME}
+    PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(${VSTPLUGIN_PRJ_NAME}
     PRIVATE sfizz-vst3-core)
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
@@ -176,12 +177,14 @@ elseif(SFIZZ_AU)
     set(AUPLUGIN_BUNDLE_NAME "${PROJECT_NAME}.component")
 
     add_library(${AUPLUGIN_PRJ_NAME} MODULE
+        "VstPluginFactory.cpp"
         "${AUWRAPPER_BASEDIR}/aucarbonview.mm"
         "${AUWRAPPER_BASEDIR}/aucocoaview.mm"
         "${AUWRAPPER_BASEDIR}/ausdk.mm"
         "${AUWRAPPER_BASEDIR}/auwrapper.mm"
         "${AUWRAPPER_BASEDIR}/NSDataIBStream.mm")
     target_include_directories(${AUPLUGIN_PRJ_NAME} PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
         "${VST3SDK_BASEDIR}")
     target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${APPLE_FOUNDATION_LIBRARY}"
@@ -326,12 +329,14 @@ if(SFIZZ_VST2)
     endif()
 
     add_library(${VST2PLUGIN_PRJ_NAME} MODULE
+        "VstPluginFactory.cpp"
         "Vst2PluginFactory.cpp"
         "${VST2WRAPPER_BASEDIR}/vst2wrapper.cpp"
         "${VST2WRAPPER_BASEDIR}/../basewrapper/basewrapper.cpp"
         "${VST2SDK_BASEDIR}/public.sdk/source/vst2.x/audioeffect.cpp"
         "${VST2SDK_BASEDIR}/public.sdk/source/vst2.x/audioeffectx.cpp")
     target_include_directories(${VST2PLUGIN_PRJ_NAME} PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
         "${VST2SDK_BASEDIR}")
 
     if(NOT WIN32)

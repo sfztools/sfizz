@@ -609,11 +609,6 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
     return result;
 }
 
-FUnknown* SfizzVstProcessor::createInstance(void*)
-{
-    return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessor);
-}
-
 void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
 {
     uint8_t* oscTemp = _oscTemp.get();
@@ -863,8 +858,15 @@ bool SfizzVstProcessor::writeMessage(Ring_Buffer& fifo, const char* type, const 
     return true;
 }
 
-/*
-  Note(jpc) Generated at random with uuidgen.
-  Can't find docs on it... maybe it's to register somewhere?
- */
+FUnknown* SfizzVstProcessor::createInstance(void*)
+{
+    return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessor);
+}
+
+template <>
+FUnknown* createInstance<SfizzVstProcessor>(void* context)
+{
+    return SfizzVstProcessor::createInstance(context);
+}
+
 FUID SfizzVstProcessor::cid = SfizzVstProcessor_cid;

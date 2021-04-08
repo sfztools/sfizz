@@ -29,7 +29,7 @@ public:
         absl::Span<FObject*> triggerUpdates);
     ~SfizzVstEditor();
 
-    bool PLUGIN_API open(void* parent, const VSTGUI::PlatformType& platformType = VSTGUI::kDefaultNative) override;
+    bool PLUGIN_API open(void* parent, const VSTGUI::PlatformType& platformType) override;
     void PLUGIN_API close() override;
 
     SfizzVstController* getController() const
