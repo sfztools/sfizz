@@ -13,79 +13,95 @@ configure_file(VstPluginDefs.h.in "${CMAKE_CURRENT_BINARY_DIR}/VstPluginDefs.h")
 # Build VST3 SDK
 include("cmake/Vst3.cmake")
 
-# Build the plugin
-set(VSTPLUGIN_SOURCES
-    SfizzVstProcessor.cpp
-    SfizzVstController.cpp
-    SfizzVstEditor.cpp
-    SfizzVstState.cpp
-    SfizzVstUpdates.cpp
-    SfizzFileScan.cpp
-    SfizzForeignPaths.cpp
-    SfizzSettings.cpp
-    VstPluginFactory.cpp
-    X11RunLoop.cpp
-    NativeHelpers.cpp
-    FileTrie.cpp)
+# Add the ring buffer
+set(RINGBUFFER_HEADERS
+    "external/ring_buffer/ring_buffer/ring_buffer.h"
+    "external/ring_buffer/ring_buffer/ring_buffer.tcc")
+add_library(sfizz-ring-buffer STATIC
+    "external/ring_buffer/ring_buffer/ring_buffer.cpp"
+    ${RINGBUFFER_HEADERS})
+source_group("Header Files" FILES ${RINGBUFFER_HEADERS})
+target_include_directories(sfizz-ring-buffer INTERFACE "external/ring_buffer")
+add_library(sfizz::ring-buffer ALIAS sfizz-ring-buffer)
 
-set(VSTPLUGIN_HEADERS
+# Build the VST shared code
+add_library(sfizz-vst3-core STATIC
+    SfizzVstProcessor.cpp
     SfizzVstProcessor.h
+    SfizzVstController.cpp
     SfizzVstController.h
+    SfizzVstEditor.cpp
     SfizzVstEditor.h
+    SfizzVstState.cpp
     SfizzVstState.h
     SfizzVstParameters.h
     SfizzVstUpdates.h
+    SfizzVstUpdates.cpp
     SfizzFileScan.h
+    SfizzFileScan.cpp
     SfizzForeignPaths.h
+    SfizzForeignPaths.cpp
     SfizzSettings.h
-    X11RunLoop.h
-    IdleUpdateHandler.h
+    SfizzSettings.cpp
+    FileTrie.h
+    FileTrie.cpp
     NativeHelpers.h
-    FileTrie.h)
-
+    NativeHelpers.cpp
+    VstPluginFactory.cpp
+    IdleUpdateHandler.h
+    X11RunLoop.h
+    X11RunLoop.cpp)
 if(APPLE)
-    set(VSTPLUGIN_MAC_SOURCES
+    target_sources(sfizz-vst3-core PRIVATE
         SfizzForeignPaths.mm
         SfizzSettings.mm
         NativeHelpers.mm)
-    list(APPEND VSTPLUGIN_SOURCES ${VSTPLUGIN_MAC_SOURCES})
-    set_property(SOURCE ${VSTPLUGIN_MAC_SOURCES} APPEND_STRING
-      PROPERTY COMPILE_FLAGS " -fobjc-arc")
+    set_property(
+        SOURCE SfizzForeignPaths.mm
+               SfizzSettings.mm
+               NativeHelpers.mm
+        APPEND_STRING
+        PROPERTY COMPILE_FLAGS " -fobjc-arc")
 endif()
-
-add_library(${VSTPLUGIN_PRJ_NAME} MODULE
-    ${VSTPLUGIN_HEADERS}
-    ${VSTPLUGIN_SOURCES})
-
-if(WIN32)
-    target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
-endif()
-target_link_libraries(${VSTPLUGIN_PRJ_NAME}
+target_include_directories(sfizz-vst3-core
+    PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(sfizz-vst3-core PRIVATE
     PRIVATE sfizz::sfizz
     PRIVATE sfizz::import
     PRIVATE sfizz::editor
     PRIVATE sfizz::plugins-common
-    PRIVATE sfizz::pugixml sfizz::filesystem)
-target_include_directories(${VSTPLUGIN_PRJ_NAME}
-    PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+    PRIVATE sfizz::pugixml sfizz::filesystem
+    PRIVATE sfizz::ring-buffer
+    vst3sdk
+    vst3sdk_vstgui)
+gw_target_warn(sfizz-vst3-core PRIVATE
+    "-Wno-ignored-qualifiers"
+    "-Wno-unused-parameter")
+add_library(sfizz::vst3-core ALIAS sfizz-vst3-core)
+
+# Link system dependencies
+if(WIN32)
+elseif(APPLE)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    target_include_directories(sfizz-vst3-core PRIVATE ${GLIB_INCLUDE_DIRS})
+    target_link_libraries(sfizz-vst3-core PRIVATE ${GLIB_LIBRARIES})
+endif()
+
+# Build the plugin
+add_library(${VSTPLUGIN_PRJ_NAME} MODULE)
+if(WIN32)
+    target_sources(${VSTPLUGIN_PRJ_NAME} PRIVATE vst3.def)
+endif()
+target_link_libraries(${VSTPLUGIN_PRJ_NAME}
+    PRIVATE sfizz-vst3-core)
 set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES
     OUTPUT_NAME "${PROJECT_NAME}"
     PREFIX "")
 
 plugin_add_vst3sdk(${VSTPLUGIN_PRJ_NAME})
 plugin_add_vstgui(${VSTPLUGIN_PRJ_NAME})
-
-# Add the ring buffer
-set(RINGBUFFER_HEADERS
-    "external/ring_buffer/ring_buffer/ring_buffer.h"
-    "external/ring_buffer/ring_buffer/ring_buffer.tcc")
-add_library(sfizz_ring_buffer STATIC
-    "external/ring_buffer/ring_buffer/ring_buffer.cpp"
-    ${RINGBUFFER_HEADERS})
-source_group("Header Files" FILES ${RINGBUFFER_HEADERS})
-target_include_directories(sfizz_ring_buffer INTERFACE "external/ring_buffer")
-
-target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE sfizz_ring_buffer)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE
@@ -94,17 +110,6 @@ endif()
 sfizz_enable_lto_if_needed(${VSTPLUGIN_PRJ_NAME})
 if(MINGW)
     set_target_properties(${VSTPLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
-endif()
-
-# Link system dependencies
-if(WIN32)
-elseif(APPLE)
-    target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE ${APPLE_FOUNDATION_LIBRARY})
-else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GLIB REQUIRED glib-2.0)
-    target_include_directories(${VSTPLUGIN_PRJ_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
-    target_link_libraries(${VSTPLUGIN_PRJ_NAME} PRIVATE ${GLIB_LIBRARIES})
 endif()
 
 # Create the bundle(see "VST 3 Locations / Format")
@@ -145,10 +150,6 @@ else()
         DESTINATION "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}")
 endif()
 
-gw_target_warn(${VSTPLUGIN_PRJ_NAME} PRIVATE
-    "-Wno-ignored-qualifiers"
-    "-Wno-unused-parameter")
-
 # To help debugging the link only
 if(FALSE)
     target_link_options(${VSTPLUGIN_PRJ_NAME} PRIVATE "-Wl,-no-undefined")
@@ -177,9 +178,7 @@ elseif(SFIZZ_AU)
         "${AUWRAPPER_BASEDIR}/aucocoaview.mm"
         "${AUWRAPPER_BASEDIR}/ausdk.mm"
         "${AUWRAPPER_BASEDIR}/auwrapper.mm"
-        "${AUWRAPPER_BASEDIR}/NSDataIBStream.mm"
-        ${VSTPLUGIN_HEADERS}
-        ${VSTPLUGIN_SOURCES})
+        "${AUWRAPPER_BASEDIR}/NSDataIBStream.mm")
     target_include_directories(${AUPLUGIN_PRJ_NAME} PRIVATE
         "${VST3SDK_BASEDIR}")
     target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE
@@ -192,13 +191,7 @@ elseif(SFIZZ_AU)
         "${APPLE_COREMIDI_LIBRARY}")
 
     target_link_libraries(${AUPLUGIN_PRJ_NAME}
-        PRIVATE sfizz::sfizz
-        PRIVATE sfizz::import
-        PRIVATE sfizz::editor
-        PRIVATE sfizz::plugins-common
-        PRIVATE sfizz::pugixml sfizz::filesystem)
-    target_include_directories(${AUPLUGIN_PRJ_NAME}
-        PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+        PRIVATE sfizz-vst3-core)
     set_target_properties(${AUPLUGIN_PRJ_NAME} PROPERTIES
         OUTPUT_NAME "${PROJECT_NAME}"
         PREFIX "")
@@ -248,9 +241,6 @@ elseif(SFIZZ_AU)
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/parameterchanges.cpp"
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
         "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/processdata.cpp")
-
-    # Add the ring buffer
-    target_link_libraries(${AUPLUGIN_PRJ_NAME} PRIVATE sfizz_ring_buffer)
 
     # Add generated source
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -313,10 +303,6 @@ elseif(SFIZZ_AU)
             "-useDF"
             "${AUWRAPPER_BASEDIR}/auresource.r")
     endif()
-
-    gw_target_warn(${AUPLUGIN_PRJ_NAME} PRIVATE
-        "-Wno-ignored-qualifiers"
-        "-Wno-unused-parameter")
 
     # Installation
     if(AUPLUGIN_INSTALL_DIR)
