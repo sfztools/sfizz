@@ -32,8 +32,7 @@ add_library(vst3sdk STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstrepresentation.cpp")
 if(WIN32)
     target_sources(vst3sdk PRIVATE
-        "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp"
-        "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp")
+        "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp")
 elseif(APPLE)
 else()
     target_sources(vst3sdk PRIVATE
@@ -72,6 +71,10 @@ endfunction()
 # --- VSTGUI ---
 add_library(vst3sdk_vstgui STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstguieditor.cpp")
+if(WIN32)
+    target_sources(vst3sdk_vstgui PRIVATE
+        "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstgui_win32_bundle_support.cpp")
+endif()
 target_link_libraries(vst3sdk_vstgui PUBLIC vst3sdk sfizz::vstgui)
 target_compile_definitions(vst3sdk_vstgui PRIVATE "SMTG_MODULE_IS_BUNDLE=1")
 
