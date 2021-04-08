@@ -8,9 +8,9 @@
 #include "SfizzVstState.h"
 #include "SfizzVstParameters.h"
 #include "SfizzVstUpdates.h"
-#include "SfizzFileScan.h"
 #include "editor/Editor.h"
 #include "editor/EditIds.h"
+#include "plugin/SfizzFileScan.h"
 #include "plugin/InstrumentDescription.h"
 #include "IdleUpdateHandler.h"
 #if !defined(__APPLE__) && !defined(_WIN32)

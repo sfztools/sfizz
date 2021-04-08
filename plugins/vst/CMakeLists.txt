@@ -38,31 +38,9 @@ add_library(sfizz-vst3-core STATIC
     SfizzVstUpdates.h
     SfizzVstUpdates.cpp
     SfizzVstIDs.h
-    SfizzFileScan.h
-    SfizzFileScan.cpp
-    SfizzForeignPaths.h
-    SfizzForeignPaths.cpp
-    SfizzSettings.h
-    SfizzSettings.cpp
-    FileTrie.h
-    FileTrie.cpp
-    NativeHelpers.h
-    NativeHelpers.cpp
     IdleUpdateHandler.h
     X11RunLoop.h
     X11RunLoop.cpp)
-if(APPLE)
-    target_sources(sfizz-vst3-core PRIVATE
-        SfizzForeignPaths.mm
-        SfizzSettings.mm
-        NativeHelpers.mm)
-    set_property(
-        SOURCE SfizzForeignPaths.mm
-               SfizzSettings.mm
-               NativeHelpers.mm
-        APPEND_STRING
-        PROPERTY COMPILE_FLAGS " -fobjc-arc")
-endif()
 target_include_directories(sfizz-vst3-core
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(sfizz-vst3-core
@@ -79,16 +57,6 @@ gw_target_warn(sfizz-vst3-core PRIVATE
     "-Wno-ignored-qualifiers"
     "-Wno-unused-parameter")
 add_library(sfizz::vst3-core ALIAS sfizz-vst3-core)
-
-# Link system dependencies
-if(WIN32)
-elseif(APPLE)
-else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GLIB REQUIRED glib-2.0)
-    target_include_directories(sfizz-vst3-core PRIVATE ${GLIB_INCLUDE_DIRS})
-    target_link_libraries(sfizz-vst3-core PRIVATE ${GLIB_LIBRARIES})
-endif()
 
 # Build the plugin
 add_library(${VSTPLUGIN_PRJ_NAME} MODULE "VstPluginFactory.cpp")
