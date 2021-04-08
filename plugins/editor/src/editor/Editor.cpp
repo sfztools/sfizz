@@ -13,6 +13,7 @@
 #include "DlgAbout.h"
 #include "ImageHelpers.h"
 #include "NativeHelpers.h"
+#include "VSTGUIHelpers.h"
 #include "BitArray.h"
 #include "plugin/MessageUtils.h"
 #include <absl/strings/string_view.h>
@@ -273,6 +274,9 @@ Editor::~Editor()
 void Editor::open(CFrame& frame)
 {
     Impl& impl = *impl_;
+
+    fprintf(stderr, "[sfizz] The resource path of the bundle is %s\n",
+            getResourceBasePath().u8string().c_str());
 
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
