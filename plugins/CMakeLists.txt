@@ -29,6 +29,7 @@ target_include_directories(plugins-common PUBLIC "common")
 target_link_libraries(plugins-common
     PUBLIC sfizz::spin_mutex
     PUBLIC sfizz::filesystem absl::strings
+    PRIVATE sfizz::pugixml
     PRIVATE sfizz::internal sfizz::sfizz)
 add_library(sfizz::plugins-common ALIAS plugins-common)
 
