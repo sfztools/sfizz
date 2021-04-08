@@ -20,6 +20,7 @@ clients/sfizz_jack
 clients/sfzprint
 
 /plugins/vst/download/
+/plugins/vst/external/vstsdk2.4/
 
 /plugins/editor/external/fluentui-system-icons/
 
