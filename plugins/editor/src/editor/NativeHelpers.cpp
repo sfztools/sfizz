@@ -262,35 +262,40 @@ bool isZenityAvailable()
 std::string getOperatingSystemName()
 {
     std::string name;
-    name.reserve(256);
 
-#if GLIB_CHECK_VERSION(2, 64, 0)
-    if (char *osName = g_get_os_info(G_OS_INFO_KEY_NAME)) {
-        name.append(osName);
-        g_free(osName);
-    }
-    else {
-        name.append("Unknown");
+    std::ifstream in("/etc/os-release", std::ios::binary);
+    if (!in)
+        in = std::ifstream("/usr/lib/os-release", std::ios::binary);
+    if (in) {
+        std::string line;
+        line.reserve(256);
+        for (bool found = false; !found && std::getline(in, line); ) {
+            const char prefix[] = "PRETTY_NAME=";
+            size_t length = sizeof(prefix) - 1;
+            found = line.size() >= length && !memcmp(line.data(), prefix, length);
+            if (found) {
+                if (char* value = g_shell_unquote(line.c_str() + length, nullptr)) {
+                    name.assign(value);
+                    g_free(value);
+                }
+            }
+        }
+        in.close();
     }
 
-    if (char *osVersion = g_get_os_info(G_OS_INFO_KEY_VERSION_ID)) {
-        name.push_back(' ');
-        name.append(osVersion);
-        g_free(osVersion);
+    if (name.empty()) {
+        utsname un {};
+        int ret = uname(&un);
+        if (ret != -1 && un.sysname[0] != '\0')
+            name.append(un.sysname);
+        else {
+            name.append("Unknown");
+        }
+        if (ret != -1 && un.release[0] != '\0') {
+            name.push_back(' ');
+            name.append(un.release);
+        }
     }
-#else
-    utsname un {};
-    int ret = uname(&un);
-    if (ret != -1 && un.sysname[0] != '\0')
-        name.append(un.sysname);
-    else {
-        name.append("Unknown");
-    }
-    if (ret != -1 && un.release[0] != '\0') {
-        name.push_back(' ');
-        name.append(un.release);
-    }
-#endif
 
     return name;
 }
