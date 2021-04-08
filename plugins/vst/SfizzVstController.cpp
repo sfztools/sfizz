@@ -7,6 +7,7 @@
 #include "SfizzVstController.h"
 #include "SfizzVstEditor.h"
 #include "SfizzVstParameters.h"
+#include "SfizzVstIDs.h"
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
 
@@ -337,4 +338,4 @@ FUnknown* SfizzVstController::createInstance(void*)
   Note(jpc) Generated at random with uuidgen.
   Can't find docs on it... maybe it's to register somewhere?
  */
-FUID SfizzVstController::cid(0x7129736c, 0xbc784134, 0xbb899d56, 0x2ebafe4f);
+FUID SfizzVstController::cid = SfizzVstController_cid;

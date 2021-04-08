@@ -8,6 +8,7 @@
 #include "SfizzVstController.h"
 #include "SfizzVstState.h"
 #include "SfizzVstParameters.h"
+#include "SfizzVstIDs.h"
 #include "SfizzFileScan.h"
 #include "sfizz/import/ForeignInstrument.h"
 #include "plugin/InstrumentDescription.h"
@@ -866,4 +867,4 @@ bool SfizzVstProcessor::writeMessage(Ring_Buffer& fifo, const char* type, const 
   Note(jpc) Generated at random with uuidgen.
   Can't find docs on it... maybe it's to register somewhere?
  */
-FUID SfizzVstProcessor::cid(0xe8fab718, 0x15ed46e3, 0x8b598310, 0x1e12993f);
+FUID SfizzVstProcessor::cid = SfizzVstProcessor_cid;

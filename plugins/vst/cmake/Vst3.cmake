@@ -18,6 +18,7 @@ add_library(vst3sdk STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/pluginterfaces/base/funknown.cpp"
     "${VST3SDK_BASEDIR}/pluginterfaces/base/ustring.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/common/commoniids.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/common/memorystream.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/common/pluginview.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/main/pluginfactory.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstaudioeffect.cpp"

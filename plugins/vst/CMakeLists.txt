@@ -37,6 +37,7 @@ add_library(sfizz-vst3-core STATIC
     SfizzVstParameters.h
     SfizzVstUpdates.h
     SfizzVstUpdates.cpp
+    SfizzVstIDs.h
     SfizzFileScan.h
     SfizzFileScan.cpp
     SfizzForeignPaths.h
@@ -65,13 +66,14 @@ if(APPLE)
 endif()
 target_include_directories(sfizz-vst3-core
     PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(sfizz-vst3-core PRIVATE
+target_link_libraries(sfizz-vst3-core
     PRIVATE sfizz::sfizz
     PRIVATE sfizz::import
     PRIVATE sfizz::editor
     PRIVATE sfizz::plugins-common
     PRIVATE sfizz::pugixml sfizz::filesystem
     PRIVATE sfizz::ring-buffer
+    PRIVATE absl::strings absl::optional absl::container_common
     vst3sdk
     vst3sdk_vstgui)
 gw_target_warn(sfizz-vst3-core PRIVATE
@@ -307,5 +309,74 @@ elseif(SFIZZ_AU)
         bundle_dylibs(au
             "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
             COMPONENT "au")
+    endif()
+endif()
+
+# --- VST2 wrapper --- #
+
+if(SFIZZ_VST2)
+    set(VST2PLUGIN_PRJ_NAME "${PROJECT_NAME}_vst2")
+    set(VST2PLUGIN_BUNDLE_NAME "${PROJECT_NAME}.vst2")
+
+    set(VST2SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/vstsdk2.4")
+    set(VST2WRAPPER_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK/public.sdk/source/vst/vst2wrapper")
+
+    if(NOT EXISTS "${VST2SDK_BASEDIR}/pluginterfaces/vst2.x/aeffect.h")
+        message(FATAL_ERROR "VST SDK 2.4 is missing. Make it available in the following folder: ${VST2SDK_BASEDIR}")
+    endif()
+
+    add_library(${VST2PLUGIN_PRJ_NAME} MODULE
+        "Vst2PluginFactory.cpp"
+        "${VST2WRAPPER_BASEDIR}/vst2wrapper.cpp"
+        "${VST2WRAPPER_BASEDIR}/../basewrapper/basewrapper.cpp"
+        "${VST2SDK_BASEDIR}/public.sdk/source/vst2.x/audioeffect.cpp"
+        "${VST2SDK_BASEDIR}/public.sdk/source/vst2.x/audioeffectx.cpp")
+    target_include_directories(${VST2PLUGIN_PRJ_NAME} PRIVATE
+        "${VST2SDK_BASEDIR}")
+
+    if(NOT WIN32)
+        target_compile_definitions(${VST2PLUGIN_PRJ_NAME} PRIVATE "__cdecl=")
+    endif()
+
+    target_link_libraries(${VST2PLUGIN_PRJ_NAME}
+        PRIVATE sfizz-vst3-core)
+    set_target_properties(${VST2PLUGIN_PRJ_NAME} PROPERTIES
+        OUTPUT_NAME "${PROJECT_NAME}"
+        PREFIX "")
+
+    plugin_add_vst3sdk(${VST2PLUGIN_PRJ_NAME})
+    plugin_add_vstgui(${VST2PLUGIN_PRJ_NAME})
+
+    # Add VST hosting classes
+    target_link_libraries(${VST2PLUGIN_PRJ_NAME} PRIVATE vst3sdk_hosting)
+
+    sfizz_enable_lto_if_needed(${VST2PLUGIN_PRJ_NAME})
+
+    # Create the bundle
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Resources")
+    copy_editor_resources(
+        "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
+        "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Resources")
+    set_target_properties(${VST2PLUGIN_PRJ_NAME} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Binary/$<0:>")
+
+    file(COPY "gpl-3.0.txt"
+        DESTINATION "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}")
+
+    if(MINGW)
+        set_target_properties(${VST2PLUGIN_PRJ_NAME} PROPERTIES LINK_FLAGS "-static")
+    endif()
+
+    # Installation
+    if(VST2PLUGIN_INSTALL_DIR)
+        install(DIRECTORY "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}"
+            DESTINATION "${VST2PLUGIN_INSTALL_DIR}"
+            COMPONENT "vst2")
+        if(APPLE)
+            bundle_dylibs(vst2
+                "${VST2PLUGIN_INSTALL_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Binary/sfizz.${CMAKE_SHARED_MODULE_SUFFIX}"
+                COMPONENT "vst2")
+        endif()
     endif()
 endif()
