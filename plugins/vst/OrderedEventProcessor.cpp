@@ -33,7 +33,7 @@ void OrderedEventProcessor::processUnorderedEvents(int32 numSamples, Vst::IParam
         ++subdivNumber;
     }
 
-    playRemainder(std::max(0, numSamples - 1), evs);
+    playRemainder(std::max(int32(0), numSamples - 1), evs);
 }
 
 void OrderedEventProcessor::startProcessing(Vst::IEventList* evs, Vst::IParameterChanges* pcs)
