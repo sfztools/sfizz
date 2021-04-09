@@ -4,6 +4,7 @@ namespace sfz {
 
 namespace Default {
 constexpr auto uint32_t_max = std::numeric_limits<uint32_t>::max();
+constexpr auto int32_t_max = std::numeric_limits<int32_t>::max();
 constexpr auto float_max = std::numeric_limits<float>::max();
 
 using FloatSpec = const OpcodeSpec<float>;
@@ -20,15 +21,15 @@ template <class Enum> using ESpec = const OpcodeSpec<Enum>;
 FloatSpec delay { 0.0f, {0.0f, 100.0f}, kPermissiveBounds };
 FloatSpec delayRandom { 0.0f, {0.0f, 100.0f}, kPermissiveBounds };
 FloatSpec delayMod { 0.0f, {0.0f, 100.0f}, kPermissiveBounds };
-Int64Spec offset { 0, {0, uint32_t_max}, kPermissiveBounds };
-Int64Spec offsetMod { 0, {0, uint32_t_max}, kPermissiveBounds };
-Int64Spec offsetRandom { 0, {0, uint32_t_max}, kPermissiveBounds };
-Int64Spec sampleEnd { uint32_t_max, {0, uint32_t_max}, kEnforceBounds };
-Int64Spec sampleEndMod { 0, {-uint32_t_max, uint32_t_max}, kPermissiveBounds };
+Int64Spec offset { 0, {0, int32_t_max}, kPermissiveBounds };
+Int64Spec offsetMod { 0, {0, int32_t_max}, kPermissiveBounds };
+Int64Spec offsetRandom { 0, {0, int32_t_max}, kPermissiveBounds };
+Int64Spec sampleEnd { int32_t_max, {0, int32_t_max}, kEnforceBounds };
+Int64Spec sampleEndMod { 0, {-int32_t_max, int32_t_max}, kPermissiveBounds };
 UInt32Spec sampleCount { 0, {0, uint32_t_max}, kEnforceUpperBound };
-Int64Spec loopStart { 0, {0, uint32_t_max}, kEnforceUpperBound };
-Int64Spec loopEnd { uint32_t_max, {0, uint32_t_max}, kEnforceUpperBound };
-Int64Spec loopMod { 0, {-uint32_t_max, uint32_t_max}, kPermissiveBounds };
+Int64Spec loopStart { 0, {0, int32_t_max}, kEnforceUpperBound };
+Int64Spec loopEnd { int32_t_max, {0, int32_t_max}, kEnforceUpperBound };
+Int64Spec loopMod { 0, {-int32_t_max, int32_t_max}, kPermissiveBounds };
 UInt32Spec loopCount { 0, {0, uint32_t_max}, kEnforceUpperBound };
 FloatSpec loopCrossfade { 1e-3, {1e-3, 1.0f}, kEnforceLowerBound|kPermissiveUpperBound };
 ESpec<OscillatorEnabled> oscillator { OscillatorEnabled::Auto, {OscillatorEnabled::Auto, OscillatorEnabled::On}, 0 };
