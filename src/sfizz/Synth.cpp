@@ -637,8 +637,10 @@ void Synth::Impl::finalizeSfzLoad()
                 return Default::offsetMod.bounds.clamp(sumOffsetCC);
             }();
 
-            if (!resources_.filePool.preloadFile(*region.sampleId, maxOffset))
+            if (!resources_.filePool.preloadFile(*region.sampleId, maxOffset)) {
                 removeCurrentRegion();
+                continue;
+            }
         }
         else if (!region.isGenerator()) {
             if (!resources_.wavePool.createFileWave(resources_.filePool, std::string(region.sampleId->filename()))) {
