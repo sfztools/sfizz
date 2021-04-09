@@ -6,6 +6,7 @@
 
 #pragma once
 #include "SfizzVstState.h"
+#include "OrderedEventProcessor.h"
 #include "sfizz/RTSemaphore.h"
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
@@ -18,7 +19,8 @@
 
 using namespace Steinberg;
 
-class SfizzVstProcessor : public Vst::AudioEffect {
+class SfizzVstProcessor : public Vst::AudioEffect,
+                          public OrderedEventProcessor {
 public:
     SfizzVstProcessor();
     ~SfizzVstProcessor();
@@ -35,9 +37,11 @@ public:
     tresult PLUGIN_API canProcessSampleSize(int32 symbolicSampleSize) override;
     tresult PLUGIN_API setActive(TBool state) override;
     tresult PLUGIN_API process(Vst::ProcessData& data) override;
-    void processParameterChanges(Vst::IParameterChanges& pc);
-    void processControllerChanges(Vst::IParameterChanges& pc);
-    void processEvents(Vst::IEventList& events);
+
+    // OrderedEventProcessor
+    void playOrderedParameter(int32 sampleOffset, Vst::ParamID id, Vst::ParamValue value) override;
+    void playOrderedEvent(const Vst::Event& event) override;
+
     void processMessagesFromUi();
     static int convertVelocityFromFloat(float x);
 
@@ -56,6 +60,9 @@ private:
     bool _isActive = false;
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
+
+    // whether allowed to perform events (owns the processing lock)
+    bool _canPerformEventsAndParameters {};
 
     // client
     sfz::ClientPtr _client;

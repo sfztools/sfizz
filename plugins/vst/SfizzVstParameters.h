@@ -25,6 +25,7 @@ enum {
     kPidCC0,
     kPidCCLast = kPidCC0 + sfz::config::numCCs - 1,
     /* Reserved */
+    kNumParameters,
 };
 
 struct SfizzRange {
