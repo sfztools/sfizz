@@ -35,6 +35,7 @@ add_library(sfizz::plugins-common ALIAS plugins-common)
 
 # Link system dependencies
 if(WIN32)
+elseif(ANDROID)
 elseif(APPLE)
     target_link_libraries(plugins-common PRIVATE
         "${APPLE_FOUNDATION_LIBRARY}")
