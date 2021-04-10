@@ -942,7 +942,7 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), sourceDepthKey).sourceDepth
             = opcode.read(depthModSpec);
         break;
-    case_any_lfo("depthpolyaft"): // NOLINT bugprone-branch-clone
+    case_any_lfo("depthpolyaft"):
         getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
         getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), sourceDepthKey).sourceDepth
             = opcode.read(depthModSpec);
@@ -956,11 +956,11 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
     case_any_lfo_any_ccN("freq"): // also freqcc&
         processGenericCc(opcode, Default::lfoFreqMod, lfo.freqKey);
         break;
-    case_any_lfo("freqchanaft"): // NOLINT bugprone-branch-clone
+    case_any_lfo("freqchanaft"):
         getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), lfo.freqKey).sourceDepth
             = opcode.read(Default::lfoFreqMod);
         break;
-    case_any_lfo("freqpolyaft"): // NOLINT bugprone-branch-clone
+    case_any_lfo("freqpolyaft"):
         getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), lfo.freqKey).sourceDepth
             = opcode.read(Default::lfoFreqMod);
         break;
