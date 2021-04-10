@@ -20,7 +20,7 @@
 using namespace Steinberg;
 
 class SfizzVstProcessor : public Vst::AudioEffect,
-                          public OrderedEventProcessor {
+                          public OrderedEventProcessor<SfizzVstProcessor> {
 public:
     SfizzVstProcessor();
     ~SfizzVstProcessor();
@@ -39,8 +39,8 @@ public:
     tresult PLUGIN_API process(Vst::ProcessData& data) override;
 
     // OrderedEventProcessor
-    void playOrderedParameter(int32 sampleOffset, Vst::ParamID id, Vst::ParamValue value) override;
-    void playOrderedEvent(const Vst::Event& event) override;
+    void playOrderedParameter(int32 sampleOffset, Vst::ParamID id, Vst::ParamValue value);
+    void playOrderedEvent(const Vst::Event& event);
 
     void processMessagesFromUi();
     static int convertVelocityFromFloat(float x);
