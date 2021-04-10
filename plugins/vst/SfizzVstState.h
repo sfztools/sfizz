@@ -25,9 +25,11 @@ public:
     int32 scalaRootKey = 60;
     float tuningFrequency = 440.0;
     float stretchedTuning = 0.0;
+    int32 sampleQuality = 1;
+    int32 oscillatorQuality = 1;
     std::vector<absl::optional<float>> controllers;
 
-    static constexpr uint64 currentStateVersion = 2;
+    static constexpr uint64 currentStateVersion = 3;
 
     tresult load(IBStream* state);
     tresult store(IBStream* state) const;

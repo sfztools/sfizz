@@ -26,6 +26,10 @@ EditRange EditRange::get(EditId id)
         return { 440, 300, 500 };
     case EditId::StretchTuning:
         return { 0, 0, 1 };
+    case EditId::SampleQuality:
+        return { 1, 0, 10 };
+    case EditId::OscillatorQuality:
+        return { 1, 0, 3 };
     case EditId::UIActivePanel:
         return { 0, 0, 255 };
     }

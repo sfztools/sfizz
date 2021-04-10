@@ -290,7 +290,7 @@ public:
      *
      * @param[in] mode  The processing mode.
      *
-     * @return The sample quality for the given mode, in the range 1 to 10.
+     * @return The sample quality for the given mode, in the range 0 to 10.
      */
     int getSampleQuality(ProcessMode mode);
 
@@ -305,12 +305,45 @@ public:
      * @since 0.4.0
      *
      * @param[in] mode    The processing mode.
-     * @param[in] quality The desired sample quality, in the range 1 to 10.
+     * @param[in] quality The desired sample quality, in the range 0 to 10.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
     void setSampleQuality(ProcessMode mode, int quality);
+
+    /**
+     * @brief Get the default oscillator quality.
+     *
+     * This is the quality setting which the engine uses when the instrument
+     * does not use the opcode `oscillator_quality`. The engine uses distinct
+     * default quality settings for live mode and freewheeling mode,
+     * which both can be accessed by the means of this function.
+     * @since 0.6.0
+     *
+     * @param[in] mode  The processing mode.
+     *
+     * @return The oscillator quality for the given mode, in the range 0 to 3.
+     */
+    int getOscillatorQuality(ProcessMode mode);
+
+    /**
+     * @brief Set the default oscillator quality.
+     *
+     * This is the quality setting which the engine uses when the instrument
+     * does not use the opcode `oscillator_quality`. The engine uses distinct
+     * default quality settings for live mode and freewheeling mode,
+     * which both can be accessed by the means of this function.
+     *
+     * @since 0.6.0
+     *
+     * @param[in] mode    The processing mode.
+     * @param[in] quality The desired oscillator quality, in the range 0 to 3.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void setOscillatorQuality(ProcessMode mode, int quality);
 
     /**
      * @brief Return the current value for the volume, in dB.

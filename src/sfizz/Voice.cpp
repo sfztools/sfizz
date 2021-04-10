@@ -162,6 +162,12 @@ struct Voice::Impl
      */
     int getCurrentSampleQuality() const noexcept;
     /**
+     * @brief Get the oscillator quality determined by the active region.
+     *
+     * @return int
+     */
+    int getCurrentOscillatorQuality() const noexcept;
+    /**
      * @brief Reset the loop information
      *
      */
@@ -529,6 +535,18 @@ int Voice::getCurrentSampleQuality() const noexcept
 {
     Impl& impl = *impl_;
     return impl.getCurrentSampleQuality();
+}
+
+int Voice::Impl::getCurrentOscillatorQuality() const noexcept
+{
+    return (region_ && region_->oscillatorQuality) ?
+        *region_->oscillatorQuality : resources_.synthConfig.currentOscillatorQuality();
+}
+
+int Voice::getCurrentOscillatorQuality() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.getCurrentOscillatorQuality();
 }
 
 bool Voice::isFree() const noexcept
@@ -1459,6 +1477,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 
         const int oscillatorMode = region_->oscillatorMode;
         const int oscillatorMulti = region_->oscillatorMulti;
+        const int quality = getCurrentOscillatorQuality();
 
         if (oscillatorMode <= 0 && oscillatorMulti < 2) {
             // single oscillator
@@ -1467,6 +1486,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
                 return;
 
             WavetableOscillator& osc = waveOscillators_[0];
+            osc.setQuality(quality);
             fill(*detuneSpan, 1.0f);
             osc.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), buffer.getNumFrames());
             copy<float>(*tempSpan, leftSpan);
@@ -1483,6 +1503,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
             const float* detuneMod = resources_.modMatrix.getModulation(oscillatorDetuneTarget_);
             for (unsigned u = 0, uSize = waveUnisonSize_; u < uSize; ++u) {
                 WavetableOscillator& osc = waveOscillators_[u];
+                osc.setQuality(quality);
                 if (!detuneMod)
                     fill(*detuneSpan, waveDetuneRatio_[u]);
                 else {
@@ -1512,6 +1533,8 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 
             WavetableOscillator& oscCar = waveOscillators_[0];
             WavetableOscillator& oscMod = waveOscillators_[1];
+            oscCar.setQuality(quality);
+            oscMod.setQuality(quality);
 
             // compute the modulator
             auto modulatorSpan = resources_.bufferPool.getBuffer(numFrames);

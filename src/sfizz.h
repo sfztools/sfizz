@@ -648,7 +648,7 @@ SFIZZ_EXPORTED_API bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfiz
  * @param      synth  The synth.
  * @param[in]  mode   The processing mode.
  *
- * @return The sample quality for the given mode, in the range 1 to 10.
+ * @return The sample quality for the given mode, in the range 0 to 10.
  */
 SFIZZ_EXPORTED_API int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode);
 
@@ -663,12 +663,46 @@ SFIZZ_EXPORTED_API int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_proc
  *
  * @param      synth    The synth.
  * @param[in]  mode     The processing mode.
- * @param[in]  quality  The desired sample quality, in the range 1 to 10.
+ * @param[in]  quality  The desired sample quality, in the range 0 to 10.
  *
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
+
+/**
+ * @brief Get the default oscillator quality.
+ *
+ * This is the quality setting which the engine uses when the instrument
+ * does not use the opcode `oscillator_quality`. The engine uses distinct
+ * default quality settings for live mode and freewheeling mode,
+ * which both can be accessed by the means of this function.
+ * @since 0.6.0
+ *
+ * @param      synth  The synth.
+ * @param[in]  mode   The processing mode.
+ *
+ * @return The oscillator quality for the given mode, in the range 0 to 10.
+ */
+SFIZZ_EXPORTED_API int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode);
+
+/**
+ * @brief Set the default oscillator quality.
+ *
+ * This is the quality setting which the engine uses when the instrument
+ * does not use the opcode `oscillator_quality`. The engine uses distinct
+ * default quality settings for live mode and freewheeling mode,
+ * which both can be accessed by the means of this function.
+ * @since 0.6.0
+ *
+ * @param      synth    The synth.
+ * @param[in]  mode     The processing mode.
+ * @param[in]  quality  The desired oscillator quality, in the range 0 to 10.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
 
 /**
  * @brief Set the global instrument volume.

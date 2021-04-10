@@ -17,6 +17,9 @@ tresult SfizzVstState::load(IBStream* state)
     if (!s.readInt64u(version))
         return kResultFalse;
 
+    if (version > currentStateVersion)
+        return kResultFalse;
+
     if (const char* str = s.readStr8())
         sfzFile = str;
     else
@@ -58,6 +61,18 @@ tresult SfizzVstState::load(IBStream* state)
         stretchedTuning = defaults.stretchedTuning;
     }
 
+    if (version >= 3) {
+        if (!s.readInt32(sampleQuality))
+            return kResultFalse;
+
+        if (!s.readInt32(oscillatorQuality))
+            return kResultFalse;
+    }
+    else {
+        sampleQuality = defaults.sampleQuality;
+        oscillatorQuality = defaults.oscillatorQuality;
+    }
+
     controllers.clear();
     if (version >= 2) {
         uint32 count;
@@ -76,9 +91,6 @@ tresult SfizzVstState::load(IBStream* state)
         controllers.resize(size);
         controllers.shrink_to_fit();
     }
-
-    if (version > 2)
-        return kResultFalse;
 
     return kResultTrue;
 }
@@ -115,6 +127,12 @@ tresult SfizzVstState::store(IBStream* state) const
         return kResultFalse;
 
     if (!s.writeFloat(stretchedTuning))
+        return kResultFalse;
+
+    if (!s.writeInt32(sampleQuality))
+        return kResultFalse;
+
+    if (!s.writeInt32(oscillatorQuality))
         return kResultFalse;
 
     {

@@ -20,6 +20,8 @@ enum {
     kPidScalaRootKey,
     kPidTuningFrequency,
     kPidStretchedTuning,
+    kPidSampleQuality,
+    kPidOscillatorQuality,
     kPidAftertouch,
     kPidPitchBend,
     kPidCC0,
@@ -68,6 +70,10 @@ struct SfizzRange {
             return {440.0, 300.0, 500.0};
         case kPidStretchedTuning:
             return {0.0, 0.0, 1.0};
+        case kPidSampleQuality:
+            return {1.0, 0.0, 10.0};
+        case kPidOscillatorQuality:
+            return {1.0, 0.0, 3.0};
         case kPidAftertouch:
             return {0.0, 0.0, 1.0};
         case kPidPitchBend:

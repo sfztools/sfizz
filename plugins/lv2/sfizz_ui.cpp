@@ -324,6 +324,12 @@ port_event(LV2UI_Handle ui,
         case SFIZZ_STRETCH_TUNING:
             self->uiReceiveValue(EditId::StretchTuning, v);
             break;
+        case SFIZZ_SAMPLE_QUALITY:
+            self->uiReceiveValue(EditId::SampleQuality, v);
+            break;
+        case SFIZZ_OSCILLATOR_QUALITY:
+            self->uiReceiveValue(EditId::OscillatorQuality, v);
+            break;
         case SFIZZ_ACTIVE_VOICES:
             self->uiReceiveValue(EditId::UINumActiveVoices, v);
             break;
@@ -582,6 +588,12 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
     case EditId::StretchTuning:
         sendFloat(SFIZZ_STRETCH_TUNING, v.to_float());
         break;
+    case EditId::SampleQuality:
+        sendFloat(SFIZZ_SAMPLE_QUALITY, v.to_float());
+        break;
+    case EditId::OscillatorQuality:
+        sendFloat(SFIZZ_OSCILLATOR_QUALITY, v.to_float());
+        break;
     case EditId::SfzFile:
         sendPath(sfizz_sfz_file_uri, v.to_string());
         break;
@@ -634,6 +646,12 @@ void sfizz_ui_t::uiTouch(EditId id, bool t)
         break;
     case EditId::StretchTuning:
         touch->touch(touch->handle, SFIZZ_STRETCH_TUNING, t);
+        break;
+    case EditId::SampleQuality:
+        touch->touch(touch->handle, SFIZZ_SAMPLE_QUALITY, t);
+        break;
+    case EditId::OscillatorQuality:
+        touch->touch(touch->handle, SFIZZ_OSCILLATOR_QUALITY, t);
         break;
     default:
         break;

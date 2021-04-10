@@ -1645,9 +1645,9 @@ int Synth::getSampleQuality(ProcessMode mode)
 
 void Synth::setSampleQuality(ProcessMode mode, int quality)
 {
-    SFIZZ_CHECK(quality >= 1 && quality <= 10);
+    SFIZZ_CHECK(quality >= 0 && quality <= 10);
     Impl& impl = *impl_;
-    quality = clamp(quality, 1, 10);
+    quality = clamp(quality, 0, 10);
 
     switch (mode) {
     case ProcessLive:
@@ -1655,6 +1655,39 @@ void Synth::setSampleQuality(ProcessMode mode, int quality)
         break;
     case ProcessFreewheeling:
         impl.resources_.synthConfig.freeWheelingSampleQuality = quality;
+        break;
+    default:
+        SFIZZ_CHECK(false);
+        break;
+    }
+}
+
+int Synth::getOscillatorQuality(ProcessMode mode)
+{
+    Impl& impl = *impl_;
+    switch (mode) {
+    case ProcessLive:
+        return impl.resources_.synthConfig.liveOscillatorQuality;
+    case ProcessFreewheeling:
+        return impl.resources_.synthConfig.freeWheelingOscillatorQuality;
+    default:
+        SFIZZ_CHECK(false);
+        return 0;
+    }
+}
+
+void Synth::setOscillatorQuality(ProcessMode mode, int quality)
+{
+    SFIZZ_CHECK(quality >= 0 && quality <= 3);
+    Impl& impl = *impl_;
+    quality = clamp(quality, 0, 3);
+
+    switch (mode) {
+    case ProcessLive:
+        impl.resources_.synthConfig.liveOscillatorQuality = quality;
+        break;
+    case ProcessFreewheeling:
+        impl.resources_.synthConfig.freeWheelingOscillatorQuality = quality;
         break;
     default:
         SFIZZ_CHECK(false);

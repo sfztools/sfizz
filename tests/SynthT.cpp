@@ -584,7 +584,7 @@ TEST_CASE("[Synth] sample quality")
     synth.noteOn(0, 60, 100);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 1);
-    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::freewheelingQuality);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::freewheelingSampleQuality);
     synth.allSoundOff();
     synth.disableFreeWheeling();
 
