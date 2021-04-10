@@ -590,6 +590,17 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             getOrCreateConnection(source, target).sourceDepth = opcode.read(Default::filterCutoffMod);
         }
         break;
+    case hash("cutoff&_polyaft"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const ModKey source = ModKey::createNXYZ(ModId::PolyAftertouch, id);
+            const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex);
+            getOrCreateConnection(source, target).sourceDepth = opcode.read(Default::filterCutoffMod);
+        }
+        break;
     case hash("fil&_keytrack"): // also fil_keytrack
         {
             const auto filterIndex = opcode.parameters.front() - 1;
