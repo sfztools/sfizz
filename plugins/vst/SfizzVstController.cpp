@@ -39,27 +39,27 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     parameters.addParameter(
         SfizzRange::getForParameter(kPidNumVoices).createParameter(
             Steinberg::String("Polyphony"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidOversampling).createParameter(
             Steinberg::String("Oversampling"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidPreloadSize).createParameter(
             Steinberg::String("Preload size"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidScalaRootKey).createParameter(
             Steinberg::String("Scala root key"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidTuningFrequency).createParameter(
             Steinberg::String("Tuning frequency"), pid++, Steinberg::String("Hz"),
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
             Steinberg::String("Stretched tuning"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidSampleQuality).createParameter(
             Steinberg::String("Sample quality"), pid++, nullptr,
@@ -70,8 +70,14 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
             0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI special controllers
-    parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
-    parameters.addParameter(Steinberg::String("Pitch bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidAftertouch).createParameter(
+            Steinberg::String("Aftertouch"), pid++, nullptr,
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidPitchBend).createParameter(
+            Steinberg::String("Pitch bend"), pid++, nullptr,
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
 
     // MIDI controllers
     for (unsigned i = 0; i < sfz::config::numCCs; ++i) {
