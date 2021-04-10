@@ -40,6 +40,9 @@ public:
     std::function<void(unsigned, float)> onKeyPressed;
     std::function<void(unsigned, float)> onKeyReleased;
 
+    void setBackColor(const CColor&);
+    void setFontColor(const CColor&);
+
 protected:
     void draw(CDrawContext* dc) override;
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;

@@ -249,18 +249,18 @@ public:
     void setHue(float hue);
     SStyledKnob* getControl() const { return knob_; }
 
-    void setNameLabelText(const UTF8String& name) { label_->setText(name); }
+    void setNameLabelText(const UTF8String& name) { label_->setText(name); label_->invalid(); }
     void setNameLabelFont(CFontRef font);
-    void setNameLabelFontColor(CColor color) { label_->setFontColor(color); }
-    void setCCLabelText(const UTF8String& name) { ccLabel_->setText(name); }
+    void setNameLabelFontColor(CColor color) { label_->setFontColor(color); label_->invalid(); }
+    void setCCLabelText(const UTF8String& name) { ccLabel_->setText(name); ccLabel_->invalid(); }
     void setCCLabelFont(CFontRef font);
-    void setCCLabelFontColor(CColor color) { ccLabel_->setFontColor(color); }
-    void setKnobLineIndicatorColor(CColor color) { knob_->setLineIndicatorColor(color); }
-    void setKnobFont(CFontRef font) { knob_->setFont(font); }
-    void setKnobFontColor(CColor color) { knob_->setFontColor(color); }
+    void setCCLabelFontColor(CColor color) { ccLabel_->setFontColor(color); ccLabel_->invalid(); }
+    void setKnobLineIndicatorColor(CColor color) { knob_->setLineIndicatorColor(color); knob_->invalid(); }
+    void setKnobFont(CFontRef font) { knob_->setFont(font); knob_->invalid(); }
+    void setKnobFontColor(CColor color) { knob_->setFontColor(color); knob_->invalid(); }
 
     using ValueToStringFunction = SStyledKnob::ValueToStringFunction;
-    void setValueToStringFunction(ValueToStringFunction f) { knob_->setValueToStringFunction(std::move(f)); }
+    void setValueToStringFunction(ValueToStringFunction f) { knob_->setValueToStringFunction(std::move(f)); knob_->invalid(); }
 
 private:
     void updateViewSizes();

@@ -141,6 +141,24 @@ int SPiano::getKeyRole(unsigned key)
     return role;
 }
 
+void SPiano::setBackColor(const CColor &color)
+{
+    Impl& impl = *impl_;
+    if (impl.backgroundFill_ != color) {
+        impl.backgroundFill_ = color;
+        invalid();
+    }
+}
+
+void SPiano::setFontColor(const CColor &color)
+{
+    Impl& impl = *impl_;
+    if (impl.labelStroke_ != color) {
+        impl.labelStroke_ = color;
+        invalid();
+    }
+}
+
 void SPiano::draw(CDrawContext* dc)
 {
     Impl& impl = *impl_;
@@ -155,7 +173,7 @@ void SPiano::draw(CDrawContext* dc)
         SharedPointer<CGraphicsPath> path;
         path = owned(dc->createGraphicsPath());
         path->addRoundRect(dim.bounds, impl.backgroundRadius_);
-        dc->setFillColor(CColor(0xca, 0xca, 0xca));
+        dc->setFillColor(impl.backgroundFill_);
         dc->drawGraphicsPath(path, CDrawContext::kPathFilled);
     }
 
