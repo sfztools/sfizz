@@ -9,7 +9,8 @@
 #include <cstdio>
 #include <cassert>
 
-void OrderedEventProcessor::initializeEventProcessor(const Vst::ProcessSetup& setup, int32 paramCount, int32 subdivSize)
+template <class R>
+void OrderedEventProcessor<R>::initializeEventProcessor(const Vst::ProcessSetup& setup, int32 paramCount, int32 subdivSize)
 {
     paramCount_ = paramCount;
     subdivSize_ = subdivSize;
@@ -18,7 +19,8 @@ void OrderedEventProcessor::initializeEventProcessor(const Vst::ProcessSetup& se
     numPointsBySample_.reset(new uint32[subdivSize]);
 }
 
-void OrderedEventProcessor::processUnorderedEvents(int32 numSamples, Vst::IParameterChanges* pcs, Vst::IEventList* evs)
+template <class R>
+void OrderedEventProcessor<R>::processUnorderedEvents(int32 numSamples, Vst::IParameterChanges* pcs, Vst::IEventList* evs)
 {
     int32 sampleIndex = 0;
     int32 subdivNumber = 0;
@@ -36,7 +38,8 @@ void OrderedEventProcessor::processUnorderedEvents(int32 numSamples, Vst::IParam
     playRemainder(std::max(int32(0), numSamples - 1), evs);
 }
 
-void OrderedEventProcessor::startProcessing(Vst::IEventList* evs, Vst::IParameterChanges* pcs)
+template <class R>
+void OrderedEventProcessor<R>::startProcessing(Vst::IEventList* evs, Vst::IParameterChanges* pcs)
 {
     // collect the parameter queues which have values on them
     // push them onto a work list
@@ -70,13 +73,15 @@ void OrderedEventProcessor::startProcessing(Vst::IEventList* evs, Vst::IParamete
         evs->getEvent(eventIndex_, currentEvent_) == kResultTrue;
 }
 
-void OrderedEventProcessor::processSubdiv(Vst::IEventList* evs, int32 firstOffset, int32 lastOffset)
+template <class R>
+void OrderedEventProcessor<R>::processSubdiv(Vst::IEventList* evs, int32 firstOffset, int32 lastOffset)
 {
     sortSubdiv(firstOffset, lastOffset);
     playSubdiv(evs, firstOffset, lastOffset);
 }
 
-void OrderedEventProcessor::sortSubdiv(int32 firstOffset, int32 lastOffset)
+template <class R>
+void OrderedEventProcessor<R>::sortSubdiv(int32 firstOffset, int32 lastOffset)
 {
     // this collects parameter changes from the subdivision that goes from
     // first offset to last offset, included.
@@ -166,10 +171,13 @@ void OrderedEventProcessor::sortSubdiv(int32 firstOffset, int32 lastOffset)
     queueList_ = head;
 }
 
-void OrderedEventProcessor::playSubdiv(Vst::IEventList* evs, int32 firstOffset, int32 lastOffset)
+template <class R>
+void OrderedEventProcessor<R>::playSubdiv(Vst::IEventList* evs, int32 firstOffset, int32 lastOffset)
 {
     // go over the points in sample order, and play them intermittently with the
     // event queue according to the sample offsets.
+
+    R& receiver = *static_cast<R*>(this);
 
     const int32 paramCount = paramCount_;
     const ParameterAndValue* pointsBySample = pointsBySample_.get();
@@ -181,22 +189,25 @@ void OrderedEventProcessor::playSubdiv(Vst::IEventList* evs, int32 firstOffset, 
         playEventsUpTo(evs, sampleOffset);
         for (int32 i = 0; i < listSize; ++i) {
             const ParameterAndValue item = listItems[i];
-            playOrderedParameter(sampleOffset, item.id, item.value);
+            receiver.playOrderedParameter(sampleOffset, item.id, item.value);
         }
     }
 }
 
-void OrderedEventProcessor::playRemainder(int32 sampleOffset, Vst::IEventList* evs)
+template <class R>
+void OrderedEventProcessor<R>::playRemainder(int32 sampleOffset, Vst::IEventList* evs)
 {
     // play any remaining events and parameters in arbitrary order,
     // disregarding their respective offsets
+
+    R& receiver = *static_cast<R*>(this);
 
     int32 eventIndex = eventIndex_;
     int32 eventCount = eventCount_;
     bool haveCurrentEvent = haveCurrentEvent_;
     while (haveCurrentEvent) {
         currentEvent_.sampleOffset = std::min(sampleOffset, currentEvent_.sampleOffset);
-        playOrderedEvent(currentEvent_);
+        receiver.playOrderedEvent(currentEvent_);
         haveCurrentEvent = false;
         while (!haveCurrentEvent && ++eventIndex < eventCount)
             haveCurrentEvent = evs->getEvent(eventIndex, currentEvent_) == kResultTrue;
@@ -210,19 +221,22 @@ void OrderedEventProcessor::playRemainder(int32 sampleOffset, Vst::IEventList* e
             int32 unusedSampleOffset;
             Vst::ParamValue value;
             if (vq->getPoint(i, unusedSampleOffset, value) == kResultTrue)
-                playOrderedParameter(sampleOffset, id, value);
+                receiver.playOrderedParameter(sampleOffset, id, value);
         }
     }
 }
 
-void OrderedEventProcessor::playEventsUpTo(Vst::IEventList* evs, int32 sampleOffset)
+template <class R>
+void OrderedEventProcessor<R>::playEventsUpTo(Vst::IEventList* evs, int32 sampleOffset)
 {
+    R& receiver = *static_cast<R*>(this);
+
     int32 index = eventIndex_;
     int32 count = eventCount_;
     bool haveCurrentEvent = haveCurrentEvent_;
 
     while (haveCurrentEvent && currentEvent_.sampleOffset <= sampleOffset) {
-        playOrderedEvent(currentEvent_);
+        receiver.playOrderedEvent(currentEvent_);
         haveCurrentEvent = false;
         while (!haveCurrentEvent && ++index < count)
             haveCurrentEvent = evs->getEvent(index, currentEvent_) == kResultTrue;

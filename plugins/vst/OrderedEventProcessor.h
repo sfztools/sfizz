@@ -12,16 +12,13 @@
 
 using namespace Steinberg;
 
+template <class R>
 class OrderedEventProcessor {
 public:
     virtual ~OrderedEventProcessor() {}
 
     void initializeEventProcessor(const Vst::ProcessSetup& setup, int32 paramCount, int32 subdivSize = 128);
     void processUnorderedEvents(int32 numSamples, Vst::IParameterChanges* pcs, Vst::IEventList* evs);
-
-protected:
-    virtual void playOrderedParameter(int32 sampleOffset, Vst::ParamID id, Vst::ParamValue value) = 0;
-    virtual void playOrderedEvent(const Vst::Event& event) = 0;
 
 private:
     void startProcessing(Vst::IEventList* evs, Vst::IParameterChanges* pcs);
@@ -64,3 +61,5 @@ private:
     bool haveCurrentEvent_ = false;
     Vst::Event currentEvent_ {};
 };
+
+#include "OrderedEventProcessor.hpp"
