@@ -133,7 +133,8 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
             if (currentValue <= config::egReleaseThreshold) {
                 currentState = State::Fadeout;
                 currentValue = previousValue;
-                transitionDelta = -currentValue / (sampleRate * config::egTransitionTime);
+                transitionDelta = -max(config::egReleaseThreshold, currentValue)
+                    / (sampleRate * config::egTransitionTime);
             }
             break;
         case State::Fadeout:
