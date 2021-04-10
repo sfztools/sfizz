@@ -316,6 +316,21 @@ public:
      */
     void setSampleQuality(ProcessMode mode, int quality);
     /**
+     * @brief Get the default oscillator quality for the given mode.
+     *
+     * @param mode the processing mode
+     *
+     * @return the quality setting
+     */
+    int getOscillatorQuality(ProcessMode mode);
+    /**
+     * @brief Set the default oscillator quality for the given mode.
+     *
+     * @param mode the processing mode
+     * @param quality the quality setting
+     */
+    void setOscillatorQuality(ProcessMode mode, int quality);
+    /**
      * @brief Get the current value for the volume, in dB.
      *
      * @return float

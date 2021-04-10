@@ -3,7 +3,7 @@ version 1.0305
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {353 221 800 475} type Double
+  xywh {439 94 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box imageContainer_ {
@@ -20,7 +20,7 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        comment {tag=kTagAbout} selected
+        comment {tag=kTagAbout}
         image {../resources/logo_text_shaded.png} xywh {35 9 120 60}
         class AboutButton
       }
@@ -328,6 +328,32 @@ widget_class mainView {open
         comment {tag=kTagChooseUserFilesDir}
         xywh {640 330 100 25} labelsize 12
         class ValueButton
+      }
+    }
+    Fl_Group {} {
+      label Quality open
+      xywh {530 135 195 100} box ROUNDED_BOX labelsize 12 align 17
+      class TitleGroup
+    } {
+      Fl_Spinner sampleQualitySlider_ {
+        comment {tag=kTagSetSampleQuality}
+        xywh {545 195 80 25} labelsize 12 textsize 12
+        class ValueMenu
+      }
+      Fl_Box {} {
+        label Sample
+        xywh {545 155 80 25} labelsize 12
+        class ValueLabel
+      }
+      Fl_Box {} {
+        label Oscillator
+        xywh {630 155 80 25} labelsize 12
+        class ValueLabel
+      }
+      Fl_Spinner oscillatorQualitySlider_ {
+        comment {tag=kTagSetOscillatorQuality} selected
+        xywh {630 195 80 25} labelsize 12 textsize 12
+        class ValueMenu
       }
     }
   }

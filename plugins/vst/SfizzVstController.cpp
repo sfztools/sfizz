@@ -60,6 +60,14 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
             Steinberg::String("Stretched tuning"), pid++, nullptr,
             0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidSampleQuality).createParameter(
+            Steinberg::String("Sample quality"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidOscillatorQuality).createParameter(
+            Steinberg::String("Oscillator quality"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI special controllers
     parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
@@ -73,7 +81,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         shortTitle.printf("CC%u", i);
 
         parameters.addParameter(
-            SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
+            SfizzRange::getForParameter(kPidCC0 + i).createParameter(
                 title, pid++, nullptr, 0, Vst::ParameterInfo::kCanAutomate,
                 Vst::kRootUnitId, shortTitle));
     }
@@ -174,6 +182,8 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     setParam(kPidScalaRootKey, s.scalaRootKey);
     setParam(kPidTuningFrequency, s.tuningFrequency);
     setParam(kPidStretchedTuning, s.stretchedTuning);
+    setParam(kPidSampleQuality, s.sampleQuality);
+    setParam(kPidOscillatorQuality, s.oscillatorQuality);
 
     uint32 ccLimit = uint32(std::min(s.controllers.size(), size_t(sfz::config::numCCs)));
     for (uint32 cc = 0; cc < ccLimit; ++cc) {

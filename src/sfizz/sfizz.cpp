@@ -140,6 +140,16 @@ void sfz::Sfizz::setSampleQuality(ProcessMode mode, int quality)
     synth->synth.setSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
+int sfz::Sfizz::getOscillatorQuality(ProcessMode mode)
+{
+    return synth->synth.getOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode));
+}
+
+void sfz::Sfizz::setOscillatorQuality(ProcessMode mode, int quality)
+{
+    synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
+}
+
 float sfz::Sfizz::getVolume() const noexcept
 {
     return synth->synth.getVolume();

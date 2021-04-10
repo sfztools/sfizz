@@ -279,6 +279,12 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
         case kPidStretchedTuning:
             uiReceiveValue(EditId::StretchTuning, range.denormalize(value));
             break;
+        case kPidSampleQuality:
+            uiReceiveValue(EditId::SampleQuality, range.denormalize(value));
+            break;
+        case kPidOscillatorQuality:
+            uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
+            break;
         default:
             if (id >= kPidCC0 && id <= kPidCCLast) {
                 int cc = int(id - kPidCC0);
@@ -372,6 +378,12 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             break;
         case EditId::StretchTuning:
             normalizeAndSet(kPidStretchedTuning, v.to_float());
+            break;
+        case EditId::SampleQuality:
+            normalizeAndSet(kPidSampleQuality, v.to_float());
+            break;
+        case EditId::OscillatorQuality:
+            normalizeAndSet(kPidOscillatorQuality, v.to_float());
             break;
 
         case EditId::UserFilesDir:
@@ -479,6 +491,8 @@ Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
     case EditId::ScalaRootKey: return kPidScalaRootKey;
     case EditId::TuningFrequency: return kPidTuningFrequency;
     case EditId::StretchTuning: return kPidStretchedTuning;
+    case EditId::SampleQuality: return kPidSampleQuality;
+    case EditId::OscillatorQuality: return kPidOscillatorQuality;
     default:
         if (editIdIsCC(id))
             return kPidCC0 + ccForEditId(id);

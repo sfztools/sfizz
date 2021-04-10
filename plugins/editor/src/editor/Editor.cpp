@@ -85,6 +85,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
+        kTagSetSampleQuality,
+        kTagSetOscillatorQuality,
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
@@ -112,6 +114,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
+    SValueMenu *sampleQualitySlider_ = nullptr;
+    SValueMenu *oscillatorQualitySlider_ = nullptr;
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
@@ -388,6 +392,24 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             if (stretchedTuningSlider_)
                 stretchedTuningSlider_->setValue(value);
             updateStretchedTuningLabel(value);
+        }
+        break;
+    case EditId::SampleQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = sampleQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
+        }
+        break;
+    case EditId::OscillatorQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = oscillatorQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
         }
         break;
     case EditId::CanEditUserFilesDir:
@@ -920,6 +942,8 @@ void Editor::Impl::createFrameContents()
     adjustMinMaxToEditRange(tuningFrequencySlider_, EditId::TuningFrequency);
     tuningFrequencySlider_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
     adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
+    adjustMinMaxToEditRange(sampleQualitySlider_, EditId::SampleQuality);
+    adjustMinMaxToEditRange(oscillatorQualitySlider_, EditId::OscillatorQuality);
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
@@ -998,6 +1022,37 @@ void Editor::Impl::createFrameContents()
         menu->addEntry("Edit file", kTagEditSfzFile);
         menu->addEntry("Create new file", kTagCreateNewSfzFile);
         menu->addEntry("Open SFZ folder", kTagOpenSfzFolder);
+    }
+
+    if (SValueMenu *menu = sampleQualitySlider_) {
+        static const std::array<const char*, 11> labels {{
+            "Nearest", "Linear", "Polynomial",
+            "Sinc 8", "Sinc 12", "Sinc 16", "Sinc 24",
+            "Sinc 36", "Sinc 48", "Sinc 60", "Sinc 72",
+        }};
+        for (size_t i = 0; i < labels.size(); ++i)
+            menu->addEntry(labels[i], float(i));
+        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+            int index = int(value);
+            if (index < 0 || unsigned(index) >= labels.size())
+                return false;
+            result = labels[unsigned(index)];
+            return true;
+        });
+    }
+    if (SValueMenu *menu = oscillatorQualitySlider_) {
+        static const std::array<const char*, 4> labels {{
+            "Nearest", "Linear", "High", "Dual-High",
+        }};
+        for (size_t i = 0; i < labels.size(); ++i)
+            menu->addEntry(labels[i], float(i));
+        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+            int index = int(value);
+            if (index < 0 || unsigned(index) >= labels.size())
+                return false;
+            result = labels[unsigned(index)];
+            return true;
+        });
     }
 
     if (SPiano* piano = piano_) {
@@ -1763,6 +1818,14 @@ void Editor::Impl::valueChanged(CControl* ctl)
     case kTagSetTuningFrequency:
         ctrl.uiSendValue(EditId::TuningFrequency, value);
         updateTuningFrequencyLabel(value);
+        break;
+
+    case kTagSetSampleQuality:
+        ctrl.uiSendValue(EditId::SampleQuality, value);
+        break;
+
+    case kTagSetOscillatorQuality:
+        ctrl.uiSendValue(EditId::OscillatorQuality, value);
         break;
 
     case kTagSetStretchedTuning:

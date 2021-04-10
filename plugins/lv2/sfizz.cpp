@@ -236,6 +236,12 @@ connect_port(LV2_Handle instance,
     case SFIZZ_STRETCH_TUNING:
         self->stretch_tuning_port = (const float *)data;
         break;
+    case SFIZZ_SAMPLE_QUALITY:
+        self->sample_quality_port = (const float *)data;
+        break;
+    case SFIZZ_OSCILLATOR_QUALITY:
+        self->oscillator_quality_port = (const float *)data;
+        break;
     case SFIZZ_ACTIVE_VOICES:
         self->active_voices_port = (float *)data;
         break;
@@ -976,6 +982,8 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_set_volume(self->synth, *(self->volume_port));
     sfizz_set_scala_root_key(self->synth, *(self->scala_root_key_port));
     sfizz_set_tuning_frequency(self->synth, *(self->tuning_frequency_port));
+    sfizz_set_sample_quality(self->synth, SFIZZ_PROCESS_LIVE, (int)(*self->sample_quality_port));
+    sfizz_set_oscillator_quality(self->synth, SFIZZ_PROCESS_LIVE, (int)(*self->oscillator_quality_port));
     sfizz_lv2_check_stretch_tuning(self);
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);

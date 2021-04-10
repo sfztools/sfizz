@@ -287,6 +287,8 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
         synth.loadStretchTuningByRatio(_state.stretchedTuning);
         _currentStretchedTuning = _state.stretchedTuning;
     }
+    synth.setSampleQuality(sfz::Sfizz::ProcessLive, _state.sampleQuality);
+    synth.setOscillatorQuality(sfz::Sfizz::ProcessLive, _state.oscillatorQuality);
 
     synth.renderBlock(outputs, numFrames, numChannels);
 
@@ -379,6 +381,12 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         break;
     case kPidStretchedTuning:
         _state.stretchedTuning = range.denormalize(value);
+        break;
+    case kPidSampleQuality:
+        _state.sampleQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidOscillatorQuality:
+        _state.oscillatorQuality = static_cast<int32>(range.denormalize(value));
         break;
     case kPidAftertouch:
         synth.aftertouch(sampleOffset, fastRound(value * 127.0));

@@ -315,8 +315,30 @@ midnam:update a lv2:Feature .
     lv2:maximum 1.0 ;
     units:unit units:coef
   ] , [
-    a lv2:OutputPort, lv2:ControlPort ;
+    a lv2:InputPort, lv2:ControlPort ;
     lv2:index 13 ;
+    lv2:symbol "sample_quality" ;
+    lv2:name "Sample quality",
+      "Qualité des échantillons"@fr ,
+      "Qualità del campione"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 1.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 10.0
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 14 ;
+    lv2:symbol "oscillator_quality" ;
+    lv2:name "Oscillator quality",
+      "Qualité des oscillateurs"@fr ,
+      "Qualità dell'oscillatore"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 1.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 3.0
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 15 ;
     lv2:symbol "active_voices" ;
     lv2:name "Active voices",
       "Voix utilisées"@fr ;
@@ -327,7 +349,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 256 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 14 ;
+    lv2:index 16 ;
     lv2:symbol "num_curves" ;
     lv2:name "Number of curves",
       "Nombre de courbes"@fr ;
@@ -338,7 +360,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 15 ;
+    lv2:index 17 ;
     lv2:symbol "num_masters" ;
     lv2:name "Number of masters",
       "Nombre de maîtres"@fr ;
@@ -349,7 +371,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 16 ;
+    lv2:index 18 ;
     lv2:symbol "num_groups" ;
     lv2:name "Number of groups",
       "Nombre de groupes"@fr ;
@@ -360,7 +382,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 17 ;
+    lv2:index 19 ;
     lv2:symbol "num_regions" ;
     lv2:name "Number of regions",
       "Nombre de régions"@fr ;
@@ -371,7 +393,7 @@ midnam:update a lv2:Feature .
     lv2:maximum 65535 ;
   ] , [
     a lv2:OutputPort, lv2:ControlPort ;
-    lv2:index 18 ;
+    lv2:index 20 ;
     lv2:symbol "num_samples" ;
     lv2:name "Number of samples",
       "Nombre d'échantillons"@fr ;

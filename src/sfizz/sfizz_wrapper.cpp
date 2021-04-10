@@ -217,6 +217,16 @@ void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, i
     return synth->synth.setSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
+int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)
+{
+    return synth->synth.getOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode));
+}
+
+void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality)
+{
+    return synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
+}
+
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
 {
     synth->synth.setVolume(volume);
