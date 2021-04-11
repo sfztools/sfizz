@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SfizzVstUpdates.h"
+#include <algorithm>
 #include <cstring>
 
 OSCUpdate::~OSCUpdate()
@@ -57,7 +58,7 @@ void NoteUpdate::setEvents(const std::pair<uint32_t, float>* events, uint32_t co
 
     if (copy) {
         auto *buffer = new std::pair<uint32_t, float>[count];
-        std::memcpy(buffer, events, count);
+        std::copy_n(events, count, buffer);
         events = buffer;
     }
 
