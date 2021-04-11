@@ -45,6 +45,7 @@ fs::path getAriaPathSetting(const char* name)
 #else
 fs::path getAriaPathSetting(const char* name)
 {
+    (void)name;
     return {};
 }
 #endif
