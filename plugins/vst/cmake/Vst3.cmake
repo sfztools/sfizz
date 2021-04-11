@@ -111,8 +111,10 @@ endfunction()
 
 # --- Warning suppressions ---
 foreach(_target vst3sdk_vstgui vst3sdk)
-    gw_target_warn("${_target}" PRIVATE
+    gw_target_warn("${_target}" PUBLIC
         "-Wno-extra"
+        "-Wno-class-memaccess")
+    gw_target_warn("${_target}" PRIVATE
         "-Wno-multichar"
         "-Wno-reorder"
         "-Wno-class-memaccess"
