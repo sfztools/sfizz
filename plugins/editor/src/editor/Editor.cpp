@@ -604,7 +604,6 @@ void Editor::Impl::createFrameContents()
     backgroundBitmap_ = background;
 
     {
-        // Try to load the Default theme from disk or hardcoded one as fallback
         theme = new Theme;
         theme_.reset(theme);
 
@@ -876,12 +875,16 @@ void Editor::Impl::createFrameContents()
             box->setNameLabelText(label);
             box->setNameLabelFont(font);
             box->setKnobFont(font);
+            box->setCCLabelText(label);
             box->setCCLabelFont(font);
             OnThemeChanged.push_back([box, palette]() {
-                box->setNameLabelFontColor(palette->text);
-                box->setCCLabelFontColor(palette->text);
-                box->setKnobFontColor(palette->text);
+                box->setNameLabelFontColor(palette->knobText);
+                box->setCCLabelFontColor(palette->knobLabelText);
+                box->setCCLabelBackColor(palette->knobActiveTrack);
+                box->setKnobFontColor(palette->knobText);
                 box->setKnobLineIndicatorColor(palette->knobLineIndicator);
+                box->setKnobActiveTrackColor(palette->knobActiveTrack);
+                box->setKnobInactiveTrackColor(palette->knobInactiveTrack);
             });
             box->setValueToStringFunction([](float value, std::string& text) -> bool {
                 text = std::to_string(std::lround(value * 127));
@@ -1902,7 +1905,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
         {
             currentThemeName_ = Theme::getAvailableNames()[int(value)];
             Theme::storeCurrentName(currentThemeName_);
-            // TODO: live reload theme
+            theme_->load(currentThemeName_);
         }
         break;
 
