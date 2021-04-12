@@ -91,6 +91,7 @@ if(SFIZZ_VST)
     execute_process(
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
     copy_editor_resources(
+        ${VSTPLUGIN_PRJ_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
         "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/Resources")
     if(WIN32)
@@ -228,6 +229,7 @@ elseif(SFIZZ_AU)
     execute_process(
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
     copy_editor_resources(
+        ${AUPLUGIN_PRJ_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
         "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/Resources")
     set_target_properties(${AUPLUGIN_PRJ_NAME} PROPERTIES
@@ -334,6 +336,7 @@ if(SFIZZ_VST2)
     execute_process(
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Resources")
     copy_editor_resources(
+        ${VST2PLUGIN_PRJ_NAME}
         "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
         "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Resources")
     set_target_properties(${VST2PLUGIN_PRJ_NAME} PROPERTIES

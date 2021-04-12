@@ -106,6 +106,7 @@ if(SFIZZ_LV2_UI)
     execute_process(
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/Contents/Resources")
     copy_editor_resources(
+        ${LV2PLUGIN_PRJ_NAME}_ui
         "${CMAKE_CURRENT_SOURCE_DIR}/../editor/resources"
         "${PROJECT_BINARY_DIR}/Contents/Resources")
 endif()

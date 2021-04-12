@@ -23,12 +23,20 @@ set(EDITOR_RESOURCES
     Themes/Default/theme.xml
     PARENT_SCOPE)
 
-function(copy_editor_resources SOURCE_DIR DESTINATION_DIR)
+function(copy_editor_resources TARGET SOURCE_DIR DESTINATION_DIR)
+    set(_deps)
     foreach(res ${EDITOR_RESOURCES})
         get_filename_component(_dir "${res}" DIRECTORY)
         file(MAKE_DIRECTORY "${DESTINATION_DIR}/${_dir}")
-        file(COPY "${SOURCE_DIR}/${res}" DESTINATION "${DESTINATION_DIR}/${_dir}")
+        add_custom_command(
+            OUTPUT "${DESTINATION_DIR}/${res}"
+            COMMAND "${CMAKE_COMMAND}" "-E" "copy"
+                    "${SOURCE_DIR}/${res}" "${DESTINATION_DIR}/${res}"
+            DEPENDS "${SOURCE_DIR}/${res}")
+        list(APPEND _deps "${DESTINATION_DIR}/${res}")
     endforeach()
+    add_custom_target("${TARGET}_editor_resources" DEPENDS ${_deps})
+    add_dependencies("${TARGET}" "${TARGET}_editor_resources")
 endfunction()
 
 set(UI_FILES layout/main.fl layout/about.fl)
