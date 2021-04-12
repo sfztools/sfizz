@@ -77,7 +77,7 @@ struct SfizzRange {
         case kPidAftertouch:
             return {0.0, 0.0, 1.0};
         case kPidPitchBend:
-            return {0.5, 0.0, 1.0};
+            return {0.0, -1.0, 1.0};
         default:
             if (id >= kPidCC0 && id <= kPidCCLast)
                 return {0.0, 0.0, 1.0};

@@ -384,6 +384,24 @@ public:
     void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
 
     /**
+     * @brief Send a high-precision note on event to the synth.
+     * @since 0.6.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number.
+     * @param velocity the normalized midi note velocity, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdNoteOn(int delay, int noteNumber, float velocity) noexcept;
+
+    /**
      * @brief Send a note off event to the synth.
      * @since 0.2.0
      *
@@ -400,6 +418,24 @@ public:
      * - @b RT: the function must be invoked from the Real-time thread
      */
     void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+
+    /**
+     * @brief Send a note off event to the synth.
+     * @since 0.6.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number.
+     * @param velocity the normalized midi note velocity, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdNoteOff(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Send a CC event to the synth
@@ -478,6 +514,24 @@ public:
     void pitchWheel(int delay, int pitch) noexcept;
 
     /**
+     * @brief Send a high-precision pitch bend event to the synth
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param pitch the normalized pitch, in domain -1 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdPitchWheel(int delay, float pitch) noexcept;
+
+    /**
      * @brief Send an aftertouch event to the synth.
      *
      * This command should be delay-ordered with all other midi-type events
@@ -496,8 +550,26 @@ public:
     void aftertouch(int delay, uint8_t aftertouch) noexcept;
 
     /**
-     * @brief Send a polyphonic aftertouch event to the synth. This feature is
-     *          experimental and needs more testing in the internal engine.
+     * @brief Send a high-precision aftertouch event to the synth.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param aftertouch the normalized aftertouch value, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdAftertouch(int delay, float aftertouch) noexcept;
+
+    /**
+     * @brief Send a polyphonic aftertouch event to the synth.
+     *        This feature is experimental and needs more testing in the internal engine.
      *
      * This command should be delay-ordered with all other midi-type events
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -514,6 +586,26 @@ public:
      * - @b RT: the function must be invoked from the Real-time thread
      */
     void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+
+    /**
+     * @brief Send a high-precision polyphonic aftertouch event to the synth.
+     *        This feature is experimental and needs more testing in the internal engine.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the note number.
+     * @param aftertouch the normalized aftertouch value, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept;
 
     /**
      * @brief Send a tempo event to the synth.

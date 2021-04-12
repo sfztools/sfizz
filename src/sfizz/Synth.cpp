@@ -1069,10 +1069,15 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
 void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 {
+    const float normalizedVelocity = normalizeVelocity(velocity);
+    hdNoteOn(delay, noteNumber, normalizedVelocity);
+}
+
+void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexcept
+{
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
-    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
     impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
@@ -1080,11 +1085,16 @@ void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
 
 void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
 {
+    const float normalizedVelocity = normalizeVelocity(velocity);
+    hdNoteOff(delay, noteNumber, normalizedVelocity);
+}
+
+void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexcept
+{
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-    UNUSED(velocity);
+    UNUSED(normalizedVelocity);
     Impl& impl = *impl_;
-    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
@@ -1319,10 +1329,13 @@ float Synth::getDefaultHdcc(int ccNumber)
 
 void Synth::pitchWheel(int delay, int pitch) noexcept
 {
-    ASSERT(pitch <= 8192);
-    ASSERT(pitch >= -8192);
+    const float normalizedPitch = normalizeBend(float(pitch));
+    hdPitchWheel(delay, normalizedPitch);
+}
+
+void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
+{
     Impl& impl = *impl_;
-    const auto normalizedPitch = normalizeBend(float(pitch));
 
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.resources_.midiState.pitchBendEvent(delay, normalizedPitch);

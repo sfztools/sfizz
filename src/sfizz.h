@@ -342,6 +342,24 @@ SFIZZ_EXPORTED_API void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample
 SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity);
 
 /**
+ * @brief Send a high-precision on event to the synth.
+ * @since 0.6.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth        The synth.
+ * @param delay        The delay of the event in the block, in samples.
+ * @param note_number  The MIDI note number.
+ * @param velocity     The normalized MIDI velocity, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_note_on(sfizz_synth_t* synth, int delay, int note_number, float velocity);
+
+/**
  * @brief Send a note off event to the synth.
  * @since 0.2.0
  *
@@ -361,6 +379,27 @@ SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int 
  * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity);
+
+/**
+ * @brief Send a high-precision note off event to the synth.
+ * @since 0.6.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * As per the SFZ spec the velocity of note-off events is usually replaced by
+ * the note-on velocity.
+ *
+ * @param synth        The synth.
+ * @param delay        The delay of the event in the block, in samples.
+ * @param note_number  The MIDI note number.
+ * @param velocity     The normalized MIDI velocity, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_note_off(sfizz_synth_t* synth, int delay, int note_number, float velocity);
 
 /**
  * @brief Send a CC event to the synth.
@@ -437,6 +476,23 @@ SFIZZ_EXPORTED_API void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int
 SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch);
 
 /**
+ * @brief Send a high-precision pitch wheel event.
+ * @since 0.6.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth  The synth.
+ * @param delay  The delay.
+ * @param pitch  The normalized pitch, in domain -1 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch);
+
+/**
  * @brief Send an aftertouch event.
  * @since 0.2.0
  *
@@ -455,8 +511,26 @@ SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, 
 SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
 
 /**
- * @brief Send a polyphonic aftertouch event. This feature is experimental and needs more testing
- *          in the internal engine.
+ * @brief Send a high-precision aftertouch event.
+ * @since 0.6.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth      The synth.
+ * @param delay      The delay at which the event occurs; this should be lower
+ *                   than the size of the block in the next call to renderBlock().
+ * @param aftertouch The normalized aftertouch value, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch);
+
+/**
+ * @brief Send a polyphonic aftertouch event.
+ *      This feature is experimental and needs more testing in the internal engine.
  * @since 0.6.0
  *
  * This command should be delay-ordered with all other midi-type events
@@ -473,6 +547,26 @@ SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, c
  * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch);
+
+/**
+ * @brief Send a high-precision polyphonic aftertouch event.
+ *        This feature is experimental and needs more testing in the internal engine.
+ * @since 0.6.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth         The synth.
+ * @param delay         The delay at which the event occurs; this should be lower
+ *                      than the size of the block in the next call to renderBlock().
+ * @param note_number   The note number.
+ * @param aftertouch    The normalized aftertouch value, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, float aftertouch);
 
 /**
  * @brief Send a tempo event.

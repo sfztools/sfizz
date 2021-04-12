@@ -354,6 +354,15 @@ public:
      */
     void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
     /**
+     * @brief Send a high-precision note on event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number
+     * @param velocity the normalized midi note velocity, in domain 0 to 1
+     */
+    void hdNoteOn(int delay, int noteNumber, float velocity) noexcept;
+    /**
      * @brief Send a note off event to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower
@@ -362,6 +371,15 @@ public:
      * @param velocity the midi note velocity
      */
     void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    /**
+     * @brief Send a high-precision note off event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number
+     * @param velocity the normalized midi note velocity, in domain 0 to 1
+     */
+    void hdNoteOff(int delay, int noteNumber, float velocity) noexcept;
     /**
      * @brief Send a CC event to the synth
      *
@@ -412,6 +430,15 @@ public:
      * @param pitch the pitch value centered between -8192 and 8192
      */
     void pitchWheel(int delay, int pitch) noexcept;
+   /**
+     * @brief Send a high-precision pitch bend event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to
+     *              renderBlock().
+     * @param pitch the normalized pitch value centered between -1 and 1
+     */
+    void hdPitchWheel(int delay, float pitch) noexcept;
     /**
      * @brief Send a aftertouch event to the synth
      *
