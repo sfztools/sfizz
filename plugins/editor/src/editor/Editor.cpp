@@ -876,8 +876,10 @@ void Editor::Impl::createFrameContents()
             box->setNameLabelText(label);
             box->setNameLabelFont(font);
             box->setKnobFont(font);
+            box->setCCLabelFont(font);
             OnThemeChanged.push_back([box, palette]() {
                 box->setNameLabelFontColor(palette->text);
+                box->setCCLabelFontColor(palette->text);
                 box->setKnobFontColor(palette->text);
                 box->setKnobLineIndicatorColor(palette->knobLineIndicator);
             });
@@ -892,8 +894,16 @@ void Editor::Impl::createFrameContents()
             container->setBackground(background);
             return container;
         };
-        auto createControlsPanel = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             auto* panel = new SControlsPanel(bounds);
+            OnThemeChanged.push_back([panel, palette]() {
+                panel->setNameLabelFontColor(palette->text);
+                panel->setCCLabelFontColor(palette->valueText);
+                panel->setKnobFontColor(palette->text);
+                panel->setKnobActiveTrackColor(palette->knobActiveTrack);
+                panel->setKnobInactiveTrackColor(palette->knobInactiveTrack);
+                panel->setKnobLineIndicatorColor(palette->knobLineIndicator);
+            });
             return panel;
         };
 

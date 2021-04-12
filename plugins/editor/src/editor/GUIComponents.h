@@ -250,14 +250,34 @@ public:
     SStyledKnob* getControl() const { return knob_; }
 
     void setNameLabelText(const UTF8String& name) { label_->setText(name); label_->invalid(); }
-    void setNameLabelFont(CFontRef font);
-    void setNameLabelFontColor(CColor color) { label_->setFontColor(color); label_->invalid(); }
     void setCCLabelText(const UTF8String& name) { ccLabel_->setText(name); ccLabel_->invalid(); }
+
+    void setNameLabelFont(CFontRef font);
+    CFontRef getNameLabelFont() const { return label_->getFont(); }
+
+    void setNameLabelFontColor(CColor color) { label_->setFontColor(color); label_->invalid(); }
+    CColor getNameLabelFontColor() const { return label_->getFontColor(); }
+
     void setCCLabelFont(CFontRef font);
+    CFontRef getCCLabelFont() const { return ccLabel_->getFont(); }
+
     void setCCLabelFontColor(CColor color) { ccLabel_->setFontColor(color); ccLabel_->invalid(); }
+    CColor getCCLabelFontColor() const { return ccLabel_->getFontColor(); }
+
+    void setKnobActiveTrackColor(CColor color) { knob_->setActiveTrackColor(color); knob_->invalid(); }
+    CColor getKnobActiveTrackColor() const { return knob_->getActiveTrackColor(); }
+
+    void setKnobInactiveTrackColor(CColor color) { knob_->setInactiveTrackColor(color); knob_->invalid(); }
+    CColor getKnobInactiveTrackColor() const { return knob_->getInactiveTrackColor(); }
+
     void setKnobLineIndicatorColor(CColor color) { knob_->setLineIndicatorColor(color); knob_->invalid(); }
+    CColor getKnobLineIndicatorColor() const { return knob_->getLineIndicatorColor(); }
+
     void setKnobFont(CFontRef font) { knob_->setFont(font); knob_->invalid(); }
+    CFontRef getKnobFont() const { return knob_->getFont(); }
+
     void setKnobFontColor(CColor color) { knob_->setFontColor(color); knob_->invalid(); }
+    CColor getKnobFontColor() const { return knob_->getFontColor(); }
 
     using ValueToStringFunction = SStyledKnob::ValueToStringFunction;
     void setValueToStringFunction(ValueToStringFunction f) { knob_->setValueToStringFunction(std::move(f)); knob_->invalid(); }
@@ -286,6 +306,16 @@ public:
     void setControlDefaultValue(uint32_t index, float value);
     void setControlLabelText(uint32_t index, UTF8StringPtr text);
 
+    void setNameLabelFont(CFontRef font);
+    void setNameLabelFontColor(CColor color);
+    void setCCLabelFont(CFontRef font);
+    void setCCLabelFontColor(CColor color);
+    void setKnobActiveTrackColor(CColor color);
+    void setKnobInactiveTrackColor(CColor color);
+    void setKnobLineIndicatorColor(CColor color);
+    void setKnobFont(CFontRef font);
+    void setKnobFontColor(CColor color);
+
     std::function<void(uint32_t, float)> ValueChangeFunction;
     std::function<void(uint32_t)> BeginEditFunction;
     std::function<void(uint32_t)> EndEditFunction;
@@ -295,6 +325,8 @@ protected:
 
 private:
     void updateLayout();
+    void syncAllSlotStyles();
+    void syncSlotStyle(uint32_t index);
     static std::string getDefaultLabelText(uint32_t index);
 
     struct ControlSlot;
