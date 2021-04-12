@@ -19,12 +19,6 @@
 #include <chrono>
 #include <cstring>
 
-template<class T>
-constexpr int fastRound(T x)
-{
-    return static_cast<int>(x + T{ 0.5 }); // NOLINT
-}
-
 static const char defaultSfzText[] =
     "<region>sample=*sine" "\n"
     "ampeg_attack=0.02 ampeg_release=0.1" "\n";
@@ -389,10 +383,10 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         _state.oscillatorQuality = static_cast<int32>(range.denormalize(value));
         break;
     case kPidAftertouch:
-        synth.aftertouch(sampleOffset, fastRound(value * 127.0));
+        synth.hdAftertouch(sampleOffset, value);
         break;
     case kPidPitchBend:
-        synth.pitchWheel(sampleOffset, fastRound(value * 16383) - 8192);
+        synth.hdPitchWheel(sampleOffset, value);
         break;
     default:
         if (id >= kPidCC0 && id <= kPidCCLast) {
@@ -422,7 +416,7 @@ void SfizzVstProcessor::playOrderedEvent(const Vst::Event& event)
             _noteEventsCurrentCycle[pitch] = 0.0f;
         }
         else {
-            synth.noteOn(sampleOffset, pitch, convertVelocityFromFloat(event.noteOn.velocity));
+            synth.hdNoteOn(sampleOffset, pitch, event.noteOn.velocity);
             _noteEventsCurrentCycle[pitch] = event.noteOn.velocity;
         }
         break;
@@ -431,7 +425,7 @@ void SfizzVstProcessor::playOrderedEvent(const Vst::Event& event)
         int pitch = event.noteOn.pitch;
         if (pitch < 0 || pitch >= 128)
             break;
-        synth.noteOff(sampleOffset, pitch, convertVelocityFromFloat(event.noteOff.velocity));
+        synth.hdNoteOff(sampleOffset, pitch, event.noteOff.velocity);
         _noteEventsCurrentCycle[pitch] = 0.0f;
         break;
     }
@@ -439,7 +433,7 @@ void SfizzVstProcessor::playOrderedEvent(const Vst::Event& event)
         int pitch = event.polyPressure.pitch;
         if (pitch < 0 || pitch >= 128)
             break;
-        synth.polyAftertouch(sampleOffset, pitch, convertVelocityFromFloat(event.polyPressure.pressure));
+        synth.hdPolyAftertouch(sampleOffset, pitch, event.polyPressure.pressure);
         break;
     }
     }
@@ -502,11 +496,6 @@ void SfizzVstProcessor::processMessagesFromUi()
             return;
         }
     }
-}
-
-int SfizzVstProcessor::convertVelocityFromFloat(float x)
-{
-    return std::min(127, std::max(0, (int)(x * 127.0f)));
 }
 
 tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)

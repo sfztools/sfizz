@@ -43,7 +43,6 @@ public:
     void playOrderedEvent(const Vst::Event& event);
 
     void processMessagesFromUi();
-    static int convertVelocityFromFloat(float x);
 
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
