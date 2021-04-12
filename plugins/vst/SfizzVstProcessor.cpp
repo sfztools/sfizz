@@ -386,7 +386,7 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         synth.hdAftertouch(sampleOffset, value);
         break;
     case kPidPitchBend:
-        synth.hdPitchWheel(sampleOffset, value);
+        synth.hdPitchWheel(sampleOffset, range.denormalize(value));
         break;
     default:
         if (id >= kPidCC0 && id <= kPidCCLast) {
