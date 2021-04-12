@@ -46,8 +46,8 @@ static const char* kMsgIdNoteEvents = "NoteEvents";
 static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 50 };
 
 SfizzVstProcessor::SfizzVstProcessor()
-    : _fifoToWorker(64 * 1024), _fifoMessageFromUi(64 * 1024),
-      _oscTemp(new uint8_t[kOscTempSize])
+    : _oscTemp(new uint8_t[kOscTempSize]),
+      _fifoToWorker(64 * 1024), _fifoMessageFromUi(64 * 1024)
 {
     setControllerClass(SfizzVstController::cid);
 

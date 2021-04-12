@@ -303,7 +303,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         const uint8* pos = reinterpret_cast<const uint8*>(data);
         const uint8* end = pos + size;
 
-        while (end - pos >= sizeof(uint32) + sizeof(float)) {
+        while (static_cast<size_t>(end - pos) >= sizeof(uint32) + sizeof(float)) {
             Vst::ParamID pid = *reinterpret_cast<const uint32*>(pos);
             pos += sizeof(uint32);
             float value = *reinterpret_cast<const float*>(pos);

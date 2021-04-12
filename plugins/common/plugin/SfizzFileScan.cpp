@@ -221,7 +221,7 @@ absl::optional<fs::path> getSfzConfigDefaultPath()
     fs::path path = fs::u8path(settings.load_or("user_files_dir", {}));
     if (path.empty() || !path.is_absolute())
         return {};
-    return std::move(path);
+    return path;
 }
 
 void setSfzConfigDefaultPath(const fs::path& path)
