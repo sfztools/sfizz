@@ -44,6 +44,9 @@ void Theme::loadDocument(const pugi::xml_document& doc)
     }
 
     ///
+    clear();
+
+    ///
     auto loadChildColorNodes = [this](pugi::xml_node topNode, bool inverted) {
         for (pugi::xml_node colorNode : topNode.children("color")) {
             absl::string_view name = colorNode.attribute("name").as_string();
@@ -79,6 +82,9 @@ void Theme::loadDocument(const pugi::xml_document& doc)
 
         loadChildColorNodes(paletteNode, inverted);
     }
+
+    ///
+    invokeChangeListener();
 }
 
 void Theme::storeCurrentName(absl::string_view name)
