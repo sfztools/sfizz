@@ -32,13 +32,27 @@ struct Palette {
 };
 
 struct Theme {
+    Theme() = default;
+
+    Theme(const Theme&) = delete;
+    Theme& operator=(const Theme&) = delete;
+
     CColor frameBackground;
     Palette normalPalette {};
     Palette invertedPalette {};
 
+    struct ChangeListener {
+        virtual ~ChangeListener() {}
+        virtual void onThemeChanged() = 0;
+    };
+
+    ChangeListener* listener = nullptr;
+
     void clear();
     void load(const std::string& name);
     void loadDocument(const pugi::xml_document& doc);
+
+    void invokeChangeListener() { if (listener) listener->onThemeChanged(); }
 
     static void storeCurrentName(absl::string_view name);
     static std::string loadCurrentName();

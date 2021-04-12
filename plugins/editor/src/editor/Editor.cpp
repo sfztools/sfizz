@@ -44,7 +44,10 @@ using namespace VSTGUI;
 const int Editor::viewWidth { 800 };
 const int Editor::viewHeight { 475 };
 
-struct Editor::Impl : EditorController::Receiver, IControlListener {
+struct Editor::Impl : EditorController::Receiver,
+                      public IControlListener,
+                      public Theme::ChangeListener
+{
     EditorController* ctrl_ = nullptr;
     CFrame* frame_ = nullptr;
     SharedPointer<SFrameDisabler> frameDisabler_;
@@ -245,6 +248,10 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void enterOrLeaveEdit(CControl* ctl, bool enter);
     void controlBeginEdit(CControl* ctl) override;
     void controlEndEdit(CControl* ctl) override;
+
+    // Theme
+    void onThemeChanged() override;
+    std::vector<std::function<void()>> OnThemeChanged;
 
     // Misc
     static std::string getUnicodeNoteName(unsigned key)
@@ -586,6 +593,7 @@ void Editor::Impl::tickOSCQueue(CVSTGUITimer* timer)
 void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
+    Theme* theme;
 
     SharedPointer<CBitmap> iconShaded = owned(new CBitmap("logo_text_shaded.png"));
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
@@ -597,10 +605,12 @@ void Editor::Impl::createFrameContents()
 
     {
         // Try to load the Default theme from disk or hardcoded one as fallback
-        Theme* theme = new Theme;
+        theme = new Theme;
         theme_.reset(theme);
-        currentThemeName_ = theme->loadCurrentName();
-        theme->load(currentThemeName_);
+
+        theme->listener = this;
+        OnThemeChanged.clear();
+        OnThemeChanged.reserve(128);
 
         Palette& invertedPalette = theme->invertedPalette;
         Palette& defaultPalette = theme->normalPalette;
@@ -612,18 +622,22 @@ void Editor::Impl::createFrameContents()
             container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
             return container;
         };
-        auto createRoundedGroup = [&palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createRoundedGroup = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             auto* box =  new SBoxContainer(bounds);
             box->setCornerRadius(10.0);
-            box->setBackgroundColor(palette->boxBackground);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setBackgroundColor(palette->boxBackground);
+            });
             return box;
         };
-        auto createTitleGroup = [&palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
+        auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
-            box->setBackgroundColor(palette->boxBackground);
-            box->setTitleFontColor(palette->titleBoxText);
-            box->setTitleBackgroundColor(palette->titleBoxBackground);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setBackgroundColor(palette->boxBackground);
+                box->setTitleFontColor(palette->titleBoxText);
+                box->setTitleBackgroundColor(palette->titleBoxBackground);
+            });
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             box->setTitleFont(font);
             return box;
@@ -631,21 +645,25 @@ void Editor::Impl::createFrameContents()
         auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CKickButton(bounds, this, tag, iconShaded);
         };
-        auto createLabel = [&palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setFontColor(palette->text);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->text);
+            });
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
         };
-        auto createInactiveLabel = [&palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createInactiveLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setFontColor(palette->inactiveText);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->inactiveText);
+            });
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
@@ -663,26 +681,32 @@ void Editor::Impl::createFrameContents()
         };
         auto createStyledKnob = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
-            knob->setActiveTrackColor(palette->knobActiveTrack);
-            knob->setInactiveTrackColor(palette->knobInactiveTrack);
-            knob->setLineIndicatorColor(palette->knobLineIndicator);
+            OnThemeChanged.push_back([knob, palette]() {
+                knob->setActiveTrackColor(palette->knobActiveTrack);
+                knob->setInactiveTrackColor(palette->knobInactiveTrack);
+                knob->setLineIndicatorColor(palette->knobLineIndicator);
+            });
             return knob;
         };
-        auto createValueLabel = [&palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createValueLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setFontColor(palette->text);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->text);
+            });
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
         };
-        auto createBadge = [&palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createBadge = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(palette->valueBackground);
-            lbl->setFontColor(palette->valueText);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setBackColor(palette->valueBackground);
+                lbl->setFontColor(palette->valueText);
+            });
             lbl->setHoriAlign(align);
             lbl->setStyle(CParamDisplay::kRoundRectStyle);
             lbl->setRoundRectRadius(5.0);
@@ -710,9 +734,11 @@ void Editor::Impl::createFrameContents()
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
-            button->setTextColor(palette->text);
-            button->setInactiveColor(palette->inactiveText);
-            button->setHoverColor(palette->highlightedText);
+            OnThemeChanged.push_back([button, palette]() {
+                button->setTextColor(palette->text);
+                button->setInactiveColor(palette->inactiveText);
+                button->setHoverColor(palette->highlightedText);
+            });
             button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, CColor(0x00, 0x00, 0x00, 0x00), CColor(0x00, 0x00, 0x00, 0x00)));
@@ -725,14 +751,16 @@ void Editor::Impl::createFrameContents()
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
-            button->setTextColor(palette->valueText);
-            button->setInactiveColor(palette->inactiveText);
-            button->setHoverColor(palette->highlightedText);
+            OnThemeChanged.push_back([button, palette]() {
+                button->setTextColor(palette->valueText);
+                button->setInactiveColor(palette->inactiveText);
+                button->setHoverColor(palette->highlightedText);
+                SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, palette->valueBackground, palette->valueBackground));
+                button->setGradient(gradient);
+                button->setGradientHighlighted(gradient);
+            });
             button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
-            SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, palette->valueBackground, palette->valueBackground));
-            button->setGradient(gradient);
-            button->setGradientHighlighted(gradient);
             return button;
         };
         auto createValueMenu = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
@@ -740,8 +768,10 @@ void Editor::Impl::createFrameContents()
             vm->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             vm->setFont(font);
-            vm->setFontColor(palette->valueText);
-            vm->setBackColor(palette->valueBackground);
+            OnThemeChanged.push_back([vm, palette]() {
+                vm->setFontColor(palette->valueText);
+                vm->setBackColor(palette->valueBackground);
+            });
             vm->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             vm->setStyle(CParamDisplay::kRoundRectStyle);
             vm->setRoundRectRadius(5.0);
@@ -752,8 +782,10 @@ void Editor::Impl::createFrameContents()
             cb->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             cb->setFont(font);
-            cb->setFontColor(palette->valueText);
-            cb->setBackColor(palette->valueBackground);
+            OnThemeChanged.push_back([cb, palette]() {
+                cb->setFontColor(palette->valueText);
+                cb->setBackColor(palette->valueBackground);
+            });
             cb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             cb->setStyle(CParamDisplay::kRoundRectStyle);
             cb->setRoundRectRadius(5.0);
@@ -762,8 +794,10 @@ void Editor::Impl::createFrameContents()
         auto createGlyphButton = [this, &palette](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
-            btn->setTextColor(palette->icon);
-            btn->setHoverColor(palette->iconHighlight);
+            OnThemeChanged.push_back([btn, palette]() {
+                btn->setTextColor(palette->icon);
+                btn->setHoverColor(palette->iconHighlight);
+            });
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setGradient(nullptr);
@@ -799,20 +833,24 @@ void Editor::Impl::createFrameContents()
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             return btn;
         };
-        auto createPiano = [&palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
+        auto createPiano = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             piano->setFont(font);
-            piano->setFontColor(palette->text);
-            piano->setBackColor(palette->boxBackground);
+            OnThemeChanged.push_back([piano, palette]() {
+                piano->setFontColor(palette->text);
+                piano->setBackColor(palette->boxBackground);
+            });
             return piano;
         };
         auto createChevronDropDown = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
             menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
-            menu->setFontColor(palette->icon);
-            menu->setHoverColor(palette->iconHighlight);
+            OnThemeChanged.push_back([menu, palette]() {
+                menu->setFontColor(palette->icon);
+                menu->setHoverColor(palette->iconHighlight);
+            });
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
@@ -824,8 +862,10 @@ void Editor::Impl::createFrameContents()
                 return true;
             });
             menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
-            menu->setFontColor(palette->icon);
-            menu->setHoverColor(palette->iconHighlight);
+            OnThemeChanged.push_back([menu, palette]() {
+                menu->setFontColor(palette->icon);
+                menu->setHoverColor(palette->iconHighlight);
+            });
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
@@ -835,10 +875,12 @@ void Editor::Impl::createFrameContents()
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             box->setNameLabelText(label);
             box->setNameLabelFont(font);
-            box->setNameLabelFontColor(palette->text);
             box->setKnobFont(font);
-            box->setKnobFontColor(palette->text);
-            box->setKnobLineIndicatorColor(palette->knobLineIndicator);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setNameLabelFontColor(palette->text);
+                box->setKnobFontColor(palette->text);
+                box->setKnobLineIndicatorColor(palette->knobLineIndicator);
+            });
             box->setValueToStringFunction([](float value, std::string& text) -> bool {
                 text = std::to_string(std::lround(value * 127));
                 return true;
@@ -857,7 +899,9 @@ void Editor::Impl::createFrameContents()
 
         #include "layout/main.hpp"
 
-        mainView->setBackgroundColor(theme->frameBackground);
+        OnThemeChanged.push_back([mainView, theme]() {
+            mainView->setBackgroundColor(theme->frameBackground);
+        });
 
 #if LINUX
         if (!isZenityAvailable()) {
@@ -886,6 +930,10 @@ void Editor::Impl::createFrameContents()
 
         mainView_ = owned(mainView);
     }
+
+    ///
+    currentThemeName_ = theme->loadCurrentName();
+    theme->load(currentThemeName_);
 
     ///
     SAboutDialog* aboutDialog = new SAboutDialog(mainView->getViewSize());
@@ -1891,4 +1939,12 @@ void Editor::Impl::controlBeginEdit(CControl* ctl)
 void Editor::Impl::controlEndEdit(CControl* ctl)
 {
     enterOrLeaveEdit(ctl, false);
+}
+
+void Editor::Impl::onThemeChanged()
+{
+    for (std::function<void()> &function : OnThemeChanged) {
+        if (function)
+            function();
+    }
 }
