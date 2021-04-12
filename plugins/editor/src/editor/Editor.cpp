@@ -15,6 +15,7 @@
 #include "NativeHelpers.h"
 #include "VSTGUIHelpers.h"
 #include "BitArray.h"
+#include "Theme.h"
 #include "plugin/MessageUtils.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
@@ -32,6 +33,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 
 #include "utility/vstgui_before.h"
 #include "vstgui/vstgui.h"
@@ -50,6 +52,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     std::string currentSfzFile_;
     std::string currentScalaFile_;
+    std::string currentThemeName_;
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
 
@@ -91,6 +94,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetCCPan,
         kTagChooseUserFilesDir,
         kTagAbout,
+        kTagThemeMenu,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -119,6 +123,8 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
+    COptionMenu* themeMenu_ = nullptr;
+    std::unique_ptr<Theme> theme_;
 
     STitleContainer* userFilesGroup_ = nullptr;
     STextButton* userFilesDirButton_ = nullptr;
@@ -590,54 +596,14 @@ void Editor::Impl::createFrameContents()
     backgroundBitmap_ = background;
 
     {
-        const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
+        // Try to load the Default theme from disk or hardcoded one as fallback
+        Theme* theme = new Theme;
+        theme_.reset(theme);
+        currentThemeName_ = theme->loadCurrentName();
+        theme->load(currentThemeName_);
 
-        struct Palette {
-            CColor boxBackground;
-            CColor text;
-            CColor inactiveText;
-            CColor highlightedText;
-            CColor titleBoxText;
-            CColor titleBoxBackground;
-            CColor icon;
-            CColor iconHighlight;
-            CColor valueText;
-            CColor valueBackground;
-            CColor knobActiveTrackColor;
-            CColor knobInactiveTrackColor;
-            CColor knobLineIndicatorColor;
-        };
-
-        Palette normalPalette;
-        normalPalette.boxBackground = { 0xba, 0xbd, 0xb6 };
-        normalPalette.text = { 0x00, 0x00, 0x00 };
-        normalPalette.inactiveText = { 0xb2, 0xb2, 0xb2 };
-        normalPalette.highlightedText = { 0xfd, 0x98, 0x00 };
-        normalPalette.titleBoxText = { 0xff, 0xff, 0xff };
-        normalPalette.titleBoxBackground = { 0x2e, 0x34, 0x36 };
-        normalPalette.icon = normalPalette.text;
-        normalPalette.iconHighlight = { 0xfd, 0x98, 0x00 };
-        normalPalette.valueText = { 0xff, 0xff, 0xff };
-        normalPalette.valueBackground = { 0x2e, 0x34, 0x36 };
-        normalPalette.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
-        normalPalette.knobInactiveTrackColor = { 0x30, 0x30, 0x30 };
-        normalPalette.knobLineIndicatorColor = { 0x00, 0x00, 0x00 };
-        Palette invertedPalette;
-        invertedPalette.boxBackground = { 0x2e, 0x34, 0x36 };
-        invertedPalette.text = { 0xff, 0xff, 0xff };
-        invertedPalette.inactiveText = { 0xb2, 0xb2, 0xb2 };
-        invertedPalette.highlightedText = { 0xfd, 0x98, 0x00 };
-        invertedPalette.titleBoxText = { 0x00, 0x00, 0x00 };
-        invertedPalette.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
-        invertedPalette.icon = { 0xb2, 0xb2, 0xb2 };
-        invertedPalette.iconHighlight = { 0xfd, 0x98, 0x00 };
-        invertedPalette.valueText = { 0x00, 0x00, 0x00 };
-        invertedPalette.valueBackground = { 0x9a, 0x9a, 0x9a };
-        invertedPalette.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
-        invertedPalette.knobInactiveTrackColor = { 0x60, 0x60, 0x60 };
-        invertedPalette.knobLineIndicatorColor = { 0xff, 0xff, 0xff };
-        Palette& defaultPalette = normalPalette;
-
+        Palette& invertedPalette = theme->invertedPalette;
+        Palette& defaultPalette = theme->normalPalette;
         Palette* palette = &defaultPalette;
         auto enterPalette = [&palette](Palette& p) { palette = &p; };
 
@@ -697,9 +663,9 @@ void Editor::Impl::createFrameContents()
         };
         auto createStyledKnob = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
-            knob->setActiveTrackColor(palette->knobActiveTrackColor);
-            knob->setInactiveTrackColor(palette->knobInactiveTrackColor);
-            knob->setLineIndicatorColor(palette->knobLineIndicatorColor);
+            knob->setActiveTrackColor(palette->knobActiveTrack);
+            knob->setInactiveTrackColor(palette->knobInactiveTrack);
+            knob->setLineIndicatorColor(palette->knobLineIndicator);
             return knob;
         };
         auto createValueLabel = [&palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -781,6 +747,18 @@ void Editor::Impl::createFrameContents()
             vm->setRoundRectRadius(5.0);
             return vm;
         };
+        auto createOptionMenu = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
+            auto* cb = new COptionMenu(bounds, this, tag);
+            cb->setHoriAlign(align);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            cb->setFont(font);
+            cb->setFontColor(palette->valueText);
+            cb->setBackColor(palette->valueBackground);
+            cb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            cb->setStyle(CParamDisplay::kRoundRectStyle);
+            cb->setRoundRectRadius(5.0);
+            return cb;
+        };
         auto createGlyphButton = [this, &palette](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
@@ -821,10 +799,12 @@ void Editor::Impl::createFrameContents()
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             return btn;
         };
-        auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
+        auto createPiano = [&palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             piano->setFont(font);
+            piano->setFontColor(palette->text);
+            piano->setBackColor(palette->boxBackground);
             return piano;
         };
         auto createChevronDropDown = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
@@ -858,7 +838,7 @@ void Editor::Impl::createFrameContents()
             box->setNameLabelFontColor(palette->text);
             box->setKnobFont(font);
             box->setKnobFontColor(palette->text);
-            box->setKnobLineIndicatorColor(palette->knobLineIndicatorColor);
+            box->setKnobLineIndicatorColor(palette->knobLineIndicator);
             box->setValueToStringFunction([](float value, std::string& text) -> bool {
                 text = std::to_string(std::lround(value * 127));
                 return true;
@@ -877,7 +857,7 @@ void Editor::Impl::createFrameContents()
 
         #include "layout/main.hpp"
 
-        mainView->setBackgroundColor(frameBackground);
+        mainView->setBackgroundColor(theme->frameBackground);
 
 #if LINUX
         if (!isZenityAvailable()) {
@@ -1111,6 +1091,19 @@ void Editor::Impl::createFrameContents()
     }
 
     applyBackgroundForCurrentPanel();
+
+    if (COptionMenu* menu = themeMenu_) {
+        const std::vector<std::string>& names = Theme::getAvailableNames();
+        size_t index = ~size_t(0);
+        for (size_t i = 0, n = names.size(); i < n; ++i) {
+            const std::string& name = names[i];
+            menu->addEntry(UTF8String(name));
+            if (name == currentThemeName_)
+                index = i;
+        }
+        if (index != ~size_t(0))
+            menu->setCurrent(index);
+    }
 }
 
 void Editor::Impl::chooseSfzFile()
@@ -1845,6 +1838,14 @@ void Editor::Impl::valueChanged(CControl* ctl)
             break;
 
         Call::later([this]() { aboutDialog_->setVisible(true); });
+        break;
+
+    case kTagThemeMenu:
+        {
+            currentThemeName_ = Theme::getAvailableNames()[int(value)];
+            Theme::storeCurrentName(currentThemeName_);
+            // TODO: live reload theme
+        }
         break;
 
     default:
