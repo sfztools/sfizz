@@ -264,6 +264,9 @@ public:
     void setCCLabelFontColor(CColor color) { ccLabel_->setFontColor(color); ccLabel_->invalid(); }
     CColor getCCLabelFontColor() const { return ccLabel_->getFontColor(); }
 
+    void setCCLabelBackColor(CColor color) { ccLabel_->setBackColor(color); ccLabel_->invalid(); }
+    CColor getCCLabelBackColor() const { return ccLabel_->getBackColor(); }
+
     void setKnobActiveTrackColor(CColor color) { knob_->setActiveTrackColor(color); knob_->invalid(); }
     CColor getKnobActiveTrackColor() const { return knob_->getActiveTrackColor(); }
 

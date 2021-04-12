@@ -29,6 +29,8 @@ struct Palette {
     CColor knobActiveTrack;
     CColor knobInactiveTrack;
     CColor knobLineIndicator;
+    CColor knobText;
+    CColor knobLabelText;
 };
 
 struct Theme {
@@ -58,7 +60,7 @@ struct Theme {
     static std::string loadCurrentName();
     static const std::vector<std::string>& getAvailableNames();
 
-    CColor* getColorFromName(absl::string_view name, bool fromInvertedPalette);
+    CColor* getColorFromName(absl::string_view name, bool fromInvertedPalette = false);
 
 private:
     static std::vector<std::string> extractAvailableNames();
