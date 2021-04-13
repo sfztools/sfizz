@@ -115,7 +115,7 @@ view__0->addView(view__43);
 view__43->setVisible(false);
 auto* const view__44 = createRoundedGroup(CRect(0, 0, 790, 285), -1, "", kCenterText, 14);
 view__43->addView(view__44);
-auto* const view__45 = createControlsPanel(CRect(0, 0, 790, 285), -1, "", kCenterText, 14);
+auto* const view__45 = createControlsPanel(CRect(0, 0, 790, 285), -1, "", kCenterText, 12);
 controlsPanel_ = view__45;
 view__44->addView(view__45);
 auto* const view__46 = createLogicalGroup(CRect(5, 109, 795, 425), -1, "", kCenterText, 14);

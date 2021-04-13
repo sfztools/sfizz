@@ -876,6 +876,7 @@ void Editor::Impl::createFrameContents()
             box->setNameLabelFont(font);
             box->setKnobFont(font);
             box->setCCLabelText(label);
+            box->setCCLabelFont(font);
             OnThemeChanged.push_back([box, palette]() {
                 box->setNameLabelFontColor(palette->knobText);
                 box->setCCLabelFontColor(palette->knobLabelText);
@@ -896,8 +897,12 @@ void Editor::Impl::createFrameContents()
             container->setBackground(background);
             return container;
         };
-        auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             auto* panel = new SControlsPanel(bounds);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            panel->setNameLabelFont(font);
+            panel->setKnobFont(font);
+            panel->setCCLabelFont(font);
             OnThemeChanged.push_back([panel, palette]() {
                 panel->setNameLabelFontColor(palette->knobText);
                 panel->setCCLabelFontColor(palette->knobLabelText);
