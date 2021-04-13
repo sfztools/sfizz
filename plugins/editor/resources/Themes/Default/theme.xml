@@ -17,6 +17,7 @@
         <color name="knobLineIndicator">#000000</color>
         <color name="knobText">#000000</color>
         <color name="knobLabelText">#ffffff</color>
+        <color name="knobLabelBackground">#006b0b</color>
     </palette>
     <palette name="inverted">
         <color name="boxBackground">#2e3436</color>
@@ -34,5 +35,6 @@
         <color name="knobLineIndicator">#ffffff</color>
         <color name="knobText">#ffffff</color>
         <color name="knobLabelText">#ffffff</color>
+        <color name="knobLabelBackground">#006b0b</color>
     </palette>
 </sfizz-theme>

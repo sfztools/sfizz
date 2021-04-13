@@ -675,18 +675,6 @@ void Editor::Impl::createFrameContents()
             hline->setBackgroundColor(CColor(0xff, 0xff, 0xff, 0xff));
             return hline;
         };
-        auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
-        };
-        auto createStyledKnob = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
-            OnThemeChanged.push_back([knob, palette]() {
-                knob->setActiveTrackColor(palette->knobActiveTrack);
-                knob->setInactiveTrackColor(palette->knobInactiveTrack);
-                knob->setLineIndicatorColor(palette->knobLineIndicator);
-            });
-            return knob;
-        };
         auto createValueLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -869,6 +857,18 @@ void Editor::Impl::createFrameContents()
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
         };
+        auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
+        };
+        auto createStyledKnob = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
+            OnThemeChanged.push_back([knob, palette]() {
+                knob->setActiveTrackColor(palette->knobActiveTrack);
+                knob->setInactiveTrackColor(palette->knobInactiveTrack);
+                knob->setLineIndicatorColor(palette->knobLineIndicator);
+            });
+            return knob;
+        };
         auto createKnobCCBox = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int fontsize) {
             SKnobCCBox* box = new SKnobCCBox(bounds, this, tag);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
@@ -880,7 +880,7 @@ void Editor::Impl::createFrameContents()
             OnThemeChanged.push_back([box, palette]() {
                 box->setNameLabelFontColor(palette->knobText);
                 box->setCCLabelFontColor(palette->knobLabelText);
-                box->setCCLabelBackColor(palette->knobActiveTrack);
+                box->setCCLabelBackColor(palette->knobLabelBackground);
                 box->setKnobFontColor(palette->knobText);
                 box->setKnobLineIndicatorColor(palette->knobLineIndicator);
                 box->setKnobActiveTrackColor(palette->knobActiveTrack);
@@ -897,15 +897,20 @@ void Editor::Impl::createFrameContents()
             container->setBackground(background);
             return container;
         };
-        auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             auto* panel = new SControlsPanel(bounds);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            panel->setNameLabelFont(font);
+            panel->setKnobFont(font);
+            panel->setCCLabelFont(font);
             OnThemeChanged.push_back([panel, palette]() {
-                panel->setNameLabelFontColor(palette->text);
-                panel->setCCLabelFontColor(palette->valueText);
-                panel->setKnobFontColor(palette->text);
+                panel->setNameLabelFontColor(palette->knobText);
+                panel->setCCLabelFontColor(palette->knobLabelText);
+                panel->setCCLabelBackColor(palette->knobLabelBackground);
+                panel->setKnobFontColor(palette->knobText);
+                panel->setKnobLineIndicatorColor(palette->knobLineIndicator);
                 panel->setKnobActiveTrackColor(palette->knobActiveTrack);
                 panel->setKnobInactiveTrackColor(palette->knobInactiveTrack);
-                panel->setKnobLineIndicatorColor(palette->knobLineIndicator);
             });
             return panel;
         };
