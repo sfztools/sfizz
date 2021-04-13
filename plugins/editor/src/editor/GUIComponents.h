@@ -214,13 +214,16 @@ public:
 
     const CColor& getActiveTrackColor() const { return activeTrackColor_; }
     void setActiveTrackColor(const CColor& color);
+
     const CColor& getInactiveTrackColor() const { return inactiveTrackColor_; }
     void setInactiveTrackColor(const CColor& color);
+
     const CColor& getLineIndicatorColor() const { return lineIndicatorColor_; }
     void setLineIndicatorColor(const CColor& color);
 
     void setFont(CFontRef font);
     CFontRef getFont() const { return font_; }
+
     void setFontColor(CColor fontColor);
     CColor getFontColor() const { return fontColor_; }
 
@@ -312,6 +315,7 @@ public:
     void setNameLabelFont(CFontRef font);
     void setNameLabelFontColor(CColor color);
     void setCCLabelFont(CFontRef font);
+    void setCCLabelBackColor(CColor color);
     void setCCLabelFontColor(CColor color);
     void setKnobActiveTrackColor(CColor color);
     void setKnobInactiveTrackColor(CColor color);

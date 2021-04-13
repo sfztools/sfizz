@@ -157,6 +157,7 @@ CColor* Theme::getColorFromName(absl::string_view name, bool fromInvertedPalette
         PALETTE_COLOR_CASE(knobLabelText);
         PALETTE_COLOR_CASE(knobLineIndicator);
         PALETTE_COLOR_CASE(knobText);
+        PALETTE_COLOR_CASE(knobLabelBackground);
         PALETTE_COLOR_CASE(text);
         PALETTE_COLOR_CASE(titleBoxBackground);
         PALETTE_COLOR_CASE(titleBoxText);

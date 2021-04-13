@@ -795,6 +795,12 @@ void SControlsPanel::setCCLabelFont(CFontRef font)
     syncAllSlotStyles();
 }
 
+void SControlsPanel::setCCLabelBackColor(CColor color)
+{
+    slots_[0]->box->setCCLabelBackColor(color);
+    syncAllSlotStyles();
+}
+
 void SControlsPanel::setCCLabelFontColor(CColor color)
 {
     slots_[0]->box->setCCLabelFontColor(color);
@@ -935,6 +941,7 @@ void SControlsPanel::syncSlotStyle(uint32_t index)
 
         cur->setCCLabelFont(ref->getCCLabelFont());
         cur->setCCLabelFontColor(ref->getCCLabelFontColor());
+        cur->setCCLabelBackColor(ref->getCCLabelBackColor());
 
         cur->setKnobActiveTrackColor(ref->getKnobActiveTrackColor());
         cur->setKnobInactiveTrackColor(ref->getKnobInactiveTrackColor());

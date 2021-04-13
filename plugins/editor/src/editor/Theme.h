@@ -31,6 +31,7 @@ struct Palette {
     CColor knobLineIndicator;
     CColor knobText;
     CColor knobLabelText;
+    CColor knobLabelBackground;
 };
 
 struct Theme {
