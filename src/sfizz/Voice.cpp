@@ -268,7 +268,6 @@ struct Voice::Impl
     ADSREnvelope egAmplitude_;
     std::unique_ptr<ADSREnvelope> egPitch_;
     std::unique_ptr<ADSREnvelope> egFilter_;
-    float bendStepFactor_ { centsFactor(1) };
 
     WavetableOscillator waveOscillators_[config::oscillatorsPerVoice];
 
@@ -501,9 +500,8 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
     impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
-    impl.bendStepFactor_ = centsFactor(region.bendStep);
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
-    impl.bendSmoother_.reset(centsFactor(region.getBendInCents(resources.midiState.getPitchBend())));
+    impl.bendSmoother_.reset(region.getBendInCents(resources.midiState.getPitchBend()));
 
     resources.modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
     impl.saveModulationTargets(&region);
@@ -1022,7 +1020,7 @@ void Voice::Impl::filterStageStereo(AudioSpan<float> buffer) noexcept
 
 void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 {
-    const auto numSamples = buffer.getNumFrames();
+    const size_t numSamples = buffer.getNumFrames();
     if (numSamples == 0)
         return;
 
@@ -1045,13 +1043,16 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         if (!jumps)
             return;
 
-        fill(*jumps, pitchRatio_ * speedRatio_);
+        absl::Span<float> pitch = *jumps; // temporary
+        pitchEnvelope(pitch);
+
+        float baseRatio = pitchRatio_ * speedRatio_;
+        for (size_t i = 0; i < numSamples; ++i)
+            (*jumps)[i] = baseRatio * centsFactor(pitch[i]);
 
         // Take the first sample if the voice just started
         if (age_ == 0)
             jumps->front() = 0.0f;
-
-        pitchEnvelope(*jumps);
 
         jumps->front() += floatPositionOffset_;
         cumsum<float>(*jumps, *jumps);
@@ -1461,15 +1462,20 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         absl::c_generate(leftSpan, gen);
         absl::c_generate(rightSpan, gen);
     } else {
-        const auto numFrames = buffer.getNumFrames();
+        const size_t numFrames = buffer.getNumFrames();
 
         auto frequencies = resources_.bufferPool.getBuffer(numFrames);
         if (!frequencies)
             return;
 
-        float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
-        fill(*frequencies, pitchRatio_ * keycenterFrequency);
-        pitchEnvelope(*frequencies);
+        absl::Span<float> pitch = *frequencies; // temporary
+        pitchEnvelope(pitch);
+
+        const float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
+        const float baseRatio = pitchRatio_ * keycenterFrequency;
+
+        for (size_t i = 0; i < numFrames; ++i)
+            (*frequencies)[i] = baseRatio * centsFactor(pitch[i]);
 
         auto detuneSpan = resources_.bufferPool.getBuffer(numFrames);
         if (!detuneSpan)
@@ -1901,34 +1907,28 @@ void Voice::Impl::switchState(State s)
 
 void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
 {
-    const auto numFrames = pitchSpan.size();
-    auto bends = resources_.bufferPool.getBuffer(numFrames);
-    if (!bends)
-        return;
+    const size_t numFrames = pitchSpan.size();
 
     const EventVector& events = resources_.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
-        return centsFactor(region_->getBendInCents(bend));
+        return region_->getBendInCents(bend);
     };
 
     if (region_->bendStep > 1.0f)
-        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor_);
+        linearEnvelope(events, pitchSpan, bendLambda, region_->bendStep);
     else
-        pitchBendEnvelope(events, *bends, bendLambda);
-    bendSmoother_.process(*bends, *bends);
-    applyGain<float>(*bends, pitchSpan);
+        linearEnvelope(events, pitchSpan, bendLambda);
+    bendSmoother_.process(pitchSpan, pitchSpan);
 
     ModMatrix& mm = resources_.modMatrix;
 
-    if (float* mod = mm.getModulation(pitchTarget_)) {
-        for (size_t i = 0; i < numFrames; ++i)
-            pitchSpan[i] *= centsFactor(mod[i]);
-    }
+    if (float* mod = mm.getModulation(pitchTarget_))
+        add<float>(absl::MakeSpan(mod, numFrames), pitchSpan);
 }
 
 void Voice::Impl::resetSmoothers() noexcept
 {
-    bendSmoother_.reset(1.0f);
+    bendSmoother_.reset(0.0f);
     gainSmoother_.reset(0.0f);
 }
 
