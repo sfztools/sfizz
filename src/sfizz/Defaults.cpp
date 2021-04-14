@@ -150,7 +150,7 @@ Int32Spec flexEGSustain { 0, {0, 100}, kEnforceLowerBound|kPermissiveUpperBound 
 FloatSpec flexEGPointTime { 0.0f, {0.0f, 100.0f}, kPermissiveBounds };
 FloatSpec flexEGPointLevel { 0.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 FloatSpec flexEGPointShape { 0.0f, {-100.0f, 100.0f}, kPermissiveBounds };
-Int32Spec sampleQuality { 1, {0, 10}, 0 };
+Int32Spec sampleQuality { 2, {0, 10}, 0 };
 Int32Spec octaveOffset { 0, {-10, 10}, kPermissiveBounds };
 Int32Spec noteOffset { 0, {-127, 127}, kPermissiveBounds };
 
