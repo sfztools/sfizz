@@ -644,7 +644,7 @@ void Editor::Impl::createFrameContents()
             return box;
         };
         auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CKickButton(bounds, this, tag, iconShaded);
+            return new CKickButton(bounds, this, tag, 0.0f, iconShaded);
         };
         auto createLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
