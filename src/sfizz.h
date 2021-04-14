@@ -695,8 +695,8 @@ SFIZZ_EXPORTED_API void sfizz_set_preload_size(sfizz_synth_t* synth, unsigned in
 /**
  * @brief Get the internal oversampling rate.
  *
- * This is the sampling rate of the engine, not the output or expected rate of
- * the calling function. For the latter use the sfizz_get_sample_rate() function.
+ * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
+ *
  * @since 0.2.0
  *
  * @param synth  The synth.
@@ -706,17 +706,7 @@ SFIZZ_EXPORTED_API sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfi
 /**
  * @brief Set the internal oversampling rate.
  *
- * This is the sampling rate of the engine, not the output or expected rate of
- * the calling function. For the latter use the sfizz_set_sample_rate() function.
- *
- * Increasing this value (up to x8 oversampling) improves the quality of the
- * output at the expense of memory consumption and background loading speed.
- * The main render path still uses the same linear interpolation algorithm and
- * should not see its performance decrease, but the files are oversampled upon
- * loading which increases the stress on the background loader and reduce
- * the loading speed. You can tweak the size of the preloaded data to compensate
- * for the memory increase, but the full loading will need to take place anyway.
- *
+ * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
  * @since 0.2.0
  *
  * @param      synth         The synth.

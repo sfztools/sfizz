@@ -287,7 +287,6 @@ struct Synth::Impl final: public Parser::Listener {
     float sampleRate_ { config::defaultSampleRate };
     float volume_ { Default::globalVolume };
     int numVoices_ { config::numVoices };
-    Oversampling oversamplingFactor_ { config::defaultOversamplingFactor };
 
     // Distribution used to generate random value for the *rand opcodes
     std::uniform_real_distribution<float> randNoteDistribution_ { 0, 1 };

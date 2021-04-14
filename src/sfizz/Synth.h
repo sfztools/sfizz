@@ -546,26 +546,6 @@ public:
     void setNumVoices(int numVoices) noexcept;
 
     /**
-     * @brief Set the oversampling factor to a new value.
-     * It will kill all the voices, and trigger a reloading of every file in
-     * the FilePool under the new oversampling.
-     * This function takes a lock and disables the callback; prefer calling
-     * it out of the RT thread. It can also take a long time to return.
-     * If the new oversampling factor is the same as the current one, it will
-     * release the lock immediately and exit.
-     *
-     * @param factor
-     */
-    void setOversamplingFactor(Oversampling factor) noexcept;
-
-    /**
-     * @brief get the current oversampling factor
-     *
-     * @return Oversampling
-     */
-    Oversampling getOversamplingFactor() const noexcept;
-
-    /**
      * @brief Set the preloaded file size.
      * This function takes a lock and disables the callback; prefer calling
      * it out of the RT thread. It can also take a long time to return.
