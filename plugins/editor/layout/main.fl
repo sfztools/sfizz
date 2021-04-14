@@ -20,8 +20,8 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        comment {tag=kTagAbout}
-        image {../resources/logo_text_shaded.png} xywh {35 9 120 60}
+        comment {tag=kTagAbout} selected
+        image {../resources/logo_text_shaded.png} xywh {32 9 120 60}
         class AboutButton
       }
       Fl_Button {panelButtons_[kPanelGeneral]} {
@@ -35,7 +35,7 @@ widget_class mainView {open
         class CCButton
       }
       Fl_Button {panelButtons_[kPanelSettings]} {
-        comment {tag=kTagFirstChangePanel+kPanelSettings} selected
+        comment {tag=kTagFirstChangePanel+kPanelSettings}
         xywh {116 73 32 32} labelsize 30
         class SettingsButton
       }
