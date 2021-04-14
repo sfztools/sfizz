@@ -322,7 +322,7 @@ midnam:update a lv2:Feature .
       "Qualité des échantillons"@fr ,
       "Qualità del campione"@it ;
     pg:group <@LV2PLUGIN_URI@#tuning> ;
-    lv2:default 1.0 ;
+    lv2:default 2.0 ;
     lv2:minimum 0.0 ;
     lv2:maximum 10.0
   ] , [
