@@ -122,6 +122,8 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     uiReceiveValue(EditId::UserFilesDir, userFilesDir.value_or(fs::path()).u8string());
     uiReceiveValue(EditId::FallbackFilesDir, SfizzPaths::getSfzFallbackDefaultPath().u8string());
 
+    updateEditorIsOpenParameter();
+
     return true;
 }
 
@@ -153,6 +155,16 @@ void PLUGIN_API SfizzVstEditor::close()
         std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
         noteEventQueue_.reset();
     }
+
+    updateEditorIsOpenParameter();
+}
+
+void SfizzVstEditor::updateEditorIsOpenParameter()
+{
+    SfizzVstController* ctrl = getController();
+    bool editorIsOpen = frame && frame->isVisible();
+    ctrl->setParamNormalized(kPidEditorOpen, editorIsOpen);
+    ctrl->performEdit(kPidEditorOpen, editorIsOpen);
 }
 
 ///
@@ -180,6 +192,7 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
     if (message == CVSTGUITimer::kMsgTimer) {
         processOscQueue();
         processNoteEventQueue();
+        updateEditorIsOpenParameter(); // Note(jpc) for Reaper, it can fail at open time
     }
 
     return result;
@@ -295,6 +308,12 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
             break;
         case kPidOscillatorQuality:
             uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
+            break;
+        case kPidLeftLevel:
+            uiReceiveValue(EditId::LeftLevel, range.denormalize(value));
+            break;
+        case kPidRightLevel:
+            uiReceiveValue(EditId::RightLevel, range.denormalize(value));
             break;
         default:
             if (id >= kPidCC0 && id <= kPidCCLast) {
