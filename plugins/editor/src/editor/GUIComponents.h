@@ -187,12 +187,14 @@ public:
     STextButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)
     : CTextButton(size, listener, tag, title) {}
 
-    CColor getHoverColor() const { return hoverColor_; }
-    void setHoverColor(const CColor& color);
+    CColor getHighlightColor() const { return highlightColor_; }
+    void setHighlightColor(const CColor& color);
     CColor getInactiveColor() const { return inactiveColor_; }
     void setInactiveColor(const CColor& color);
     bool isInactive() const { return inactive_; }
     void setInactive(bool b);
+    bool isHighlighted() const { return highlighted_; }
+    void setHighlighted(bool b);
     CMouseEventResult onMouseEntered (CPoint& where, const CButtonState& buttons) override;
     CMouseEventResult onMouseExited (CPoint& where, const CButtonState& buttons) override;
     void draw(CDrawContext* context) override;
@@ -201,8 +203,9 @@ public:
     std::function<void()> OnHoverLeave;
 
 private:
-    CColor hoverColor_;
+    CColor highlightColor_;
     bool hovered_ { false };
+    bool highlighted_ { false };
     CColor inactiveColor_;
     bool inactive_ { false };
 };

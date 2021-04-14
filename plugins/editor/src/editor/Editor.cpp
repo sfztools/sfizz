@@ -73,6 +73,7 @@ struct Editor::Impl : EditorController::Receiver,
 
     unsigned activePanel_ = 0;
     CViewContainer* subPanels_[kNumPanels] = {};
+    STextButton* panelButtons_[kNumPanels] = {};
 
     enum {
         kTagLoadSfzFile,
@@ -238,6 +239,7 @@ struct Editor::Impl : EditorController::Receiver,
     void performCCEndEdit(unsigned cc);
 
     void setActivePanel(unsigned panelId);
+    void setupCurrentPanel();
     void applyBackgroundForCurrentPanel();
 
     static void formatLabel(CTextLabel* label, const char* fmt, ...);
@@ -724,7 +726,7 @@ void Editor::Impl::createFrameContents()
             OnThemeChanged.push_back([button, palette]() {
                 button->setTextColor(palette->text);
                 button->setInactiveColor(palette->inactiveText);
-                button->setHoverColor(palette->highlightedText);
+                button->setHighlightColor(palette->highlightedText);
             });
             button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
@@ -741,7 +743,7 @@ void Editor::Impl::createFrameContents()
             OnThemeChanged.push_back([button, palette]() {
                 button->setTextColor(palette->valueText);
                 button->setInactiveColor(palette->inactiveText);
-                button->setHoverColor(palette->highlightedText);
+                button->setHighlightColor(palette->highlightedText);
                 SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, palette->valueBackground, palette->valueBackground));
                 button->setGradient(gradient);
                 button->setGradientHighlighted(gradient);
@@ -783,7 +785,7 @@ void Editor::Impl::createFrameContents()
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             OnThemeChanged.push_back([btn, palette]() {
                 btn->setTextColor(palette->icon);
-                btn->setHoverColor(palette->iconHighlight);
+                btn->setHighlightColor(palette->iconHighlight);
             });
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
@@ -1156,7 +1158,7 @@ void Editor::Impl::createFrameContents()
         panel->setVisible(currentPanel == activePanel_);
     }
 
-    applyBackgroundForCurrentPanel();
+    setupCurrentPanel();
 
     if (COptionMenu* menu = themeMenu_) {
         const std::vector<std::string>& names = Theme::getAvailableNames();
@@ -1684,6 +1686,16 @@ void Editor::Impl::updateBackgroundImage(const char* filepath)
     applyBackgroundForCurrentPanel();
 }
 
+void Editor::Impl::setupCurrentPanel()
+{
+    for (unsigned i = 0; i < kNumPanels; ++i) {
+        if (STextButton* button = panelButtons_[i])
+            button->setHighlighted(i == activePanel_);
+    }
+
+    applyBackgroundForCurrentPanel();
+}
+
 void Editor::Impl::applyBackgroundForCurrentPanel()
 {
     CBitmap* bitmap;
@@ -1745,7 +1757,7 @@ void Editor::Impl::setActivePanel(unsigned panelId)
         if (subPanels_[panelId])
             subPanels_[panelId]->setVisible(true);
         activePanel_ = panelId;
-        applyBackgroundForCurrentPanel();
+        setupCurrentPanel();
     }
 }
 

@@ -415,9 +415,9 @@ void SActionMenu::onItemClicked(int32_t index)
 }
 
 ///
-void STextButton::setHoverColor(const CColor& color)
+void STextButton::setHighlightColor(const CColor& color)
 {
-    hoverColor_ = color;
+    highlightColor_ = color;
     invalid();
 }
 
@@ -433,11 +433,19 @@ void STextButton::setInactive(bool b)
     invalid();
 }
 
+void STextButton::setHighlighted(bool b)
+{
+    highlighted_ = b;
+    invalid();
+}
+
 void STextButton::draw(CDrawContext* context)
 {
     CColor backupColor = textColor;
-    if (hovered_)
-        textColor = hoverColor_; // textColor is protected
+    if (inactive_)
+        textColor = inactiveColor_; // textColor is protected
+    else if (hovered_ || highlighted_)
+        textColor = highlightColor_;
     else if (inactive_)
         textColor = inactiveColor_;
     CTextButton::draw(context);

@@ -24,18 +24,18 @@ widget_class mainView {open
         image {../resources/logo_text_shaded.png} xywh {35 9 120 60}
         class AboutButton
       }
-      Fl_Button {} {
+      Fl_Button {panelButtons_[kPanelGeneral]} {
         comment {tag=kTagFirstChangePanel+kPanelGeneral}
         xywh {36 73 32 32} labelsize 30
         class HomeButton
       }
-      Fl_Button {} {
+      Fl_Button {panelButtons_[kPanelControls]} {
         comment {tag=kTagFirstChangePanel+kPanelControls}
         xywh {76 73 32 32} labelsize 30
         class CCButton
       }
-      Fl_Button {} {
-        comment {tag=kTagFirstChangePanel+kPanelSettings}
+      Fl_Button {panelButtons_[kPanelSettings]} {
+        comment {tag=kTagFirstChangePanel+kPanelSettings} selected
         xywh {116 73 32 32} labelsize 30
         class SettingsButton
       }
@@ -220,7 +220,7 @@ widget_class mainView {open
       xywh {5 110 790 285} box ROUNDED_BOX
       class RoundedGroup
     } {
-      Fl_Group controlsPanel_ {selected
+      Fl_Group controlsPanel_ {
         xywh {5 110 790 285} box THIN_DOWN_FRAME labelsize 12
         class ControlsPanel
       } {}
