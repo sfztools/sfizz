@@ -723,18 +723,8 @@ public:
     /**
      * @brief Set the oversampling factor to a new value.
      *
-     * It will kill all the voices, and trigger a reloading of every file in
-     * the FilePool under the new oversampling.
+     * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
      *
-     * Increasing this value (up to x8 oversampling) improves the
-     * quality of the output at the expense of memory consumption and
-     * background loading speed. The main render path still uses the
-     * same linear interpolation algorithm and should not see its
-     * performance decrease, but the files are oversampled upon loading
-     * which increases the stress on the background loader and reduce
-     * the loading speed. You can tweak the size of the preloaded data
-     * to compensate for the memory increase, but the full loading will
-     * need to take place anyway.
      *
      * @since 0.2.0
      *
@@ -751,6 +741,9 @@ public:
     /**
      * @brief Return the current oversampling factor.
      * @since 0.2.0
+     *
+     * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
+     *
      */
     int getOversamplingFactor() const noexcept;
 

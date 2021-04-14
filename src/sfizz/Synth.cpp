@@ -1849,28 +1849,6 @@ void Synth::Impl::setupModMatrix()
     mm.init();
 }
 
-void Synth::setOversamplingFactor(Oversampling factor) noexcept
-{
-    Impl& impl = *impl_;
-
-    // fast path
-    if (factor == impl.oversamplingFactor_)
-        return;
-
-    for (auto& voice : impl.voiceManager_)
-        voice.reset();
-
-    impl.resources_.filePool.emptyFileLoadingQueues();
-    impl.resources_.filePool.setOversamplingFactor(factor);
-    impl.oversamplingFactor_ = factor;
-}
-
-Oversampling Synth::getOversamplingFactor() const noexcept
-{
-    Impl& impl = *impl_;
-    return impl.oversamplingFactor_;
-}
-
 void Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     Impl& impl = *impl_;

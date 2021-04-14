@@ -200,31 +200,14 @@ void sfizz_set_preload_size(sfizz_synth_t* synth, unsigned int preload_size)
     synth->synth.setPreloadSize(preload_size);
 }
 
-sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t* synth)
+sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t*)
 {
-    return static_cast<sfizz_oversampling_factor_t>(synth->synth.getOversamplingFactor());
+    return SFIZZ_OVERSAMPLING_X1;
 }
 
-bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t oversampling)
+bool sfizz_set_oversampling_factor(sfizz_synth_t*, sfizz_oversampling_factor_t)
 {
-    using sfz::Oversampling;
-    switch(oversampling)
-    {
-        case SFIZZ_OVERSAMPLING_X1:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x1);
-            return true;
-        case SFIZZ_OVERSAMPLING_X2:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x2);
-            return true;
-        case SFIZZ_OVERSAMPLING_X4:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x4);
-            return true;
-        case SFIZZ_OVERSAMPLING_X8:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x8);
-            return true;
-        default:
-            return false;
-    }
+    return true;
 }
 
 int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)

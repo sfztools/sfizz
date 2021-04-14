@@ -17,6 +17,13 @@
 namespace sfz {
 class AudioReader;
 
+enum class Oversampling: int {
+    x1 = 1,
+    x2 = 2,
+    x4 = 4,
+    x8 = 8
+};
+
 /**
  * @brief Wraps the internal oversampler in a single function that takes an
  *        AudioBuffer and oversamples it in another pre-allocated one. The

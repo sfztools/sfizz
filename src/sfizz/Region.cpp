@@ -1704,14 +1704,13 @@ float sfz::Region::getPhase() const noexcept
     return phase;
 }
 
-uint64_t sfz::Region::getOffset(const MidiState& midiState, Oversampling factor) const noexcept
+uint64_t sfz::Region::getOffset(const MidiState& midiState) const noexcept
 {
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
         finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
-
-    return Default::offset.bounds.clamp(finalOffset) * static_cast<uint64_t>(factor);
+    return Default::offset.bounds.clamp(finalOffset);
 }
 
 float sfz::Region::getDelay(const MidiState& midiState) const noexcept
@@ -1725,34 +1724,34 @@ float sfz::Region::getDelay(const MidiState& midiState) const noexcept
     return Default::delay.bounds.clamp(finalDelay);
 }
 
-uint32_t sfz::Region::getSampleEnd(MidiState& midiState, Oversampling factor) const noexcept
+uint32_t sfz::Region::getSampleEnd(MidiState& midiState) const noexcept
 {
     int64_t end = sampleEnd;
     for (const auto& mod: endCC)
         end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
     end = clamp(end, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(end) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(end);
 }
 
-uint32_t sfz::Region::loopStart(MidiState& midiState, Oversampling factor) const noexcept
+uint32_t sfz::Region::loopStart(MidiState& midiState) const noexcept
 {
     auto start = loopRange.getStart();
     for (const auto& mod: loopStartCC)
         start += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
     start = clamp(start, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(start) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(start);
 }
 
-uint32_t sfz::Region::loopEnd(MidiState& midiState, Oversampling factor) const noexcept
+uint32_t sfz::Region::loopEnd(MidiState& midiState) const noexcept
 {
     auto end = loopRange.getEnd();
     for (const auto& mod: loopEndCC)
         end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
     end = clamp(end, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(end) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(end);
 }
 
 float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept

@@ -17,12 +17,6 @@
 #include <cstdint>
 
 namespace sfz {
-enum class Oversampling: int {
-    x1 = 1,
-    x2 = 2,
-    x4 = 4,
-    x8 = 8
-};
 
 enum ExtendedCCs {
     pitchBend = 128,
@@ -69,7 +63,6 @@ namespace config {
     constexpr float virtuallyZero { 0.001f };
     constexpr float fastReleaseDuration { 0.01f };
     constexpr char defineCharacter { '$' };
-    constexpr Oversampling defaultOversamplingFactor { Oversampling::x1 };
     constexpr float A440 { 440.0 };
     constexpr size_t powerHistoryLength { 16 };
     constexpr size_t powerFollowerStep { 512 };

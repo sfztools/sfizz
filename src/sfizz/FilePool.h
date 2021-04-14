@@ -279,19 +279,6 @@ public:
      */
     uint32_t getPreloadSize() const noexcept;
     /**
-     * @brief Set the oversampling factor. This will trigger a full
-     * reload of all samples so don't call it on the audio thread.
-     *
-     * @param factor
-     */
-    void setOversamplingFactor(Oversampling factor) noexcept;
-    /**
-     * @brief Get the current oversampling factor
-     *
-     * @return Oversampling
-     */
-    Oversampling getOversamplingFactor() const noexcept;
-    /**
      * @brief Empty the file loading queues without actually loading
      * the files. All promises will be unfulfilled. Don't call this
      * method on the audio thread as it will spinlock.
@@ -331,7 +318,6 @@ private:
 
     bool loadInRam { config::loadInRam };
     uint32_t preloadSize { config::preloadSize };
-    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Signals
     volatile bool dispatchFlag { true };

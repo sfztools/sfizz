@@ -466,7 +466,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
-        impl.sourcePosition_ = region.getOffset(resources.midiState, resources.filePool.getOversamplingFactor());
+        impl.sourcePosition_ = region.getOffset(resources.midiState);
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
@@ -498,7 +498,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.triggerDelay_ = delay;
     impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
     impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState, resources.filePool.getOversamplingFactor()));
+    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(region.getBendInCents(resources.midiState.getPitchBend()));
@@ -1676,11 +1676,10 @@ void Voice::Impl::updateLoopInformation() noexcept
 
     Resources& resources = resources_;
     const FileInformation& info = currentPromise_->information;
-    const Oversampling factor = resources_.filePool.getOversamplingFactor();
     const double rate = info.sampleRate;
 
-    loop_.start = static_cast<int>(region_->loopStart(resources.midiState, factor));
-    loop_.end = max(static_cast<int>(region_->loopEnd(resources.midiState, factor)), loop_.start);
+    loop_.start = static_cast<int>(region_->loopStart(resources.midiState));
+    loop_.end = max(static_cast<int>(region_->loopEnd(resources.midiState)), loop_.start);
     loop_.size = loop_.end + 1 - loop_.start;
     loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
     // Clamp the crossfade to the part available before the loop starts
