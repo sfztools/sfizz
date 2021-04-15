@@ -152,11 +152,15 @@ void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch)
 }
 void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
-    synth->synth.aftertouch(delay, aftertouch);
+    synth->synth.channelAftertouch(delay, aftertouch);
 }
-void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch)
+void sfizz_send_channel_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
-    synth->synth.hdAftertouch(delay, aftertouch);
+    synth->synth.channelAftertouch(delay, aftertouch);
+}
+void sfizz_send_hd_channel_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch)
+{
+    synth->synth.hdChannelAftertouch(delay, aftertouch);
 }
 void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, int aftertouch)
 {
@@ -305,19 +309,22 @@ bool sfizz_should_reload_scala(sfizz_synth_t* synth)
     return synth->synth.shouldReloadScala();
 }
 
-void sfizz_enable_logging(sfizz_synth_t* synth)
+void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 {
-    return synth->synth.enableLogging();
+    if (prefix)
+        synth->synth.enableLogging(prefix);
+    else
+        synth->synth.enableLogging();
 }
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 {
-    return synth->synth.setLoggingPrefix(prefix);
+
 }
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
-    return synth->synth.disableLogging();
+    synth->synth.disableLogging();
 }
 
 void sfizz_all_sound_off(sfizz_synth_t* synth)

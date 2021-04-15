@@ -325,7 +325,7 @@ public:
      * does not use the opcode `oscillator_quality`. The engine uses distinct
      * default quality settings for live mode and freewheeling mode,
      * which both can be accessed by the means of this function.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param[in] mode  The processing mode.
      *
@@ -341,7 +341,7 @@ public:
      * default quality settings for live mode and freewheeling mode,
      * which both can be accessed by the means of this function.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param[in] mode    The processing mode.
      * @param[in] quality The desired oscillator quality, in the range 0 to 3.
@@ -391,7 +391,7 @@ public:
 
     /**
      * @brief Send a high-precision note on event to the synth.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * This command should be delay-ordered with all other midi-type events
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -427,7 +427,7 @@ public:
 
     /**
      * @brief Send a note off event to the synth.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * This command should be delay-ordered with all other midi-type events
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -489,7 +489,7 @@ public:
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -526,7 +526,7 @@ public:
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -553,7 +553,25 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void aftertouch(int delay, int aftertouch) noexcept;
+    SFIZZ_DEPRECATED_API void aftertouch(int delay, int aftertouch) noexcept;
+
+    /**
+     * @brief Send a channel aftertouch (channel pressure) event to the synth.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 0.2.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void channelAftertouch(int delay, int aftertouch) noexcept;
 
     /**
      * @brief Send a high-precision aftertouch event to the synth.
@@ -562,7 +580,7 @@ public:
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -571,7 +589,7 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void hdAftertouch(int delay, float aftertouch) noexcept;
+    void hdChannelAftertouch(int delay, float aftertouch) noexcept;
 
     /**
      * @brief Send a polyphonic aftertouch event to the synth.
@@ -581,7 +599,7 @@ public:
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -601,7 +619,7 @@ public:
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -638,7 +656,7 @@ public:
      * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
      * of the synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
@@ -868,7 +886,7 @@ public:
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void enableLogging() noexcept;
+    SFIZZ_DEPRECATED_API void enableLogging() noexcept;
 
     /**
      * @brief Enable logging of timings to sidecar CSV files.
@@ -894,7 +912,7 @@ public:
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void setLoggingPrefix(const std::string& prefix) noexcept;
+    SFIZZ_DEPRECATED_API void setLoggingPrefix(const std::string& prefix) noexcept;
 
     /**
      * @brief Disable logging of timings to sidecar CSV files.
@@ -956,7 +974,7 @@ public:
 
     /**
      * @brief Export a MIDI Name document describing the currently loaded SFZ file.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param model  The model name used if a non-empty string, otherwise generated.
      *
@@ -979,7 +997,7 @@ public:
 
     /**
      * @brief Create a new messaging client
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param data         The opaque data pointer which is passed to the receiver.
      * @return             The new client.
@@ -988,7 +1006,7 @@ public:
 
     /**
      * @brief Get the client data
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client.
      * @return             The client data.
@@ -997,7 +1015,7 @@ public:
 
     /**
      * @brief Set the function which receives reply messages from the synth engine.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client.
      * @param receive      The pointer to the receiving function.
@@ -1007,7 +1025,7 @@ public:
     /**
      * @brief Send a message to the synth engine
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client sending the message.
      * @param delay        The delay of the message in the block, in samples.
@@ -1023,7 +1041,7 @@ public:
     /**
      * @brief Set the function which receives broadcast messages from the synth engine.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param broadcast    The pointer to the receiving function.
      * @param data         The opaque data pointer which is passed to the receiver.

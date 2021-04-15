@@ -1345,13 +1345,13 @@ void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
     impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
 
-void Synth::aftertouch(int delay, int aftertouch) noexcept
+void Synth::channelAftertouch(int delay, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
-    hdAftertouch(delay, normalizedAftertouch);
+    hdChannelAftertouch(delay, normalizedAftertouch);
 }
 
-void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
+void Synth::hdChannelAftertouch(int delay, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1939,12 +1939,6 @@ void Synth::enableLogging(absl::string_view prefix) noexcept
 {
     Impl& impl = *impl_;
     impl.resources_.logger.enableLogging(prefix);
-}
-
-void Synth::setLoggingPrefix(absl::string_view prefix) noexcept
-{
-    Impl& impl = *impl_;
-    impl.resources_.logger.setPrefix(prefix);
 }
 
 void Synth::disableLogging() noexcept
