@@ -1811,3 +1811,20 @@ TEST_CASE("[Keyswitches] Trigger from aftertouch extended CC")
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 2);
 }
+
+TEST_CASE("[Synth] Short empty files are turned into *silence")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/aftertouch_trigger.sfz", R"(
+        <region> sample=silence.wav
+    )");
+    synth.dispatchMessage(client, 0, "/region0/sample", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/sample,s : { *silence }",
+    };
+    REQUIRE(messageList == expected);
+}
