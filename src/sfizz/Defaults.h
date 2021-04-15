@@ -70,7 +70,7 @@ struct OpcodeSpec
     int flags;
 
     using Intermediate = typename std::conditional<
-        std::is_integral<T>::value, int64_t, T>::type;
+        std::is_integral<T>::value || std::is_enum<T>::value, int64_t, T>::type;
 
     template <class U>
     using IsNormalizable = std::integral_constant<
