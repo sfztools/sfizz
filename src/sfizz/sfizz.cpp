@@ -110,11 +110,6 @@ int sfz::Sfizz::getNumCurves() const noexcept
     return synth->synth.getNumCurves();
 }
 
-std::string sfz::Sfizz::exportMidnam(const std::string& model) const noexcept
-{
-    return synth->synth.exportMidnam(model);
-}
-
 const std::vector<std::string>& sfz::Sfizz::getUnknownOpcodes() const noexcept
 {
     return synth->synth.getUnknownOpcodes();
@@ -366,7 +361,7 @@ void sfz::Sfizz::clearExternalDefinitions()
     synth->synth.getParser().clearExternalDefinitions();
 }
 
-std::string sfz::Sfizz::exportMidnam(const char* model)
+std::string sfz::Sfizz::exportMidnam(const std::string& model) const
 {
     return synth->synth.exportMidnam(model);
 }

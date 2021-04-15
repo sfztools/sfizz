@@ -243,16 +243,6 @@ public:
     int getNumCurves() const noexcept;
 
     /**
-     * @brief Export a MIDI Name document describing the currently loaded SFZ file.
-     * @since 0.3.1
-     *
-     * @param model  The model name used if a non-empty string, otherwise generated.
-     *
-     * @return A newly allocated XML string, which must be freed after use.
-     */
-    std::string exportMidnam(const std::string& model) const noexcept;
-
-    /**
      * @brief Return a list of unsupported opcodes, if any.
      * @since 0.2.0
      */
@@ -990,7 +980,7 @@ public:
      *
      * @return A XML string.
      */
-    std::string exportMidnam(const char* model);
+    std::string exportMidnam(const std::string& model) const;
 
     /**
      * @addtogroup Messaging
