@@ -1398,7 +1398,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/lfo&/wave", "i") {
             indices[2] = 0;
             goto set_lfoN_wave;
-        }
+        } break;
 
         MATCH("/region&/lfo&/wave&", "i") {
         set_lfoN_wave:
