@@ -107,19 +107,28 @@ struct Opcode {
             category == kOpcodeStepCcN || category == kOpcodeSmoothCcN;
     }
 
+    ///
     template <class T>
-    absl::optional<T> readOptional(OpcodeSpec<T> spec) const;
+    absl::optional<T> readOptional(OpcodeSpec<T> spec) const { return readOptional(spec, value); }
 
     template <class T>
-    T read(OpcodeSpec<T> spec) const { return readOptional(spec).value_or(spec); }
+    T read(OpcodeSpec<T> spec) const { return readOptional(spec, value).value_or(spec); }
 
+    ///
+    template <class T>
+    static absl::optional<T> readOptional(OpcodeSpec<T> spec, absl::string_view value);
+
+    template <class T>
+    static T read(OpcodeSpec<T> spec, absl::string_view value) { return readOptional(spec, value).value_or(spec); }
+
+    ///
     template <class T> using Intermediate = typename OpcodeSpec<T>::Intermediate;
 
     template <class T>
-    absl::optional<T> transformOptional(OpcodeSpec<T> spec, Intermediate<T> value) const;
+    static absl::optional<T> transformOptional(OpcodeSpec<T> spec, Intermediate<T> value);
 
     template <class T>
-    T transform(OpcodeSpec<T> spec, Intermediate<T> value) const { return transformOptional(spec, value).value_or(spec); }
+    static T transform(OpcodeSpec<T> spec, Intermediate<T> value) { return transformOptional(spec, value).value_or(spec); }
 
 private:
     static OpcodeCategory identifyCategory(absl::string_view name);
@@ -137,7 +146,7 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value);
 /**
  * @brief Read a boolean value from the sfz file and cast it to the destination parameter.
  */
-absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode);
+absl::optional<bool> readBoolean(absl::string_view value);
 
 }
 

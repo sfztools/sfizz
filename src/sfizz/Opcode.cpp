@@ -189,12 +189,12 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
 
 #define INSTANTIATE_FOR_INTEGRAL(T)                             \
     template <>                                                 \
-    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
+    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec, absl::string_view value)    \
     {                                                           \
         return readInt_<T>(spec, value);                               \
     }                                                                  \
     template <>                                                         \
-    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, int64_t value) const \
+    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, int64_t value) \
     {                                                                   \
         return transformInt_<T>(spec, value);                           \
     }
@@ -241,12 +241,12 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
 
 #define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
     template <>                                                 \
-    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
+    absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec, absl::string_view value)    \
     {                                                           \
         return readFloat_<T>(spec, value);                             \
     }                                                                   \
     template <>                                                         \
-    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, T value) const \
+    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, T value) \
     {                                                                   \
         return transformFloat_<T>(spec, value);                         \
     }
@@ -304,19 +304,19 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
     return static_cast<uint8_t>(noteNumber);
 }
 
-absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
+absl::optional<bool> readBoolean(absl::string_view value)
 {
     // Cakewalk-style booleans, case-insensitive
-    if (absl::EqualsIgnoreCase(opcode.value, "off"))
+    if (absl::EqualsIgnoreCase(value, "off"))
         return false;
 
-    if (absl::EqualsIgnoreCase(opcode.value, "on"))
+    if (absl::EqualsIgnoreCase(value, "on"))
         return true;
 
     // ARIA-style booleans? (seen in egN_dynamic=1 for example)
     // TODO check this
     const OpcodeSpec<int64_t> fullInt64 { 0, Range<int64_t>::wholeRange(), 0 };
-    const auto v = opcode.readOptional(fullInt64);
+    const auto v = Opcode::readOptional(fullInt64, value);
 
     if (v)
         return v != 0;
@@ -325,17 +325,37 @@ absl::optional<bool> readBooleanFromOpcode(const Opcode& opcode)
 }
 
 template <>
-absl::optional<OscillatorEnabled> Opcode::readOptional(OpcodeSpec<OscillatorEnabled>) const
+absl::optional<OscillatorEnabled> Opcode::readOptional(OpcodeSpec<OscillatorEnabled>, absl::string_view value)
 {
-    auto v = readBooleanFromOpcode(*this);
+    auto v = readBoolean(value);
     if (!v)
         return absl::nullopt;
 
     return *v ? OscillatorEnabled::On : OscillatorEnabled::Off;
 }
 
+template <class E>
+absl::optional<E> transformEnum_(OpcodeSpec<E> spec, int64_t value)
+{
+    OpcodeSpec<int64_t> intermediateSpec;
+    intermediateSpec.defaultInputValue = static_cast<int64_t>(spec.defaultInputValue);
+    intermediateSpec.bounds = spec.bounds.template to<int64_t>();
+    intermediateSpec.flags = static_cast<int64_t>(spec.flags);
+    absl::optional<int64_t> intermediateValue = transformInt_(intermediateSpec, value);
+    if (!intermediateValue)
+        return absl::nullopt;
+    return static_cast<E>(*intermediateValue);
+}
+
+#define INSTANTIATE_FOR_ENUM(T)                                         \
+    template <>                                                         \
+    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, int64_t value) \
+    {                                                                   \
+        return transformEnum_<T>(spec, static_cast<int64_t>(value));    \
+    }
+
 template <>
-absl::optional<Trigger> Opcode::readOptional(OpcodeSpec<Trigger>) const
+absl::optional<Trigger> Opcode::readOptional(OpcodeSpec<Trigger>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("attack"): return Trigger::attack;
@@ -349,8 +369,10 @@ absl::optional<Trigger> Opcode::readOptional(OpcodeSpec<Trigger>) const
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(Trigger)
+
 template <>
-absl::optional<CrossfadeCurve> Opcode::readOptional(OpcodeSpec<CrossfadeCurve>) const
+absl::optional<CrossfadeCurve> Opcode::readOptional(OpcodeSpec<CrossfadeCurve>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("power"): return CrossfadeCurve::power;
@@ -361,8 +383,10 @@ absl::optional<CrossfadeCurve> Opcode::readOptional(OpcodeSpec<CrossfadeCurve>) 
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(CrossfadeCurve)
+
 template <>
-absl::optional<OffMode> Opcode::readOptional(OpcodeSpec<OffMode>) const
+absl::optional<OffMode> Opcode::readOptional(OpcodeSpec<OffMode>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("fast"): return OffMode::fast;
@@ -374,8 +398,10 @@ absl::optional<OffMode> Opcode::readOptional(OpcodeSpec<OffMode>) const
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(OffMode)
+
 template <>
-absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>) const
+absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("lpf_1p"): return kFilterLpf1p;
@@ -407,8 +433,10 @@ absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>) const
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(FilterType)
+
 template <>
-absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>) const
+absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("peak"): return kEqPeak;
@@ -420,8 +448,10 @@ absl::optional<EqType> Opcode::readOptional(OpcodeSpec<EqType>) const
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(EqType)
+
 template <>
-absl::optional<VelocityOverride> Opcode::readOptional(OpcodeSpec<VelocityOverride>) const
+absl::optional<VelocityOverride> Opcode::readOptional(OpcodeSpec<VelocityOverride>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("current"): return VelocityOverride::current;
@@ -432,8 +462,10 @@ absl::optional<VelocityOverride> Opcode::readOptional(OpcodeSpec<VelocityOverrid
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(VelocityOverride)
+
 template <>
-absl::optional<SelfMask> Opcode::readOptional(OpcodeSpec<SelfMask>) const
+absl::optional<SelfMask> Opcode::readOptional(OpcodeSpec<SelfMask>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("on"):
@@ -445,8 +477,10 @@ absl::optional<SelfMask> Opcode::readOptional(OpcodeSpec<SelfMask>) const
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(SelfMask)
+
 template <>
-absl::optional<LoopMode> Opcode::readOptional(OpcodeSpec<LoopMode>) const
+absl::optional<LoopMode> Opcode::readOptional(OpcodeSpec<LoopMode>, absl::string_view value)
 {
     switch (hash(value)) {
     case hash("no_loop"): return LoopMode::no_loop;
@@ -459,14 +493,16 @@ absl::optional<LoopMode> Opcode::readOptional(OpcodeSpec<LoopMode>) const
     return absl::nullopt;
 }
 
+INSTANTIATE_FOR_ENUM(LoopMode)
+
 template <>
-absl::optional<bool> Opcode::readOptional(OpcodeSpec<bool>) const
+absl::optional<bool> Opcode::readOptional(OpcodeSpec<bool>, absl::string_view value)
 {
-    return readBooleanFromOpcode(*this);
+    return readBoolean(value);
 }
 
 template <>
-absl::optional<LFOWave> Opcode::readOptional(OpcodeSpec<LFOWave> spec) const
+absl::optional<LFOWave> Opcode::readOptional(OpcodeSpec<LFOWave> spec, absl::string_view value)
 {
     const OpcodeSpec<int> intSpec {
         static_cast<int>(spec.defaultInputValue),
@@ -474,11 +510,13 @@ absl::optional<LFOWave> Opcode::readOptional(OpcodeSpec<LFOWave> spec) const
         0
     };
 
-    if (auto value = readOptional(intSpec))
-        return static_cast<LFOWave>(*value);
+    if (auto intValue = readOptional(intSpec, value))
+        return static_cast<LFOWave>(*intValue);
 
     return absl::nullopt;
 }
+
+INSTANTIATE_FOR_ENUM(LFOWave)
 
 } // namespace sfz
 

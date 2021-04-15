@@ -509,11 +509,11 @@ TEST_CASE("[Opcode] opcode read (float)")
 
 TEST_CASE("[Opcode] readBooleanFromOpcode")
 {
-    REQUIRE(readBooleanFromOpcode({"", "1"}) == true);
-    REQUIRE(readBooleanFromOpcode({"", "0"}) == false);
-    REQUIRE(readBooleanFromOpcode({"", "777"}) == true);
-    REQUIRE(readBooleanFromOpcode({"", "on"}) == true);
-    REQUIRE(readBooleanFromOpcode({"", "off"}) == false);
-    REQUIRE(readBooleanFromOpcode({"", "On"}) == true);
-    REQUIRE(readBooleanFromOpcode({"", "oFf"}) == false);
+    REQUIRE(readBoolean({"1"}) == true);
+    REQUIRE(readBoolean({"0"}) == false);
+    REQUIRE(readBoolean({"777"}) == true);
+    REQUIRE(readBoolean({"on"}) == true);
+    REQUIRE(readBoolean({"off"}) == false);
+    REQUIRE(readBoolean({"On"}) == true);
+    REQUIRE(readBoolean({"oFf"}) == false);
 }
