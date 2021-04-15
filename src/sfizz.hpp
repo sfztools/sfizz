@@ -26,6 +26,12 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+#if defined _WIN32
+  #define SFIZZ_DEPRECATED_API __declspec(deprecated)
+#else
+  #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
+#endif
+
 struct sfizz_synth_t;
 
 namespace sfz
@@ -375,13 +381,13 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
-     * @param velocity the midi note velocity.
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the midi note velocity, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOn(int delay, int noteNumber, int velocity) noexcept;
 
     /**
      * @brief Send a high-precision note on event to the synth.
@@ -393,7 +399,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
+     * @param noteNumber the midi note number, in domain 0 to 127.
      * @param velocity the normalized midi note velocity, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -411,13 +417,13 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
-     * @param velocity the midi note velocity.
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the midi note velocity, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int noteNumber, int velocity) noexcept;
 
     /**
      * @brief Send a note off event to the synth.
@@ -429,7 +435,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
+     * @param noteNumber the midi note number, in domain 0 to 127.
      * @param velocity the normalized midi note velocity, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -447,13 +453,13 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
-     * @param ccValue the cc value.
+     * @param ccNumber the cc number, in domain 0 to 127.
+     * @param ccValue the cc value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void cc(int delay, int ccNumber, int ccValue) noexcept;
 
     /**
      * @brief Send a high precision CC event to the synth
@@ -465,7 +471,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
+     * @param ccNumber the cc number, in domain 0 to 127.
      * @param normValue the normalized cc value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -487,7 +493,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
+     * @param ccNumber the cc number, in domain 0 to 127.
      * @param normValue the normalized cc value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -542,12 +548,12 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param aftertouch the aftertouch value.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void aftertouch(int delay, uint8_t aftertouch) noexcept;
+    void aftertouch(int delay, int aftertouch) noexcept;
 
     /**
      * @brief Send a high-precision aftertouch event to the synth.
@@ -579,13 +585,13 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the note number.
-     * @param aftertouch the aftertouch value.
+     * @param noteNumber the note number, in domain 0 to 127.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+    void polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept;
 
     /**
      * @brief Send a high-precision polyphonic aftertouch event to the synth.
@@ -599,7 +605,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the note number.
+     * @param noteNumber the note number, in domain 0 to 127.
      * @param aftertouch the normalized aftertouch value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -623,7 +629,25 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void tempo(int delay, float secondsPerBeat) noexcept;
+    SFIZZ_DEPRECATED_API void tempo(int delay, float secondsPerBeat) noexcept;
+
+    /**
+     * @brief Send a tempo event to the synth.
+     *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param beatsPerMinute the new tempo, in beats per minute.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void bpmTempo(int delay, float beatsPerMinute) noexcept;
 
     /**
      * @brief Send the time signature.
@@ -929,6 +953,16 @@ public:
      * @since 0.4.0
      */
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
+
+    /**
+     * @brief Export a MIDI Name document describing the currently loaded SFZ file.
+     * @since 0.6.0
+     *
+     * @param model  The model name used if a non-empty string, otherwise generated.
+     *
+     * @return A XML string.
+     */
+    std::string exportMidnam(const char* model);
 
     /**
      * @addtogroup Messaging

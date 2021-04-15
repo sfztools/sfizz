@@ -114,7 +114,7 @@ void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate)
     synth->synth.setSampleRate(sample_rate);
 }
 
-void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity)
+void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, int velocity)
 {
     synth->synth.noteOn(delay, note_number, velocity);
 }
@@ -122,7 +122,7 @@ void sfizz_send_hd_note_on(sfizz_synth_t* synth, int delay, int note_number, flo
 {
     synth->synth.hdNoteOn(delay, note_number, velocity);
 }
-void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity)
+void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, int velocity)
 {
     synth->synth.noteOff(delay, note_number, velocity);
 }
@@ -130,7 +130,7 @@ void sfizz_send_hd_note_off(sfizz_synth_t* synth, int delay, int note_number, fl
 {
     synth->synth.hdNoteOff(delay, note_number, velocity);
 }
-void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value)
+void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, int cc_value)
 {
     synth->synth.cc(delay, cc_number, cc_value);
 }
@@ -150,7 +150,7 @@ void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch)
 {
     synth->synth.hdPitchWheel(delay, pitch);
 }
-void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch)
+void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
     synth->synth.aftertouch(delay, aftertouch);
 }
@@ -158,7 +158,7 @@ void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch)
 {
     synth->synth.hdAftertouch(delay, aftertouch);
 }
-void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch)
+void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, int aftertouch)
 {
     synth->synth.polyAftertouch(delay, note_number, aftertouch);
 }
@@ -169,6 +169,10 @@ void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_num
 void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter)
 {
     synth->synth.tempo(delay, seconds_per_quarter);
+}
+void sfizz_send_bpm_tempo(sfizz_synth_t* synth, int delay, float beats_per_minute)
+{
+    synth->synth.bpmTempo(delay, beats_per_minute);
 }
 void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_bar, int beat_unit)
 {

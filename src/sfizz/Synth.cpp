@@ -1061,7 +1061,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 }
 
-void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
+void Synth::noteOn(int delay, int noteNumber, int velocity) noexcept
 {
     const float normalizedVelocity = normalizeVelocity(velocity);
     hdNoteOn(delay, noteNumber, normalizedVelocity);
@@ -1077,7 +1077,7 @@ void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexce
     impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 }
 
-void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
+void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
 {
     const float normalizedVelocity = normalizeVelocity(velocity);
     hdNoteOff(delay, noteNumber, normalizedVelocity);
@@ -1221,7 +1221,7 @@ void Synth::Impl::startDelayedSostenutoReleases(Layer* layer, int delay, SisterV
     layer->delayedSostenutoReleases_.clear();
 }
 
-void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
+void Synth::cc(int delay, int ccNumber, int ccValue) noexcept
 {
     const auto normalizedCC = normalizeCC(ccValue);
     hdcc(delay, ccNumber, normalizedCC);
@@ -1345,7 +1345,7 @@ void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
     impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
 
-void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
+void Synth::aftertouch(int delay, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
     hdAftertouch(delay, normalizedAftertouch);
@@ -1369,7 +1369,7 @@ void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
     impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
 }
 
-void Synth::polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept
+void Synth::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
     hdPolyAftertouch(delay, noteNumber, normalizedAftertouch);
@@ -1395,6 +1395,12 @@ void Synth::tempo(int delay, float secondsPerBeat) noexcept
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     impl.resources_.beatClock.setTempo(delay, secondsPerBeat);
+}
+
+void Synth::bpmTempo(int delay, float beatsPerMinute) noexcept
+{
+    // TODO make this the main tempo function and remove the deprecated other one
+    return tempo(delay, 60 / beatsPerMinute);
 }
 
 void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)

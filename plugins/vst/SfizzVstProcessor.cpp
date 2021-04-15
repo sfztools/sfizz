@@ -97,7 +97,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _currentStretchedTuning = 0.0;
     loadSfzFileOrDefault({}, false);
 
-    _synth->tempo(0, 0.5);
+    _synth->bpmTempo(0, 120);
     _timeSigNumerator = 4;
     _timeSigDenominator = 4;
     _synth->timeSignature(0, _timeSigNumerator, _timeSigDenominator);
@@ -313,7 +313,7 @@ void SfizzVstProcessor::updateTimeInfo(const Vst::ProcessContext& context)
     sfz::Sfizz& synth = *_synth;
 
     if (context.state & context.kTempoValid)
-        synth.tempo(0, float(60.0 / context.tempo));
+        synth.bpmTempo(0, static_cast<float>(context.tempo));
 
     if (context.state & context.kTimeSigValid) {
         _timeSigNumerator = context.timeSigNumerator;
