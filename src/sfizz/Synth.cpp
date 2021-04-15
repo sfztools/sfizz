@@ -898,26 +898,6 @@ void Synth::setSampleRate(float sampleRate) noexcept
     }
 }
 
-void Synth::Impl::updateRegions() noexcept
-{
-    std::unique_lock<SpinMutex> lock { regionUpdatesMutex_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
-
-    absl::c_sort(regionUpdates_, [](const OpcodeUpdate& lhs, const OpcodeUpdate& rhs) {
-        return lhs.delay < rhs.delay;
-    });
-
-    for (auto& update: regionUpdates_) {
-        if (!update.region)
-            continue;
-
-        update.region->parseOpcode(update.opcode, false);
-    }
-
-    regionUpdates_.clear();
-}
-
 void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     Impl& impl = *impl_;
@@ -946,8 +926,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         impl.lastGarbageCollection_ = now;
         impl.resources_.filePool.triggerGarbageCollection();
     }
-
-    impl.updateRegions();
 
     auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);

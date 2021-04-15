@@ -180,12 +180,6 @@ struct Synth::Impl final: public Parser::Listener {
      */
     void finalizeSfzLoad();
 
-    /**
-     * @brief Update the regions with the opcodes received through OSC if necessary
-     *
-     */
-    void updateRegions() noexcept;
-
     template<class T>
     static void collectUsedCCsFromCCMap(BitArray<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
     {
@@ -348,16 +342,6 @@ struct Synth::Impl final: public Parser::Listener {
     }
 
     bool playheadMoved_ { false };
-
-    struct OpcodeUpdate
-    {
-        int delay;
-        Region* region;
-        Opcode opcode;
-    };
-
-    std::vector<OpcodeUpdate> regionUpdates_;
-    SpinMutex regionUpdatesMutex_;
 };
 
 } // namespace sfz
