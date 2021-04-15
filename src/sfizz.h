@@ -339,8 +339,8 @@ SFIZZ_EXPORTED_API void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
- * @param note_number  The MIDI note number.
- * @param velocity     The MIDI velocity.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
+ * @param velocity     The MIDI velocity, in domain 0 to 127.
  *
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
@@ -357,7 +357,7 @@ SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int 
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
- * @param note_number  The MIDI note number.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
  * @param velocity     The normalized MIDI velocity, in domain 0 to 1.
  *
  * @par Thread-safety constraints
@@ -378,8 +378,8 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_note_on(sfizz_synth_t* synth, int delay, i
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
- * @param note_number  The MIDI note number.
- * @param velocity     The MIDI velocity.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
+ * @param velocity     The MIDI velocity, in domain 0 to 127.
  *
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
@@ -399,7 +399,7 @@ SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
- * @param note_number  The MIDI note number.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
  * @param velocity     The normalized MIDI velocity, in domain 0 to 1.
  *
  * @par Thread-safety constraints
@@ -417,8 +417,8 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_note_off(sfizz_synth_t* synth, int delay, 
  *
  * @param synth      The synth.
  * @param delay      The delay of the event in the block, in samples.
- * @param cc_number  The MIDI CC number.
- * @param cc_value   The MIDI CC value.
+ * @param cc_number  The MIDI CC number, in domain 0 to 127.
+ * @param cc_value   The MIDI CC value, in domain 0 to 127.
  *
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
@@ -435,7 +435,7 @@ SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_nu
  *
  * @param synth       The synth.
  * @param delay       The delay of the event in the block, in samples.
- * @param cc_number   The MIDI CC number.
+ * @param cc_number   The MIDI CC number, in domain 0 to 127.
  * @param norm_value  The normalized CC value, in domain 0 to 1.
  *
  * @par Thread-safety constraints
@@ -456,7 +456,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_
  *
  * @param synth       The synth.
  * @param delay       The delay of the event in the block, in samples.
- * @param cc_number   The MIDI CC number.
+ * @param cc_number   The MIDI CC number, in domain 0 to 127.
  * @param norm_value  The normalized CC value, in domain 0 to 1.
  *
  * @par Thread-safety constraints
@@ -509,7 +509,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int dela
  * @param synth      The synth.
  * @param delay      The delay at which the event occurs; this should be lower
  *                   than the size of the block in the next call to renderBlock().
- * @param aftertouch The aftertouch value.
+ * @param aftertouch The aftertouch value, in domain 0 to 127.
  *
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
@@ -546,8 +546,8 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay
  * @param synth         The synth.
  * @param delay         The delay at which the event occurs; this should be lower
  *                      than the size of the block in the next call to renderBlock().
- * @param note_number   The note number.
- * @param aftertouch    The aftertouch value.
+ * @param note_number   The note number, in domain 0 to 127.
+ * @param aftertouch    The aftertouch value, in domain 0 to 127.
  *
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
@@ -566,7 +566,7 @@ SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int del
  * @param synth         The synth.
  * @param delay         The delay at which the event occurs; this should be lower
  *                      than the size of the block in the next call to renderBlock().
- * @param note_number   The note number.
+ * @param note_number   The note number, in domain 0 to 127.
  * @param aftertouch    The normalized aftertouch value, in domain 0 to 1.
  *
  * @par Thread-safety constraints

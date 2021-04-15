@@ -381,8 +381,8 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
-     * @param velocity the midi note velocity.
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the midi note velocity, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
@@ -399,7 +399,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
+     * @param noteNumber the midi note number, in domain 0 to 127.
      * @param velocity the normalized midi note velocity, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -417,8 +417,8 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
-     * @param velocity the midi note velocity.
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the midi note velocity, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
@@ -435,7 +435,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
+     * @param noteNumber the midi note number, in domain 0 to 127.
      * @param velocity the normalized midi note velocity, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -453,8 +453,8 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
-     * @param ccValue the cc value.
+     * @param ccNumber the cc number, in domain 0 to 127.
+     * @param ccValue the cc value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
@@ -471,7 +471,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
+     * @param ccNumber the cc number, in domain 0 to 127.
      * @param normValue the normalized cc value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -493,7 +493,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
+     * @param ccNumber the cc number, in domain 0 to 127.
      * @param normValue the normalized cc value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -548,7 +548,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param aftertouch the aftertouch value.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
@@ -585,8 +585,8 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the note number.
-     * @param aftertouch the aftertouch value.
+     * @param noteNumber the note number, in domain 0 to 127.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
@@ -605,7 +605,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the note number.
+     * @param noteNumber the note number, in domain 0 to 127.
      * @param aftertouch the normalized aftertouch value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
