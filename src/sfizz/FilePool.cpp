@@ -355,7 +355,6 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
             *fileInformation
         });
         insertedPair.first->second.status = FileData::Status::Preloaded;
-        ASSERT(insertedPair.second);
         return { &insertedPair.first->second };
     }
 }

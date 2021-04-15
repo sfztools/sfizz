@@ -595,8 +595,24 @@ void Synth::Impl::finalizeSfzLoad()
                 continue;
             }
 
-            region.hasWavetableSample = fileInformation->wavetable ||
-                fileInformation->end < config::wavetableMaxFrames;
+            region.hasWavetableSample = fileInformation->wavetable.has_value();
+
+            if (fileInformation->end < config::wavetableMaxFrames) {
+                auto sample = resources_.filePool.loadFile(*region.sampleId);
+                bool allZeros = true;
+                int numChannels = sample->information.numChannels;
+                for (int i = 0; i < numChannels; ++i) {
+                    allZeros &= allWithin(sample->preloadedData.getConstSpan(i),
+                        -config::virtuallyZero, config::virtuallyZero);
+                }
+
+                if (allZeros) {
+                    region.sampleId.reset(new FileId("*silence"));
+                    region.hasWavetableSample = false;
+                } else {
+                    region.hasWavetableSample |= true;
+                }
+            }
         }
 
         if (!region.isOscillator()) {
