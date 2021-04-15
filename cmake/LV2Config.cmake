@@ -3,7 +3,7 @@ option(SFIZZ_LV2_PSA "Enable plugin-side MIDI automations" OFF)
 
 # Configuration for this plugin
 # TODO: generate version from git
-set(LV2PLUGIN_VERSION_MINOR   6)
+set(LV2PLUGIN_VERSION_MINOR   8)
 set(LV2PLUGIN_VERSION_MICRO   0)
 set(LV2PLUGIN_NAME            "sfizz")
 set(LV2PLUGIN_COMMENT         "SFZ sampler")
