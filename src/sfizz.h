@@ -460,7 +460,7 @@ SFIZZ_EXPORTED_API void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int
 
 /**
  * @brief Send a pitch wheel event.
- * @since 0.4.0
+ * @since 0.2.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
