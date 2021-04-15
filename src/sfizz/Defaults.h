@@ -33,6 +33,7 @@
 #include "SfzHelpers.h"
 #include "LFOCommon.h"
 #include "MathHelpers.h"
+#include "utility/Macros.h"
 
 
 namespace sfz
@@ -67,6 +68,9 @@ struct OpcodeSpec
     T defaultInputValue;
     Range<T> bounds;
     int flags;
+
+    using Intermediate = typename std::conditional<
+        std::is_integral<T>::value, int64_t, T>::type;
 
     template <class U>
     using IsNormalizable = std::integral_constant<

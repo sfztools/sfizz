@@ -113,6 +113,14 @@ struct Opcode {
     template <class T>
     T read(OpcodeSpec<T> spec) const { return readOptional(spec).value_or(spec); }
 
+    template <class T> using Intermediate = typename OpcodeSpec<T>::Intermediate;
+
+    template <class T>
+    absl::optional<T> transformOptional(OpcodeSpec<T> spec, Intermediate<T> value) const;
+
+    template <class T>
+    T transform(OpcodeSpec<T> spec, Intermediate<T> value) const { return transformOptional(spec, value).value_or(spec); }
+
 private:
     static OpcodeCategory identifyCategory(absl::string_view name);
     LEAK_DETECTOR(Opcode);

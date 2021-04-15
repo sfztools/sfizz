@@ -143,10 +143,31 @@ OpcodeCategory Opcode::identifyCategory(absl::string_view name)
 }
 
 template <typename T>
-absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
+absl::optional<T> transformInt_(OpcodeSpec<T> spec, int64_t v)
 {
     using Limits = std::numeric_limits<T>;
 
+    if (v > static_cast<int64_t>(spec.bounds.getEnd())) {
+        if (spec.flags & kEnforceUpperBound)
+            return spec.bounds.getEnd();
+        else if (!(spec.flags & kPermissiveUpperBound))
+            return absl::nullopt;
+    } else if (v < static_cast<int64_t>(spec.bounds.getStart())) {
+        if (spec.flags & kEnforceLowerBound)
+            return spec.bounds.getStart();
+        else if (!(spec.flags & kPermissiveLowerBound))
+            return absl::nullopt;
+    }
+
+    v = std::max<int64_t>(v, Limits::min());
+    v = std::min<int64_t>(v, Limits::max());
+
+    return static_cast<T>(v);
+}
+
+template <typename T>
+absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
+{
     int64_t returnedValue;
     bool readValueSuccess = false;
 
@@ -163,22 +184,7 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
     if (!readValueSuccess)
         return absl::nullopt;
 
-    if (returnedValue > static_cast<int64_t>(spec.bounds.getEnd())) {
-        if (spec.flags & kEnforceUpperBound)
-            return spec.bounds.getEnd();
-        else if (!(spec.flags & kPermissiveUpperBound))
-            return absl::nullopt;
-    } else if (returnedValue < static_cast<int64_t>(spec.bounds.getStart())) {
-        if (spec.flags & kEnforceLowerBound)
-            return spec.bounds.getStart();
-        else if (!(spec.flags & kPermissiveLowerBound))
-            return absl::nullopt;
-    }
-
-    returnedValue = std::max<int64_t>(returnedValue, Limits::min());
-    returnedValue = std::min<int64_t>(returnedValue, Limits::max());
-
-    return static_cast<T>(returnedValue);
+    return transformInt_(spec, returnedValue);
 }
 
 #define INSTANTIATE_FOR_INTEGRAL(T)                             \
@@ -186,6 +192,11 @@ absl::optional<T> readInt_(OpcodeSpec<T> spec, absl::string_view v)
     absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
     {                                                           \
         return readInt_<T>(spec, value);                               \
+    }                                                                  \
+    template <>                                                         \
+    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, int64_t value) const \
+    {                                                                   \
+        return transformInt_<T>(spec, value);                           \
     }
 
 INSTANTIATE_FOR_INTEGRAL(uint8_t)
@@ -198,30 +209,34 @@ INSTANTIATE_FOR_INTEGRAL(int64_t)
 
 
 template <typename T>
-absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
+absl::optional<T> transformFloat_(OpcodeSpec<T> spec, T v)
 {
-    T returnedValue;
-    if (!readLeadingFloat(v, &returnedValue))
-        return absl::nullopt;
-
     if (spec.flags & kWrapPhase)
-        returnedValue = wrapPhase(returnedValue);
+        v = wrapPhase(v);
 
-    if (returnedValue > spec.bounds.getEnd()) {
+    if (v > spec.bounds.getEnd()) {
         if (spec.flags & kEnforceUpperBound)
             return spec.bounds.getEnd();
         else if (!(spec.flags & kPermissiveUpperBound))
             return absl::nullopt;
-    } else if (returnedValue < spec.bounds.getStart()) {
+    } else if (v < spec.bounds.getStart()) {
         if (spec.flags & kEnforceLowerBound)
             return spec.bounds.getStart();
         else if (!(spec.flags & kPermissiveLowerBound))
             return absl::nullopt;
     }
 
-    returnedValue = spec.normalizeInput(returnedValue);
+    return spec.normalizeInput(v);
+}
 
-    return returnedValue;
+template <typename T>
+absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
+{
+    T returnedValue;
+    if (!readLeadingFloat(v, &returnedValue))
+        return absl::nullopt;
+
+    return transformFloat_(spec, returnedValue);
 }
 
 #define INSTANTIATE_FOR_FLOATING_POINT(T)                       \
@@ -229,6 +244,11 @@ absl::optional<T> readFloat_(OpcodeSpec<T> spec, absl::string_view v)
     absl::optional<T> Opcode::readOptional(OpcodeSpec<T> spec) const    \
     {                                                           \
         return readFloat_<T>(spec, value);                             \
+    }                                                                   \
+    template <>                                                         \
+    absl::optional<T> Opcode::transformOptional(OpcodeSpec<T> spec, T value) const \
+    {                                                                   \
+        return transformFloat_<T>(spec, value);                         \
     }
 
 INSTANTIATE_FOR_FLOATING_POINT(float)
