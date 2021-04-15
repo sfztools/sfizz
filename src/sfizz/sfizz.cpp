@@ -207,12 +207,17 @@ void sfz::Sfizz::hdPitchWheel(int delay, float pitch) noexcept
 
 void sfz::Sfizz::aftertouch(int delay, int aftertouch) noexcept
 {
-    synth->synth.aftertouch(delay, aftertouch);
+    synth->synth.channelAftertouch(delay, aftertouch);
 }
 
-void sfz::Sfizz::hdAftertouch(int delay, float aftertouch) noexcept
+void sfz::Sfizz::channelAftertouch(int delay, int aftertouch) noexcept
 {
-    synth->synth.hdAftertouch(delay, aftertouch);
+    synth->synth.channelAftertouch(delay, aftertouch);
+}
+
+void sfz::Sfizz::hdChannelAftertouch(int delay, float aftertouch) noexcept
+{
+    synth->synth.hdChannelAftertouch(delay, aftertouch);
 }
 
 void sfz::Sfizz::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept

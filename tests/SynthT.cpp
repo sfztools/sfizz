@@ -1801,13 +1801,13 @@ TEST_CASE("[Keyswitches] Trigger from aftertouch extended CC")
     )");
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 0);
-    synth.aftertouch(0, 90);
+    synth.channelAftertouch(0, 90);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 0);
-    synth.aftertouch(0, 110);
+    synth.channelAftertouch(0, 110);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 1);
-    synth.aftertouch(0, 120);
+    synth.channelAftertouch(0, 120);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 2);
 }

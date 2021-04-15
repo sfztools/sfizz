@@ -695,7 +695,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         break;
 #endif
     case LV2_MIDI_MSG_CHANNEL_PRESSURE:
-        sfizz_send_aftertouch(self->synth,
+        sfizz_send_channel_aftertouch(self->synth,
                       (int)ev->time.frames,
                       msg[1]);
         break;

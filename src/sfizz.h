@@ -99,7 +99,7 @@ SFIZZ_EXPORTED_API void sfizz_free(sfizz_synth_t* synth);
 
 /**
  * @brief Adds a reference to an existing sfizz synth.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param synth  The synth to reference.
  */
@@ -349,7 +349,7 @@ SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int 
 
 /**
  * @brief Send a high-precision on event to the synth.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -388,7 +388,7 @@ SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int
 
 /**
  * @brief Send a high-precision note off event to the synth.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -445,7 +445,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_
 
 /**
  * @brief Send a high precision CC automation to the synth.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This updates the CC value known to the synth, but without performing
  * additional MIDI-specific interpretations. (eg. the CC 120 and up)
@@ -483,7 +483,7 @@ SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, 
 
 /**
  * @brief Send a high-precision pitch wheel event.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -514,11 +514,29 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int dela
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch);
+
+/**
+ * @brief Send a channel aftertouch (channel pressure) event.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth      The synth.
+ * @param delay      The delay at which the event occurs; this should be lower
+ *                   than the size of the block in the next call to renderBlock().
+ * @param aftertouch The aftertouch value, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_channel_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch);
 
 /**
  * @brief Send a high-precision aftertouch event.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -532,12 +550,12 @@ SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, i
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_hd_channel_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch);
 
 /**
  * @brief Send a polyphonic aftertouch event.
  *      This feature is experimental and needs more testing in the internal engine.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -557,7 +575,7 @@ SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int del
 /**
  * @brief Send a high-precision polyphonic aftertouch event.
  *        This feature is experimental and needs more testing in the internal engine.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -599,7 +617,7 @@ SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_tempo(sfizz_synth_t* syn
  * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
  * of the synth is undefined.
  *
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param synth             The synth.
  * @param delay             The delay.
@@ -785,7 +803,7 @@ SFIZZ_EXPORTED_API void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_pro
  * does not use the opcode `oscillator_quality`. The engine uses distinct
  * default quality settings for live mode and freewheeling mode,
  * which both can be accessed by the means of this function.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param      synth  The synth.
  * @param[in]  mode   The processing mode.
@@ -801,7 +819,7 @@ SFIZZ_EXPORTED_API int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_
  * does not use the opcode `oscillator_quality`. The engine uses distinct
  * default quality settings for live mode and freewheeling mode,
  * which both can be accessed by the means of this function.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param      synth    The synth.
  * @param[in]  mode     The processing mode.
@@ -1086,13 +1104,13 @@ SFIZZ_EXPORTED_API const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, in
 
 /**
  * @brief Client for communicating with the synth engine in either direction
- * @since 0.6.0
+ * @since 1.0.0
  */
 typedef struct sfizz_client_t sfizz_client_t;
 
 /**
  * @brief Create a new messaging client
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param data         The opaque data pointer which is passed to the receiver.
  * @return             The new client.
@@ -1101,7 +1119,7 @@ SFIZZ_EXPORTED_API sfizz_client_t* sfizz_create_client(void* data);
 
 /**
  * @brief Destroy a messaging client
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param client       The client.
  */
@@ -1109,7 +1127,7 @@ SFIZZ_EXPORTED_API void sfizz_delete_client(sfizz_client_t* client);
 
 /**
  * @brief Get the client data
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param client       The client.
  * @return             The client data.
@@ -1118,7 +1136,7 @@ SFIZZ_EXPORTED_API void* sfizz_get_client_data(sfizz_client_t* client);
 
 /**
  * @brief Set the function which receives reply messages from the synth engine.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param client       The client.
  * @param receive      The pointer to the receiving function.
@@ -1127,7 +1145,7 @@ SFIZZ_EXPORTED_API void sfizz_set_receive_callback(sfizz_client_t* client, sfizz
 
 /**
  * @brief Send a message to the synth engine
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param synth        The synth.
  * @param client       The client sending the message.
@@ -1143,7 +1161,7 @@ SFIZZ_EXPORTED_API void sfizz_send_message(sfizz_synth_t* synth, sfizz_client_t*
 
 /**
  * @brief Set the function which receives broadcast messages from the synth engine.
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param synth        The synth.
  * @param broadcast    The pointer to the receiving function.

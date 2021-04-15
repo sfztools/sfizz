@@ -152,11 +152,15 @@ void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch)
 }
 void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
-    synth->synth.aftertouch(delay, aftertouch);
+    synth->synth.channelAftertouch(delay, aftertouch);
 }
-void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch)
+void sfizz_send_channel_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
-    synth->synth.hdAftertouch(delay, aftertouch);
+    synth->synth.channelAftertouch(delay, aftertouch);
+}
+void sfizz_send_hd_channel_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch)
+{
+    synth->synth.hdChannelAftertouch(delay, aftertouch);
 }
 void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, int aftertouch)
 {

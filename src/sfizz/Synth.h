@@ -446,7 +446,7 @@ public:
      *              the block in the next call to renderBlock().
      * @param aftertouch the aftertouch value
      */
-    void aftertouch(int delay, int aftertouch) noexcept;
+    void channelAftertouch(int delay, int aftertouch) noexcept;
     /**
      * @brief Send a high precision aftertouch event to the synth
      *
@@ -454,7 +454,7 @@ public:
      *              the block in the next call to renderBlock().
      * @param normAftertouch the normalized aftertouch value, in domain 0 to 1
      */
-    void hdAftertouch(int delay, float normAftertouch) noexcept;
+    void hdChannelAftertouch(int delay, float normAftertouch) noexcept;
     /**
      * @brief Send a tempo event to the synth
      *

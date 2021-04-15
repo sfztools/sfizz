@@ -383,7 +383,7 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         _state.oscillatorQuality = static_cast<int32>(range.denormalize(value));
         break;
     case kPidAftertouch:
-        synth.hdAftertouch(sampleOffset, value);
+        synth.hdChannelAftertouch(sampleOffset, value);
         break;
     case kPidPitchBend:
         synth.hdPitchWheel(sampleOffset, range.denormalize(value));
