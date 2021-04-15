@@ -381,7 +381,7 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOn(int delay, int noteNumber, int velocity) noexcept;
 
     /**
      * @brief Send a high-precision note on event to the synth.
@@ -417,7 +417,7 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int noteNumber, int velocity) noexcept;
 
     /**
      * @brief Send a note off event to the synth.
@@ -453,7 +453,7 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void cc(int delay, int ccNumber, int ccValue) noexcept;
 
     /**
      * @brief Send a high precision CC event to the synth
@@ -547,7 +547,7 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void aftertouch(int delay, uint8_t aftertouch) noexcept;
+    void aftertouch(int delay, int aftertouch) noexcept;
 
     /**
      * @brief Send a high-precision aftertouch event to the synth.
@@ -585,7 +585,7 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+    void polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept;
 
     /**
      * @brief Send a high-precision polyphonic aftertouch event to the synth.

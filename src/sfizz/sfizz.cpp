@@ -160,7 +160,7 @@ void sfz::Sfizz::setVolume(float volume) noexcept
     synth->synth.setVolume(volume);
 }
 
-void sfz::Sfizz::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Sfizz::noteOn(int delay, int noteNumber, int velocity) noexcept
 {
     synth->synth.noteOn(delay, noteNumber, velocity);
 }
@@ -170,7 +170,7 @@ void sfz::Sfizz::hdNoteOn(int delay, int noteNumber, float velocity) noexcept
     synth->synth.hdNoteOn(delay, noteNumber, velocity);
 }
 
-void sfz::Sfizz::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
+void sfz::Sfizz::noteOff(int delay, int noteNumber, int velocity) noexcept
 {
     synth->synth.noteOff(delay, noteNumber, velocity);
 }
@@ -180,7 +180,7 @@ void sfz::Sfizz::hdNoteOff(int delay, int noteNumber, float velocity) noexcept
     synth->synth.hdNoteOff(delay, noteNumber, velocity);
 }
 
-void sfz::Sfizz::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
+void sfz::Sfizz::cc(int delay, int ccNumber, int ccValue) noexcept
 {
     synth->synth.cc(delay, ccNumber, ccValue);
 }
@@ -205,7 +205,7 @@ void sfz::Sfizz::hdPitchWheel(int delay, float pitch) noexcept
     synth->synth.hdPitchWheel(delay, pitch);
 }
 
-void sfz::Sfizz::aftertouch(int delay, uint8_t aftertouch) noexcept
+void sfz::Sfizz::aftertouch(int delay, int aftertouch) noexcept
 {
     synth->synth.aftertouch(delay, aftertouch);
 }
@@ -215,7 +215,7 @@ void sfz::Sfizz::hdAftertouch(int delay, float aftertouch) noexcept
     synth->synth.hdAftertouch(delay, aftertouch);
 }
 
-void sfz::Sfizz::polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept
+void sfz::Sfizz::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept
 {
     synth->synth.polyAftertouch(delay, noteNumber, aftertouch);
 }

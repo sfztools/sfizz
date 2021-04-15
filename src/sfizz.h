@@ -339,7 +339,7 @@ SFIZZ_EXPORTED_API void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity);
+SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, int velocity);
 
 /**
  * @brief Send a high-precision on event to the synth.
@@ -378,7 +378,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_note_on(sfizz_synth_t* synth, int delay, i
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity);
+SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, int velocity);
 
 /**
  * @brief Send a high-precision note off event to the synth.
@@ -417,7 +417,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_note_off(sfizz_synth_t* synth, int delay, 
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value);
+SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, int cc_value);
 
 /**
  * @brief Send a high precision CC event to the synth.
@@ -508,7 +508,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int dela
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch);
 
 /**
  * @brief Send a high-precision aftertouch event.
@@ -546,7 +546,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_aftertouch(sfizz_synth_t* synth, int delay
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, int aftertouch);
 
 /**
  * @brief Send a high-precision polyphonic aftertouch event.

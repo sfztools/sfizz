@@ -352,7 +352,7 @@ public:
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-    void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOn(int delay, int noteNumber, int velocity) noexcept;
     /**
      * @brief Send a high-precision note on event to the synth
      *
@@ -370,7 +370,7 @@ public:
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-    void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int noteNumber, int velocity) noexcept;
     /**
      * @brief Send a high-precision note off event to the synth
      *
@@ -388,7 +388,7 @@ public:
      * @param ccNumber the cc number
      * @param ccValue the cc value
      */
-    void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void cc(int delay, int ccNumber, int ccValue) noexcept;
     /**
      * @brief Send a high precision CC event to the synth
      *
@@ -446,7 +446,7 @@ public:
      *              the block in the next call to renderBlock().
      * @param aftertouch the aftertouch value
      */
-    void aftertouch(int delay, uint8_t aftertouch) noexcept;
+    void aftertouch(int delay, int aftertouch) noexcept;
     /**
      * @brief Send a high precision aftertouch event to the synth
      *
@@ -471,7 +471,7 @@ public:
      * @param noteNumber
      * @param normAftertouch
      */
-    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+    void polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept;
     /**
      * @brief Send a polyphonic aftertouch event to the synth
      *
