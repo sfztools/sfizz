@@ -410,6 +410,11 @@ const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index)
     return ccLabels[label_index].second.c_str();
 }
 
+void sfizz_free_memory(void* ptr)
+{
+    free(ptr);
+}
+
 sfizz_client_t* sfizz_create_client(void* data)
 {
     return reinterpret_cast<sfizz_client_t*>(new sfz::Client(data));

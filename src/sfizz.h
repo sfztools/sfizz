@@ -274,7 +274,7 @@ SFIZZ_EXPORTED_API int sfizz_get_num_curves(sfizz_synth_t* synth);
  * @param synth  The synth.
  * @param model  The model name used if a non-empty string, otherwise generated.
  *
- * @return A newly allocated XML string, which must be freed after use.
+ * @return A newly allocated XML string, which must be freed after use using sfizz_free_memory().
  */
 SFIZZ_EXPORTED_API char* sfizz_export_midnam(sfizz_synth_t* synth, const char* model);
 
@@ -1096,6 +1096,14 @@ SFIZZ_EXPORTED_API int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label
  * @returns the label or @null if the index is out of bounds.
  */
 SFIZZ_EXPORTED_API const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @brief Free a block of memory allocated by the library.
+ * @brief 1.0.0
+ *
+ * @param ptr        The address of the memory to free.
+ */
+SFIZZ_EXPORTED_API void sfizz_free_memory(void* ptr);
 
 /**
  * @addtogroup Messaging

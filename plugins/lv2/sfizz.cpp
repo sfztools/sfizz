@@ -1707,7 +1707,7 @@ midnam_export(LV2_Handle instance)
 static void
 midnam_free(char *string)
 {
-    free(string);
+    sfizz_free_memory(string);
 }
 
 static const void *

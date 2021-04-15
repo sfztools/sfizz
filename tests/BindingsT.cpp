@@ -33,6 +33,6 @@ TEST_CASE("[Bindings] Midnam C")
     REQUIRE(xmlMidnam.find("<Note Number=\"65\" Name=\"Crash\" />") != xmlMidnam.npos);
     REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"54\" Name=\"Gain\" />") != xmlMidnam.npos);
     REQUIRE(xmlMidnam.find("<Control Type=\"7bit\" Number=\"2\" Name=\"Other\" />") != xmlMidnam.npos);
-    free(midnamChar);
+    sfizz_free_memory(midnamChar);
     sfizz_free(synth);
 }
