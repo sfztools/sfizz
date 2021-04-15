@@ -955,6 +955,16 @@ public:
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
 
     /**
+     * @brief Export a MIDI Name document describing the currently loaded SFZ file.
+     * @since 0.6.0
+     *
+     * @param model  The model name used if a non-empty string, otherwise generated.
+     *
+     * @return A XML string.
+     */
+    std::string exportMidnam(const char* model);
+
+    /**
      * @addtogroup Messaging
      * @{
      */

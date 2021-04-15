@@ -356,6 +356,11 @@ void sfz::Sfizz::clearExternalDefinitions()
     synth->synth.getParser().clearExternalDefinitions();
 }
 
+std::string sfz::Sfizz::exportMidnam(const char* model)
+{
+    return synth->synth.exportMidnam(model);
+}
+
 const std::vector<std::pair<uint8_t, std::string>>& sfz::Sfizz::getKeyLabels() const noexcept
 {
     return synth->synth.getKeyLabels();
