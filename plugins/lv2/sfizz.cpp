@@ -313,7 +313,7 @@ sfizz_lv2_update_timeinfo(sfizz_plugin_t *self, int delay, int updates)
     if (updates & SFIZZ_TIMEINFO_SIGNATURE)
         sfizz_send_time_signature(self->synth, delay, self->beats_per_bar, self->beat_unit);
     if (updates & SFIZZ_TIMEINFO_TEMPO)
-        sfizz_send_tempo(self->synth, delay, 60.0f / self->bpm_tempo);
+        sfizz_send_bpm_tempo(self->synth, delay, self->bpm_tempo);
     if (updates & SFIZZ_TIMEINFO_SPEED)
         sfizz_send_playback_state(self->synth, delay, self->speed > 0);
 }

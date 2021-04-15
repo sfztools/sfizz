@@ -1397,6 +1397,12 @@ void Synth::tempo(int delay, float secondsPerBeat) noexcept
     impl.resources_.beatClock.setTempo(delay, secondsPerBeat);
 }
 
+void Synth::bpmTempo(int delay, float beatsPerMinute) noexcept
+{
+    // TODO make this the main tempo function and remove the deprecated other one
+    return tempo(delay, 60 / beatsPerMinute);
+}
+
 void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
 {
     Impl& impl = *impl_;

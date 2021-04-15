@@ -230,6 +230,11 @@ void sfz::Sfizz::tempo(int delay, float secondsPerBeat) noexcept
     synth->synth.tempo(delay, secondsPerBeat);
 }
 
+void sfz::Sfizz::bpmTempo(int delay, float beatsPerMinute) noexcept
+{
+    synth->synth.bpmTempo(delay, beatsPerMinute);
+}
+
 void sfz::Sfizz::timeSignature(int delay, int beatsPerBar, int beatUnit)
 {
     synth->synth.timeSignature(delay, beatsPerBar, beatUnit);

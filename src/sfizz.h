@@ -43,6 +43,12 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+#if defined _WIN32
+  #define SFIZZ_DEPRECATED_API __declspec(deprecated)
+#else
+  #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -584,7 +590,25 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int 
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_beat);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_beat);
+
+/**
+ * @brief Send a tempo event.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
+ * @since 0.6.0
+ *
+ * @param synth             The synth.
+ * @param delay             The delay.
+ * @param beats_per_minute  The new tempo, in beats per minute.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_bpm_tempo(sfizz_synth_t* synth, int delay, float beats_per_minute);
 
 /**
  * @brief Send the time signature.

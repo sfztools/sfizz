@@ -170,6 +170,10 @@ void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter
 {
     synth->synth.tempo(delay, seconds_per_quarter);
 }
+void sfizz_send_bpm_tempo(sfizz_synth_t* synth, int delay, float beats_per_minute)
+{
+    synth->synth.bpmTempo(delay, beats_per_minute);
+}
 void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_bar, int beat_unit)
 {
     synth->synth.timeSignature(delay, beats_per_bar, beat_unit);

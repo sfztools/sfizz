@@ -465,6 +465,15 @@ public:
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
+     * @brief Send a tempo event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock(), and ordered with respect to
+     *              calls to tempo(), timeSignature(), timePosition(), and playbackState().
+     * @param beatsPerMinute the new tempo, in beats per minute
+     */
+    void bpmTempo(int delay, float beatsPerMinute) noexcept;
+    /**
      * @brief Send a polyphonic aftertouch event to the synth
      *
      * @param delay

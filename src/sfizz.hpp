@@ -26,6 +26,12 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+#if defined _WIN32
+  #define SFIZZ_DEPRECATED_API __declspec(deprecated)
+#else
+  #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
+#endif
+
 struct sfizz_synth_t;
 
 namespace sfz
@@ -623,7 +629,25 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void tempo(int delay, float secondsPerBeat) noexcept;
+    SFIZZ_DEPRECATED_API void tempo(int delay, float secondsPerBeat) noexcept;
+
+    /**
+     * @brief Send a tempo event to the synth.
+     *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
+     *
+     * @since 0.6.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param beatsPerMinute the new tempo, in beats per minute.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void bpmTempo(int delay, float beatsPerMinute) noexcept;
 
     /**
      * @brief Send the time signature.
