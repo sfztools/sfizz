@@ -306,6 +306,7 @@ if(SFIZZ_VST2)
     add_library(${VST2PLUGIN_PRJ_NAME} MODULE
         "VstPluginFactory.cpp"
         "Vst2PluginFactory.cpp"
+        "Vst2PluginEntry.c"
         "${VST2WRAPPER_BASEDIR}/vst2wrapper.cpp"
         "${VST2WRAPPER_BASEDIR}/../basewrapper/basewrapper.cpp"
         "${VST2SDK_BASEDIR}/public.sdk/source/vst2.x/audioeffect.cpp"
