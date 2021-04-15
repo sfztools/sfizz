@@ -338,7 +338,7 @@ void sfz::Sfizz::enableLogging(const std::string& prefix) noexcept
 
 void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
 {
-    synth->synth.setLoggingPrefix(prefix);
+
 }
 
 void sfz::Sfizz::disableLogging() noexcept

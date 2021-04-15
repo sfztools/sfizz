@@ -966,7 +966,7 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @par Thread-safety constraints
  * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth);
+SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix);
 
 /**
  * @brief Disable logging.
@@ -991,7 +991,7 @@ SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
  * @par Thread-safety constraints
  * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
 
 /**
  * @brief Shuts down the current processing, clear buffers and reset the voices.

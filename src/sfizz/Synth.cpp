@@ -1941,12 +1941,6 @@ void Synth::enableLogging(absl::string_view prefix) noexcept
     impl.resources_.logger.enableLogging(prefix);
 }
 
-void Synth::setLoggingPrefix(absl::string_view prefix) noexcept
-{
-    Impl& impl = *impl_;
-    impl.resources_.logger.setPrefix(prefix);
-}
-
 void Synth::disableLogging() noexcept
 {
     Impl& impl = *impl_;

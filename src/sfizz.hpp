@@ -886,7 +886,7 @@ public:
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void enableLogging() noexcept;
+    SFIZZ_DEPRECATED_API void enableLogging() noexcept;
 
     /**
      * @brief Enable logging of timings to sidecar CSV files.
@@ -912,7 +912,7 @@ public:
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void setLoggingPrefix(const std::string& prefix) noexcept;
+    SFIZZ_DEPRECATED_API void setLoggingPrefix(const std::string& prefix) noexcept;
 
     /**
      * @brief Disable logging of timings to sidecar CSV files.

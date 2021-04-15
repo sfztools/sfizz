@@ -309,19 +309,22 @@ bool sfizz_should_reload_scala(sfizz_synth_t* synth)
     return synth->synth.shouldReloadScala();
 }
 
-void sfizz_enable_logging(sfizz_synth_t* synth)
+void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 {
-    return synth->synth.enableLogging();
+    if (prefix)
+        synth->synth.enableLogging(prefix);
+    else
+        synth->synth.enableLogging();
 }
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 {
-    return synth->synth.setLoggingPrefix(prefix);
+
 }
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
-    return synth->synth.disableLogging();
+    synth->synth.disableLogging();
 }
 
 void sfizz_all_sound_off(sfizz_synth_t* synth)
