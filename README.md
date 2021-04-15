@@ -48,6 +48,7 @@ The sfizz library makes primary use of:
 - [pugixml] by Arseny Kapoulkine, licensed under the MIT license
 - [cephes] by Stephen Moshier, licensed under the BSD 3-Clause license
 - [cpuid] by Steinwurf ApS, licensed under the BSD 3-Clause license
+- [faust-libraries] by GRAME, Julius O. Smith III and Eric Tarr, licensed under the STK-4.3 license and a permissive variant of the LGPL license
 
 The sfizz library also uses in some subprojects:
 
@@ -70,6 +71,7 @@ The sfizz library also uses in some subprojects:
 [pugixml]:      https://pugixml.org/
 [cephes]:       https://www.netlib.org/cephes/
 [cpuid]:        https://github.com/steinwurf/cpuid
+[faust-libraries]: https://github.com/grame-cncm/faustlibraries
 [hiir]:         http://ldesoras.free.fr/prod.html#src_hiir
 [KISS FFT]:     http://kissfft.sourceforge.net/
 [JACK]:         https://github.com/jackaudio/jack2
