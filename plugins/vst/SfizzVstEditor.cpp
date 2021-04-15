@@ -12,6 +12,7 @@
 #include "editor/EditIds.h"
 #include "plugin/SfizzFileScan.h"
 #include "plugin/InstrumentDescription.h"
+#include "pluginterfaces/vst/ivsthostapplication.h"
 #include "IdleUpdateHandler.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "X11RunLoop.h"
@@ -98,13 +99,19 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         update->deferUpdate();
 
     // let the editor know about plugin format
-    uiReceiveValue(EditId::PluginFormat, std::string("VST3"));
+    absl::string_view pluginFormatName = "VST3";
 
     if (FUnknownPtr<Vst::IHostApplication> app { controller->getHostContext() }) {
         Vst::String128 name;
         app->getName(name);
         uiReceiveValue(EditId::PluginHost, std::string(Steinberg::String(name).text8()));
+
+        void* interfacePtr;
+        if (app->queryInterface(Vst::IVst3ToAUWrapper_iid, &interfacePtr) == kResultTrue)
+            pluginFormatName = "Audio Unit";
     }
+
+    uiReceiveValue(EditId::PluginFormat, std::string(pluginFormatName));
 
     absl::optional<fs::path> userFilesDir = SfizzPaths::getSfzConfigDefaultPath();
     uiReceiveValue(EditId::CanEditUserFilesDir, 1);
