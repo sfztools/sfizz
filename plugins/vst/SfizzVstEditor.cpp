@@ -109,6 +109,10 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         void* interfacePtr;
         if (app->queryInterface(Vst::IVst3ToAUWrapper_iid, &interfacePtr) == kResultTrue)
             pluginFormatName = "Audio Unit";
+        else if (app->queryInterface(Vst::IVst3ToVst2Wrapper_iid, &interfacePtr) == kResultTrue)
+            pluginFormatName = "VST2";
+        else if (app->queryInterface(Vst::IVst3ToAAXWrapper_iid, &interfacePtr) == kResultTrue)
+            pluginFormatName = "AAX";
     }
 
     uiReceiveValue(EditId::PluginFormat, std::string(pluginFormatName));
