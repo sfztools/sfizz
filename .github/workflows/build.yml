@@ -438,6 +438,12 @@ jobs:
           name: Win64 MinGW tarball
       - uses: actions/download-artifact@v2
         with:
+          name: Win32 installer
+      - uses: actions/download-artifact@v2
+        with:
+          name: Win64 installer
+      - uses: actions/download-artifact@v2
+        with:
           name: Source code tarball
       - name: Display file information
         shell: bash
