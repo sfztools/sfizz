@@ -37,7 +37,7 @@ typedef struct {
 } sfizz_blob_t;
 
 /**
- * @brief Representation of an argument of variant type in OSC format as an union
+ * @brief Representation of an argument of variant type in OSC format as a union
  * @since 1.0.0
  */
 typedef union {
