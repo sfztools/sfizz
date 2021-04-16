@@ -43,11 +43,13 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+//! @cond Doxygen_Suppress
 #if defined _WIN32
   #define SFIZZ_DEPRECATED_API __declspec(deprecated)
 #else
   #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
 #endif
+//! @endcond
 
 #ifdef __cplusplus
 extern "C" {
@@ -962,6 +964,7 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @note This can produce many outputs so use with caution.
  *
  * @param synth  The synth.
+ * @param prefix The prefix.
  *
  * @par Thread-safety constraints
  * - TBD ?

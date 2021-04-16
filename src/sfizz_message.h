@@ -29,7 +29,7 @@ extern "C" {
 
 /**
  * @brief Representation of a binary blob in OSC format
- * @since 0.6.0
+ * @since 1.0.0
  */
 typedef struct {
     const uint8_t* data;
@@ -38,7 +38,7 @@ typedef struct {
 
 /**
  * @brief Representation of an argument of variant type in OSC format
- * @since 0.6.0
+ * @since 1.0.0
  */
 typedef union {
     int32_t i;
@@ -52,13 +52,13 @@ typedef union {
 
 /**
  * @brief Generic message receiving function
- * @since 0.6.0
+ * @since 1.0.0
  */
 typedef void (sfizz_receive_t)(void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
 /**
  * @brief Convert the message to OSC using the provided output buffer
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param buffer        The output buffer
  * @param capacity      The capacity of the buffer
@@ -74,7 +74,7 @@ SFIZZ_EXPORTED_API uint32_t sfizz_prepare_message(
 
 /**
  * @brief Extract the contents of an OSC message
- * @since 0.6.0
+ * @since 1.0.0
  *
  * @param srcBuffer     The data of the OSC message
  * @param srcCapacity   The size of the OSC message
