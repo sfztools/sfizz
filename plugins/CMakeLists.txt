@@ -3,6 +3,8 @@ add_library(plugins-common STATIC EXCLUDE_FROM_ALL
     "common/plugin/MessageUtils.cpp"
     "common/plugin/InstrumentDescription.h"
     "common/plugin/InstrumentDescription.cpp"
+    "common/plugin/NativeHelpers.h"
+    "common/plugin/NativeHelpers.cpp"
     "common/plugin/SfizzFileScan.h"
     "common/plugin/SfizzFileScan.cpp"
     "common/plugin/FileTrie.h"
@@ -11,14 +13,6 @@ add_library(plugins-common STATIC EXCLUDE_FROM_ALL
     "common/plugin/SfizzForeignPaths.cpp"
     "common/plugin/SfizzSettings.h"
     "common/plugin/SfizzSettings.cpp")
-
-# Add native helpers to find user files when building some of the plugin targets
-if (SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
-    target_sources(plugins-common PRIVATE
-        "common/plugin/NativeHelpers.h"
-        "common/plugin/NativeHelpers.cpp")
-endif
-
 if(APPLE)
     target_sources(plugins-common PRIVATE
         "common/plugin/SfizzForeignPaths.mm"
@@ -45,7 +39,7 @@ elseif(ANDROID)
 elseif(APPLE)
     target_link_libraries(plugins-common PRIVATE
         "${APPLE_FOUNDATION_LIBRARY}")
-elseif(SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
+else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GLIB REQUIRED glib-2.0)
     target_include_directories(plugins-common PRIVATE ${GLIB_INCLUDE_DIRS})
