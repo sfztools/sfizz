@@ -28,8 +28,8 @@ public:
     explicit ModKey(ModId id, NumericId<Region> region = {}, Parameters params = {})
         : id_(id), region_(region), params_(params), flags_(ModIds::flags(id_)) {}
 
-    static ModKey createCC(uint16_t cc, uint8_t curve, uint8_t smooth, float step);
-    static ModKey createNXYZ(ModId id, NumericId<Region> region, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
+    static ModKey createCC(uint16_t cc, uint8_t curve, uint16_t smooth, float step);
+    static ModKey createNXYZ(ModId id, NumericId<Region> region = {}, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
 
     explicit operator bool() const noexcept { return id_ != ModId(); }
 
@@ -42,10 +42,16 @@ public:
     bool isTarget() const noexcept;
     std::string toString() const;
 
+    /**
+     * @brief Obtain the modulation key of the source depth, in the connection
+     * between source and target, if such a key exists.
+     */
+    static ModKey getSourceDepthKey(ModKey source, ModKey target);
+
     struct RawParameters {
         union {
             //! Parameters if this key identifies a CC source
-            struct { uint16_t cc; uint8_t curve, smooth; float step; };
+            struct { uint16_t cc; uint8_t curve; uint16_t smooth; float step; };
             //! Parameters otherwise, based on the related opcode
             // eg. `N` in `lfoN`, `N, X` in `lfoN_eqX`
             struct { uint8_t N, X, Y, Z; };
@@ -59,8 +65,8 @@ public:
         Parameters(const Parameters& other) noexcept;
         Parameters& operator=(const Parameters& other) noexcept;
 
-        Parameters(Parameters&&) = delete;
-        Parameters &operator=(Parameters&&) = delete;
+        Parameters(Parameters&&) noexcept;
+        Parameters &operator=(Parameters&&) noexcept;
 
         bool operator==(const Parameters& other) const noexcept
         {

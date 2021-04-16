@@ -1,9 +1,14 @@
 #include "PolyphonyGroup.h"
+#include <absl/algorithm/container.h>
+
+sfz::PolyphonyGroup::PolyphonyGroup()
+{
+    voices.reserve(config::maxVoices);
+}
 
 void sfz::PolyphonyGroup::setPolyphonyLimit(unsigned limit) noexcept
 {
     polyphonyLimit = limit;
-    voices.reserve(limit);
 }
 
 void sfz::PolyphonyGroup::registerVoice(Voice* voice) noexcept
@@ -15,6 +20,11 @@ void sfz::PolyphonyGroup::registerVoice(Voice* voice) noexcept
 void sfz::PolyphonyGroup::removeVoice(const Voice* voice) noexcept
 {
     swapAndPopFirst(voices, [voice](const Voice* v) { return v == voice; });
+}
+
+void sfz::PolyphonyGroup::removeAllVoices() noexcept
+{
+    voices.clear();
 }
 
 unsigned sfz::PolyphonyGroup::numPlayingVoices() const noexcept

@@ -6,15 +6,17 @@
 
 #pragma once
 
+#include "Config.h"
 #include "Region.h"
 #include "Voice.h"
-#include "SwapAndPop.h"
-#include "absl/algorithm/container.h"
+#include "utility/SwapAndPop.h"
 
 namespace sfz
 {
 class PolyphonyGroup {
 public:
+    PolyphonyGroup();
+
     /**
      * @brief Set the polyphony limit for this polyphony group.
      *
@@ -34,6 +36,10 @@ public:
      * @param voice
      */
     void removeVoice(const Voice* voice) noexcept;
+    /**
+     * @brief Remove all the voices from this polyphony group.
+     */
+    void removeAllVoices() noexcept;
     /**
      * @brief Get the polyphony limit for this group
      *

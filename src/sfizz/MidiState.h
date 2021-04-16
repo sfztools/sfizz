@@ -6,6 +6,7 @@
 
 #pragma once
 #include <array>
+#include <bitset>
 #include "CCMap.h"
 #include "Range.h"
 
@@ -85,6 +86,13 @@ public:
     float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
+     * @brief Get the velocity of the last note played
+     *
+     * @return float
+     */
+    float getLastVelocity() const noexcept;
+
+    /**
      * @brief Register a pitch bend event
      *
      * @param pitchBendValue
@@ -99,6 +107,34 @@ public:
     float getPitchBend() const noexcept;
 
     /**
+     * @brief Register a channel aftertouch event
+     *
+     * @param aftertouch
+     */
+    void channelAftertouchEvent(int delay, float aftertouch) noexcept;
+
+    /**
+     * @brief Register a channel aftertouch event
+     *
+     * @param aftertouch
+     */
+    void polyAftertouchEvent(int delay, int noteNumber, float aftertouch) noexcept;
+
+    /**
+     * @brief Get the channel aftertouch status
+
+     * @return int
+     */
+    float getChannelAftertouch() const noexcept;
+
+    /**
+     * @brief Get the polyphonic aftertouch status
+
+     * @return int
+     */
+    float getPolyAftertouch(int noteNumber) const noexcept;
+
+    /**
      * @brief Register a CC event
      *
      * @param ccNumber
@@ -109,11 +145,27 @@ public:
     /**
      * @brief Advances the internal clock of a given amount of samples.
      * You should call this at each callback. This will flush the events
-     * in the midistate memory.
+     * in the midistate memory by calling flushEvents().
      *
      * @param numSamples the number of samples of clock advance
      */
     void advanceTime(int numSamples) noexcept;
+
+    /**
+     * @brief Flush events in all states, keeping only the last one as the "base" state
+     *
+     */
+    void flushEvents() noexcept;
+
+    /**
+     * @brief Check if a note is currently depressed
+     *
+     * @param noteNumber
+     * @return true
+     * @return false
+     */
+    bool isNotePressed(int noteNumber) const noexcept { return noteStates[noteNumber]; }
+
     /**
      * @brief Get the CC value for CC number
      *
@@ -134,9 +186,28 @@ public:
     void resetAllControllers(int delay) noexcept;
 
     const EventVector& getCCEvents(int ccIdx) const noexcept;
+    const EventVector& getPolyAftertouchEvents(int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
+    const EventVector& getChannelAftertouchEvents() const noexcept;
+
+    /**
+     * @brief Get the alternate state value, for extended CC 137
+     *
+     * @return float
+     */
+    float getAlternateState() const noexcept { return alternate; }
 
 private:
+
+    /**
+     * @brief Insert events in a sorted event vector.
+     *
+     * @param events
+     * @param delay
+     * @param value
+     */
+    void insertEventInVector(EventVector& events, int delay, float value);
+
     int activeNotes { 0 };
 
     /**
@@ -153,6 +224,12 @@ private:
     MidiNoteArray<unsigned> noteOffTimes { {} };
 
     /**
+     * @brief Store the note states
+     *
+     */
+    std::bitset<128> noteStates;
+
+    /**
      * @brief Stores the velocity of the note ons for currently
      * depressed notes.
      *
@@ -160,10 +237,15 @@ private:
     MidiNoteArray<float> lastNoteVelocities;
 
     /**
+     * @brief Last note played
+     */
+    int lastNotePlayed { 0 };
+
+    /**
      * @brief Current known values for the CCs.
      *
      */
-    std::array<EventVector, config::numCCs> cc;
+    std::array<EventVector, config::numCCs> ccEvents;
 
     /**
      * @brief Null event
@@ -175,8 +257,20 @@ private:
      * @brief Pitch bend status
      */
     EventVector pitchEvents;
+
+    /**
+     * @brief Aftertouch status
+     */
+    EventVector channelAftertouchEvents;
+
+    /**
+     * @brief Polyphonic aftertouch status.
+     */
+    std::array<EventVector, 128> polyAftertouchEvents;
+
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };
+    float alternate { 0.0f };
     unsigned internalClock { 0 };
 };
 }

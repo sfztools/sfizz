@@ -5,17 +5,24 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include <array>
-#include <memory>
-#include "absl/types/span.h"
-#include "Debug.h"
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
 #include "Config.h"
+#include "utility/Debug.h"
+#include <absl/types/span.h>
+#include <array>
+#include <memory>
 
 namespace sfz {
 class AudioReader;
+
+enum class Oversampling: int {
+    x1 = 1,
+    x2 = 2,
+    x4 = 4,
+    x8 = 8
+};
 
 /**
  * @brief Wraps the internal oversampler in a single function that takes an

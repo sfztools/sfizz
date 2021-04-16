@@ -10,21 +10,20 @@
 #include "../../Voice.h"
 #include "../../SIMDHelpers.h"
 #include "../../Config.h"
-#include "../../Debug.h"
+#include "../../utility/Debug.h"
 
 namespace sfz {
 
-FlexEnvelopeSource::FlexEnvelopeSource(Synth &synth)
-    : synth_(&synth)
+FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
 }
 
 void FlexEnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Synth& synth = *synth_;
     unsigned egIndex = sourceKey.parameters().N;
 
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -38,15 +37,20 @@ void FlexEnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
 
     FlexEnvelope* eg = voice->getFlexEG(egIndex);
     eg->configure(&region->flexEGs[egIndex]);
+    bool freeRunning = (
+        (region->loopMode == LoopMode::one_shot && region->isOscillator())
+    );
+    if (freeRunning && region->flexAmpEG && egIndex == *region->flexAmpEG)
+        eg->setFreeRunning(true);
+
     eg->start(delay);
 }
 
 void FlexEnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Synth& synth = *synth_;
     unsigned egIndex = sourceKey.parameters().N;
 
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
@@ -64,10 +68,9 @@ void FlexEnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
 
 void FlexEnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
-    Synth& synth = *synth_;
     unsigned egIndex = sourceKey.parameters().N;
 
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;

@@ -6,10 +6,10 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Opcode.h"
-#include "Macros.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/ascii.h"
+#include "utility/Macros.h"
+#include <absl/strings/string_view.h>
+#include <absl/strings/str_cat.h>
+#include <absl/strings/ascii.h>
 #include <string>
 
 namespace sfz {
@@ -96,8 +96,16 @@ end_region_oncc:
         opcode = absl::StrCat(group(1), "_", group(2), "_oncc", group(3));
         goto end_region;
     }
+    (egV1) "_vel2" (any) END {
+        opcode = absl::StrCat(group(1), "_velto", group(2));
+        goto end_region;
+    }
     (eqV1) "_" ("bw"|"freq"|"gain") "cc" (number) END {
         opcode = absl::StrCat(group(1), "_", group(2), "_oncc", group(3));
+        goto end_region;
+    }
+    (eqV1) "_vel2" (any) END {
+        opcode = absl::StrCat(group(1), "_velto", group(2));
         goto end_region;
     }
     (lfoV2) "_" ("wave"|"offset"|"ratio"|"scale") END {
@@ -120,7 +128,7 @@ end_region_oncc:
         opcode = absl::StrCat("off_", group(1));
         goto end_region;
     }
-    "bend" ("up"|"down") END {
+    "bend" ("up"|"down"|"step") END {
         opcode = absl::StrCat("bend_", group(1));
         goto end_region;
     }
@@ -229,7 +237,7 @@ end_control:
 
 Opcode Opcode::cleanUp(OpcodeScope scope) const
 {
-    return Opcode(cleanUpOpcodeName(opcode, scope), value);
+    return Opcode(cleanUpOpcodeName(name, scope), value);
 }
 
 } // namespace sfz

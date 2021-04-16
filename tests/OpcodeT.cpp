@@ -7,13 +7,14 @@
 #include "sfizz/Region.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
+using namespace sfz;
 
 TEST_CASE("[Opcode] Construction")
 {
     SECTION("Normal construction")
     {
-        sfz::Opcode opcode { "sample", "dummy" };
-        REQUIRE(opcode.opcode == "sample");
+        Opcode opcode { "sample", "dummy" };
+        REQUIRE(opcode.name == "sample");
         REQUIRE(opcode.lettersOnlyHash == hash("sample"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -21,8 +22,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Normal construction with underscore")
     {
-        sfz::Opcode opcode { "sample_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample_underscore");
+        Opcode opcode { "sample_underscore", "dummy" };
+        REQUIRE(opcode.name == "sample_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -30,8 +31,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Normal construction with ampersand")
     {
-        sfz::Opcode opcode { "sample&_ampersand", "dummy" };
-        REQUIRE(opcode.opcode == "sample&_ampersand");
+        Opcode opcode { "sample&_ampersand", "dummy" };
+        REQUIRE(opcode.name == "sample&_ampersand");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -39,8 +40,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Normal construction with multiple ampersands")
     {
-        sfz::Opcode opcode { "&sample&_ampersand&", "dummy" };
-        REQUIRE(opcode.opcode == "&sample&_ampersand&");
+        Opcode opcode { "&sample&_ampersand&", "dummy" };
+        REQUIRE(opcode.name == "&sample&_ampersand&");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_ampersand"));
         REQUIRE(opcode.parameters.empty());
         REQUIRE(opcode.value == "dummy");
@@ -48,8 +49,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode")
     {
-        sfz::Opcode opcode { "sample123", "dummy" };
-        REQUIRE(opcode.opcode == "sample123");
+        Opcode opcode { "sample123", "dummy" };
+        REQUIRE(opcode.name == "sample123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
@@ -58,8 +59,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode with ampersand")
     {
-        sfz::Opcode opcode { "sample&123", "dummy" };
-        REQUIRE(opcode.opcode == "sample&123");
+        Opcode opcode { "sample&123", "dummy" };
+        REQUIRE(opcode.name == "sample&123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
@@ -68,8 +69,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode with underscore")
     {
-        sfz::Opcode opcode { "sample_underscore123", "dummy" };
-        REQUIRE(opcode.opcode == "sample_underscore123");
+        Opcode opcode { "sample_underscore123", "dummy" };
+        REQUIRE(opcode.name == "sample_underscore123");
         REQUIRE(opcode.lettersOnlyHash == hash("sample_underscore&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters == std::vector<uint16_t>({ 123 }));
@@ -77,8 +78,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode within the opcode")
     {
-        sfz::Opcode opcode { "sample1_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample1_underscore");
+        Opcode opcode { "sample1_underscore", "dummy" };
+        REQUIRE(opcode.name == "sample1_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters == std::vector<uint16_t>({ 1 }));
@@ -86,8 +87,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode within the opcode")
     {
-        sfz::Opcode opcode { "sample123_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample123_underscore");
+        Opcode opcode { "sample123_underscore", "dummy" };
+        REQUIRE(opcode.name == "sample123_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 1);
@@ -96,8 +97,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode within the opcode twice")
     {
-        sfz::Opcode opcode { "sample123_double44_underscore", "dummy" };
-        REQUIRE(opcode.opcode == "sample123_double44_underscore");
+        Opcode opcode { "sample123_double44_underscore", "dummy" };
+        REQUIRE(opcode.name == "sample123_double44_underscore");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 2);
@@ -108,8 +109,8 @@ TEST_CASE("[Opcode] Construction")
 
     SECTION("Parameterized opcode within the opcode twice, with a back parameter")
     {
-        sfz::Opcode opcode { "sample123_double44_underscore23", "dummy" };
-        REQUIRE(opcode.opcode == "sample123_double44_underscore23");
+        Opcode opcode { "sample123_double44_underscore23", "dummy" };
+        REQUIRE(opcode.name == "sample123_double44_underscore23");
         REQUIRE(opcode.lettersOnlyHash == hash("sample&_double&_underscore&"));
         REQUIRE(opcode.value == "dummy");
         REQUIRE(opcode.parameters.size() == 3);
@@ -119,66 +120,86 @@ TEST_CASE("[Opcode] Construction")
 
 TEST_CASE("[Opcode] Note values")
 {
-    auto noteValue = sfz::readNoteValue("c-1");
+    auto noteValue = readNoteValue("c-1");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 0);
-    noteValue = sfz::readNoteValue("C-1");
+    noteValue = readNoteValue("C-1");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 0);
-    noteValue = sfz::readNoteValue("g9");
+    noteValue = readNoteValue("g9");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 127);
-    noteValue = sfz::readNoteValue("G9");
+    noteValue = readNoteValue("G9");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 127);
-    noteValue = sfz::readNoteValue("c#4");
+    noteValue = readNoteValue("c#4");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 61);
-    noteValue = sfz::readNoteValue("C#4");
+    noteValue = readNoteValue(u8"c♯4");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 61);
-    noteValue = sfz::readNoteValue("e#4");
+    noteValue = readNoteValue("C#4");
+    REQUIRE(noteValue);
+    REQUIRE(*noteValue == 61);
+    noteValue = readNoteValue(u8"C♯4");
+    REQUIRE(noteValue);
+    REQUIRE(*noteValue == 61);
+    noteValue = readNoteValue("e#4");
     REQUIRE(!noteValue);
-    noteValue = sfz::readNoteValue("E#4");
+    noteValue = readNoteValue(u8"e♯4");
     REQUIRE(!noteValue);
-    noteValue = sfz::readNoteValue("db4");
+    noteValue = readNoteValue("E#4");
+    REQUIRE(!noteValue);
+    noteValue = readNoteValue(u8"E♯4");
+    REQUIRE(!noteValue);
+    noteValue = readNoteValue("db4");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 61);
-    noteValue = sfz::readNoteValue("Db4");
+    noteValue = readNoteValue(u8"d♭4");
     REQUIRE(noteValue);
     REQUIRE(*noteValue == 61);
-    noteValue = sfz::readNoteValue("fb4");
+    noteValue = readNoteValue("Db4");
+    REQUIRE(noteValue);
+    REQUIRE(*noteValue == 61);
+    noteValue = readNoteValue(u8"D♭4");
+    REQUIRE(noteValue);
+    REQUIRE(*noteValue == 61);
+    noteValue = readNoteValue("fb4");
     REQUIRE(!noteValue);
-    noteValue = sfz::readNoteValue("Fb4");
+    noteValue = readNoteValue(u8"f♭4");
+    REQUIRE(!noteValue);
+    noteValue = readNoteValue("Fb4");
+    REQUIRE(!noteValue);
+    noteValue = readNoteValue(u8"F♭4");
     REQUIRE(!noteValue);
 }
 
 TEST_CASE("[Opcode] Categories")
 {
-    REQUIRE(sfz::Opcode("sample", "").category == sfz::kOpcodeNormal);
-    REQUIRE(sfz::Opcode("amplitude_oncc11", "").category == sfz::kOpcodeOnCcN);
-    REQUIRE(sfz::Opcode("cutoff_cc22", "").category == sfz::kOpcodeOnCcN);
-    REQUIRE(sfz::Opcode("lfo01_pitch_curvecc33", "").category == sfz::kOpcodeCurveCcN);
-    REQUIRE(sfz::Opcode("pan_stepcc44", "").category == sfz::kOpcodeStepCcN);
-    REQUIRE(sfz::Opcode("noise_level_smoothcc55", "").category == sfz::kOpcodeSmoothCcN);
+    REQUIRE(Opcode("sample", "").category == kOpcodeNormal);
+    REQUIRE(Opcode("amplitude_oncc11", "").category == kOpcodeOnCcN);
+    REQUIRE(Opcode("cutoff_cc22", "").category == kOpcodeOnCcN);
+    REQUIRE(Opcode("lfo01_pitch_curvecc33", "").category == kOpcodeCurveCcN);
+    REQUIRE(Opcode("pan_stepcc44", "").category == kOpcodeStepCcN);
+    REQUIRE(Opcode("noise_level_smoothcc55", "").category == kOpcodeSmoothCcN);
 }
 
 TEST_CASE("[Opcode] Derived names")
 {
-    REQUIRE(sfz::Opcode("sample", "").getDerivedName(sfz::kOpcodeNormal) == "sample");
-    REQUIRE(sfz::Opcode("cutoff_cc22", "").getDerivedName(sfz::kOpcodeNormal) == "cutoff");
-    REQUIRE(sfz::Opcode("lfo01_pitch_curvecc33", "").getDerivedName(sfz::kOpcodeOnCcN) == "lfo01_pitch_oncc33");
-    REQUIRE(sfz::Opcode("pan_stepcc44", "").getDerivedName(sfz::kOpcodeCurveCcN) == "pan_curvecc44");
-    REQUIRE(sfz::Opcode("noise_level_smoothcc55", "").getDerivedName(sfz::kOpcodeStepCcN) == "noise_level_stepcc55");
-    REQUIRE(sfz::Opcode("sample", "").getDerivedName(sfz::kOpcodeSmoothCcN, 66) == "sample_smoothcc66");
+    REQUIRE(Opcode("sample", "").getDerivedName(kOpcodeNormal) == "sample");
+    REQUIRE(Opcode("cutoff_cc22", "").getDerivedName(kOpcodeNormal) == "cutoff");
+    REQUIRE(Opcode("lfo01_pitch_curvecc33", "").getDerivedName(kOpcodeOnCcN) == "lfo01_pitch_oncc33");
+    REQUIRE(Opcode("pan_stepcc44", "").getDerivedName(kOpcodeCurveCcN) == "pan_curvecc44");
+    REQUIRE(Opcode("noise_level_smoothcc55", "").getDerivedName(kOpcodeStepCcN) == "noise_level_stepcc55");
+    REQUIRE(Opcode("sample", "").getDerivedName(kOpcodeSmoothCcN, 66) == "sample_smoothcc66");
 }
 
 TEST_CASE("[Opcode] Normalization")
 {
     // *_ccN
 
-    REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "foo_oncc7");
-    REQUIRE(sfz::Opcode("foo_cc7", "").cleanUp(sfz::kOpcodeScopeControl).opcode == "foo_cc7");
+    REQUIRE(Opcode("foo_cc7", "").cleanUp(kOpcodeScopeRegion).name == "foo_oncc7");
+    REQUIRE(Opcode("foo_cc7", "").cleanUp(kOpcodeScopeControl).name == "foo_cc7");
 
     // <region>
 
@@ -212,6 +233,7 @@ TEST_CASE("[Opcode] Normalization")
         {"offmode", "off_mode"},
         {"bendup", "bend_up"},
         {"benddown", "bend_down"},
+        {"bendstep", "bend_step"},
         {"filtype", "fil1_type"},
         {"fil21type", "fil21_type"},
         // ARIA aliases
@@ -238,13 +260,23 @@ TEST_CASE("[Opcode] Normalization")
         {"cutoff1_random", "fil1_random"},
         {"cutoff2_random", "fil2_random"},
         {"gain_random", "amp_random"},
+        // Internal transformations
+        {"ampeg_vel2delay", "ampeg_veltodelay"},
+        {"fileg_vel2attack", "fileg_veltoattack"},
+        {"pitcheg_vel2decay", "pitcheg_veltodecay"},
+        {"ampeg_vel2hold", "ampeg_veltohold"},
+        {"fileg_vel2sustain", "fileg_veltosustain"},
+        {"pitcheg_vel2release", "pitcheg_veltorelease"},
+        {"fileg_vel2depth", "fileg_veltodepth"},
+        {"eq21_vel2freq", "eq21_veltofreq"},
+        {"eq22_vel2gain", "eq22_veltogain"},
     };
 
     for (auto pair : regionSpecific) {
         absl::string_view input = pair.first;
         absl::string_view expected = pair.second;
-        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeRegion).opcode == expected);
-        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeRegion).name == expected);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeGeneric).name == input);
     }
 
     // <control>
@@ -257,42 +289,231 @@ TEST_CASE("[Opcode] Normalization")
     for (auto pair : controlSpecific) {
         absl::string_view input = pair.first;
         absl::string_view expected = pair.second;
-        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeControl).opcode == expected);
-        REQUIRE(sfz::Opcode(input, "").cleanUp(sfz::kOpcodeScopeGeneric).opcode == input);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeControl).name == expected);
+        REQUIRE(Opcode(input, "").cleanUp(kOpcodeScopeGeneric).name == input);
     }
 
     // case
 
-    REQUIRE(sfz::Opcode("SaMpLe", "").cleanUp(sfz::kOpcodeScopeRegion).opcode == "sample");
+    REQUIRE(Opcode("SaMpLe", "").cleanUp(kOpcodeScopeRegion).name == "sample");
 }
 
-TEST_CASE("[Opcode] readOpcode")
+TEST_CASE("[Opcode] opcode read (uint8_t)")
 {
-    REQUIRE( sfz::readOpcode("16", sfz::Range<uint8_t>(0, 100)).value() == 16 );
-    REQUIRE( sfz::readOpcode("+16", sfz::Range<uint8_t>(0, 100)).value() == 16 );
-    REQUIRE( sfz::readOpcode("110", sfz::Range<uint8_t>(0, 100)).value() == 100 );
-    REQUIRE( sfz::readOpcode("-1", sfz::Range<uint8_t>(0, 100)).value() == 0 );
-    REQUIRE( sfz::readOpcode("12.5", sfz::Range<int>(-100, 100)).value() == 12 );
-    REQUIRE( sfz::readOpcode("+12.5", sfz::Range<int>(-100, 100)).value() == 12 );
-    REQUIRE( sfz::readOpcode("-40", sfz::Range<int>(-100, 100)).value() == -40 );
-    REQUIRE( sfz::readOpcode("-140", sfz::Range<int>(-100, 100)).value() == -100 );
-    REQUIRE( sfz::readOpcode("12.5", sfz::Range<float>(0.0f, 100.0f)).value() == 12.5_a );
-    REQUIRE( sfz::readOpcode("+12.5", sfz::Range<float>(0.0f, 100.0f)).value() == 12.5_a );
-    REQUIRE( sfz::readOpcode("-22.5", sfz::Range<float>(-20.0f, 100.0f)).value() == -20.0_a );
-    REQUIRE( sfz::readOpcode("150.5", sfz::Range<float>(-20.0f, 100.0f)).value() == 100.0_a );
-    REQUIRE( sfz::readOpcode("50.25garbage", sfz::Range<float>(-20.0f, 100.0f)).value() == 50.25_a );
-    REQUIRE( sfz::readOpcode("50.25garbage", sfz::Range<int>(-20, 100)).value() == 50 );
-    REQUIRE( !sfz::readOpcode("garbage50.25", sfz::Range<int>(-20, 100)) );
-    REQUIRE( !sfz::readOpcode("garbage", sfz::Range<int>(-20, 100)) );
+    SECTION("Basic")
+    {
+        Opcode opcode { "", "16" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 16);
+    }
+
+    SECTION("Sign")
+    {
+        Opcode opcode { "", "+16" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 16);
+    }
+
+    SECTION("Ignore")
+    {
+        Opcode opcode { "", "110" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == spec.defaultInputValue );
+    }
+
+    SECTION("Clamp upper")
+    {
+        Opcode opcode { "", "110" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), kEnforceUpperBound };
+        REQUIRE( opcode.read(spec) == 100 );
+    }
+
+    SECTION("Clamp lower")
+    {
+        Opcode opcode { "", "10" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(20, 100), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 20 );
+    }
+
+    SECTION("Clamp upper (real)")
+    {
+        Opcode opcode { "", "101" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.5f), kEnforceUpperBound };
+        REQUIRE( opcode.read(spec) == 100.5f );
+    }
+
+    SECTION("Clamp lower (real)")
+    {
+        Opcode opcode { "", "19" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(19.5f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 19.5f );
+    }
+
+    SECTION("Floating point")
+    {
+        Opcode opcode { "", "10.5" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 10 );
+    }
+
+    SECTION("Text after")
+    {
+        Opcode opcode { "", "10garbage" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 10 );
+    }
+
+    SECTION("Text before")
+    {
+        Opcode opcode { "", "garbage10" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), 0 };
+        REQUIRE( !opcode.readOptional(spec) );
+        REQUIRE( opcode.read(spec) == 0 );
+    }
+
+    SECTION("Can be note")
+    {
+        Opcode opcode { "", "c4" };
+        OpcodeSpec<uint8_t> spec { 0, Range<uint8_t>(0, 100), kCanBeNote };
+        REQUIRE( opcode.read(spec) == 60 );
+    }
+}
+
+TEST_CASE("[Opcode] opcode read (int)")
+{
+    SECTION("Basic")
+    {
+        Opcode opcode { "", "16" };
+        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), 0 };
+        REQUIRE( opcode.read(spec) == 16);
+    }
+
+    SECTION("Sign")
+    {
+        Opcode opcode { "", "+16" };
+        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), 0 };
+        REQUIRE( opcode.read(spec) == 16);
+    }
+
+    SECTION("Sign")
+    {
+        Opcode opcode { "", "-16" };
+        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), 0 };
+        REQUIRE( opcode.read(spec) == -16);
+    }
+
+    SECTION("Clamp upper")
+    {
+        Opcode opcode { "", "110" };
+        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), kEnforceUpperBound };
+        REQUIRE( opcode.read(spec) == 100 );
+    }
+
+    SECTION("Clamp lower")
+    {
+        Opcode opcode { "", "-110" };
+        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == -100 );
+    }
+
+    SECTION("Floating point")
+    {
+        Opcode opcode { "", "10.5" };
+        OpcodeSpec<int> spec { 0, Range<int>(-100, 100), 0 };
+        REQUIRE( opcode.read(spec) == 10 );
+    }
+
+    SECTION("Text after")
+    {
+        Opcode opcode { "", "10garbage" };
+        OpcodeSpec<int> spec { 0, Range<int>(0, 100), 0 };
+        REQUIRE( opcode.read(spec) == 10 );
+    }
+
+    SECTION("Text before")
+    {
+        Opcode opcode { "", "garbage10" };
+        OpcodeSpec<int> spec { 0, Range<int>(20, 100), 0 };
+        REQUIRE( !opcode.readOptional(spec) );
+        REQUIRE( opcode.read(spec) == 0 );
+    }
+
+    SECTION("Can be note")
+    {
+        Opcode opcode { "", "c4" };
+        OpcodeSpec<int> spec { 0, Range<int>(20, 100), kCanBeNote };
+        REQUIRE( opcode.read(spec) == 60 );
+    }
+}
+
+
+TEST_CASE("[Opcode] opcode read (float)")
+{
+    SECTION("Basic")
+    {
+        Opcode opcode { "", "16.4" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
+        REQUIRE( opcode.read(spec) == 16.4_a);
+    }
+
+    SECTION("Plus sign")
+    {
+        Opcode opcode { "", "+16.4" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
+        REQUIRE( opcode.read(spec) == 16.4_a);
+    }
+
+    SECTION("Minus sign")
+    {
+        Opcode opcode { "", "-16.4" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
+        REQUIRE( opcode.read(spec) == -16.4_a);
+    }
+
+    SECTION("Ignore")
+    {
+        Opcode opcode { "", "110" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), 0 };
+        REQUIRE( opcode.read(spec) == spec.defaultInputValue );
+    }
+
+    SECTION("Clamp upper")
+    {
+        Opcode opcode { "", "110" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), kEnforceUpperBound };
+        REQUIRE( opcode.read(spec) == 100.0f );
+    }
+
+    SECTION("Clamp lower")
+    {
+        Opcode opcode { "", "-110" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(-100.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == -100.0f );
+    }
+
+    SECTION("Text after")
+    {
+        Opcode opcode { "", "10.5garbage" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 10.5f );
+    }
+
+    SECTION("Text before")
+    {
+        Opcode opcode { "", "garbage10" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), 0 };
+        REQUIRE( !opcode.readOptional(spec) );
+        REQUIRE( opcode.read(spec) == 0.0f );
+    }
 }
 
 TEST_CASE("[Opcode] readBooleanFromOpcode")
 {
-    REQUIRE(sfz::readBooleanFromOpcode({"", "1"}) == true);
-    REQUIRE(sfz::readBooleanFromOpcode({"", "0"}) == false);
-    REQUIRE(sfz::readBooleanFromOpcode({"", "777"}) == true);
-    REQUIRE(sfz::readBooleanFromOpcode({"", "on"}) == true);
-    REQUIRE(sfz::readBooleanFromOpcode({"", "off"}) == false);
-    REQUIRE(sfz::readBooleanFromOpcode({"", "On"}) == true);
-    REQUIRE(sfz::readBooleanFromOpcode({"", "oFf"}) == false);
+    REQUIRE(readBoolean({"1"}) == true);
+    REQUIRE(readBoolean({"0"}) == false);
+    REQUIRE(readBoolean({"777"}) == true);
+    REQUIRE(readBoolean({"on"}) == true);
+    REQUIRE(readBoolean({"off"}) == false);
+    REQUIRE(readBoolean({"On"}) == true);
+    REQUIRE(readBoolean({"oFf"}) == false);
 }

@@ -9,29 +9,25 @@
 #include "../../Synth.h"
 #include "../../Voice.h"
 #include "../../Config.h"
-#include "../../Debug.h"
-
-// TODO(jpc): also matrix the ampeg
+#include "../../utility/Debug.h"
 
 namespace sfz {
 
-ADSREnvelopeSource::ADSREnvelopeSource(Synth &synth)
-    : synth_(&synth)
+ADSREnvelopeSource::ADSREnvelopeSource(VoiceManager& manager, MidiState& state)
+    : voiceManager_(manager), midiState_(state)
 {
 }
 
 void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Synth& synth = *synth_;
-
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
     }
 
     const Region* region = voice->getRegion();
-    ADSREnvelope<float>* eg = nullptr;
+    ADSREnvelope* eg = nullptr;
     const EGDescription* desc = nullptr;
 
     switch (sourceKey.id()) {
@@ -55,23 +51,20 @@ void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
         return;
     }
 
-    Resources& resources = synth.getResources();
     const TriggerEvent& triggerEvent = voice->getTriggerEvent();
     const float sampleRate = voice->getSampleRate();
-    eg->reset(*desc, *region, resources.midiState, delay, triggerEvent.value, sampleRate);
+    eg->reset(*desc, *region, midiState_, delay, triggerEvent.value, sampleRate);
 }
 
 void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
 {
-    Synth& synth = *synth_;
-
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
     }
 
-    ADSREnvelope<float>* eg = nullptr;
+    ADSREnvelope* eg = nullptr;
 
     switch (sourceKey.id()) {
     case ModId::AmpEG:
@@ -96,15 +89,13 @@ void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
 
 void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
-    Synth& synth = *synth_;
-
-    Voice* voice = synth.getVoiceById(voiceId);
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
     if (!voice) {
         ASSERTFALSE;
         return;
     }
 
-    ADSREnvelope<float>* eg = nullptr;
+    ADSREnvelope* eg = nullptr;
 
     switch (sourceKey.id()) {
     case ModId::AmpEG:

@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "../StringViewHelpers.h"
+#include "StringViewHelpers.h"
 #include <functional>
 
 /**

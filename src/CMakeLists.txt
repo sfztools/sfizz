@@ -1,9 +1,6 @@
-include (GNUInstallDirs)
+include(GNUInstallDirs)
 
-add_subdirectory(external/kiss_fft)
-add_subdirectory(external/cpuid)
-
-set (FAUST_FILES
+set(FAUST_FILES
     sfizz/dsp/filters/filters_modulable.dsp
     sfizz/dsp/filters/rbj_filters.dsp
     sfizz/dsp/filters/sallenkey_modulable.dsp
@@ -14,21 +11,26 @@ set (FAUST_FILES
     sfizz/effects/dsp/gate.dsp
     sfizz/effects/dsp/disto_stage.dsp
     sfizz/effects/dsp/fverb.dsp)
-source_group ("Faust Files" FILES ${FAUST_FILES})
+source_group("Faust Files" FILES ${FAUST_FILES})
 
-set (SFIZZ_HEADERS
+set(SFIZZ_HEADERS
     sfizz/ADSREnvelope.h
     sfizz/AudioBuffer.h
     sfizz/AudioReader.h
     sfizz/AudioSpan.h
+    sfizz/BeatClock.h
     sfizz/Buffer.h
     sfizz/BufferPool.h
     sfizz/CCMap.h
     sfizz/Config.h
     sfizz/Curve.h
-    sfizz/Debug.h
+    sfizz/utility/Debug.h
+    sfizz/utility/LeakDetector.h
+    sfizz/utility/Macros.h
+    sfizz/utility/MemoryHelpers.h
     sfizz/utility/NumericId.h
-    sfizz/utility/SpinMutex.h
+    sfizz/utility/StringViewHelpers.h
+    sfizz/utility/SwapAndPop.h
     sfizz/utility/XmlHelpers.h
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
@@ -36,6 +38,8 @@ set (SFIZZ_HEADERS
     sfizz/modulations/ModMatrix.h
     sfizz/modulations/ModGenerator.h
     sfizz/modulations/sources/ADSREnvelope.h
+    sfizz/modulations/sources/ChannelAftertouch.h
+    sfizz/modulations/sources/PolyAftertouch.h
     sfizz/modulations/sources/Controller.h
     sfizz/modulations/sources/FlexEnvelope.h
     sfizz/modulations/sources/LFO.h
@@ -46,8 +50,6 @@ set (SFIZZ_HEADERS
     sfizz/effects/impl/ResonantStringAVX.h
     sfizz/effects/impl/ResonantStringSSE.h
     sfizz/effects/Apan.h
-    sfizz/effects/CommonLFO.h
-    sfizz/effects/CommonLFO.hpp
     sfizz/effects/Compressor.h
     sfizz/effects/Disto.h
     sfizz/effects/Eq.h
@@ -75,10 +77,14 @@ set (SFIZZ_HEADERS
     sfizz/HistoricalBuffer.h
     sfizz/Interpolators.h
     sfizz/Interpolators.hpp
+    sfizz/Layer.h
     sfizz/Logger.h
     sfizz/LFO.h
+    sfizz/LFOCommon.h
+    sfizz/LFOCommon.hpp
     sfizz/LFODescription.h
     sfizz/MathHelpers.h
+    sfizz/Metronome.h
     sfizz/MidiState.h
     sfizz/ModifierHelpers.h
     sfizz/OnePoleFilter.h
@@ -104,17 +110,20 @@ set (SFIZZ_HEADERS
     sfizz/SIMDHelpers.h
     sfizz/SisterVoiceRing.h
     sfizz/Smoothers.h
-    sfizz/SwapAndPop.h
     sfizz/Synth.h
     sfizz/SynthConfig.h
+    sfizz/SynthPrivate.h
     sfizz/Tuning.h
     sfizz/Voice.h
+    sfizz/VoiceManager.h
     sfizz/VoiceStealing.h
     sfizz/Wavetables.h
+    sfizz/WindowedSinc.h
+    sfizz/WindowedSinc.hpp
     sfizz.h
     sfizz.hpp)
 
-set (SFIZZ_SOURCES
+set(SFIZZ_SOURCES
     sfizz/Synth.cpp
     sfizz/FileId.cpp
     sfizz/FilePool.cpp
@@ -126,9 +135,8 @@ set (SFIZZ_SOURCES
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp
     sfizz/MidiState.cpp
-    sfizz/SfzHelpers.cpp
     sfizz/Oversampler.cpp
-    sfizz/FloatEnvelopes.cpp
+    sfizz/ADSREnvelope.cpp
     sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
     sfizz/Curve.cpp
@@ -137,6 +145,7 @@ set (SFIZZ_SOURCES
     sfizz/Tuning.cpp
     sfizz/RegionSet.cpp
     sfizz/PolyphonyGroup.cpp
+    sfizz/VoiceManager.cpp
     sfizz/VoiceStealing.cpp
     sfizz/RTSemaphore.cpp
     sfizz/Panning.cpp
@@ -146,15 +155,22 @@ set (SFIZZ_SOURCES
     sfizz/PowerFollower.cpp
     sfizz/FlexEGDescription.cpp
     sfizz/FlexEnvelope.cpp
+    sfizz/BeatClock.cpp
+    sfizz/Metronome.cpp
+    sfizz/SynthMessaging.cpp
+    sfizz/WindowedSinc.cpp
+    sfizz/Interpolators.cpp
+    sfizz/Layer.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
     sfizz/modulations/ModMatrix.cpp
+    sfizz/modulations/sources/ADSREnvelope.cpp
+    sfizz/modulations/sources/ChannelAftertouch.cpp
+    sfizz/modulations/sources/PolyAftertouch.cpp
     sfizz/modulations/sources/Controller.cpp
     sfizz/modulations/sources/FlexEnvelope.cpp
-    sfizz/modulations/sources/ADSREnvelope.cpp
     sfizz/modulations/sources/LFO.cpp
-    sfizz/utility/SpinMutex.cpp
     sfizz/effects/Nothing.cpp
     sfizz/effects/Filter.cpp
     sfizz/effects/Eq.cpp
@@ -176,96 +192,234 @@ set (SFIZZ_SOURCES
     sfizz/effects/impl/ResonantArraySSE.cpp
     sfizz/effects/impl/ResonantArrayAVX.cpp)
 
-include (SfizzSIMDSourceFiles)
-sfizz_add_simd_sources (SFIZZ_SOURCES ".")
+include(SfizzSIMDSourceFiles)
+sfizz_add_simd_sources(SFIZZ_SOURCES ".")
 
 # Parser core library
-set (SFIZZ_PARSER_HEADERS
+set(SFIZZ_PARSER_HEADERS
     sfizz/Defaults.h
-    sfizz/LeakDetector.h
     sfizz/Range.h
     sfizz/Opcode.h
-    sfizz/Macros.h
-    sfizz/Parser.h
     sfizz/parser/Parser.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
-    sfizz/SfzHelpers.h
-    sfizz/StringViewHelpers.h)
+    sfizz/SfzHelpers.h)
 
-set (SFIZZ_PARSER_SOURCES
-    sfizz/Parser.cpp
+set(SFIZZ_PARSER_SOURCES
     sfizz/Opcode.cpp
+    sfizz/Defaults.cpp
     sfizz/OpcodeCleanup.cpp
-    sfizz/SfzHelpers.cpp
     sfizz/parser/Parser.cpp
     sfizz/parser/ParserPrivate.cpp)
 
-set (SFIZZ_PARSER_OTHER sfizz/OpcodeCleanup.re)
-source_group ("Other Files" FILES ${SFIZZ_PARSER_OTHER})
+set(SFIZZ_PARSER_OTHER sfizz/OpcodeCleanup.re)
+source_group("Other Files" FILES ${SFIZZ_PARSER_OTHER})
 
-add_library (sfizz_parser STATIC)
-target_sources (sfizz_parser PRIVATE
+# Sfizz parser library
+add_library(sfizz_parser STATIC)
+add_library(sfizz::parser ALIAS sfizz_parser)
+target_sources(sfizz_parser PRIVATE
     ${SFIZZ_PARSER_HEADERS} ${SFIZZ_PARSER_SOURCES} ${SFIZZ_PARSER_OTHER})
-target_include_directories (sfizz_parser PUBLIC sfizz)
-target_include_directories (sfizz_parser PUBLIC external)
-target_link_libraries (sfizz_parser PUBLIC absl::strings PRIVATE absl::flat_hash_map)
+target_include_directories(sfizz_parser PUBLIC sfizz)
+target_link_libraries(sfizz_parser
+    PUBLIC sfizz::filesystem sfizz::simde absl::strings
+    PRIVATE absl::flat_hash_map)
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_parser PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
+
+# OSC messaging library
+set(SFIZZ_MESSAGING_HEADERS
+    sfizz/Messaging.h
+    sfizz/Messaging.hpp
+    sfizz_message.h)
+
+set(SFIZZ_MESSAGING_SOURCES
+    sfizz/Messaging.cpp)
+
+add_library(sfizz_messaging STATIC)
+add_library(sfizz::messaging ALIAS sfizz_messaging)
+target_sources(sfizz_messaging PRIVATE
+    ${SFIZZ_MESSAGING_HEADERS} ${SFIZZ_MESSAGING_SOURCES})
+target_include_directories(sfizz_messaging PUBLIC ".")
+target_link_libraries(sfizz_messaging PUBLIC absl::strings)
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_messaging PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
+
+# Import library
+set(SFIZZ_IMPORT_HEADERS
+    sfizz/import/ForeignInstrument.h
+    sfizz/import/foreign_instruments/AudioFile.h
+    sfizz/import/foreign_instruments/DecentSampler.h)
+
+set(SFIZZ_IMPORT_SOURCES
+    sfizz/import/ForeignInstrument.cpp
+    sfizz/import/foreign_instruments/AudioFile.cpp
+    sfizz/import/foreign_instruments/DecentSampler.cpp)
+
+add_library(sfizz_import STATIC)
+add_library(sfizz::import ALIAS sfizz_import)
+target_sources(sfizz_import PRIVATE
+    ${SFIZZ_IMPORT_HEADERS} ${SFIZZ_IMPORT_SOURCES})
+target_include_directories(sfizz_import PUBLIC ".")
+target_link_libraries(sfizz_import
+    PUBLIC absl::strings absl::memory sfizz::filesystem
+    PRIVATE sfizz::internal sfizz::pugixml)
+
+# Sfizz spinlock mutex
+add_library(sfizz_spin_mutex STATIC
+    sfizz/utility/spin_mutex/spin_mutex.h
+    sfizz/utility/spin_mutex/spin_mutex.cpp
+    sfizz/utility/spin_mutex/SpinMutex.h
+    sfizz/utility/spin_mutex/SpinMutex.cpp)
+target_include_directories(sfizz_spin_mutex PUBLIC sfizz/utility/spin_mutex)
+target_link_libraries(sfizz_spin_mutex PRIVATE sfizz::atomic_queue)
+add_library(sfizz::spin_mutex ALIAS sfizz_spin_mutex)
+
+# Sfizz bit array
+add_library(sfizz_bit_array INTERFACE)
+target_include_directories(sfizz_bit_array INTERFACE sfizz/utility/bit_array)
+add_library(sfizz::bit_array ALIAS sfizz_bit_array)
+
+# Sfizz internals (use this for testing)
+add_library(sfizz_internal STATIC)
+add_library(sfizz::internal ALIAS sfizz_internal)
+target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES})
+target_include_directories(sfizz_internal PUBLIC "." "sfizz")
+target_link_libraries(sfizz_internal
+    PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex sfizz::bit_array sfizz::simde sfizz::hiir sfizz::jsl
+    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::atomic)
+if(SFIZZ_USE_SNDFILE)
+    target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
+    target_link_libraries(sfizz_internal PUBLIC st_audiofile)
+endif()
+if(WIN32)
+    target_compile_definitions(sfizz_internal PRIVATE _USE_MATH_DEFINES)
+endif()
+if(SFIZZ_RELEASE_ASSERTS)
+    target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
+sfizz_enable_fast_math(sfizz_internal)
+
+# Check that sfizz and cmake-side definitions are matching
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp" "
+#include \"Config.h\"
+static_assert(sfz::config::numCCs == ${SFIZZ_NUM_CCS}, \"SFIZZ_NUM_CCS did not match\");
+")
+add_library(sfizz_match_definitions STATIC "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp")
+target_link_libraries(sfizz_match_definitions PRIVATE sfizz::internal)
 
 # Sfizz static library
-add_library(sfizz_static STATIC)
-target_sources(sfizz_static PRIVATE
-    ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
-target_include_directories (sfizz_static PUBLIC .)
-target_include_directories (sfizz_static PUBLIC external)
-target_link_libraries (sfizz_static PUBLIC absl::strings absl::span)
-target_link_libraries (sfizz_static PRIVATE sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-jsl sfizz-atomic)
-set_target_properties (sfizz_static PROPERTIES OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
-if (WIN32)
-    target_compile_definitions (sfizz_static PRIVATE _USE_MATH_DEFINES)
-endif()
-if (SFIZZ_RELEASE_ASSERTS)
-    target_compile_definitions (sfizz_static PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
-endif()
-sfizz_enable_fast_math(sfizz_static)
-
-if(WIN32)
-    include(VSTConfig)
-    configure_file (${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
-endif()
-
-configure_file (${PROJECT_SOURCE_DIR}/scripts/doxygen/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)
-
-add_library (sfizz::parser ALIAS sfizz_parser)
-add_library (sfizz::sfizz ALIAS sfizz_static)
+add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sfizz_private.hpp)
+add_library(sfizz::static ALIAS sfizz_static)
+target_include_directories(sfizz_static PUBLIC .)
+target_link_libraries(sfizz_static PRIVATE sfizz::internal)
+set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
 
 # Shared library and installation target
-if (SFIZZ_SHARED)
-    add_library (sfizz_shared SHARED)
-    target_sources(sfizz_shared PRIVATE
-        ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_FILES} sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
-    target_include_directories (sfizz_shared PRIVATE .)
-    target_include_directories (sfizz_shared PRIVATE external)
-    target_link_libraries (sfizz_shared PRIVATE absl::strings absl::span sfizz_parser absl::flat_hash_map Threads::Threads sfizz-sndfile sfizz-pugixml sfizz-spline sfizz-tunings sfizz-kissfft sfizz-cpuid sfizz-jsl sfizz-atomic)
-    if (WIN32)
-        target_compile_definitions (sfizz_shared PRIVATE _USE_MATH_DEFINES)
-    endif()
-    if (SFIZZ_RELEASE_ASSERTS)
-        target_compile_definitions (sfizz_shared PRIVATE "SFIZZ_ENABLE_RELEASE_ASSERT=1")
-    endif()
+if(SFIZZ_SHARED)
+    add_library(sfizz_shared SHARED sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp)
+    add_library(sfizz::shared ALIAS sfizz_shared)
+    target_include_directories(sfizz_shared PUBLIC .)
+    target_link_libraries(sfizz_shared PRIVATE sfizz::internal)
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties (sfizz_shared PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} OUTPUT_NAME sfizz PUBLIC_HEADER "sfizz.h;sfizz.hpp")
+    set_target_properties(sfizz_shared PROPERTIES SOVERSION "${PROJECT_VERSION_MAJOR}" OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
     sfizz_enable_lto_if_needed(sfizz_shared)
-    sfizz_enable_fast_math(sfizz_shared)
 
-    if (NOT MSVC)
-        install (TARGETS sfizz_shared
+    if(NOT MSVC)
+        install(TARGETS sfizz_shared
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "runtime"
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "runtime"
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "development"
             PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT "development")
-        configure_file (${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
-        install (FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
+        set(SFIZZ_PC_REQUIRES "")
+        if(SFIZZ_USE_SNDFILE)
+            set(SFIZZ_PC_REQUIRES "${SFIZZ_PC_REQUIRES} sndfile")
+        endif()
+        configure_file(${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
+        install(FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
             COMPONENT "development")
     endif()
 endif()
+
+# Generic library alias
+add_library(sfizz::sfizz ALIAS sfizz_static)
+
+# Preserve generated files (Faust)
+set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)
+
+# Faust filters
+foreach(filter_type
+        Lpf1p Lpf2p Lpf4p Lpf6p Hpf1p Hpf2p Hpf4p Hpf6p
+        Bpf1p Bpf2p Bpf4p Bpf6p Apf1p Brf1p Brf2p
+        Pink Lpf2pSv Hpf2pSv Bpf2pSv Brf2pSv
+        Lsh Hsh Peq EqPeak EqLshelf EqHshelf)
+    add_faust_command(
+        "sfizz/dsp/filters/sfz_filters.dsp"
+        "sfizz/gen/filters/sfz${filter_type}.hxx"
+        DOUBLE IN_PLACE
+        PROCESS_NAME "sfz${filter_type}"
+        CLASS_NAME "faust${filter_type}"
+        SUPERCLASS_NAME "sfzFilterDsp"
+        IMPORT_DIRS "sfizz/dsp")
+    add_faust_command(
+        "sfizz/dsp/filters/sfz_filters.dsp"
+        "sfizz/gen/filters/sfz2ch${filter_type}.hxx"
+        DOUBLE IN_PLACE
+        PROCESS_NAME "sfz2ch${filter_type}"
+        CLASS_NAME "faust2ch${filter_type}"
+        SUPERCLASS_NAME "sfzFilterDsp"
+        IMPORT_DIRS "sfizz/dsp")
+    target_sources(sfizz_internal PRIVATE
+        "sfizz/gen/filters/sfz${filter_type}.hxx"
+        "sfizz/gen/filters/sfz2ch${filter_type}.hxx")
+endforeach()
+
+# Faust effects
+add_faust_command(
+    "sfizz/effects/dsp/compressor.dsp"
+    "sfizz/effects/gen/compressor.hxx"
+    IN_PLACE
+    CLASS_NAME "faustCompressor"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/disto_stage.dsp"
+    "sfizz/effects/gen/disto_stage.hxx"
+    IN_PLACE
+    CLASS_NAME "faustDisto"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/fverb.dsp"
+    "sfizz/effects/gen/fverb.hxx"
+    IN_PLACE
+    CLASS_NAME "faustFverb"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/gate.dsp"
+    "sfizz/effects/gen/gate.hxx"
+    IN_PLACE
+    CLASS_NAME "faustGate"
+    IMPORT_DIRS "sfizz/dsp")
+add_faust_command(
+    "sfizz/effects/dsp/limiter.dsp"
+    "sfizz/effects/gen/limiter.hxx"
+    IN_PLACE
+    CLASS_NAME "faustLimiter"
+    IMPORT_DIRS "sfizz/dsp")
+target_sources(sfizz_internal PRIVATE
+    "sfizz/effects/gen/compressor.hxx"
+    "sfizz/effects/gen/disto_stage.hxx"
+    "sfizz/effects/gen/fverb.hxx"
+    "sfizz/effects/gen/gate.hxx"
+    "sfizz/effects/gen/limiter.hxx")
+
+# Windows installer
+if(WIN32)
+    include(VSTConfig)
+    configure_file(${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
+endif()
+
+# Doxygen
+configure_file(${PROJECT_SOURCE_DIR}/scripts/doxygen/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)

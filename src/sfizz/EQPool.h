@@ -2,10 +2,8 @@
 #include "SfzFilter.h"
 #include "Region.h"
 #include "Resources.h"
-#include "utility/SpinMutex.h"
 #include <vector>
 #include <memory>
-#include <mutex>
 
 namespace sfz
 {
@@ -46,7 +44,7 @@ private:
     const EQDescription* description;
     std::unique_ptr<FilterEq> eq;
     float baseBandwidth { Default::eqBandwidth };
-    float baseFrequency { Default::eqFrequency1 };
+    float baseFrequency { Default::eqFrequency };
     float baseGain { Default::eqGain };
     bool prepared { false };
     ModMatrix::TargetId gainTarget;

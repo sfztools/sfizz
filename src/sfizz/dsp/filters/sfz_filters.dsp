@@ -95,18 +95,16 @@ sfzPeq = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q);
 // the SFZ equalizer band
 sfzEqPeak = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
   Q = 1./(2.*ma.sinh(0.5*log(2)*bandwidth*w0/sin(w0)));
-  w0 = 2*ma.PI*max(0,cutoff)/ma.SR;
+  w0 = 2*ma.PI*cutoff/ma.SR;
 };
 
 // the SFZ low-shelf with EQ controls
 sfzEqLshelf = fm.rbjLowShelfSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
-  slope = bandwidth; // in this case eqN_bw meaning is not bandwith but slope
   Q = sfzGetQFromSlope(slope);
 };
 
 // the SFZ high-shelf with EQ controls
 sfzEqHshelf = fm.rbjHighShelfSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
-  slope = bandwidth; // in this case eqN_bw meaning is not bandwith but slope
   Q = sfzGetQFromSlope(slope);
 };
 
@@ -155,10 +153,12 @@ sfz2chEqHshelf = par(i,2,sfzEqHshelf);
 //==============================================================================
 // Filter parameters
 
-cutoff = hslider("[01] Cutoff [unit:Hz] [scale:log]", 440.0, 50.0, 10000.0, 1.0);
-Q = vslider("[02] Resonance [unit:dB]", 0.0, 0.0, 40.0, 0.1) : ba.db2linear;
-pkShGain = vslider("[03] Peak/shelf gain [unit:dB]", 0.0, 0.0, 40.0, 0.1);
-bandwidth = vslider("[04] Bandwidth [unit:octave]", 1.0, 0.1, 10.0, 0.01);
+cutoff = hslider("[01] Cutoff [unit:Hz] [scale:log]", 440.0, 50.0, 10000.0, 1.0) : max(1.0) : min(20000.0);
+Q = vslider("[02] Resonance [unit:dB]", 0.0, 0.0, 40.0, 0.1) : max(0.0) : min(60.0) : ba.db2linear;
+pkShGain = vslider("[03] Peak/shelf gain [unit:dB]", 0.0, 0.0, 40.0, 0.1) : max(-120.0) : min(60.0);
+bandwidthOrSlope = vslider("[04] Bandwidth [unit:octave]", 1.0, 0.1, 10.0, 0.01);
+bandwidth = bandwidthOrSlope : max(1e-2) : min(12.0);
+slope = bandwidthOrSlope; // limited further down in code
 
 // smoothing function to prevent fast changes of filter coefficients
 // The basic si.smoo is a bit longish and creates strange modulation sounds

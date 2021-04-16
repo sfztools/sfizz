@@ -1,4 +1,4 @@
-build*
+build*/*
 docs
 .vscode
 perf.data
@@ -11,7 +11,7 @@ CMakeFiles/
 cmake_install.cmake
 compile_commands.json
 *.a
-*.txt.user
+*.user*
 *.autosave
 /Doxyfile
 .DS_Store
@@ -19,21 +19,12 @@ compile_commands.json
 clients/sfizz_jack
 clients/sfzprint
 
-/vst/download/
+/plugins/vst/download/
+/plugins/vst/external/vstsdk2.4/
+/plugins/vst/external/CoreAudioUtilityClasses/
 
-/editor/external/fluentui-system-icons/
+/plugins/editor/external/fluentui-system-icons/
 
-# gh-pages unstaged files:
-_api/
-_site/
-.bundle/
-api/
-assets/
-node_modules/
-.jekyll-cache
-.jekyll-metadata
-.sass-cache
-*.lock
 *.sublime-*
 *.code-*
 .kak.tags.namecache

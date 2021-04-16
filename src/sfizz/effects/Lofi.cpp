@@ -85,10 +85,10 @@ namespace fx {
         for (const Opcode& opcode : members) {
             switch (opcode.lettersOnlyHash) {
             case hash("bitred"):
-                setValueFromOpcode(opcode, lofi->_bitred_depth, { 0.0, 100.0 });
+                lofi->_bitred_depth = opcode.read(Default::lofiBitred);
                 break;
             case hash("decim"):
-                setValueFromOpcode(opcode, lofi->_decim_depth, { 0.0, 100.0 });
+                lofi->_decim_depth = opcode.read(Default::lofiDecim);
                 break;
             }
         }
@@ -101,8 +101,7 @@ namespace fx {
     {
         (void)sampleRate;
 
-        static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-        fDownsampler2x.set_coefs(coefs2x);
+        fDownsampler2x.set_coefs(OSCoeffs2x);
     }
 
     void Lofi::Bitred::clear()
@@ -153,8 +152,7 @@ namespace fx {
     {
         fSampleTime = 1.0f / static_cast<float>(sampleRate);
 
-        static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-        fDownsampler2x.set_coefs(coefs2x);
+        fDownsampler2x.set_coefs(OSCoeffs2x);
     }
 
     void Lofi::Decim::clear()

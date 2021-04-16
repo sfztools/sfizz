@@ -5,7 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "FileId.h"
-#include "StringViewHelpers.h"
+#include "utility/StringViewHelpers.h"
 #include <iostream>
 
 size_t std::hash<sfz::FileId>::operator()(const sfz::FileId &id) const

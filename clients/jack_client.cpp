@@ -26,6 +26,7 @@
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
 #include <absl/types/span.h>
+#include <SpinMutex.h>
 #include <atomic>
 #include <cstddef>
 #include <ios>
@@ -38,11 +39,14 @@
 #include <string_view>
 #include <chrono>
 #include <thread>
+#include <mutex>
+#include <algorithm>
 
 static jack_port_t* midiInputPort;
 static jack_port_t* outputPort1;
 static jack_port_t* outputPort2;
 static jack_client_t* client;
+static SpinMutex processMutex;
 
 int process(jack_nframes_t numFrames, void* arg)
 {
@@ -50,6 +54,16 @@ int process(jack_nframes_t numFrames, void* arg)
 
     auto* buffer = jack_port_get_buffer(midiInputPort, numFrames);
     assert(buffer);
+
+    auto* leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
+    auto* rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
+
+    std::unique_lock<SpinMutex> lock { processMutex, std::try_to_lock };
+    if (!lock.owns_lock()) {
+        std::fill_n(leftOutput, numFrames, 0.0f);
+        std::fill_n(rightOutput, numFrames, 0.0f);
+        return 0;
+    }
 
     auto numMidiEvents = jack_midi_get_event_count(buffer);
     jack_midi_event_t event;
@@ -64,40 +78,33 @@ int process(jack_nframes_t numFrames, void* arg)
 
         switch (midi::status(event.buffer[0])) {
         case midi::noteOff: noteoff:
-            // DBG("[MIDI] Note " << +event.buffer[1] << " OFF at time " << event.time);
             synth->noteOff(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::noteOn:
             if (event.buffer[2] == 0)
                 goto noteoff;
-            // DBG("[MIDI] Note " << +event.buffer[1] << " ON at time " << event.time);
             synth->noteOn(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::polyphonicPressure:
-            // DBG("[MIDI] Polyphonic pressure on at time " << event.time);
+            synth->polyAftertouch(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::controlChange:
-            // DBG("[MIDI] CC " << +event.buffer[1] << " at time " << event.time);
             synth->cc(event.time, event.buffer[1], event.buffer[2]);
             break;
         case midi::programChange:
-            // DBG("[MIDI] Program change at time " << event.time);
+            // Not implemented
             break;
         case midi::channelPressure:
-            // DBG("[MIDI] Channel pressure at time " << event.time);
+            synth->channelAftertouch(event.time, event.buffer[1]);
             break;
         case midi::pitchBend:
             synth->pitchWheel(event.time, midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));
-            // DBG("[MIDI] Pitch bend at time " << event.time);
             break;
         case midi::systemMessage:
-            // DBG("[MIDI] System message at time " << event.time);
+            // Not implemented
             break;
         }
     }
-
-    auto* leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
-    auto* rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
 
     float* stereoOutput[] = { leftOutput, rightOutput };
     synth->renderBlock(stereoOutput, numFrames);
@@ -112,6 +119,7 @@ int sampleBlockChanged(jack_nframes_t nframes, void* arg)
 
     auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
     // DBG("Sample per block changed to " << nframes);
+    std::lock_guard<SpinMutex> lock { processMutex };
     synth->setSamplesPerBlock(nframes);
     return 0;
 }
@@ -123,6 +131,7 @@ int sampleRateChanged(jack_nframes_t nframes, void* arg)
 
     auto* synth = reinterpret_cast<sfz::Sfizz*>(arg);
     // DBG("Sample rate changed to " << nframes);
+    std::lock_guard<SpinMutex> lock { processMutex };
     synth->setSampleRate(nframes);
     return 0;
 }

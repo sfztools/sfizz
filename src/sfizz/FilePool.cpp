@@ -28,24 +28,22 @@
 #include "Buffer.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
-#include "SwapAndPop.h"
 #include "Config.h"
-#include "Debug.h"
-#include "Oversampler.h"
-#include "absl/types/span.h"
-#include "absl/strings/match.h"
-#include "absl/memory/memory.h"
+#include "utility/SwapAndPop.h"
+#include "utility/Debug.h"
+#include <ThreadPool.h>
+#include <absl/types/span.h>
+#include <absl/strings/match.h>
+#include <absl/memory/memory.h>
 #include <algorithm>
 #include <memory>
 #include <thread>
 #include <system_error>
-#include <sndfile.hh>
 #if defined(_WIN32)
 #include <windows.h>
 #else
 #include <pthread.h>
 #endif
-#include "threadpool/ThreadPool.h"
 using namespace std::placeholders;
 
 static std::weak_ptr<ThreadPool> globalThreadPoolWeakPtr;
@@ -92,33 +90,60 @@ void readBaseFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, uint32
     }
 }
 
-sfz::FileAudioBuffer readFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampling factor)
+sfz::FileAudioBuffer readFromFile(sfz::AudioReader& reader, uint32_t numFrames)
 {
     sfz::FileAudioBuffer baseBuffer;
     readBaseFile(reader, baseBuffer, numFrames);
-
-    if (factor == sfz::Oversampling::x1)
-        return baseBuffer;
-
-    sfz::FileAudioBuffer outputBuffer { reader.channels(), numFrames * static_cast<int>(factor) };
-    outputBuffer.clear();
-    sfz::Oversampler oversampler { factor };
-    oversampler.stream(baseBuffer, outputBuffer);
-    return outputBuffer;
+    return baseBuffer;
 }
 
-void streamFromFile(sfz::AudioReader& reader, uint32_t numFrames, sfz::Oversampling factor, sfz::FileAudioBuffer& output, std::atomic<size_t>* filledFrames = nullptr)
+void streamFromFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, std::atomic<size_t>* filledFrames = nullptr)
 {
+    const auto numFrames = static_cast<size_t>(reader.frames());
+    const auto numChannels = reader.channels();
+    const auto chunkSize = static_cast<size_t>(sfz::config::chunkSize);
+
     output.reset();
     output.addChannels(reader.channels());
-    output.resize(numFrames * static_cast<int>(factor));
+    output.resize(numFrames);
     output.clear();
-    sfz::Oversampler oversampler { factor };
-    oversampler.stream(reader, output, filledFrames);
+
+    sfz::Buffer<float> fileBlock { chunkSize * numChannels };
+    size_t inputFrameCounter { 0 };
+    size_t outputFrameCounter { 0 };
+    bool inputEof = false;
+
+    while (!inputEof && inputFrameCounter < numFrames)
+    {
+        auto thisChunkSize = std::min(chunkSize, numFrames - inputFrameCounter);
+        const auto numFramesRead = static_cast<size_t>(
+            reader.readNextBlock(fileBlock.data(), thisChunkSize));
+        if (numFramesRead == 0)
+            break;
+
+        if (numFramesRead < thisChunkSize) {
+            inputEof = true;
+            thisChunkSize = numFramesRead;
+        }
+        const auto outputChunkSize = thisChunkSize;
+
+        for (size_t chanIdx = 0; chanIdx < numChannels; chanIdx++) {
+            const auto outputChunk = output.getSpan(chanIdx).subspan(outputFrameCounter, outputChunkSize);
+            for (size_t i = 0; i < thisChunkSize; ++i)
+                outputChunk[i] = fileBlock[i * numChannels + chanIdx];
+        }
+        inputFrameCounter += thisChunkSize;
+        outputFrameCounter += outputChunkSize;
+
+        if (filledFrames != nullptr)
+            filledFrames->fetch_add(outputChunkSize);
+    }
 }
 
 sfz::FilePool::FilePool(sfz::Logger& logger)
-    : logger(logger), threadPool(globalThreadPool())
+    : logger(logger),
+      filesToLoad(alignedNew<FileQueue>()),
+      threadPool(globalThreadPool())
 {
     loadingJobs.reserve(config::maxVoices);
     lastUsedFiles.reserve(config::maxVoices);
@@ -233,9 +258,9 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     FileInformation returnedValue;
     returnedValue.end = static_cast<uint32_t>(reader->frames()) - 1;
     returnedValue.sampleRate = static_cast<double>(reader->sampleRate());
-    returnedValue.numChannels = reader->channels();
+    returnedValue.numChannels = static_cast<int>(reader->channels());
 
-    SF_INSTRUMENT instrumentInfo {};
+    InstrumentInfo instrumentInfo {};
     bool haveInstrumentInfo = reader->getInstrument(&instrumentInfo);
 
     FileMetadataReader mdReader;
@@ -244,7 +269,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     if (!haveInstrumentInfo) {
         // if no instrument, then try extracting from embedded RIFF chunks (flac)
         if (mdReaderOpened)
-            haveInstrumentInfo = mdReader.extractRiffInstrument(instrumentInfo);
+            haveInstrumentInfo = mdReader.extractInstrument(instrumentInfo);
     }
 
     if (mdReaderOpened) {
@@ -256,8 +281,9 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     if (!fileId.isReverse()) {
         if (haveInstrumentInfo && instrumentInfo.loop_count > 0) {
             returnedValue.hasLoop = true;
-            returnedValue.loopBegin = instrumentInfo.loops[0].start;
-            returnedValue.loopEnd = min(returnedValue.end, instrumentInfo.loops[0].end - 1);
+            returnedValue.loopStart = instrumentInfo.loops[0].start;
+            returnedValue.loopEnd =
+                min(returnedValue.end, static_cast<int64_t>(instrumentInfo.loops[0].end - 1));
         }
     } else {
         // TODO loops ignored when reversed
@@ -265,7 +291,7 @@ absl::optional<sfz::FileInformation> sfz::FilePool::getFileInformation(const Fil
     }
 
     if (haveInstrumentInfo)
-        returnedValue.rootKey = clamp<int8_t>(instrumentInfo.basenote, 0, 127);
+        returnedValue.rootKey = clamp<uint8_t>(instrumentInfo.basenote, 0, 127);
 
     return returnedValue;
 }
@@ -292,16 +318,12 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     if (existingFile != preloadedFiles.end()) {
         if (framesToLoad > existingFile->second.preloadedData.getNumFrames()) {
             preloadedFiles[fileId].information.maxOffset = maxOffset;
-            preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad, oversamplingFactor);
+            preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad);
         }
     } else {
-        const auto factor = static_cast<double>(oversamplingFactor);
-        fileInformation->sampleRate = factor * static_cast<double>(reader->sampleRate());
-        fileInformation->end = static_cast<uint32_t>(factor * fileInformation->end);
-        fileInformation->loopBegin = static_cast<uint32_t>(factor * fileInformation->loopBegin);
-        fileInformation->loopEnd = static_cast<uint32_t>(factor * fileInformation->loopEnd);
+        fileInformation->sampleRate = static_cast<double>(reader->sampleRate());
         auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
-            readFromFile(*reader, framesToLoad, oversamplingFactor),
+            readFromFile(*reader, framesToLoad),
             *fileInformation
         });
 
@@ -327,17 +349,12 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
     if (existingFile != loadedFiles.end()) {
         return { &existingFile->second };
     } else {
-        const auto factor = static_cast<double>(oversamplingFactor);
-        fileInformation->sampleRate = factor * static_cast<double>(reader->sampleRate());
-        fileInformation->end = static_cast<uint32_t>(factor * fileInformation->end);
-        fileInformation->loopBegin = static_cast<uint32_t>(factor * fileInformation->loopBegin);
-        fileInformation->loopEnd = static_cast<uint32_t>(factor * fileInformation->loopEnd);
+        fileInformation->sampleRate = static_cast<double>(reader->sampleRate());
         auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
-            readFromFile(*reader, frames, oversamplingFactor),
+            readFromFile(*reader, frames),
             *fileInformation
         });
         insertedPair.first->second.status = FileData::Status::Preloaded;
-        ASSERT(insertedPair.second);
         return { &insertedPair.first->second };
     }
 }
@@ -350,8 +367,8 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
         return {};
     }
     QueuedFileData queuedData { fileId, &preloaded->second, std::chrono::high_resolution_clock::now() };
-    if (!filesToLoad.try_push(queuedData)) {
-        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad.capacity() << ")");
+    if (!filesToLoad->try_push(queuedData)) {
+        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
         return {};
     }
 
@@ -373,11 +390,11 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
         const auto maxOffset = preloadedFile.second.information.maxOffset;
         fs::path file { rootDirectory / preloadedFile.first.filename() };
         AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
-        preloadedFile.second.preloadedData = readFromFile(*reader, preloadSize + maxOffset, oversamplingFactor);
+        preloadedFile.second.preloadedData = readFromFile(*reader, preloadSize + maxOffset);
     }
 }
 
-void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
+void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
 {
     raiseCurrentThreadPriority();
 
@@ -422,7 +439,7 @@ void sfz::FilePool::loadingJob(QueuedFileData data) noexcept
         return;
 
     const auto frames = static_cast<uint32_t>(reader->frames());
-    streamFromFile(*reader, frames, oversamplingFactor, data.data->fileData, &data.data->availableFrames);
+    streamFromFile(*reader, data.data->fileData, &data.data->availableFrames);
     const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
     logger.logFileTime(waitDuration, loadDuration, frames, id->filename());
 
@@ -442,45 +459,6 @@ void sfz::FilePool::clear()
     preloadedFiles.clear();
 }
 
-void sfz::FilePool::setOversamplingFactor(sfz::Oversampling factor) noexcept
-{
-    float samplerateChange { static_cast<float>(factor) / static_cast<float>(this->oversamplingFactor) };
-    for (auto& preloadedFile : preloadedFiles) {
-        const auto framesToLoad = [&]() {
-            if (loadInRam)
-                return preloadedFile.second.information.end;
-            else
-                return min(
-                    preloadedFile.second.information.end,
-                    preloadedFile.second.information.maxOffset + preloadSize
-                );
-        }();
-
-        fs::path file { rootDirectory / preloadedFile.first.filename() };
-        AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
-        preloadedFile.second.preloadedData = readFromFile(*reader, framesToLoad, factor);
-        FileInformation& information = preloadedFile.second.information;
-        information.sampleRate *= samplerateChange;
-        information.end = static_cast<uint32_t>(samplerateChange * information.end);
-        information.loopBegin = static_cast<uint32_t>(samplerateChange * information.loopBegin);
-        information.loopEnd = static_cast<uint32_t>(samplerateChange * information.loopEnd);
-
-        if (preloadedFile.second.status == FileData::Status::Done) {
-            const auto realFrames =
-                preloadedFile.second.availableFrames.load() / static_cast<unsigned>(this->oversamplingFactor);
-            preloadedFile.second.fileData = readFromFile(*reader, realFrames, factor);
-            preloadedFile.second.availableFrames = realFrames * static_cast<unsigned>(factor);
-        }
-    }
-
-    this->oversamplingFactor = factor;
-}
-
-sfz::Oversampling sfz::FilePool::getOversamplingFactor() const noexcept
-{
-    return oversamplingFactor;
-}
-
 uint32_t sfz::FilePool::getPreloadSize() const noexcept
 {
     return preloadSize;
@@ -494,17 +472,17 @@ bool is_ready(std::future<R> const& f)
 
 void sfz::FilePool::dispatchingJob() noexcept
 {
-    QueuedFileData queuedData;
     while (dispatchBarrier.wait(), dispatchFlag) {
         std::lock_guard<std::mutex> guard { loadingJobsMutex };
 
-        if (filesToLoad.try_pop(queuedData)) {
+        QueuedFileData queuedData;
+        if (filesToLoad->try_pop(queuedData)) {
             if (queuedData.id.expired()) {
                 // file ID was nulled, it means the region was deleted, ignore
             }
             else
                 loadingJobs.push_back(
-                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, queuedData));
+                    threadPool->enqueue([this](const QueuedFileData& data) { loadingJob(data); }, std::move(queuedData)));
         }
 
         // Clear finished jobs
@@ -576,8 +554,7 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
             AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
             preloadedFile.second.preloadedData = readFromFile(
                 *reader,
-                preloadedFile.second.information.end,
-                oversamplingFactor
+                preloadedFile.second.information.end
             );
         }
     } else {

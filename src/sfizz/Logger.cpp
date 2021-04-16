@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Logger.h"
-#include "Debug.h"
-#include "absl/algorithm/container.h"
-#include "ghc/fs_std.hpp"
+#include "utility/Debug.h"
+#include <ghc/fs_std.hpp>
+#include <absl/algorithm/container.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -43,6 +43,8 @@ void printStatistics(std::vector<T>& data)
 }
 
 sfz::Logger::Logger()
+    : callbackTimeQueue(alignedNew<CallbackTimeQueue>()),
+      fileTimeQueue(alignedNew<FileTimeQueue>())
 {
     keepRunning.test_and_set();
     clearFlag.test_and_set();
@@ -102,7 +104,11 @@ void sfz::Logger::logCallbackTime(const CallbackBreakdown& breakdown, int numVoi
     if (!loggingEnabled)
         return;
 
-    callbackTimeQueue.try_push<CallbackTime>({ breakdown, numVoices, numSamples });
+    CallbackTime callbackTime;
+    callbackTime.breakdown = breakdown;
+    callbackTime.numVoices = numVoices;
+    callbackTime.numSamples = numSamples;
+    callbackTimeQueue->try_push(callbackTime);
 }
 
 void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::chrono::duration<double> loadDuration, uint32_t fileSize, absl::string_view filename)
@@ -110,7 +116,12 @@ void sfz::Logger::logFileTime(std::chrono::duration<double> waitDuration, std::c
     if (!loggingEnabled)
         return;
 
-    fileTimeQueue.try_push<FileTime>({ waitDuration, loadDuration, fileSize, filename });
+    FileTime fileTime;
+    fileTime.waitDuration = waitDuration;
+    fileTime.loadDuration = loadDuration;
+    fileTime.fileSize = fileSize;
+    fileTime.filename = filename;
+    fileTimeQueue->try_push(fileTime);
 }
 
 void sfz::Logger::setPrefix(absl::string_view prefix)
@@ -127,11 +138,11 @@ void sfz::Logger::moveEvents() noexcept
 {
     while(keepRunning.test_and_set()) {
         CallbackTime callbackTime;
-        while (callbackTimeQueue.try_pop(callbackTime))
+        while (callbackTimeQueue->try_pop(callbackTime))
             callbackTimes.push_back(callbackTime);
 
         FileTime fileTime;
-        while (fileTimeQueue.try_pop(fileTime))
+        while (fileTimeQueue->try_pop(fileTime))
             fileTimes.push_back(fileTime);
 
         if (!clearFlag.test_and_set()) {

@@ -4,8 +4,8 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "sfizz/utility/SpinMutex.h"
 #include "catch2/catch.hpp"
+#include <SpinMutex.h>
 #include <thread>
 #include <mutex>
 #include <condition_variable>

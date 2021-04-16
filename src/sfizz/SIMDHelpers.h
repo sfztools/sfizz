@@ -25,9 +25,9 @@
  */
 #pragma once
 #include "Config.h"
-#include "Debug.h"
 #include "Range.h"
 #include "MathHelpers.h"
+#include "utility/Debug.h"
 #include "simd/HelpersScalar.h"
 #include <absl/types/span.h>
 #include <array>
@@ -641,8 +641,10 @@ namespace _internals {
     template <class T>
     void snippetSFZInterpolationCast(const T*& floatJump, int*& jump, T*& coeff)
     {
-        *jump = static_cast<int>(*floatJump);
-        *coeff = *floatJump - static_cast<float>(*jump);
+        constexpr float maxJump { 1 << 24 };
+        const float limitedJump = min(maxJump, *floatJump);
+        *jump = static_cast<int>(limitedJump);
+        *coeff = limitedJump - static_cast<float>(*jump);
         incrementAll(floatJump, coeff, jump);
     }
 }

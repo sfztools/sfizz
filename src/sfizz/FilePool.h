@@ -26,24 +26,25 @@
 #pragma once
 #include "Config.h"
 #include "Defaults.h"
-#include "LeakDetector.h"
 #include "RTSemaphore.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
 #include "FileId.h"
 #include "FileMetadata.h"
 #include "SIMDHelpers.h"
-#include "utility/SpinMutex.h"
-#include "ghc/fs_std.hpp"
+#include "Logger.h"
+#include "SpinMutex.h"
+#include "utility/LeakDetector.h"
+#include "utility/MemoryHelpers.h"
+#include <ghc/fs_std.hpp>
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
-#include "absl/strings/string_view.h"
-#include "atomic_queue/atomic_queue.h"
-#include "Logger.h"
+#include <absl/strings/string_view.h>
+#include <atomic_queue/atomic_queue.h>
 #include <chrono>
 #include <thread>
 #include <future>
-#include "utility/SpinMutex.h"
+#include <memory>
 class ThreadPool;
 
 namespace sfz {
@@ -52,10 +53,10 @@ using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
 using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
 
 struct FileInformation {
-    uint32_t end { Default::sampleEndRange.getEnd() };
-    uint32_t maxOffset { 0 };
-    uint32_t loopBegin { Default::loopRange.getStart() };
-    uint32_t loopEnd { Default::loopRange.getEnd() };
+    int64_t end { Default::sampleEnd };
+    int64_t maxOffset { 0 };
+    int64_t loopStart { Default::loopStart };
+    int64_t loopEnd { Default::loopEnd };
     bool hasLoop { false };
     double sampleRate { config::defaultSampleRate };
     int numChannels { 0 };
@@ -278,19 +279,6 @@ public:
      */
     uint32_t getPreloadSize() const noexcept;
     /**
-     * @brief Set the oversampling factor. This will trigger a full
-     * reload of all samples so don't call it on the audio thread.
-     *
-     * @param factor
-     */
-    void setOversamplingFactor(Oversampling factor) noexcept;
-    /**
-     * @brief Get the current oversampling factor
-     *
-     * @return Oversampling
-     */
-    Oversampling getOversamplingFactor() const noexcept;
-    /**
      * @brief Empty the file loading queues without actually loading
      * the files. All promises will be unfulfilled. Don't call this
      * method on the audio thread as it will spinlock.
@@ -330,7 +318,6 @@ private:
 
     bool loadInRam { config::loadInRam };
     uint32_t preloadSize { config::preloadSize };
-    Oversampling oversamplingFactor { config::defaultOversamplingFactor };
 
     // Signals
     volatile bool dispatchFlag { true };
@@ -342,21 +329,20 @@ private:
     struct QueuedFileData
     {
         using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
-        QueuedFileData() = default;
-        QueuedFileData(std::weak_ptr<FileId> id, FileData* data, TimePoint queuedTime)
+        QueuedFileData() noexcept {}
+        QueuedFileData(std::weak_ptr<FileId> id, FileData* data, TimePoint queuedTime) noexcept
         : id(id), data(data), queuedTime(queuedTime) {}
-        QueuedFileData(const QueuedFileData&) = default;
-        QueuedFileData& operator=(const QueuedFileData&) = default;
-        QueuedFileData(QueuedFileData&&) = default;
-        QueuedFileData& operator=(QueuedFileData&&) = default;
         std::weak_ptr<FileId> id;
         FileData* data { nullptr };
         TimePoint queuedTime {};
     };
-    atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices> filesToLoad;
+
+    using FileQueue = atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices>;
+    aligned_unique_ptr<FileQueue> filesToLoad;
+
     void dispatchingJob() noexcept;
     void garbageJob() noexcept;
-    void loadingJob(QueuedFileData data) noexcept;
+    void loadingJob(const QueuedFileData& data) noexcept;
     std::mutex loadingJobsMutex;
     std::vector<std::future<void>> loadingJobs;
     std::thread dispatchThread { &FilePool::dispatchingJob, this };

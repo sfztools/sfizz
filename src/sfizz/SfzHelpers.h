@@ -5,18 +5,17 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include <absl/types/optional.h>
-#include <absl/strings/string_view.h>
-#include <absl/algorithm/container.h>
-//#include <string>
-#include <array>
-#include <cmath>
-#include "Macros.h"
 #include "Config.h"
 #include "MathHelpers.h"
 #include "SIMDHelpers.h"
-#include "absl/meta/type_traits.h"
-#include "Defaults.h"
+#include "utility/Macros.h"
+//#include <string>
+#include <array>
+#include <cmath>
+#include <absl/types/optional.h>
+#include <absl/strings/string_view.h>
+#include <absl/algorithm/container.h>
+#include <absl/meta/type_traits.h>
 
 namespace sfz {
 
@@ -54,6 +53,7 @@ struct MidiEvent {
     int delay;
     float value;
 };
+
 using EventVector = std::vector<MidiEvent>;
 
 struct MidiEventDelayComparator {
@@ -126,6 +126,12 @@ constexpr float normalize7Bits(T value)
     return static_cast<float>(min(max(value, T { 0 }), T { 127 })) / 127.0f;
 }
 
+template <>
+constexpr float normalize7Bits(bool value)
+{
+    return value ? 1.0f : 0.0f;
+}
+
 /**
  * @brief Normalize a CC value between 0.0 and 1.0
  *
@@ -162,7 +168,7 @@ constexpr float normalizeVelocity(T velocity)
 template <class T>
 constexpr float normalizePercents(T percentValue)
 {
-    return percentValue * 0.01f;
+    return percentValue / 100.0f;
 }
 
 /**
@@ -175,6 +181,24 @@ constexpr float normalizePercents(T percentValue)
 constexpr float normalizeBend(float bendValue)
 {
     return clamp(bendValue, -8191.0f, 8191.0f) / 8191.0f;
+}
+
+/**
+ * @brief Offset a key and clamp it to a reasonable range
+ *
+ * @param key
+ * @param offset
+ * @return uint8_t
+ */
+inline CXX14_CONSTEXPR uint8_t offsetAndClampKey(uint8_t key, int offset)
+{
+    const int offsetKey { key + offset };
+    if (offsetKey > std::numeric_limits<uint8_t>::max())
+        return 127;
+    if (offsetKey < std::numeric_limits<uint8_t>::min())
+        return 0;
+
+    return clamp<uint8_t>(static_cast<uint8_t>(offsetKey), 0, 127);
 }
 
 namespace literals {
@@ -230,67 +254,5 @@ bool insertPairUniquely(std::vector<P>& pairVector, const T& key, U value, bool 
     }
     return result;
 }
-
-/**
- * @brief From a source view, find the next sfz header and its members and
- *          return them, while updating the source by removing this header
- *          and members from the beginning. The function "consumes" the
- *          header and its members from the source if found.
- *
- * No check is made to see if the header is "valid" in the sfz sense.
- * The output parameters are set only if the method returns true.
- *
- * @param source A source view; can be updated and shortened
- * @param header An output view on the header, without the <>
- * @param members An output view on the members, untrimmed
- * @return true if a header was found
- * @return false otherwise
- */
-bool findHeader(absl::string_view& source, absl::string_view& header, absl::string_view& members);
-/**
- * @brief From a source view, find the next sfz member opcode and its value.
- *          Return them while updating the source by removing this opcode
- *          and value from the beginning. The function "consumes" the
- *          opcode from the source if one is found.
- *
- * No check is made to see if the opcode is "valid" in the sfz sense.
- * The output parameters are set only if the method returns true.
- *
- * @param source A source view; can be updated and shortened
- * @param opcode An output view on the opcode name
- * @param value An output view on the opcode value
- * @return true if an opcode was found
- * @return false
- */
-bool findOpcode(absl::string_view& source, absl::string_view& opcode, absl::string_view& value);
-
-/**
- * @brief Find an SFZ #define statement on a line and return the variable and value as views.
- *
- * This function assums that there is a single define per line and that the variable and value
- * are separated by whitespace.
- * The output parameters are set only if the method returns true.
- *
- * @param line The source line
- * @param variable An output view on the define variable
- * @param value An output view on the define value
- * @return true If a define was found
- * @return false
- */
-bool findDefine(absl::string_view line, absl::string_view& variable, absl::string_view& value);
-
-/**
- * @brief Find an SFZ #include statement on a line and return included path.
- *
- * This function assums that there is a single include per line and that the
- * include path is within quotes.
- * The output parameter is set only if the method returns true.
- *
- * @param line The source line
- * @param path The path, if found
- * @return true If an include was found
- * @return false
- */
-bool findInclude(absl::string_view line, std::string& path);
 
 } // namespace sfz

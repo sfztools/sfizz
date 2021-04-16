@@ -1,11 +1,11 @@
 
-#include <sndfile.hh>
 #include "sfizz/Synth.h"
 #include "sfizz/MathHelpers.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/SIMDHelpers.h"
 #include "MidiHelpers.h"
-#include "cxxopts.hpp"
+#include <st_audiofile_libs.h>
+#include <cxxopts.hpp>
 #include <fmidi/fmidi.h>
 #include <iostream>
 
@@ -66,7 +66,6 @@ int main(int argc, char** argv)
     bool help { false };
     bool useEOT { false };
     int quality { 2 };
-    int oversampling { 1 };
 
     options.add_options()
         ("sfz", "SFZ file", cxxopts::value<std::string>())
@@ -74,7 +73,6 @@ int main(int argc, char** argv)
         ("wav", "Output wav file", cxxopts::value<std::string>())
         ("b,blocksize", "Block size for the sfizz callbacks", cxxopts::value(blockSize))
         ("s,samplerate", "Output sample rate", cxxopts::value(sampleRate))
-        ("oversampling", "Internal oversampling factor", cxxopts::value(oversampling))
         ("q,quality", "Resampling quality", cxxopts::value(quality))
         ("v,verbose", "Verbose output", cxxopts::value(verbose))
         ("log", "Produce logs", cxxopts::value<std::string>())
@@ -126,23 +124,6 @@ int main(int argc, char** argv)
     if (params.count("log") > 0)
         synth.enableLogging(params["log"].as<std::string>());
 
-    const auto osFactor = [oversampling] {
-        switch (oversampling){
-        case 1:
-            return sfz::Oversampling::x1;
-        case 2:
-            return sfz::Oversampling::x2;
-        case 4:
-            return sfz::Oversampling::x4;
-        case 5:
-            return sfz::Oversampling::x8;
-        default:
-            LOG_ERROR("Bad oversampling factor: " << oversampling);
-            std::exit(-1);
-        }
-    }();
-    synth.setOversamplingFactor(osFactor);
-
     ERROR_IF(!synth.loadSfzFile(sfzPath), "There was an error loading the SFZ file.");
     LOG_INFO(synth.getNumRegions() << " regions in the SFZ.");
 
@@ -158,14 +139,27 @@ int main(int argc, char** argv)
         LOG_INFO("-- Cutting the rendering at the last MIDI End of Track message");
     }
 
-    SndfileHandle outputFile (outputPath.u8string(), SFM_WRITE, SF_FORMAT_WAV | SF_FORMAT_PCM_16, 2, sampleRate);
-    ERROR_IF(outputFile.error() != 0, "Error writing out the wav file: " << outputFile.strError());
+    drwav outputFile;
+    drwav_data_format outputFormat {};
+    outputFormat.container = drwav_container_riff;
+    outputFormat.format = DR_WAVE_FORMAT_PCM;
+    outputFormat.channels = 2;
+    outputFormat.sampleRate = sampleRate;
+    outputFormat.bitsPerSample = 16;
+
+#if !defined(_WIN32)
+    drwav_bool32 outputFileOk = drwav_init_file_write(&outputFile, outputPath.c_str(), &outputFormat, nullptr);
+#else
+    drwav_bool32 outputFileOk = drwav_init_file_write_w(&outputFile, outputPath.c_str(), &outputFormat, nullptr);
+#endif
+    ERROR_IF(!outputFileOk, "Error opening the wav file for writing");
 
     auto sampleRateDouble = static_cast<double>(sampleRate);
     const double increment { 1.0 / sampleRateDouble };
-    int numFramesWritten { 0 };
+    uint64_t numFramesWritten { 0 };
     sfz::AudioBuffer<float> audioBuffer { 2, blockSize };
     sfz::Buffer<float> interleavedBuffer { 2 * blockSize };
+    sfz::Buffer<int16_t> interleavedPcm { 2 * blockSize };
 
     fmidi_player_u midiPlayer { fmidi_player_new(midiFile.get()) };
     CallbackData callbackData { synth, 0, false };
@@ -178,7 +172,8 @@ int main(int argc, char** argv)
             fmidi_player_tick(midiPlayer.get(), increment);
         synth.renderBlock(audioBuffer);
         sfz::writeInterleaved(audioBuffer.getConstSpan(0), audioBuffer.getConstSpan(1), absl::MakeSpan(interleavedBuffer));
-        numFramesWritten += outputFile.writef(interleavedBuffer.data(), blockSize);
+        drwav_f32_to_s16(interleavedPcm.data(), interleavedBuffer.data(), 2 * blockSize);
+        numFramesWritten += drwav_write_pcm_frames(&outputFile, blockSize, interleavedPcm.data());
     }
 
     if (!useEOT) {
@@ -186,12 +181,13 @@ int main(int argc, char** argv)
         while (averagePower > 1e-12f) {
             synth.renderBlock(audioBuffer);
             sfz::writeInterleaved(audioBuffer.getConstSpan(0), audioBuffer.getConstSpan(1), absl::MakeSpan(interleavedBuffer));
-            numFramesWritten += outputFile.writef(interleavedBuffer.data(), blockSize);
+            drwav_f32_to_s16(interleavedPcm.data(), interleavedBuffer.data(), 2 * blockSize);
+            numFramesWritten += drwav_write_pcm_frames(&outputFile, blockSize, interleavedPcm.data());
             averagePower = sfz::meanSquared<float>(interleavedBuffer);
         }
     }
 
-    outputFile.writeSync();
+    drwav_uninit(&outputFile);
     LOG_INFO("Wrote " << numFramesWritten << " frames of sound data in" << outputPath.string());
 
     return 0;

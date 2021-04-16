@@ -37,27 +37,51 @@ We invite you to check out the [GOVERNANCE](GOVERNANCE.md) file to see how the o
 ## Dependencies and licenses
 
 The sfizz library makes primary use of:
+
 - [libsndfile], licensed under the GNU Lesser General Public License v2.1
 - [Abseil], licensed under the Apache License 2.0
 - [atomic_queue] by Maxim Egorushkin, licensed under the MIT license
 - [filesystem] by Steffen Schümann, licensed under the BSD 3-Clause license
 - [hiir] by Laurent de Soras, licensed under the WTFPL v2 license
+- [KISS FFT] by Mark Borgerding, licensed under the BSD 3-Clause license
+- [Surge tuning] by Paul Walker, licensed under the MIT license
+- [pugixml] by Arseny Kapoulkine, licensed under the MIT license
+- [cephes] by Stephen Moshier, licensed under the BSD 3-Clause license
+- [cpuid] by Steinwurf ApS, licensed under the BSD 3-Clause license
+- [faust-libraries] by GRAME, Julius O. Smith III and Eric Tarr, licensed under the STK-4.3 license and a permissive variant of the LGPL license
 
 The sfizz library also uses in some subprojects:
+
 - [Catch2], licensed under the Boost Software License 1.0
 - [benchmark], licensed under the Apache License 2.0
 - [LV2], licensed under the ISC license
 - [JACK], licensed under the GNU Lesser General Public License v2.1
+- [cxxopts] by Jarryd Beck, licensed under the MIT license
+- [fmidi] by Jean Pierre Cimalando, licensed under the Boost Software License 1.0
+- [libsamplerate], licensed under the BSD 2-Clause license
+- [GLSL-Color-Spaces] by tobspr, licensed under the MIT license
+- [stb_image] by Sean Barrett, licensed as public domain or MIT license
 
-[Abseil]:       https://github.com/abseil/abseil-cpp
+[Abseil]:       https://abseil.io/
 [atomic_queue]: https://github.com/max0x7ba/atomic_queue
 [benchmark]:    https://github.com/google/benchmark
 [Catch2]:       https://github.com/catchorg/Catch2
 [filesystem]:   https://github.com/gulrak/filesystem
+[Surge tuning]: https://surge-synth-team.org/tuning-library/
+[pugixml]:      https://pugixml.org/
+[cephes]:       https://www.netlib.org/cephes/
+[cpuid]:        https://github.com/steinwurf/cpuid
+[faust-libraries]: https://github.com/grame-cncm/faustlibraries
 [hiir]:         http://ldesoras.free.fr/prod.html#src_hiir
+[KISS FFT]:     http://kissfft.sourceforge.net/
 [JACK]:         https://github.com/jackaudio/jack2
-[libsndfile]:   https://github.com/erikd/libsndfile/
+[cxxopts]:      https://github.com/jarro2783/cxxopts
+[fmidi]:        https://github.com/jpcima/fmidi
+[libsamplerate]: http://www.mega-nerd.com/SRC/
+[libsndfile]:   http://www.mega-nerd.com/libsndfile/
 [LV2]:          https://lv2plug.in/
+[GLSL-Color-Spaces]: https://github.com/tobspr/GLSL-Color-Spaces
+[stb_image]:    https://github.com/nothings/stb
 [our website]:  https://sfz.tools/sfizz
 [releases]:     https://github.com/sfztools/sfizz/releases
 [Carla]:     https://kx.studio/Applications:Carla

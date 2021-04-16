@@ -5,11 +5,31 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 /**
-  @file
-  @brief sfizz public C API.
-*/
+ * @file
+ * @brief sfizz public C API.
+ *
+ * sfizz is a synthesizer for SFZ instruments.
+ *
+ * The synthesizer must be operated under indicated constraints in order to
+ * guarantee thread-safety.
+ *
+ * At any given time, no more than 2 tasks must interact in parallel with this
+ * library:
+ * - a processing tasks @b RT for audio and MIDI, which can be real-time
+ * - a Control tasks @b CT
+ *
+ * The tasks RT and CT can be assumed by different threads over the lifetime, as
+ * long as the switch is adequately synchronized. If real-time processing is not
+ * required, it's acceptable for the 2 tasks can be assumed by a single thread.
+ *
+ * Where one or more following items are indicated on a function, the constraints apply.
+ * - @b RT: the function must be invoked from the Real-time thread
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
+ */
 
 #pragma once
+#include "sfizz_message.h"
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -22,6 +42,14 @@
 #else
   #define SFIZZ_EXPORTED_API
 #endif
+
+//! @cond Doxygen_Suppress
+#if defined _WIN32
+  #define SFIZZ_DEPRECATED_API __declspec(deprecated)
+#else
+  #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
+#endif
+//! @endcond
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +100,14 @@ SFIZZ_EXPORTED_API sfizz_synth_t* sfizz_create_synth();
 SFIZZ_EXPORTED_API void sfizz_free(sfizz_synth_t* synth);
 
 /**
+ * @brief Adds a reference to an existing sfizz synth.
+ * @since 1.0.0
+ *
+ * @param synth  The synth to reference.
+ */
+SFIZZ_EXPORTED_API void sfizz_add_ref(sfizz_synth_t* synth);
+
+/**
  * @brief Loads an SFZ file.
  *
  * The file path can be absolute or relative. All file operations for this SFZ
@@ -83,6 +119,10 @@ SFIZZ_EXPORTED_API void sfizz_free(sfizz_synth_t* synth);
  *
  * @return @true when file loading went OK,
  *         @false if some error occured while loading.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API bool sfizz_load_file(sfizz_synth_t* synth, const char* path);
 
@@ -100,6 +140,10 @@ SFIZZ_EXPORTED_API bool sfizz_load_file(sfizz_synth_t* synth, const char* path);
  *
  * @return @true when file loading went OK,
  *         @false if some error occured while loading.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API bool sfizz_load_string(sfizz_synth_t* synth, const char* path, const char* text);
 
@@ -112,6 +156,10 @@ SFIZZ_EXPORTED_API bool sfizz_load_string(sfizz_synth_t* synth, const char* path
  *
  * @return @true when tuning scale loaded OK,
  *         @false if some error occurred.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API bool sfizz_load_scala_file(sfizz_synth_t* synth, const char* path);
 
@@ -124,6 +172,10 @@ SFIZZ_EXPORTED_API bool sfizz_load_scala_file(sfizz_synth_t* synth, const char* 
  *
  * @return @true when tuning scale loaded OK,
  *         @false if some error occurred.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API bool sfizz_load_scala_string(sfizz_synth_t* synth, const char* text);
 
@@ -133,6 +185,9 @@ SFIZZ_EXPORTED_API bool sfizz_load_scala_string(sfizz_synth_t* synth, const char
  *
  * @param synth     The synth.
  * @param root_key  The MIDI number of the Scala root key (default 60 for C4).
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_set_scala_root_key(sfizz_synth_t* synth, int root_key);
 
@@ -152,6 +207,9 @@ SFIZZ_EXPORTED_API int sfizz_get_scala_root_key(sfizz_synth_t* synth);
  *
  * @param synth      The synth.
  * @param frequency  The frequency which indicates where standard tuning A4 is (default 440 Hz).
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_set_tuning_frequency(sfizz_synth_t* synth, float frequency);
 
@@ -173,6 +231,9 @@ SFIZZ_EXPORTED_API float sfizz_get_tuning_frequency(sfizz_synth_t* synth);
  *
  * @param synth  The synth.
  * @param ratio  The parameter in domain 0-1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_load_stretch_tuning_by_ratio(sfizz_synth_t* synth, float ratio);
 
@@ -215,7 +276,7 @@ SFIZZ_EXPORTED_API int sfizz_get_num_curves(sfizz_synth_t* synth);
  * @param synth  The synth.
  * @param model  The model name used if a non-empty string, otherwise generated.
  *
- * @return A newly allocated XML string, which must be freed after use.
+ * @return A newly allocated XML string, which must be freed after use using sfizz_free_memory().
  */
 SFIZZ_EXPORTED_API char* sfizz_export_midnam(sfizz_synth_t* synth, const char* model);
 
@@ -248,6 +309,10 @@ SFIZZ_EXPORTED_API int sfizz_get_num_active_voices(sfizz_synth_t* synth);
  *
  * @param synth              The synth.
  * @param samples_per_block  The number of samples per block.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API void sfizz_set_samples_per_block(sfizz_synth_t* synth, int samples_per_block);
 
@@ -259,130 +324,365 @@ SFIZZ_EXPORTED_API void sfizz_set_samples_per_block(sfizz_synth_t* synth, int sa
  *
  * @param synth        The synth
  * @param sample_rate  The sample rate.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate);
 
 /**
  * @brief Send a note on event to the synth.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
- * @param note_number  The MIDI note number.
- * @param velocity     The MIDI velocity.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
+ * @param velocity     The MIDI velocity, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity);
+SFIZZ_EXPORTED_API void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, int velocity);
+
+/**
+ * @brief Send a high-precision on event to the synth.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth        The synth.
+ * @param delay        The delay of the event in the block, in samples.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
+ * @param velocity     The normalized MIDI velocity, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_note_on(sfizz_synth_t* synth, int delay, int note_number, float velocity);
 
 /**
  * @brief Send a note off event to the synth.
+ * @since 0.2.0
  *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
  * As per the SFZ spec the velocity of note-off events is usually replaced by
  * the note-on velocity.
- * @since 0.2.0
  *
  * @param synth        The synth.
  * @param delay        The delay of the event in the block, in samples.
- * @param note_number  The MIDI note number.
- * @param velocity     The MIDI velocity.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
+ * @param velocity     The MIDI velocity, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity);
+SFIZZ_EXPORTED_API void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, int velocity);
+
+/**
+ * @brief Send a high-precision note off event to the synth.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * As per the SFZ spec the velocity of note-off events is usually replaced by
+ * the note-on velocity.
+ *
+ * @param synth        The synth.
+ * @param delay        The delay of the event in the block, in samples.
+ * @param note_number  The MIDI note number, in domain 0 to 127.
+ * @param velocity     The normalized MIDI velocity, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_note_off(sfizz_synth_t* synth, int delay, int note_number, float velocity);
 
 /**
  * @brief Send a CC event to the synth.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth      The synth.
  * @param delay      The delay of the event in the block, in samples.
- * @param cc_number  The MIDI CC number.
- * @param cc_value   The MIDI CC value.
+ * @param cc_number  The MIDI CC number, in domain 0 to 127.
+ * @param cc_value   The MIDI CC value, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value);
+SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, int cc_value);
 
 /**
  * @brief Send a high precision CC event to the synth.
- *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
  * @since 0.4.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth       The synth.
  * @param delay       The delay of the event in the block, in samples.
- * @param cc_number   The MIDI CC number.
+ * @param cc_number   The MIDI CC number, in domain 0 to 127.
  * @param norm_value  The normalized CC value, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value);
 
 /**
- * @brief Send a pitch wheel event.
+ * @brief Send a high precision CC automation to the synth.
+ * @since 1.0.0
  *
- * As with all MIDI events, this needs to happen before the call to
- * sfizz_render_block() in each block and should appear in order of the delays.
- * @since 0.4.0
+ * This updates the CC value known to the synth, but without performing
+ * additional MIDI-specific interpretations. (eg. the CC 120 and up)
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth       The synth.
+ * @param delay       The delay of the event in the block, in samples.
+ * @param cc_number   The MIDI CC number, in domain 0 to 127.
+ * @param norm_value  The normalized CC value, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_automate_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value);
+
+/**
+ * @brief Send a pitch wheel event.
+ * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth  The synth.
  * @param delay  The delay.
  * @param pitch  The pitch.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch);
 
 /**
- * @brief Send an aftertouch event. (CURRENTLY UNIMPLEMENTED)
+ * @brief Send a high-precision pitch wheel event.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth  The synth.
+ * @param delay  The delay.
+ * @param pitch  The normalized pitch, in domain -1 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch);
+
+/**
+ * @brief Send an aftertouch event.
  * @since 0.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
  *
  * @param synth      The synth.
  * @param delay      The delay at which the event occurs; this should be lower
-     *               than the size of the block in the next call to renderBlock().
- * @param aftertouch The aftertouch value.
+ *                   than the size of the block in the next call to renderBlock().
+ * @param aftertouch The aftertouch value, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch);
+
+/**
+ * @brief Send a channel aftertouch (channel pressure) event.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth      The synth.
+ * @param delay      The delay at which the event occurs; this should be lower
+ *                   than the size of the block in the next call to renderBlock().
+ * @param aftertouch The aftertouch value, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_channel_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch);
+
+/**
+ * @brief Send a high-precision aftertouch event.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth      The synth.
+ * @param delay      The delay at which the event occurs; this should be lower
+ *                   than the size of the block in the next call to renderBlock().
+ * @param aftertouch The normalized aftertouch value, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_channel_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch);
+
+/**
+ * @brief Send a polyphonic aftertouch event.
+ *      This feature is experimental and needs more testing in the internal engine.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth         The synth.
+ * @param delay         The delay at which the event occurs; this should be lower
+ *                      than the size of the block in the next call to renderBlock().
+ * @param note_number   The note number, in domain 0 to 127.
+ * @param aftertouch    The aftertouch value, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, int aftertouch);
+
+/**
+ * @brief Send a high-precision polyphonic aftertouch event.
+ *        This feature is experimental and needs more testing in the internal engine.
+ * @since 1.0.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth         The synth.
+ * @param delay         The delay at which the event occurs; this should be lower
+ *                      than the size of the block in the next call to renderBlock().
+ * @param note_number   The note number, in domain 0 to 127.
+ * @param aftertouch    The normalized aftertouch value, in domain 0 to 1.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, float aftertouch);
 
 /**
  * @brief Send a tempo event.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.2.0
  *
  * @param synth             The synth.
  * @param delay             The delay.
  * @param seconds_per_beat  The seconds per beat.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_beat);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_beat);
+
+/**
+ * @brief Send a tempo event.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
+ * @since 1.0.0
+ *
+ * @param synth             The synth.
+ * @param delay             The delay.
+ * @param beats_per_minute  The new tempo, in beats per minute.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_bpm_tempo(sfizz_synth_t* synth, int delay, float beats_per_minute);
 
 /**
  * @brief Send the time signature.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.5.0
  *
  * @param synth          The synth.
  * @param delay          The delay.
  * @param beats_per_bar  The number of beats per bar, or time signature numerator.
  * @param beat_unit      The note corresponding to one beat, or time signature denominator.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_bar, int beat_unit);
 
 /**
  * @brief Send the time position.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.5.0
  *
  * @param synth     The synth.
  * @param delay     The delay.
  * @param bar       The current bar.
  * @param bar_beat  The fractional position of the current beat within the bar.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, float bar_beat);
+SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay, int bar, double bar_beat);
 
 /**
  * @brief Send the playback state.
+ *
+ * This command should be delay-ordered with all other time/signature commands, namely
+ * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+ * of the synth is undefined.
+ *
  * @since 0.5.0
  *
  * @param synth           The synth.
  * @param delay           The delay.
  * @param playback_state  The playback state, 1 if playing, 0 if stopped.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int delay, int playback_state);
 
@@ -394,6 +694,7 @@ SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int dela
  * for the block (midi notes, CCs, ...) before rendering each block.
  * The synth will memorize the inputs and render sample accurates envelopes
  * depending on the input events passed to it.
+ *
  * @since 0.2.0
  *
  * @param synth         The synth.
@@ -401,6 +702,9 @@ SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int dela
  * @param num_channels  Should be equal to 2 for the time being.
  * @param num_frames    Number of frames to fill. This should be less than
  *                      or equal to the expected samples_per_block.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels, int num_frames);
 
@@ -425,14 +729,18 @@ SFIZZ_EXPORTED_API unsigned int sfizz_get_preload_size(sfizz_synth_t* synth);
  *
  * @param      synth         The synth.
  * @param[in]  preload_size  The preload size.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API void sfizz_set_preload_size(sfizz_synth_t* synth, unsigned int preload_size);
 
 /**
  * @brief Get the internal oversampling rate.
  *
- * This is the sampling rate of the engine, not the output or expected rate of
- * the calling function. For the latter use the sfizz_get_sample_rate() function.
+ * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
+ *
  * @since 0.2.0
  *
  * @param synth  The synth.
@@ -442,27 +750,17 @@ SFIZZ_EXPORTED_API sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfi
 /**
  * @brief Set the internal oversampling rate.
  *
- * This is the sampling rate of the engine, not the output or expected rate of
- * the calling function. For the latter use the sfizz_set_sample_rate() function.
- *
- * Increasing this value (up to x8 oversampling) improves the quality of the
- * output at the expense of memory consumption and background loading speed.
- * The main render path still uses the same linear interpolation algorithm and
- * should not see its performance decrease, but the files are oversampled upon
- * loading which increases the stress on the background loader and reduce
- * the loading speed. You can tweak the size of the preloaded data to compensate
- * for the memory increase, but the full loading will need to take place anyway.
- *
- * This function takes a lock and disables the callback; prefer calling it out
- * of the RT thread. It can also take a long time to return.
- * If the new oversampling factor is the same as the current one, it will
- * release the lock immediately and exit.
+ * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
  * @since 0.2.0
  *
  * @param      synth         The synth.
  * @param[in]  oversampling  The oversampling factor.
  *
  * @return @true if the oversampling factor was correct, @false otherwise.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t oversampling);
 
@@ -478,7 +776,7 @@ SFIZZ_EXPORTED_API bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfiz
  * @param      synth  The synth.
  * @param[in]  mode   The processing mode.
  *
- * @return The sample quality for the given mode, in the range 1 to 10.
+ * @return The sample quality for the given mode, in the range 0 to 10.
  */
 SFIZZ_EXPORTED_API int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode);
 
@@ -493,9 +791,46 @@ SFIZZ_EXPORTED_API int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_proc
  *
  * @param      synth    The synth.
  * @param[in]  mode     The processing mode.
- * @param[in]  quality  The desired sample quality, in the range 1 to 10.
+ * @param[in]  quality  The desired sample quality, in the range 0 to 10.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
+
+/**
+ * @brief Get the default oscillator quality.
+ *
+ * This is the quality setting which the engine uses when the instrument
+ * does not use the opcode `oscillator_quality`. The engine uses distinct
+ * default quality settings for live mode and freewheeling mode,
+ * which both can be accessed by the means of this function.
+ * @since 1.0.0
+ *
+ * @param      synth  The synth.
+ * @param[in]  mode   The processing mode.
+ *
+ * @return The oscillator quality for the given mode, in the range 0 to 10.
+ */
+SFIZZ_EXPORTED_API int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode);
+
+/**
+ * @brief Set the default oscillator quality.
+ *
+ * This is the quality setting which the engine uses when the instrument
+ * does not use the opcode `oscillator_quality`. The engine uses distinct
+ * default quality settings for live mode and freewheeling mode,
+ * which both can be accessed by the means of this function.
+ * @since 1.0.0
+ *
+ * @param      synth    The synth.
+ * @param[in]  mode     The processing mode.
+ * @param[in]  quality  The desired oscillator quality, in the range 0 to 10.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
 
 /**
  * @brief Set the global instrument volume.
@@ -503,6 +838,9 @@ SFIZZ_EXPORTED_API void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_pro
  *
  * @param synth   The synth.
  * @param volume  The new volume.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_set_volume(sfizz_synth_t* synth, float volume);
 
@@ -517,14 +855,14 @@ SFIZZ_EXPORTED_API float sfizz_get_volume(sfizz_synth_t* synth);
 /**
  * @brief Set the number of voices used by the synth.
  *
- * This function takes a lock and disables the callback; prefer calling
- * it out of the RT thread. It can also take a long time to return.
- * If the new number of voices is the same as the current one, it will
- * release the lock immediately and exit.
  * @since 0.2.0
  *
  * @param synth       The synth.
  * @param num_voices  The number of voices.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
+ * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 SFIZZ_EXPORTED_API void sfizz_set_num_voices(sfizz_synth_t* synth, int num_voices);
 
@@ -560,6 +898,9 @@ SFIZZ_EXPORTED_API int sfizz_get_num_bytes(sfizz_synth_t* synth);
  * @since 0.2.0
  *
  * @param synth  The synth.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_enable_freewheeling(sfizz_synth_t* synth);
 
@@ -568,6 +909,9 @@ SFIZZ_EXPORTED_API void sfizz_enable_freewheeling(sfizz_synth_t* synth);
  * @since 0.2.0
  *
  * @param synth  The synth.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_disable_freewheeling(sfizz_synth_t* synth);
 
@@ -591,7 +935,10 @@ SFIZZ_EXPORTED_API char* sfizz_get_unknown_opcodes(sfizz_synth_t* synth);
  * @param synth  The synth.
  *
  * @return @true if any included files (including the root file)
-           have been modified since the sfz file was loaded, @false otherwise.
+ *         have been modified since the sfz file was loaded, @false otherwise.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
  */
 SFIZZ_EXPORTED_API bool sfizz_should_reload_file(sfizz_synth_t* synth);
 
@@ -604,6 +951,9 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_file(sfizz_synth_t* synth);
  * @param synth  The synth.
  *
  * @return @true if the scala file has been modified since loading.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
  */
 SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
 
@@ -614,14 +964,21 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @note This can produce many outputs so use with caution.
  *
  * @param synth  The synth.
+ * @param prefix The prefix.
+ *
+ * @par Thread-safety constraints
+ * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth);
+SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix);
 
 /**
  * @brief Disable logging.
  * @since 0.3.0
  *
  * @param synth  The synth.
+ *
+ * @par Thread-safety constraints
+ * - TBD ?
  */
 SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
 
@@ -633,14 +990,20 @@ SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
  *
  * @param synth  The synth.
  * @param prefix The prefix.
+ *
+ * @par Thread-safety constraints
+ * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
 
 /**
  * @brief Shuts down the current processing, clear buffers and reset the voices.
  * @since 0.3.2
  *
  * @param synth  The synth.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
  */
 SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
 
@@ -654,6 +1017,9 @@ SFIZZ_EXPORTED_API void sfizz_all_sound_off(sfizz_synth_t* synth);
  * @param synth  The synth.
  * @param id     The definition variable name.
  * @param value  The definition value.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
  */
 SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, const char* id, const char* value);
 
@@ -662,6 +1028,9 @@ SFIZZ_EXPORTED_API void sfizz_add_external_definitions(sfizz_synth_t* synth, con
  * @since 0.4.0
  *
  * @param synth  The synth.
+ *
+ * @par Thread-safety constraints
+ * - @b CT: the function must be invoked from the Control thread
  */
 SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
 
@@ -669,7 +1038,7 @@ SFIZZ_EXPORTED_API void sfizz_clear_external_definitions(sfizz_synth_t* synth);
  * @brief Index out of bound error for the requested CC/key label.
  * @since 0.4.0
  */
-#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX -1
+#define SFIZZ_OUT_OF_BOUNDS_LABEL_INDEX (-1)
 
 /**
  * @brief Get the number of key labels registered in the current sfz file.
@@ -730,6 +1099,93 @@ SFIZZ_EXPORTED_API int sfizz_get_cc_label_number(sfizz_synth_t* synth, int label
  * @returns the label or @null if the index is out of bounds.
  */
 SFIZZ_EXPORTED_API const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index);
+
+/**
+ * @brief Free a block of memory allocated by the library.
+ * @brief 1.0.0
+ *
+ * @param ptr        The address of the memory to free.
+ */
+SFIZZ_EXPORTED_API void sfizz_free_memory(void* ptr);
+
+/**
+ * @addtogroup Messaging
+ * @{
+ */
+
+/**
+ * @brief Client for communicating with the synth engine in either direction
+ * @since 1.0.0
+ */
+typedef struct sfizz_client_t sfizz_client_t;
+
+/**
+ * @brief Create a new messaging client
+ * @since 1.0.0
+ *
+ * @param data         The opaque data pointer which is passed to the receiver.
+ * @return             The new client.
+ */
+SFIZZ_EXPORTED_API sfizz_client_t* sfizz_create_client(void* data);
+
+/**
+ * @brief Destroy a messaging client
+ * @since 1.0.0
+ *
+ * @param client       The client.
+ */
+SFIZZ_EXPORTED_API void sfizz_delete_client(sfizz_client_t* client);
+
+/**
+ * @brief Get the client data
+ * @since 1.0.0
+ *
+ * @param client       The client.
+ * @return             The client data.
+ */
+SFIZZ_EXPORTED_API void* sfizz_get_client_data(sfizz_client_t* client);
+
+/**
+ * @brief Set the function which receives reply messages from the synth engine.
+ * @since 1.0.0
+ *
+ * @param client       The client.
+ * @param receive      The pointer to the receiving function.
+ */
+SFIZZ_EXPORTED_API void sfizz_set_receive_callback(sfizz_client_t* client, sfizz_receive_t* receive);
+
+/**
+ * @brief Send a message to the synth engine
+ * @since 1.0.0
+ *
+ * @param synth        The synth.
+ * @param client       The client sending the message.
+ * @param delay        The delay of the message in the block, in samples.
+ * @param path         The OSC address pattern.
+ * @param sig          The OSC type tag string.
+ * @param args         The OSC arguments, whose number and format is determined the type tag string.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_message(sfizz_synth_t* synth, sfizz_client_t* client, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+
+/**
+ * @brief Set the function which receives broadcast messages from the synth engine.
+ * @since 1.0.0
+ *
+ * @param synth        The synth.
+ * @param broadcast    The pointer to the receiving function.
+ * @param data         The opaque data pointer which is passed to the receiver.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_set_broadcast_callback(sfizz_synth_t* synth, sfizz_receive_t* broadcast, void* data);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

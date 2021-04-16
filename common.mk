@@ -4,6 +4,10 @@ ifndef SFIZZ_DIR
 $(error sfizz: The source directory must be set before including)
 endif
 
+### Options
+
+SFIZZ_USE_SNDFILE ?= 0
+
 ###
 
 SFIZZ_MACHINE := $(shell $(CC) -dumpmachine)
@@ -44,7 +48,9 @@ SFIZZ_CXX_FLAGS = $(SFIZZ_C_FLAGS)
 SFIZZ_SOURCES = \
 	src/sfizz/ADSREnvelope.cpp \
 	src/sfizz/AudioReader.cpp \
+	src/sfizz/BeatClock.cpp \
 	src/sfizz/Curve.cpp \
+	src/sfizz/Defaults.cpp \
 	src/sfizz/effects/Apan.cpp \
 	src/sfizz/Effects.cpp \
 	src/sfizz/modulations/ModId.cpp \
@@ -52,6 +58,8 @@ SFIZZ_SOURCES = \
 	src/sfizz/modulations/ModKeyHash.cpp \
 	src/sfizz/modulations/ModMatrix.cpp \
 	src/sfizz/modulations/sources/ADSREnvelope.cpp \
+	src/sfizz/modulations/sources/ChannelAftertouch.cpp \
+	src/sfizz/modulations/sources/PolyAftertouch.cpp \
 	src/sfizz/modulations/sources/Controller.cpp \
 	src/sfizz/modulations/sources/FlexEnvelope.cpp \
 	src/sfizz/modulations/sources/LFO.cpp \
@@ -81,16 +89,18 @@ SFIZZ_SOURCES = \
 	src/sfizz/FilterPool.cpp \
 	src/sfizz/FlexEGDescription.cpp \
 	src/sfizz/FlexEnvelope.cpp \
-	src/sfizz/FloatEnvelopes.cpp \
+	src/sfizz/Interpolators.cpp \
+	src/sfizz/Layer.cpp \
 	src/sfizz/Logger.cpp \
 	src/sfizz/LFO.cpp \
 	src/sfizz/LFODescription.cpp \
+	src/sfizz/Messaging.cpp \
+	src/sfizz/Metronome.cpp \
 	src/sfizz/MidiState.cpp \
 	src/sfizz/OpcodeCleanup.cpp \
 	src/sfizz/Opcode.cpp \
 	src/sfizz/Oversampler.cpp \
 	src/sfizz/Panning.cpp \
-	src/sfizz/Parser.cpp \
 	src/sfizz/parser/Parser.cpp \
 	src/sfizz/parser/ParserPrivate.cpp \
 	src/sfizz/PolyphonyGroup.cpp \
@@ -102,22 +112,26 @@ SFIZZ_SOURCES = \
 	src/sfizz/sfizz.cpp \
 	src/sfizz/sfizz_wrapper.cpp \
 	src/sfizz/SfzFilter.cpp \
-	src/sfizz/SfzHelpers.cpp \
 	src/sfizz/SIMDHelpers.cpp \
 	src/sfizz/simd/HelpersSSE.cpp \
 	src/sfizz/simd/HelpersAVX.cpp \
 	src/sfizz/Smoothers.cpp \
 	src/sfizz/Synth.cpp \
+	src/sfizz/SynthMessaging.cpp \
 	src/sfizz/Tuning.cpp \
-	src/sfizz/utility/SpinMutex.cpp \
+	src/sfizz/utility/spin_mutex/SpinMutex.cpp \
 	src/sfizz/Voice.cpp \
+	src/sfizz/VoiceManager.cpp \
 	src/sfizz/VoiceStealing.cpp \
-	src/sfizz/Wavetables.cpp
+	src/sfizz/Wavetables.cpp \
+	src/sfizz/WindowedSinc.cpp
 
 ### Other internal
 
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/sfizz
-SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/src/external
+SFIZZ_C_FLAGS += \
+    -I$(SFIZZ_DIR)/src/sfizz \
+    -I$(SFIZZ_DIR)/src/sfizz/utility/bit_array \
+    -I$(SFIZZ_DIR)/src/sfizz/utility/spin_mutex
 
 # Pkg-config dependency
 
@@ -125,13 +139,69 @@ SFIZZ_PKG_CONFIG ?= pkg-config
 
 # Sndfile dependency
 
+ifeq ($(SFIZZ_USE_SNDFILE),1)
 SFIZZ_SNDFILE_C_FLAGS ?= $(shell $(SFIZZ_PKG_CONFIG) --cflags sndfile)
 SFIZZ_SNDFILE_CXX_FLAGS ?= $(SFIZZ_SNDFILE_C_FLAGS)
 SFIZZ_SNDFILE_LINK_FLAGS ?= $(shell $(SFIZZ_PKG_CONFIG) --libs sndfile)
 
-SFIZZ_C_FLAGS += $(SFIZZ_SNDFILE_C_FLAGS)
-SFIZZ_CXX_FLAGS += $(SFIZZ_SNDFILE_CXX_FLAGS)
+SFIZZ_C_FLAGS += -DSFIZZ_USE_SNDFILE=1
+SFIZZ_CXX_FLAGS += -DSFIZZ_USE_SNDFILE=1
+endif
+
+# st_audiofile dependency
+
+SFIZZ_SOURCES += \
+	external/st_audiofile/src/st_audiofile.c \
+	external/st_audiofile/src/st_audiofile_common.c \
+	external/st_audiofile/src/st_audiofile_libs.c \
+	external/st_audiofile/src/st_audiofile_sndfile.c
+
+ifneq ($(SFIZZ_USE_SNDFILE),1)
+SFIZZ_SOURCES += \
+	external/st_audiofile/src/st_audiofile_libs.c
+endif
+
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/src \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/stb_vorbis
+SFIZZ_CXX_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/src \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/stb_vorbis
+
+ifeq ($(SFIZZ_USE_SNDFILE),1)
+SFIZZ_C_FLAGS += $(SFIZZ_SNDFILE_C_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
+SFIZZ_CXX_FLAGS += $(SFIZZ_SNDFILE_CXX_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
 SFIZZ_LINK_FLAGS += $(SFIZZ_SNDFILE_LINK_FLAGS)
+endif
+
+# libaiff dependency
+
+ifneq ($(SFIZZ_USE_SNDFILE),1)
+SFIZZ_SOURCES += \
+	external/st_audiofile/thirdparty/libaiff/libaiff.all.c
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
+SFIZZ_CXX_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/libaiff
+endif
+
+# hiir dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/src/external/hiir
+
+# threadpool dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/threadpool
+
+# atomic_queue dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/atomic_queue/include
+
+# ghc::filesystem dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/filesystem/include
 
 ### Abseil dependency
 
@@ -146,9 +216,6 @@ SFIZZ_SOURCES += \
 # absl::exponential_biased
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/exponential_biased.cc
-# absl::dynamic_annotations
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/dynamic_annotations.cc
 # absl::malloc_internal
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/low_level_alloc.cc
@@ -233,6 +300,9 @@ SFIZZ_SOURCES += \
 # absl::city
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/hash/internal/city.cc
+# absl::wyhash
+SFIZZ_SOURCES += \
+	external/abseil-cpp/absl/hash/internal/wyhash.cc
 # absl::int128
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/numeric/int128.cc
@@ -254,6 +324,10 @@ SFIZZ_C_FLAGS += \
 SFIZZ_SOURCES += \
 	src/external/cpuid/src/cpuid/cpuinfo.cpp \
 	src/external/cpuid/src/cpuid/version.cpp
+
+### simde dependency
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/simde
 
 ### Pugixml dependency
 
@@ -281,6 +355,12 @@ SFIZZ_SOURCES += \
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/jsl/include
 
+### cephes dependency
+
+SFIZZ_SOURCES += \
+	external/cephes/src/chbevl.c \
+	external/cephes/src/i0.c
+
 ### math dependency
 
 ifdef SFIZZ_OS_LINUX
@@ -294,3 +374,9 @@ SFIZZ_C_FLAGS += -pthread
 SFIZZ_CXX_FLAGS += -pthread
 SFIZZ_LINK_FLAGS += -pthread
 endif
+
+### OpenMP dependency
+
+SFIZZ_C_FLAGS += -fopenmp
+SFIZZ_CXX_FLAGS += -fopenmp
+SFIZZ_LINK_FLAGS += -fopenmp

@@ -21,9 +21,9 @@
 */
 
 #include "Apan.h"
-#include "Macros.h"
-#include "CommonLFO.h"
+#include "LFOCommon.h"
 #include "Opcode.h"
+#include "utility/Macros.h"
 #include <limits>
 #include <cmath>
 
@@ -81,28 +81,22 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("apan_waveform"):
-                if (auto value = readOpcode(opc.value, Default::apanWaveformRange))
-                    apan->_lfoWave = *value;
+                apan->_lfoWave = opc.read(Default::apanWaveform);
                 break;
             case hash("apan_freq"):
-                if (auto value = readOpcode(opc.value, Default::apanFrequencyRange))
-                    apan->_lfoFrequency = *value;
+                apan->_lfoFrequency = opc.read(Default::apanFrequency);
                 break;
             case hash("apan_phase"):
-                if (auto value = readOpcode(opc.value, Default::apanPhaseRange))
-                    apan->_lfoPhaseOffset = wrapPhase(*value);
+                apan->_lfoPhaseOffset = opc.read(Default::apanPhase);
                 break;
             case hash("apan_dry"):
-                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
-                    apan->_dry = *value / 100.0f;
+                apan->_dry = opc.read(Default::apanLevel);
                 break;
             case hash("apan_wet"):
-                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
-                    apan->_wet = *value / 100.0f;
+                apan->_wet = opc.read(Default::apanLevel);
                 break;
             case hash("apan_depth"):
-                if (auto value = readOpcode(opc.value, Default::apanLevelRange))
-                    apan->_depth = *value / 100.0f;
+                apan->_depth = opc.read(Default::apanLevel);
                 break;
             }
         }
@@ -113,22 +107,22 @@ namespace fx {
     void Apan::computeLfos(float* left, float* right, unsigned nframes)
     {
         switch (_lfoWave) {
-        #define CASE(X) case lfo::X:                          \
-            computeLfos<lfo::X>(left, right, nframes); break;
+        #define CASE(X) case X:                          \
+            computeLfos<X>(left, right, nframes); break;
         default:
-        CASE(kTriangle)
-        CASE(kSine)
-        CASE(kPulse75)
-        CASE(kSquare)
-        CASE(kPulse25)
-        CASE(kPulse12_5)
-        CASE(kRamp)
-        CASE(kSaw)
+        CASE(LFOWave::Triangle)
+        CASE(LFOWave::Sine)
+        CASE(LFOWave::Pulse75)
+        CASE(LFOWave::Square)
+        CASE(LFOWave::Pulse25)
+        CASE(LFOWave::Pulse12_5)
+        CASE(LFOWave::Ramp)
+        CASE(LFOWave::Saw)
         #undef CASE
         }
     }
 
-    template <int Wave> void Apan::computeLfos(float* left, float* right, unsigned nframes)
+    template <LFOWave Wave> void Apan::computeLfos(float* left, float* right, unsigned nframes)
     {
         float samplePeriod = _samplePeriod;
         float frequency = _lfoFrequency;

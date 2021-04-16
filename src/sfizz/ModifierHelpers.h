@@ -15,21 +15,21 @@ namespace sfz {
 /**
  * @brief Compute a crossfade in value with respect to a crossfade range (note, velocity, cc, ...)
  */
-template <class T, class U>
-float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+template <class T, bool C, class U>
+float crossfadeIn(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurve curve)
 {
     if (value < crossfadeRange.getStart())
         return 0.0f;
 
     const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
+    if (length <= 0.0f)
         return 1.0f;
 
     else if (value < crossfadeRange.getEnd()) {
         const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
+        if (curve == CrossfadeCurve::power)
             return sqrt(crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
+        if (curve == CrossfadeCurve::gain)
             return crossfadePosition;
     }
 
@@ -39,21 +39,21 @@ float crossfadeIn(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurv
 /**
  * @brief Compute a crossfade out value with respect to a crossfade range (note, velocity, cc, ...)
  */
-template <class T, class U>
-float crossfadeOut(const sfz::Range<T>& crossfadeRange, U value, SfzCrossfadeCurve curve)
+template <class T, bool C, class U>
+float crossfadeOut(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurve curve)
 {
     if (value > crossfadeRange.getEnd())
         return 0.0f;
 
     const auto length = static_cast<float>(crossfadeRange.length());
-    if (length == 0.0f)
+    if (length <= 0.0f)
         return 1.0f;
 
     else if (value > crossfadeRange.getStart()) {
         const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
-        if (curve == SfzCrossfadeCurve::power)
+        if (curve == CrossfadeCurve::power)
             return std::sqrt(1 - crossfadePosition);
-        if (curve == SfzCrossfadeCurve::gain)
+        if (curve == CrossfadeCurve::gain)
             return 1 - crossfadePosition;
     }
 
@@ -73,6 +73,7 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 {
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
+
     if (envelope.size() == 0)
         return;
 
@@ -103,7 +104,11 @@ void linearEnvelope(const EventVector& events, absl::Span<float> envelope, F&& l
 {
     ASSERT(events.size() > 0);
     ASSERT(events[0].delay == 0);
-    ASSERT(step != 0.0);
+
+    if (step == 0.0f) {
+        linearEnvelope(events, envelope, std::forward<F>(lambda));
+        return;
+    }
 
     if (envelope.size() == 0)
         return;
@@ -155,6 +160,7 @@ void multiplicativeEnvelope(const EventVector& events, absl::Span<float> envelop
 
     if (envelope.size() == 0)
         return;
+
     const auto maxDelay = static_cast<int>(envelope.size() - 1);
 
     auto lastValue = lambda(events[0].value);

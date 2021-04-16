@@ -5,68 +5,432 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Voice.h"
-#include "Macros.h"
+#include "Layer.h"
+#include "AudioBuffer.h"
+#include "Config.h"
 #include "Defaults.h"
-#include "ModifierHelpers.h"
-#include "MathHelpers.h"
-#include "SIMDHelpers.h"
-#include "Panning.h"
-#include "SfzHelpers.h"
-#include "LFO.h"
+#include "EQPool.h"
+#include "FilterPool.h"
 #include "FlexEnvelope.h"
+#include "Interpolators.h"
+#include "LFO.h"
+#include "MathHelpers.h"
+#include "ModifierHelpers.h"
+#include "TriggerEvent.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
-#include "Interpolators.h"
-#include "absl/algorithm/container.h"
+#include "OnePoleFilter.h"
+#include "Panning.h"
+#include "PowerFollower.h"
+#include "SfzHelpers.h"
+#include "SIMDHelpers.h"
+#include "Smoothers.h"
+#include "utility/Macros.h"
+#include <absl/algorithm/container.h>
+#include <absl/types/span.h>
+#include <random>
 
-sfz::Voice::Voice(int voiceNumber, sfz::Resources& resources)
-: id{voiceNumber}, stateListener(nullptr), resources(resources)
+namespace sfz {
+
+struct Voice::Impl
+{
+    Impl() = delete;
+    Impl(int voiceNumber, Resources& resources);
+    /**
+     * @brief Fill a span with data from a file source. This is the first step
+     * in rendering each block of data.
+     *
+     * @param buffer
+     */
+    void fillWithData(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Fill a span with data from a generator source. This is the first step
+     * in rendering each block of data.
+     *
+     * @param buffer
+     */
+    void fillWithGenerator(AudioSpan<float> buffer) noexcept;
+
+    /**
+     * @brief Fill a destination with an interpolated source.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     */
+    template <InterpolatorModel M, bool Adding>
+    static void fillInterpolated(
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains);
+
+    /**
+     * @brief Fill a destination with an interpolated source, selecting
+     *        interpolation type dynamically by quality level.
+     *
+     * @param source the source sample
+     * @param dest the destination buffer
+     * @param indices the integral parts of the source positions
+     * @param coeffs the fractional parts of the source positions
+     * @param quality the quality level 1-10
+     */
+    template <bool Adding>
+    static void fillInterpolatedWithQuality(
+        const AudioSpan<const float>& source, const AudioSpan<float>& dest,
+        absl::Span<const int> indices, absl::Span<const float> coeffs,
+        absl::Span<const float> addingGains, int quality);
+
+    /**
+     * @brief Get a S-shaped curve that is applicable to loop crossfading.
+     */
+    static const Curve& getSCurve();
+
+    /**
+     * @brief Compute the amplitude envelope, applied as a gain to a mono
+     * or stereo buffer
+     *
+     * @param modulationSpan
+     */
+    void amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept;
+
+    /**
+     * @brief Apply the crossfade envelope to a span.
+     *
+     * @param modulationSpan
+     */
+    void applyCrossfades(absl::Span<float> modulationSpan) noexcept;
+    void resetCrossfades() noexcept;
+
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
+    void ampStageMono(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a stereo source
+     *
+     * @param buffer
+     */
+    void ampStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
+    void panStageMono(AudioSpan<float> buffer) noexcept;
+    void panStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Amplitude stage for a mono source
+     *
+     * @param buffer
+     */
+    void filterStageMono(AudioSpan<float> buffer) noexcept;
+    void filterStageStereo(AudioSpan<float> buffer) noexcept;
+    /**
+     * @brief Compute the pitch envelope. This envelope is meant to multiply
+     * the frequency parameter for each sample (which translates to floating
+     * point intervals for sample-based voices, or phases for generators)
+     *
+     * @param pitchSpan
+     */
+    void pitchEnvelope(absl::Span<float> pitchSpan) noexcept;
+
+    /**
+     * @brief Initialize frequency and gain coefficients for the oscillators.
+     */
+    void setupOscillatorUnison();
+    void updateChannelPowers(AudioSpan<float> buffer);
+
+    /**
+     * @brief Modify the voice state and notify any listeners.
+     */
+    void switchState(State s);
+
+    /**
+     * @brief Save the modulation targets to avoid recomputing them in every callback.
+     * Must be called during startVoice() ideally.
+     */
+    void saveModulationTargets(const Region* region) noexcept;
+
+    /**
+     * @brief Get the sample quality determined by the active region.
+     *
+     * @return int
+     */
+    int getCurrentSampleQuality() const noexcept;
+    /**
+     * @brief Get the oscillator quality determined by the active region.
+     *
+     * @return int
+     */
+    int getCurrentOscillatorQuality() const noexcept;
+    /**
+     * @brief Reset the loop information
+     *
+     */
+    void resetLoopInformation() noexcept;
+    /**
+     * @brief Read the loop information data from the region.
+     * This requires that the region and promise is properly set.
+     *
+     */
+    void updateLoopInformation() noexcept;
+
+    /**
+     * @brief Check whether the voice is released
+     *
+     * @return true
+     * @return false
+     */
+    bool released() const noexcept;
+
+    /**
+     * @brief Release the voice after a given delay
+     *
+     * @param delay
+     */
+    void release(int delay) noexcept;
+
+    /**
+     * @brief Off the voice (steal). This will respect the off mode of the region
+     *      and set the envelopes if necessary.
+     *
+     * @param delay
+     * @param fast whether to apply a fast release regardless of the off mode
+     */
+    void off(int delay, bool fast = false) noexcept;
+
+    /**
+     * @brief Setup the extended CC values for the voice
+     *
+     */
+    void updateExtendedCCValues() noexcept;
+
+    const NumericId<Voice> id_;
+    StateListener* stateListener_ = nullptr;
+
+    const Region* region_ { nullptr };
+
+    State state_ { State::idle };
+    bool noteIsOff_ { false };
+    enum class SustainState { Up, Sustaining };
+    SustainState sustainState_ { SustainState::Up };
+    enum class SostenutoState { Up, Sustaining, PreviouslyDown };
+    SostenutoState sostenutoState_ { SostenutoState::Up };
+
+    TriggerEvent triggerEvent_;
+    absl::optional<int> triggerDelay_;
+
+    float speedRatio_ { 1.0 };
+    float pitchRatio_ { 1.0 };
+    float baseVolumedB_ { 0.0 };
+    float baseGain_ { 1.0 };
+    float baseFrequency_ { 440.0 };
+    uint8_t pitchKeycenter_ { Default::key };
+
+    float floatPositionOffset_ { 0.0f };
+    int sourcePosition_ { 0 };
+    int initialDelay_ { 0 };
+    int age_ { 0 };
+    uint32_t count_ { 1 };
+    int sampleEnd_ { 0 };
+    int sampleSize_ { 0 };
+
+    struct {
+        int start { 0 };
+        int end { 0 };
+        int size { 0 };
+        int xfSize { 0 };
+        int xfOutStart { 0 };
+        int xfInStart { 0 };
+        uint32_t restarts { 0 };
+    } loop_;
+
+    FileDataHolder currentPromise_;
+
+    int samplesPerBlock_ { config::defaultSamplesPerBlock };
+    float sampleRate_ { config::defaultSampleRate };
+
+    Resources& resources_;
+
+    std::vector<FilterHolder> filters_;
+    std::vector<EQHolder> equalizers_;
+    std::vector<std::unique_ptr<LFO>> lfos_;
+    std::vector<std::unique_ptr<FlexEnvelope>> flexEGs_;
+
+    std::unique_ptr<LFO> lfoAmplitude_;
+    std::unique_ptr<LFO> lfoPitch_;
+    std::unique_ptr<LFO> lfoFilter_;
+
+    ADSREnvelope egAmplitude_;
+    std::unique_ptr<ADSREnvelope> egPitch_;
+    std::unique_ptr<ADSREnvelope> egFilter_;
+
+    WavetableOscillator waveOscillators_[config::oscillatorsPerVoice];
+
+    // unison of oscillators
+    unsigned waveUnisonSize_ { 0 };
+    float waveDetuneRatio_[config::oscillatorsPerVoice] {};
+    float waveLeftGain_[config::oscillatorsPerVoice] {};
+    float waveRightGain_[config::oscillatorsPerVoice] {};
+
+    Duration dataDuration_;
+    Duration amplitudeDuration_;
+    Duration panningDuration_;
+    Duration filterDuration_;
+
+    fast_real_distribution<float> uniformNoiseDist_ { -config::uniformNoiseBounds, config::uniformNoiseBounds };
+    fast_gaussian_generator<float> gaussianNoiseDist_ { 0.0f, config::noiseVariance };
+
+    Smoother gainSmoother_;
+    Smoother bendSmoother_;
+    Smoother xfadeSmoother_;
+    void resetSmoothers() noexcept;
+
+    ModMatrix::TargetId masterAmplitudeTarget_;
+    ModMatrix::TargetId amplitudeTarget_;
+    ModMatrix::TargetId volumeTarget_;
+    ModMatrix::TargetId panTarget_;
+    ModMatrix::TargetId positionTarget_;
+    ModMatrix::TargetId widthTarget_;
+    ModMatrix::TargetId pitchTarget_;
+    ModMatrix::TargetId oscillatorDetuneTarget_;
+    ModMatrix::TargetId oscillatorModDepthTarget_;
+
+    bool followPower_ { false };
+    PowerFollower powerFollower_;
+
+    ExtendedCCValues extendedCCValues_;
+    fast_real_distribution<float> unipolarDist { 0.0f, 1.0f };
+    fast_real_distribution<float> bipolarDist { -1.0f, 1.0f };
+};
+
+Voice::Voice(int voiceNumber, Resources& resources)
+: impl_(new Impl(voiceNumber, resources))
+{
+
+}
+
+// Need to define the dtor after Impl has been defined
+Voice::~Voice()
+{
+
+}
+
+Voice::Voice(Voice&& other) noexcept {
+    impl_ = std::move(other.impl_);
+
+    if (other.nextSisterVoice_ != &other) {
+        nextSisterVoice_ = other.nextSisterVoice_;
+        other.nextSisterVoice_ = &other;
+        nextSisterVoice_->setPreviousSisterVoice(this);
+    } else {
+        nextSisterVoice_ = this;
+    }
+
+    if (other.previousSisterVoice_ != &other) {
+        previousSisterVoice_ = other.previousSisterVoice_;
+        other.previousSisterVoice_ = &other;
+        previousSisterVoice_->setNextSisterVoice(this);
+    } else {
+        previousSisterVoice_ = this;
+    }
+}
+
+Voice& Voice::operator=(Voice&& other) noexcept {
+    impl_ = std::move(other.impl_);
+
+    if (other.nextSisterVoice_ != &other) {
+        nextSisterVoice_ = other.nextSisterVoice_;
+        other.nextSisterVoice_ = &other;
+        nextSisterVoice_->setPreviousSisterVoice(this);
+    } else {
+        nextSisterVoice_ = this;
+    }
+
+    if (other.previousSisterVoice_ != &other) {
+        previousSisterVoice_ = other.previousSisterVoice_;
+        other.previousSisterVoice_ = &other;
+        previousSisterVoice_->setNextSisterVoice(this);
+    } else {
+        previousSisterVoice_ = this;
+    }
+
+    return *this;
+}
+
+Voice::Impl::Impl(int voiceNumber, Resources& resources)
+: id_ { voiceNumber }, stateListener_(nullptr), resources_(resources)
 {
     for (unsigned i = 0; i < config::filtersPerVoice; ++i)
-        filters.emplace_back(resources);
+        filters_.emplace_back(resources);
 
     for (unsigned i = 0; i < config::eqsPerVoice; ++i)
-        equalizers.emplace_back(resources);
+        equalizers_.emplace_back(resources);
 
-    for (WavetableOscillator& osc : waveOscillators)
-        osc.init(sampleRate);
+    for (WavetableOscillator& osc : waveOscillators_)
+        osc.init(sampleRate_);
 
-    gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
-    xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
+    gainSmoother_.setSmoothing(config::gainSmoothing, sampleRate_);
+    xfadeSmoother_.setSmoothing(config::xfadeSmoothing, sampleRate_);
 
     // prepare curves
     getSCurve();
 }
 
-sfz::Voice::~Voice()
+const ExtendedCCValues& Voice::getExtendedCCValues() const noexcept
 {
+    Impl& impl = *impl_;
+    return impl.extendedCCValues_;
 }
 
-void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event) noexcept
+void Voice::Impl::updateExtendedCCValues() noexcept
 {
+    extendedCCValues_.unipolar = unipolarDist(Random::randomGenerator);
+    extendedCCValues_.bipolar = bipolarDist(Random::randomGenerator);
+    extendedCCValues_.alternate = resources_.midiState.getAlternateState();
+    extendedCCValues_.noteGate = resources_.midiState.getActiveNotes() > 0 ? 1.0f : 0.0f;
+}
+
+bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
+{
+    Impl& impl = *impl_;
     ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
-    this->region = region;
-    if (region->disabled())
-        return;
+    Resources& resources = impl.resources_;
 
-    triggerEvent = event;
-    if (triggerEvent.type == TriggerEventType::CC)
-        triggerEvent.number = region->pitchKeycenter;
+    const Region& region = layer->getRegion();
+    impl.region_ = &region;
 
-    switchState(State::playing);
+    impl.triggerEvent_ = event;
+    if (impl.triggerEvent_.type == TriggerEventType::CC)
+        impl.triggerEvent_.number = region.pitchKeycenter;
+
+    if (region.velocityOverride == VelocityOverride::previous)
+        impl.triggerEvent_.value = resources.midiState.getLastVelocity();
+
+    if (region.disabled()) {
+        impl.switchState(State::cleanMeUp);
+        return false;
+    }
+
+    impl.switchState(State::playing);
+
+    impl.updateExtendedCCValues();
 
     ASSERT(delay >= 0);
     if (delay < 0)
         delay = 0;
 
-    if (region->isOscillator()) {
+    if (region.isOscillator()) {
         const WavetableMulti* wave = nullptr;
-        if (!region->isGenerator())
-            wave = resources.wavePool.getFileWave(region->sampleId->filename());
+        if (!region.isGenerator())
+            wave = resources.wavePool.getFileWave(region.sampleId->filename());
         else {
-            switch (hash(region->sampleId->filename())) {
+            switch (hash(region.sampleId->filename())) {
             default:
             case hash("*silence"):
                 break;
@@ -85,95 +449,146 @@ void sfz::Voice::startVoice(Region* region, int delay, const TriggerEvent& event
                 break;
             }
         }
-        const float phase = region->getPhase();
-        const int quality = region->oscillatorQuality.value_or(Default::oscillatorQuality);
-        for (WavetableOscillator& osc : waveOscillators) {
+        const float phase = region.getPhase();
+        const int quality =
+            region.oscillatorQuality.value_or(Default::oscillatorQuality);
+        for (WavetableOscillator& osc : impl.waveOscillators_) {
             osc.setWavetable(wave);
             osc.setPhase(phase);
             osc.setQuality(quality);
         }
-        setupOscillatorUnison();
+        impl.setupOscillatorUnison();
     } else {
-        currentPromise = resources.filePool.getFilePromise(region->sampleId);
-        if (!currentPromise) {
-            switchState(State::cleanMeUp);
-            return;
+        impl.currentPromise_ = resources.filePool.getFilePromise(region.sampleId);
+        if (!impl.currentPromise_) {
+            impl.switchState(State::cleanMeUp);
+            return false;
         }
-        updateLoopInformation();
-        speedRatio = static_cast<float>(currentPromise->information.sampleRate / this->sampleRate);
-        sourcePosition = region->getOffset(resources.filePool.getOversamplingFactor());
+        impl.updateLoopInformation();
+        impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
+        impl.sourcePosition_ = region.getOffset(resources.midiState);
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
-    const float numberRetuned = resources.tuning.getKeyFractional12TET(triggerEvent.number);
+    const float numberRetuned = resources.tuning.getKeyFractional12TET(impl.triggerEvent_.number);
 
-    pitchRatio = region->getBasePitchVariation(numberRetuned, triggerEvent.value);
+    impl.pitchRatio_ = region.getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
 
     // apply stretch tuning if set
     if (resources.stretch)
-        pitchRatio *= resources.stretch->getRatioForFractionalKey(numberRetuned);
+        impl.pitchRatio_ *= resources.stretch->getRatioForFractionalKey(numberRetuned);
 
-    baseVolumedB = region->getBaseVolumedB(triggerEvent.number);
-    baseGain = region->getBaseGain();
-    if (triggerEvent.type != TriggerEventType::CC)
-        baseGain *= region->getNoteGain(triggerEvent.number, triggerEvent.value);
-    gainSmoother.reset();
-    resetCrossfades();
+    impl.pitchKeycenter_ = region.pitchKeycenter;
+    impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
+    impl.baseGain_ = region.getBaseGain();
+    if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
+        impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
 
-    for (unsigned i = 0; i < region->filters.size(); ++i) {
-        filters[i].setup(*region, i, triggerEvent.number, triggerEvent.value);
+    impl.gainSmoother_.reset();
+    impl.resetCrossfades();
+
+    for (unsigned i = 0; i < region.filters.size(); ++i) {
+        impl.filters_[i].setup(region, i, impl.triggerEvent_.number, impl.triggerEvent_.value);
     }
 
-    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
-        equalizers[i].setup(*region, i, triggerEvent.value);
+    for (unsigned i = 0; i < region.equalizers.size(); ++i) {
+        impl.equalizers_[i].setup(region, i, impl.triggerEvent_.value);
     }
 
-    triggerDelay = delay;
-    initialDelay = delay + static_cast<int>(region->getDelay() * sampleRate);
-    baseFrequency = resources.tuning.getFrequencyOfKey(triggerEvent.number);
-    bendStepFactor = centsFactor(region->bendStep);
-    bendSmoother.setSmoothing(region->bendSmooth, sampleRate);
-    bendSmoother.reset(centsFactor(region->getBendInCents(resources.midiState.getPitchBend())));
+    impl.triggerDelay_ = delay;
+    impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
+    impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
+    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState));
+    impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
+    impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
+    impl.bendSmoother_.reset(region.getBendInCents(resources.midiState.getPitchBend()));
 
-    resources.modMatrix.initVoice(id, region->getId(), delay);
-    saveModulationTargets(region);
+    resources.modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
+    impl.saveModulationTargets(&region);
+
+    if (region.checkSustain) {
+        const bool sustainPressed =
+            resources.midiState.getCCValue(region.sustainCC) >= region.sustainThreshold;
+        impl.sustainState_ =
+            sustainPressed ? Impl::SustainState::Sustaining : Impl::SustainState::Up;
+    }
+
+    if (region.checkSostenuto) {
+        const bool sostenutoPressed =
+            resources.midiState.getCCValue(region.sostenutoCC) >= region.sostenutoThreshold;
+        impl.sostenutoState_ =
+            sostenutoPressed ? Impl::SostenutoState::PreviouslyDown : Impl::SostenutoState::Up;
+    }
+
+    return true;
 }
 
-int sfz::Voice::getCurrentSampleQuality() const noexcept
+int Voice::Impl::getCurrentSampleQuality() const noexcept
 {
-    return (region && region->sampleQuality) ?
-        *region->sampleQuality : resources.synthConfig.currentSampleQuality();
+    return (region_ && region_->sampleQuality) ?
+        *region_->sampleQuality : resources_.synthConfig.currentSampleQuality();
 }
 
-bool sfz::Voice::isFree() const noexcept
+int Voice::getCurrentSampleQuality() const noexcept
 {
-    return (state == State::idle);
+    Impl& impl = *impl_;
+    return impl.getCurrentSampleQuality();
 }
 
-void sfz::Voice::release(int delay) noexcept
+int Voice::Impl::getCurrentOscillatorQuality() const noexcept
 {
-    if (state != State::playing)
+    return (region_ && region_->oscillatorQuality) ?
+        *region_->oscillatorQuality : resources_.synthConfig.currentOscillatorQuality();
+}
+
+int Voice::getCurrentOscillatorQuality() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.getCurrentOscillatorQuality();
+}
+
+bool Voice::isFree() const noexcept
+{
+    Impl& impl = *impl_;
+    return (impl.state_ == State::idle);
+}
+
+void Voice::release(int delay) noexcept
+{
+    Impl& impl = *impl_;
+    impl.release(delay);
+}
+
+void Voice::Impl::release(int delay) noexcept
+{
+    if (state_ != State::playing)
         return;
 
-    if (!region->flexAmpEG) {
-        if (egAmplitude.getRemainingDelay() > delay)
+    if (!region_->flexAmpEG) {
+        if (egAmplitude_.getRemainingDelay() > delay)
             switchState(State::cleanMeUp);
     }
     else {
-        if (flexEGs[*region->flexAmpEG]->getRemainingDelay() > static_cast<unsigned>(delay))
+        if (flexEGs_[*region_->flexAmpEG]->getRemainingDelay() > static_cast<unsigned>(delay))
             switchState(State::cleanMeUp);
     }
 
-    resources.modMatrix.releaseVoice(id, region->getId(), delay);
+    resources_.modMatrix.releaseVoice(id_, region_->getId(), delay);
 }
 
-void sfz::Voice::off(int delay, bool fast) noexcept
+void Voice::off(int delay, bool fast) noexcept
 {
-    if (!region->flexAmpEG) {
-        if (region->offMode == SfzOffMode::fast || fast) {
-            egAmplitude.setReleaseTime(Default::offTime);
-        } else if (region->offMode == SfzOffMode::time) {
-            egAmplitude.setReleaseTime(region->offTime);
+    Impl& impl = *impl_;
+    impl.off(delay, fast);
+}
+
+void Voice::Impl::off(int delay, bool fast) noexcept
+{
+    if (!region_->flexAmpEG) {
+        if (region_->offMode == OffMode::fast || fast) {
+            egAmplitude_.setReleaseTime(Default::offTime);
+        } else if (region_->offMode == OffMode::time) {
+            egAmplitude_.setReleaseTime(region_->offTime);
         }
     }
     else {
@@ -183,136 +598,200 @@ void sfz::Voice::off(int delay, bool fast) noexcept
     release(delay);
 }
 
-void sfz::Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
+void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
 {
     ASSERT(velocity >= 0.0 && velocity <= 1.0);
     UNUSED(velocity);
+    Impl& impl = *impl_;
 
-    if (region == nullptr)
+    if (impl.region_ == nullptr)
         return;
 
-    if (state != State::playing)
+    if (impl.state_ != State::playing)
         return;
 
-    if (triggerEvent.number == noteNumber && triggerEvent.type == TriggerEventType::NoteOn) {
-        noteIsOff = true;
+    if (impl.triggerEvent_.number == noteNumber && impl.triggerEvent_.type == TriggerEventType::NoteOn) {
+        impl.noteIsOff_ = true;
 
-        if (region->loopMode == SfzLoopMode::one_shot)
+        if (impl.region_->loopMode == LoopMode::one_shot)
             return;
 
-        if (!region->checkSustain || resources.midiState.getCCValue(region->sustainCC) < region->sustainThreshold)
+        const bool sustainPedalReleaseCondition = !impl.region_->checkSustain
+            || impl.sustainState_ != Impl::SustainState::Sustaining;
+
+        const bool sostenutoPedalReleaseCondition = !impl.region_->checkSostenuto
+            || impl.sostenutoState_ != Impl::SostenutoState::Sustaining;
+
+        if (sustainPedalReleaseCondition && sostenutoPedalReleaseCondition)
             release(delay);
     }
 }
 
-void sfz::Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
+void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
 {
-    ASSERT(ccValue >= 0.0 && ccValue <= 1.0);
-    if (region == nullptr)
+    Impl& impl = *impl_;
+    if (impl.region_ == nullptr)
         return;
 
-    if (state != State::playing)
+    const Region& region = *impl.region_;
+
+    if (impl.state_ != State::playing)
         return;
 
-    if (region->checkSustain && noteIsOff && ccNumber == region->sustainCC && ccValue < region->sustainThreshold)
+    if (ccNumber != region.sustainCC && ccNumber != region.sostenutoCC)
+        return;
+
+    if (region.checkSustain && (ccNumber == region.sostenutoCC)) {
+        if (ccValue < region.sostenutoThreshold) {
+            impl.sostenutoState_ = Impl::SostenutoState::Up;
+        } else if (impl.sostenutoState_ == Impl::SostenutoState::Up) {
+            impl.sostenutoState_ = Impl::SostenutoState::Sustaining;
+        }
+    }
+
+    if (region.checkSostenuto && (ccNumber == region.sustainCC)) {
+        if (ccValue < region.sustainThreshold) {
+            impl.sustainState_ = Impl::SustainState::Up;
+        } else {
+            impl.sustainState_ = Impl::SustainState::Sustaining;
+        }
+    }
+
+    const bool sustainPedalReleaseCondition = !region.checkSustain
+        || (impl.sustainState_ != Impl::SustainState::Sustaining);
+
+    const bool sostenutoPedalReleaseCondition = !region.checkSostenuto
+        || (impl.sostenutoState_ != Impl::SostenutoState::Sustaining);
+
+    if (impl.noteIsOff_ && region.loopMode != LoopMode::one_shot
+        && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
 }
 
-void sfz::Voice::registerPitchWheel(int delay, float pitch) noexcept
+void Voice::registerPitchWheel(int delay, float pitch) noexcept
 {
-    if (state != State::playing)
+    Impl& impl = *impl_;
+    if (impl.state_ != State::playing)
         return;
     UNUSED(delay);
     UNUSED(pitch);
 }
 
-void sfz::Voice::registerAftertouch(int delay, uint8_t aftertouch) noexcept
+void Voice::registerAftertouch(int delay, float aftertouch) noexcept
 {
     // TODO
     UNUSED(delay);
     UNUSED(aftertouch);
 }
 
-void sfz::Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
+void Voice::registerPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept
+{
+    Impl& impl = *impl_;
+    if (impl.state_ != State::playing)
+        return;
+
+    if (!(impl.triggerEvent_.type == TriggerEventType::NoteOn || impl.triggerEvent_.type == TriggerEventType::NoteOff)
+        || impl.triggerEvent_.number != noteNumber)
+        return;
+
+    // TODO
+    UNUSED(delay);
+    UNUSED(aftertouch);
+}
+
+void Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 {
     // TODO
     UNUSED(delay);
     UNUSED(secondsPerQuarter);
 }
 
-void sfz::Voice::setSampleRate(float sampleRate) noexcept
+void Voice::setSampleRate(float sampleRate) noexcept
 {
-    this->sampleRate = sampleRate;
-    gainSmoother.setSmoothing(config::gainSmoothing, sampleRate);
-    xfadeSmoother.setSmoothing(config::xfadeSmoothing, sampleRate);
+    Impl& impl = *impl_;
+    impl.sampleRate_ = sampleRate;
+    impl.gainSmoother_.setSmoothing(config::gainSmoothing, sampleRate);
+    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, sampleRate);
 
-    for (WavetableOscillator& osc : waveOscillators)
+    for (WavetableOscillator& osc : impl.waveOscillators_)
         osc.init(sampleRate);
 
-    for (auto& lfo : lfos)
+    for (auto& eg : impl.flexEGs_)
+        eg->setSampleRate(sampleRate);
+
+    for (auto& lfo : impl.lfos_)
+        lfo->setSampleRate(sampleRate);
+    if (auto* lfo = impl.lfoAmplitude_.get())
+        lfo->setSampleRate(sampleRate);
+    if (auto* lfo = impl.lfoPitch_.get())
+        lfo->setSampleRate(sampleRate);
+    if (auto* lfo = impl.lfoFilter_.get())
         lfo->setSampleRate(sampleRate);
 
-    for (auto& filter : filters)
+    for (auto& filter : impl.filters_)
         filter.setSampleRate(sampleRate);
 
-    for (auto& eq : equalizers)
+    for (auto& eq : impl.equalizers_)
         eq.setSampleRate(sampleRate);
 
-    powerFollower.setSampleRate(sampleRate);
+    impl.powerFollower_.setSampleRate(sampleRate);
 }
 
-void sfz::Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
+void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
-    this->samplesPerBlock = samplesPerBlock;
-    powerFollower.setSamplesPerBlock(samplesPerBlock);
+    Impl& impl = *impl_;
+    impl.samplesPerBlock_ = samplesPerBlock;
+    impl.powerFollower_.setSamplesPerBlock(samplesPerBlock);
 }
 
-void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
+void Voice::renderBlock(AudioSpan<float> buffer) noexcept
 {
-    ASSERT(static_cast<int>(buffer.getNumFrames()) <= samplesPerBlock);
+    Impl& impl = *impl_;
+    ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);
     buffer.fill(0.0f);
 
-    if (region == nullptr)
+    const Region* region = impl.region_;
+    if (region == nullptr || region->disabled())
         return;
 
-    const auto delay = min(static_cast<size_t>(initialDelay), buffer.getNumFrames());
+    const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
-    initialDelay -= static_cast<int>(delay);
+    impl.initialDelay_ -= static_cast<int>(delay);
 
     { // Fill buffer with raw data
-        ScopedTiming logger { dataDuration };
+        ScopedTiming logger { impl.dataDuration_ };
         if (region->isOscillator())
-            fillWithGenerator(delayed_buffer);
+            impl.fillWithGenerator(delayed_buffer);
         else
-            fillWithData(delayed_buffer);
+            impl.fillWithData(delayed_buffer);
     }
 
     if (region->isStereo()) {
-        ampStageStereo(buffer);
-        panStageStereo(buffer);
-        filterStageStereo(buffer);
+        impl.ampStageStereo(buffer);
+        impl.panStageStereo(buffer);
+        impl.filterStageStereo(buffer);
     } else {
-        ampStageMono(buffer);
-        filterStageMono(buffer);
-        panStageMono(buffer);
+        impl.ampStageMono(buffer);
+        impl.filterStageMono(buffer);
+        impl.panStageMono(buffer);
     }
 
     if (!region->flexAmpEG) {
-        if (!egAmplitude.isSmoothing())
-            switchState(State::cleanMeUp);
+        if (!impl.egAmplitude_.isSmoothing())
+            impl.switchState(State::cleanMeUp);
     }
     else {
-        if (flexEGs[*region->flexAmpEG]->isFinished())
-            switchState(State::cleanMeUp);
+        if (impl.flexEGs_[*region->flexAmpEG]->isFinished())
+            impl.switchState(State::cleanMeUp);
     }
 
-    powerFollower.process(buffer);
+    impl.powerFollower_.process(buffer);
 
-    age += buffer.getNumFrames();
-    if (triggerDelay) {
+    impl.age_ += buffer.getNumFrames();
+    if (impl.triggerDelay_) {
         // Should be OK but just in case;
-        age = min(age - *triggerDelay, 0);
-        triggerDelay = absl::nullopt;
+        impl.age_ = min(impl.age_ - *impl.triggerDelay_, 0);
+        impl.triggerDelay_ = absl::nullopt;
     }
 
 #if 0
@@ -323,31 +802,31 @@ void sfz::Voice::renderBlock(AudioSpan<float> buffer) noexcept
 #endif
 }
 
-void sfz::Voice::resetCrossfades() noexcept
+void Voice::Impl::resetCrossfades() noexcept
 {
     float xfadeValue { 1.0f };
-    const auto xfCurve = region->crossfadeCCCurve;
+    const auto xfCurve = region_->crossfadeCCCurve;
 
-    for (const auto& mod : region->crossfadeCCInRange) {
-        const auto value = resources.midiState.getCCValue(mod.cc);
+    for (const auto& mod : region_->crossfadeCCInRange) {
+        const auto value = resources_.midiState.getCCValue(mod.cc);
         xfadeValue *= crossfadeIn(mod.data, value, xfCurve);
     }
 
-    for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto value = resources.midiState.getCCValue(mod.cc);
+    for (const auto& mod : region_->crossfadeCCOutRange) {
+        const auto value = resources_.midiState.getCCValue(mod.cc);
         xfadeValue *= crossfadeOut(mod.data, value, xfCurve);
     }
 
-    xfadeSmoother.reset(xfadeValue);
+    xfadeSmoother_.reset(xfadeValue);
 }
 
-void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
+void Voice::Impl::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
-    const auto xfCurve = region->crossfadeCCCurve;
+    const auto xfCurve = region_->crossfadeCCCurve;
 
-    auto tempSpan = resources.bufferPool.getBuffer(numSamples);
-    auto xfadeSpan = resources.bufferPool.getBuffer(numSamples);
+    auto tempSpan = resources_.bufferPool.getBuffer(numSamples);
+    auto xfadeSpan = resources_.bufferPool.getBuffer(numSamples);
 
     if (!tempSpan || !xfadeSpan)
         return;
@@ -355,8 +834,8 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
     fill<float>(*xfadeSpan, 1.0f);
 
     bool canShortcut = true;
-    for (const auto& mod : region->crossfadeCCInRange) {
-        const auto& events = resources.midiState.getCCEvents(mod.cc);
+    for (const auto& mod : region_->crossfadeCCInRange) {
+        const auto& events = resources_.midiState.getCCEvents(mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeIn(mod.data, x, xfCurve);
@@ -364,8 +843,8 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
         applyGain<float>(*tempSpan, *xfadeSpan);
     }
 
-    for (const auto& mod : region->crossfadeCCOutRange) {
-        const auto& events = resources.midiState.getCCEvents(mod.cc);
+    for (const auto& mod : region_->crossfadeCCOutRange) {
+        const auto& events = resources_.midiState.getCCEvents(mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeOut(mod.data, x, xfCurve);
@@ -373,48 +852,48 @@ void sfz::Voice::applyCrossfades(absl::Span<float> modulationSpan) noexcept
         applyGain<float>(*tempSpan, *xfadeSpan);
     }
 
-    xfadeSmoother.process(*xfadeSpan, *xfadeSpan, canShortcut);
+    xfadeSmoother_.process(*xfadeSpan, *xfadeSpan, canShortcut);
     applyGain<float>(*xfadeSpan, modulationSpan);
 }
 
 
-void sfz::Voice::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
+void Voice::Impl::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
 
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = resources_.modMatrix;
 
     // Amplitude EG
-    absl::Span<const float> ampegOut(mm.getModulation(masterAmplitudeTarget), numSamples);
+    absl::Span<const float> ampegOut(mm.getModulation(masterAmplitudeTarget_), numSamples);
     ASSERT(ampegOut.data());
     copy(ampegOut, modulationSpan);
 
     // Amplitude envelope
-    applyGain1<float>(baseGain, modulationSpan);
-    if (float* mod = mm.getModulation(amplitudeTarget)) {
+    applyGain1<float>(baseGain_, modulationSpan);
+    if (float* mod = mm.getModulation(amplitudeTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            modulationSpan[i] *= normalizePercents(mod[i]);
+            modulationSpan[i] *= mod[i];
     }
 
     // Volume envelope
-    applyGain1<float>(db2mag(baseVolumedB), modulationSpan);
-    if (float* mod = mm.getModulation(volumeTarget)) {
+    applyGain1<float>(db2mag(baseVolumedB_), modulationSpan);
+    if (float* mod = mm.getModulation(volumeTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
             modulationSpan[i] *= db2mag(mod[i]);
     }
 
     // Smooth the gain transitions
-    gainSmoother.process(modulationSpan, modulationSpan);
+    gainSmoother_.process(modulationSpan, modulationSpan);
 }
 
-void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
+void Voice::Impl::ampStageMono(AudioSpan<float> buffer) noexcept
 {
-    ScopedTiming logger { amplitudeDuration };
+    ScopedTiming logger { amplitudeDuration_ };
 
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
 
-    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
@@ -423,12 +902,12 @@ void sfz::Voice::ampStageMono(AudioSpan<float> buffer) noexcept
     applyGain<float>(*modulationSpan, leftBuffer);
 }
 
-void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
+void Voice::Impl::ampStageStereo(AudioSpan<float> buffer) noexcept
 {
-    ScopedTiming logger { amplitudeDuration };
+    ScopedTiming logger { amplitudeDuration_ };
 
     const auto numSamples = buffer.getNumFrames();
-    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
@@ -437,65 +916,65 @@ void sfz::Voice::ampStageStereo(AudioSpan<float> buffer) noexcept
     buffer.applyGain(*modulationSpan);
 }
 
-void sfz::Voice::panStageMono(AudioSpan<float> buffer) noexcept
+void Voice::Impl::panStageMono(AudioSpan<float> buffer) noexcept
 {
-    ScopedTiming logger { panningDuration };
+    ScopedTiming logger { panningDuration_ };
 
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
     const auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = resources_.modMatrix;
 
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
 
     // Apply panning
-    fill(*modulationSpan, region->pan);
-    if (float* mod = mm.getModulation(panTarget)) {
+    fill(*modulationSpan, region_->pan);
+    if (float* mod = mm.getModulation(panTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 }
 
-void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
+void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
 {
-    ScopedTiming logger { panningDuration };
+    ScopedTiming logger { panningDuration_ };
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
     const auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationSpan = resources.bufferPool.getBuffer(numSamples);
+    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = resources_.modMatrix;
 
     // Apply panning
-    fill(*modulationSpan, region->pan);
-    if (float* mod = mm.getModulation(panTarget)) {
+    fill(*modulationSpan, region_->pan);
+    if (float* mod = mm.getModulation(panTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
     // Apply the width/position process
-    fill(*modulationSpan, region->width);
-    if (float* mod = mm.getModulation(widthTarget)) {
+    fill(*modulationSpan, region_->width);
+    if (float* mod = mm.getModulation(widthTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     width(*modulationSpan, leftBuffer, rightBuffer);
 
-    fill(*modulationSpan, region->position);
-    if (float* mod = mm.getModulation(positionTarget)) {
+    fill(*modulationSpan, region_->position);
+    if (float* mod = mm.getModulation(positionTarget_)) {
         for (size_t i = 0; i < numSamples; ++i)
-            (*modulationSpan)[i] += normalizePercents(mod[i]);
+            (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
@@ -504,25 +983,25 @@ void sfz::Voice::panStageStereo(AudioSpan<float> buffer) noexcept
     applyGain1(1.4125375446227544f, rightBuffer);
 }
 
-void sfz::Voice::filterStageMono(AudioSpan<float> buffer) noexcept
+void Voice::Impl::filterStageMono(AudioSpan<float> buffer) noexcept
 {
-    ScopedTiming logger { filterDuration };
+    ScopedTiming logger { filterDuration_ };
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
     const float* inputChannel[1] { leftBuffer.data() };
     float* outputChannel[1] { leftBuffer.data() };
-    for (unsigned i = 0; i < region->filters.size(); ++i) {
-        filters[i].process(inputChannel, outputChannel, numSamples);
+    for (unsigned i = 0; i < region_->filters.size(); ++i) {
+        filters_[i].process(inputChannel, outputChannel, numSamples);
     }
 
-    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
-        equalizers[i].process(inputChannel, outputChannel, numSamples);
+    for (unsigned i = 0; i < region_->equalizers.size(); ++i) {
+        equalizers_[i].process(inputChannel, outputChannel, numSamples);
     }
 }
 
-void sfz::Voice::filterStageStereo(AudioSpan<float> buffer) noexcept
+void Voice::Impl::filterStageStereo(AudioSpan<float> buffer) noexcept
 {
-    ScopedTiming logger { filterDuration };
+    ScopedTiming logger { filterDuration_ };
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
     const auto rightBuffer = buffer.getSpan(1);
@@ -530,53 +1009,67 @@ void sfz::Voice::filterStageStereo(AudioSpan<float> buffer) noexcept
     const float* inputChannels[2] { leftBuffer.data(), rightBuffer.data() };
     float* outputChannels[2] { leftBuffer.data(), rightBuffer.data() };
 
-    for (unsigned i = 0; i < region->filters.size(); ++i) {
-        filters[i].process(inputChannels, outputChannels, numSamples);
+    for (unsigned i = 0; i < region_->filters.size(); ++i) {
+        filters_[i].process(inputChannels, outputChannels, numSamples);
     }
 
-    for (unsigned i = 0; i < region->equalizers.size(); ++i) {
-        equalizers[i].process(inputChannels, outputChannels, numSamples);
+    for (unsigned i = 0; i < region_->equalizers.size(); ++i) {
+        equalizers_[i].process(inputChannels, outputChannels, numSamples);
     }
 }
 
-void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
+void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 {
-    const auto numSamples = buffer.getNumFrames();
+    const size_t numSamples = buffer.getNumFrames();
     if (numSamples == 0)
         return;
 
-    if (!currentPromise) {
+    if (!currentPromise_) {
         DBG("[Voice] Missing promise during fillWithData");
         return;
     }
 
-    auto source = currentPromise->getData();
+    auto source = currentPromise_->getData();
 
     // calculate interpolation data
     //   indices: integral position in the source audio
     //   coeffs: fractional position normalized 0-1
-    auto coeffs = resources.bufferPool.getBuffer(numSamples);
-    auto indices = resources.bufferPool.getIndexBuffer(numSamples);
+    auto coeffs = resources_.bufferPool.getBuffer(numSamples);
+    auto indices = resources_.bufferPool.getIndexBuffer(numSamples);
     if (!indices || !coeffs)
         return;
     {
-        auto jumps = resources.bufferPool.getBuffer(numSamples);
+        auto jumps = resources_.bufferPool.getBuffer(numSamples);
         if (!jumps)
             return;
 
-        fill(*jumps, pitchRatio * speedRatio);
-        pitchEnvelope(*jumps);
+        absl::Span<float> pitch = *jumps; // temporary
+        pitchEnvelope(pitch);
 
-        jumps->front() += floatPositionOffset;
+        float baseRatio = pitchRatio_ * speedRatio_;
+        for (size_t i = 0; i < numSamples; ++i)
+            (*jumps)[i] = baseRatio * centsFactor(pitch[i]);
+
+        // Take the first sample if the voice just started
+        if (age_ == 0)
+            jumps->front() = 0.0f;
+
+        jumps->front() += floatPositionOffset_;
         cumsum<float>(*jumps, *jumps);
         sfzInterpolationCast<float>(*jumps, *indices, *coeffs);
-        add1<int>(sourcePosition, *indices);
+        add1<int>(sourcePosition_, *indices);
     }
 
-    // calculate loop characteristics
-    const auto loop = this->loop;
-    const bool isLooping = region->shouldLoop()
-        && (static_cast<size_t>(loop.end) < source.getNumFrames());
+    // Update loop characteristics with the current CC state
+    updateLoopInformation();
+    const auto loop = this->loop_;
+
+    // Looping logic
+    const bool hasLoopSamples = static_cast<size_t>(loop.end) < source.getNumFrames();
+    const bool loopCountReached = region_->loopCount && loop_.restarts >= *region_->loopCount;
+    const bool loopContinuous = (region_->loopMode == LoopMode::loop_continuous);
+    const bool loopSustain = (region_->loopMode == LoopMode::loop_sustain) && !released();
+    const bool shouldLoop = hasLoopSamples && (loopSustain || loopContinuous) && !loopCountReached;
 
     /*
                loop start             loop end
@@ -598,15 +1091,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
     enum PartitionType { kPartitionNormal, kPartitionLoopXfade };
 
     SpanHolder<absl::Span<int>> partitionBuffers[2];
-    if (!isLooping) {
-        static const int starts[1] = { 0 };
-        static const int types[1] = { kPartitionNormal };
-        partitionStarts = absl::MakeSpan(const_cast<int*>(starts), 1);
-        partitionTypes = absl::MakeSpan(const_cast<int*>(types), 1);
-        numPartitions = 1;
-    } else {
+    if (shouldLoop) {
         for (auto& buf : partitionBuffers) {
-            buf = resources.bufferPool.getIndexBuffer(numSamples);
+            buf = resources_.bufferPool.getIndexBuffer(numSamples);
             if (!buf)
                 return;
         }
@@ -614,63 +1101,81 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         partitionTypes = *partitionBuffers[1];
         // Note: partitions will be alternance of Normal/Xfade
         //       computed along with index processing below
+    } else {
+        static const int starts[1] = { 0 };
+        static const int types[1] = { kPartitionNormal };
+        partitionStarts = absl::MakeSpan(const_cast<int*>(starts), 1);
+        partitionTypes = absl::MakeSpan(const_cast<int*>(types), 1);
+        numPartitions = 1;
     }
 
-    // index preprocessing for loops
-    if (isLooping) {
-        int oldIndex {};
-        int oldPartitionType {};
-        for (unsigned i = 0; i < numSamples; ++i) {
-            int index = (*indices)[i];
+    const auto sampleEnd = min( int(sampleEnd_), int(currentPromise_->information.end), int(source.getNumFrames())) - 1;
 
-            // wrap indices post loop-entry around the loop segment
-            int wrappedIndex = (index <= loop.end) ? index :
-                (loop.start + (index - loop.start) % loop.size);
+    int blockRestarts { 0 };
+    int oldIndex {};
+    int oldPartitionType {};
+
+    const auto addPartitionIfNecessary = [&] (unsigned blockIndex, int wrappedIndex, bool wrapped) {
+        const bool xfading = wrappedIndex >= loop.start && wrappedIndex >= loop.xfOutStart;
+        const int partitionType = xfading ? kPartitionLoopXfade : kPartitionNormal;
+
+        // if looping or entering a different type, start a new partition
+        bool start = blockIndex == 0 || wrapped || partitionType != oldPartitionType;
+        if (start) {
+            partitionStarts[numPartitions] = blockIndex;
+            partitionTypes[numPartitions] = partitionType;
+            ++numPartitions;
+        }
+
+        oldIndex = wrappedIndex;
+        oldPartitionType = partitionType;
+    };
+
+    if (shouldLoop) {
+        unsigned i = 0;
+        while (i < numSamples) {
+            int wrappedIndex = (*indices)[i] - loop.size * blockRestarts;
+            if (wrappedIndex > loop.end) {
+                wrappedIndex -= loop.size;
+                blockRestarts += 1;
+                loop_.restarts += 1;
+            }
             (*indices)[i] = wrappedIndex;
+            const bool wrapped = wrappedIndex < oldIndex;
 
             // identify the partition this index is in
-            bool xfading = wrappedIndex >= loop.start && wrappedIndex >= loop.xfOutStart;
-            int partitionType = xfading ? kPartitionLoopXfade : kPartitionNormal;
-            // if looping or entering a different type, start a new partition
-            bool start = i == 0 || wrappedIndex < oldIndex || partitionType != oldPartitionType;
-            if (start) {
-                partitionStarts[numPartitions] = i;
-                partitionTypes[numPartitions] = partitionType;
-                ++numPartitions;
-            }
+            addPartitionIfNecessary(i, wrappedIndex, wrapped);
+            i++;
 
-            oldIndex = wrappedIndex;
-            oldPartitionType = partitionType;
+            // Break if we reached the loop count
+            if (wrapped && region_->loopCount && loop_.restarts >= *region_->loopCount)
+                break;
         }
-    }
-    // index preprocessing for one-shots
-    else {
-        // cut short the voice at the instant of reaching end of sample
-        const auto sampleEnd = min(
-            static_cast<int>(currentPromise->information.end),
-            static_cast<int>(source.getNumFrames())
-        ) - 1;
-        for (unsigned i = 0; i < numSamples; ++i) {
+
+        while (i < numSamples) { // In case we released within the block, continue as if it were a one-shot
+            (*indices)[i] -= loop.size * blockRestarts;
             if ((*indices)[i] >= sampleEnd) {
-#ifndef NDEBUG
-                // Check for underflow
-                if (source.getNumFrames() - 1 < currentPromise->information.end) {
-                    DBG("[sfizz] Underflow: source available samples "
-                        << source.getNumFrames() << "/"
-                        << currentPromise->information.end
-                        << " for sample " << *region->sampleId);
-                }
-#endif
-                if (!region->flexAmpEG) {
-                    egAmplitude.setReleaseTime(0.0f);
-                    egAmplitude.startRelease(i);
-                }
-                else {
-                    // TODO(jpc): Flex AmpEG
-                    flexEGs[*region->flexAmpEG]->release(i);
-                }
                 fill<int>(indices->subspan(i), sampleEnd);
-                fill<float>(coeffs->subspan(i), 1.0f);
+                fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
+                break;
+            }
+            i++;
+        }
+    } else { // One shots and loops that have released (for loop sustain) or ended (with loop counts)
+        for (unsigned i = 0; i < numSamples; ++i) {
+            (*indices)[i] -= sampleSize_ * blockRestarts;
+
+            if ((*indices)[i] >= sampleEnd) {
+                if (region_->sampleCount && count_ < *region_->sampleCount && !region_->shouldLoop()) {
+                    (*indices)[i] -= sampleSize_;
+                    blockRestarts += 1;
+                    count_ += 1;
+                    continue;
+                }
+
+                off(int(i), true);
+                fill<int>(indices->subspan(i), sampleEnd);
+                fill<float>(coeffs->subspan(i), 0x1.fffffep-1);
                 break;
             }
         }
@@ -695,9 +1200,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
 
         if (ptType == kPartitionLoopXfade) {
-            auto xfTemp1 = resources.bufferPool.getBuffer(numSamples);
-            auto xfTemp2 = resources.bufferPool.getBuffer(numSamples);
-            auto xfIndicesTemp = resources.bufferPool.getIndexBuffer(numSamples);
+            auto xfTemp1 = resources_.bufferPool.getBuffer(numSamples);
+            auto xfTemp2 = resources_.bufferPool.getBuffer(numSamples);
+            auto xfIndicesTemp = resources_.bufferPool.getIndexBuffer(numSamples);
             if (!xfTemp1 || !xfTemp2 || !xfIndicesTemp)
                 return;
 
@@ -705,8 +1210,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 
             // compute crossfade positions
             for (unsigned i = 0; i < ptSize; ++i) {
-                float pos = ptIndices[i] + ptCoeffs[i];
-                xfCurvePos[i] = (pos - loop.xfOutStart) / loop.xfSize;
+                float pos = float(ptIndices[i]) + ptCoeffs[i];
+                xfCurvePos[i] = (pos - float(loop.xfOutStart)) / float(loop.xfSize);
             }
 
             //----------------------------------------------------------------//
@@ -721,7 +1226,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                         xfCurve[i] = xfIn.evalNormalized(1.0f - xfCurvePos[i]);
                 }
                 else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
-                    const Curve& xfOut = resources.curves.getCurve(6);
+                    const Curve& xfOut = resources_.curves.getCurve(6);
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = xfOut.evalNormalized(xfCurvePos[i]);
                 }
@@ -771,7 +1276,7 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
                         xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
                 else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
-                    const Curve& xfIn = resources.curves.getCurve(5);
+                    const Curve& xfIn = resources_.curves.getCurve(5);
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
@@ -787,8 +1292,8 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
         }
     }
 
-    sourcePosition = indices->back();
-    floatPositionOffset = coeffs->back();
+    sourcePosition_ = indices->back();
+    floatPositionOffset_ = coeffs->back();
 
 #if 1
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
@@ -798,9 +1303,9 @@ void sfz::Voice::fillWithData(AudioSpan<float> buffer) noexcept
 #endif
 }
 
-template <sfz::InterpolatorModel M, bool Adding>
-void sfz::Voice::fillInterpolated(
-    const sfz::AudioSpan<const float>& source, const sfz::AudioSpan<float>& dest,
+template <InterpolatorModel M, bool Adding>
+void Voice::Impl::fillInterpolated(
+    const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
     absl::Span<const float> addingGains)
 {
@@ -811,7 +1316,7 @@ void sfz::Voice::fillInterpolated(
     auto left = dest.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            auto output = sfz::interpolate<M>(&leftSource[*ind], *coeff);
+            auto output = interpolate<M>(&leftSource[*ind], *coeff);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * output;
@@ -824,8 +1329,8 @@ void sfz::Voice::fillInterpolated(
         auto right = dest.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
-            auto leftOutput = sfz::interpolate<M>(&leftSource[*ind], *coeff);
-            auto rightOutput = sfz::interpolate<M>(&rightSource[*ind], *coeff);
+            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff);
+            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * leftOutput;
@@ -841,96 +1346,153 @@ void sfz::Voice::fillInterpolated(
 }
 
 template <bool Adding>
-void sfz::Voice::fillInterpolatedWithQuality(
-    const sfz::AudioSpan<const float>& source, const sfz::AudioSpan<float>& dest,
+void Voice::Impl::fillInterpolatedWithQuality(
+    const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
     absl::Span<const float> addingGains, int quality)
 {
-    switch (quality) {
-    default:
-        if (quality > 2)
-            goto high; // TODO sinc, not implemented
-        // fall through
+    switch (clamp(quality, 0, 10)) {
+    case 0:
+        {
+            constexpr auto itp = kInterpolatorNearest;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
     case 1:
         {
             constexpr auto itp = kInterpolatorLinear;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
         }
         break;
-    case 2: high:
+    case 2:
         {
-#if 1
+#if 0
             // B-spline response has faster decay of aliasing, but not zero-crossings at integer positions
             constexpr auto itp = kInterpolatorBspline3;
 #else
-            // Hermite polynomial
+            // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 3:
+        {
+            constexpr auto itp = kInterpolatorSinc8;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 4:
+        {
+            constexpr auto itp = kInterpolatorSinc12;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 5:
+        {
+            constexpr auto itp = kInterpolatorSinc16;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 6:
+        {
+            constexpr auto itp = kInterpolatorSinc24;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 7:
+        {
+            constexpr auto itp = kInterpolatorSinc36;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 8:
+        {
+            constexpr auto itp = kInterpolatorSinc48;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 9:
+        {
+            constexpr auto itp = kInterpolatorSinc60;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+        }
+        break;
+    case 10:
+        {
+            constexpr auto itp = kInterpolatorSinc72;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
         }
         break;
     }
 }
 
-const sfz::Curve& sfz::Voice::getSCurve()
+const Curve& Voice::Impl::getSCurve()
 {
     static const Curve curve = []() -> Curve {
         constexpr unsigned N = Curve::NumValues;
         float values[N];
         for (unsigned i = 0; i < N; ++i) {
-            double x = i / static_cast<double>(N - 1);
-            values[i] = (1.0 - std::cos(M_PI * x)) * 0.5;
+            double x = i / double(N - 1);
+            values[i] = float((1.0 - std::cos(M_PI * x)) * 0.5);
         }
         return Curve::buildFromPoints(values);
     }();
     return curve;
 }
 
-void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
+void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 {
     const auto leftSpan = buffer.getSpan(0);
     const auto rightSpan  = buffer.getSpan(1);
 
-    if (region->sampleId->filename() == "*noise") {
+    if (region_->sampleId->filename() == "*noise") {
         auto gen = [&]() {
-            return uniformNoiseDist(Random::randomGenerator);
+            return uniformNoiseDist_(Random::randomGenerator);
         };
         absl::c_generate(leftSpan, gen);
         absl::c_generate(rightSpan, gen);
-    } else if (region->sampleId->filename() == "*gnoise") {
+    } else if (region_->sampleId->filename() == "*gnoise") {
         // You need to wrap in a lambda, otherwise generate will
         // make a copy of the gaussian distribution *along with its state*
         // leading to periodic behavior....
         auto gen = [&]() {
-            return gaussianNoiseDist();
+            return gaussianNoiseDist_();
         };
         absl::c_generate(leftSpan, gen);
         absl::c_generate(rightSpan, gen);
     } else {
-        const auto numFrames = buffer.getNumFrames();
+        const size_t numFrames = buffer.getNumFrames();
 
-        auto frequencies = resources.bufferPool.getBuffer(numFrames);
+        auto frequencies = resources_.bufferPool.getBuffer(numFrames);
         if (!frequencies)
             return;
 
-        float keycenterFrequency = midiNoteFrequency(region->pitchKeycenter);
-        fill(*frequencies, pitchRatio * keycenterFrequency);
-        pitchEnvelope(*frequencies);
+        absl::Span<float> pitch = *frequencies; // temporary
+        pitchEnvelope(pitch);
 
-        auto detuneSpan = resources.bufferPool.getBuffer(numFrames);
+        const float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
+        const float baseRatio = pitchRatio_ * keycenterFrequency;
+
+        for (size_t i = 0; i < numFrames; ++i)
+            (*frequencies)[i] = baseRatio * centsFactor(pitch[i]);
+
+        auto detuneSpan = resources_.bufferPool.getBuffer(numFrames);
         if (!detuneSpan)
             return;
 
-        const int oscillatorMode = region->oscillatorMode;
-        const int oscillatorMulti = region->oscillatorMulti;
+        const int oscillatorMode = region_->oscillatorMode;
+        const int oscillatorMulti = region_->oscillatorMulti;
+        const int quality = getCurrentOscillatorQuality();
 
         if (oscillatorMode <= 0 && oscillatorMulti < 2) {
             // single oscillator
-            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
+            auto tempSpan = resources_.bufferPool.getBuffer(numFrames);
             if (!tempSpan)
                 return;
 
-            WavetableOscillator& osc = waveOscillators[0];
+            WavetableOscillator& osc = waveOscillators_[0];
+            osc.setQuality(quality);
             fill(*detuneSpan, 1.0f);
             osc.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), buffer.getNumFrames());
             copy<float>(*tempSpan, leftSpan);
@@ -938,30 +1500,31 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         }
         else if (oscillatorMode <= 0 && oscillatorMulti >= 3) {
             // unison oscillator
-            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
-            auto tempLeftSpan = resources.bufferPool.getBuffer(numFrames);
-            auto tempRightSpan = resources.bufferPool.getBuffer(numFrames);
+            auto tempSpan = resources_.bufferPool.getBuffer(numFrames);
+            auto tempLeftSpan = resources_.bufferPool.getBuffer(numFrames);
+            auto tempRightSpan = resources_.bufferPool.getBuffer(numFrames);
             if (!tempSpan || !tempLeftSpan || !tempRightSpan)
                 return;
 
-            const float* detuneMod = resources.modMatrix.getModulation(oscillatorDetuneTarget);
-            for (unsigned u = 0, uSize = waveUnisonSize; u < uSize; ++u) {
-                WavetableOscillator& osc = waveOscillators[u];
+            const float* detuneMod = resources_.modMatrix.getModulation(oscillatorDetuneTarget_);
+            for (unsigned u = 0, uSize = waveUnisonSize_; u < uSize; ++u) {
+                WavetableOscillator& osc = waveOscillators_[u];
+                osc.setQuality(quality);
                 if (!detuneMod)
-                    fill(*detuneSpan, waveDetuneRatio[u]);
+                    fill(*detuneSpan, waveDetuneRatio_[u]);
                 else {
                     for (size_t i = 0; i < numFrames; ++i)
                         (*detuneSpan)[i] = centsFactor(detuneMod[i]);
-                    applyGain1(waveDetuneRatio[u], *detuneSpan);
+                    applyGain1(waveDetuneRatio_[u], *detuneSpan);
                 }
                 osc.processModulated(frequencies->data(), detuneSpan->data(), tempSpan->data(), numFrames);
                 if (u == 0) {
-                    applyGain1<float>(waveLeftGain[u], *tempSpan, *tempLeftSpan);
-                    applyGain1<float>(waveRightGain[u], *tempSpan, *tempRightSpan);
+                    applyGain1<float>(waveLeftGain_[u], *tempSpan, *tempLeftSpan);
+                    applyGain1<float>(waveRightGain_[u], *tempSpan, *tempRightSpan);
                 }
                 else {
-                    multiplyAdd1<float>(waveLeftGain[u], *tempSpan, *tempLeftSpan);
-                    multiplyAdd1<float>(waveRightGain[u], *tempSpan, *tempRightSpan);
+                    multiplyAdd1<float>(waveLeftGain_[u], *tempSpan, *tempLeftSpan);
+                    multiplyAdd1<float>(waveRightGain_[u], *tempSpan, *tempRightSpan);
                 }
             }
 
@@ -970,39 +1533,41 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
         }
         else {
             // modulated oscillator
-            auto tempSpan = resources.bufferPool.getBuffer(numFrames);
+            auto tempSpan = resources_.bufferPool.getBuffer(numFrames);
             if (!tempSpan)
                 return;
 
-            WavetableOscillator& oscCar = waveOscillators[0];
-            WavetableOscillator& oscMod = waveOscillators[1];
+            WavetableOscillator& oscCar = waveOscillators_[0];
+            WavetableOscillator& oscMod = waveOscillators_[1];
+            oscCar.setQuality(quality);
+            oscMod.setQuality(quality);
 
             // compute the modulator
-            auto modulatorSpan = resources.bufferPool.getBuffer(numFrames);
+            auto modulatorSpan = resources_.bufferPool.getBuffer(numFrames);
             if (!modulatorSpan)
                 return;
 
-            const float* detuneMod = resources.modMatrix.getModulation(oscillatorDetuneTarget);
+            const float* detuneMod = resources_.modMatrix.getModulation(oscillatorDetuneTarget_);
             if (!detuneMod)
-                fill(*detuneSpan, waveDetuneRatio[1]);
+                fill(*detuneSpan, waveDetuneRatio_[1]);
             else {
                 for (size_t i = 0; i < numFrames; ++i)
                     (*detuneSpan)[i] = centsFactor(detuneMod[i]);
-                applyGain1(waveDetuneRatio[1], *detuneSpan);
+                applyGain1(waveDetuneRatio_[1], *detuneSpan);
             }
 
             oscMod.processModulated(frequencies->data(), detuneSpan->data(), modulatorSpan->data(), numFrames);
 
             // scale the modulator
-            const float oscillatorModDepth = region->oscillatorModDepth;
+            const float oscillatorModDepth = region_->oscillatorModDepth;
             if (oscillatorModDepth != 1.0f)
                 applyGain1(oscillatorModDepth, *modulatorSpan);
-            const float* modDepthMod = resources.modMatrix.getModulation(oscillatorModDepthTarget);
+            const float* modDepthMod = resources_.modMatrix.getModulation(oscillatorModDepthTarget_);
             if (modDepthMod)
-                multiplyMul1(0.01f, absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
+                applyGain(absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
 
             // compute carrier×modulator
-            switch (region->oscillatorMode) {
+            switch (region_->oscillatorMode) {
             case 0: // RM synthesis
             default:
                 fill(*detuneSpan, 1.0f);
@@ -1036,14 +1601,27 @@ void sfz::Voice::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #endif
 }
 
-bool sfz::Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
+bool Voice::Impl::released() const noexcept
 {
+    if (!region_->flexAmpEG)
+        return egAmplitude_.isReleased();
+    else
+        return flexEGs_[*region_->flexAmpEG]->isReleased();
+}
+
+bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
+{
+    Impl& impl = *impl_;
+    const Region* region = impl.region_;
     if (region == nullptr || other == nullptr)
         return false;
 
-    if (triggerEvent.type == TriggerEventType::NoteOn
-        && region->offBy == other->group
-        && (region->group != other->group || noteNumber != triggerEvent.number)) {
+    if (impl.released())
+        return false;
+
+    if (impl.triggerEvent_.type == TriggerEventType::NoteOn
+        && region->offBy && *region->offBy == other->group
+        && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
     }
@@ -1051,178 +1629,232 @@ bool sfz::Voice::checkOffGroup(const Region* other, int delay, int noteNumber) n
     return false;
 }
 
-void sfz::Voice::reset() noexcept
+void Voice::reset() noexcept
 {
-    switchState(State::idle);
-    region = nullptr;
-    currentPromise.reset();
-    sourcePosition = 0;
-    age = 0;
-    floatPositionOffset = 0.0f;
-    noteIsOff = false;
+    Impl& impl = *impl_;
+    impl.switchState(State::idle);
+    impl.region_ = nullptr;
+    impl.currentPromise_.reset();
+    impl.sourcePosition_ = 0;
+    impl.age_ = 0;
+    impl.count_ = 1;
+    impl.floatPositionOffset_ = 0.0f;
+    impl.noteIsOff_ = false;
+    impl.sostenutoState_ = Impl::SostenutoState::Up;
 
-    resetLoopInformation();
+    impl.resetLoopInformation();
 
-    powerFollower.clear();
+    impl.powerFollower_.clear();
 
-    for (auto& filter : filters)
+    for (auto& filter : impl.filters_)
         filter.reset();
 
-    for (auto& eq : equalizers)
+    for (auto& eq : impl.equalizers_)
         eq.reset();
 
     removeVoiceFromRing();
 }
 
-void sfz::Voice::resetLoopInformation() noexcept
+void Voice::Impl::resetLoopInformation() noexcept
 {
-    loop.start = 0;
-    loop.end = 0;
-    loop.size = 0;
-    loop.xfSize = 0;
-    loop.xfOutStart = 0;
-    loop.xfInStart = 0;
+    loop_.start = 0;
+    loop_.end = 0;
+    loop_.size = 0;
+    loop_.xfSize = 0;
+    loop_.xfOutStart = 0;
+    loop_.xfInStart = 0;
+    loop_.restarts = 0;
 }
 
-void sfz::Voice::updateLoopInformation() noexcept
+void Voice::Impl::updateLoopInformation() noexcept
 {
-    if (!region || !currentPromise)
+    if (!region_ || !currentPromise_)
         return;
 
-    if (!region->shouldLoop())
+    if (!region_->shouldLoop())
         return;
-    const auto& info = currentPromise->information;
-    const auto factor = resources.filePool.getOversamplingFactor();
-    const auto rate = info.sampleRate;
 
-    loop.end = static_cast<int>(region->loopEnd(factor));
-    loop.start = static_cast<int>(region->loopStart(factor));
-    loop.size = loop.end + 1 - loop.start;
-    loop.xfSize = static_cast<int>(lroundPositive(region->loopCrossfade * rate));
-    loop.xfOutStart = loop.end + 1 - loop.xfSize;
-    loop.xfInStart = loop.start - loop.xfSize;
+    Resources& resources = resources_;
+    const FileInformation& info = currentPromise_->information;
+    const double rate = info.sampleRate;
+
+    loop_.start = static_cast<int>(region_->loopStart(resources.midiState));
+    loop_.end = max(static_cast<int>(region_->loopEnd(resources.midiState)), loop_.start);
+    loop_.size = loop_.end + 1 - loop_.start;
+    loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
+    // Clamp the crossfade to the part available before the loop starts
+    loop_.xfSize = min(loop_.start, loop_.xfSize);
+    loop_.xfOutStart = loop_.end + 1 - loop_.xfSize;
+    loop_.xfInStart = loop_.start - loop_.xfSize;
 }
 
-void sfz::Voice::setNextSisterVoice(Voice* voice) noexcept
+void Voice::setNextSisterVoice(Voice* voice) noexcept
 {
     // Should never be null
     ASSERT(voice);
-    nextSisterVoice = voice;
+    nextSisterVoice_ = voice;
 }
 
-void sfz::Voice::setPreviousSisterVoice(Voice* voice) noexcept
+void Voice::setPreviousSisterVoice(Voice* voice) noexcept
 {
     // Should never be null
     ASSERT(voice);
-    previousSisterVoice = voice;
+    previousSisterVoice_ = voice;
 }
 
-void sfz::Voice::removeVoiceFromRing() noexcept
+void Voice::removeVoiceFromRing() noexcept
 {
-    previousSisterVoice->setNextSisterVoice(nextSisterVoice);
-    nextSisterVoice->setPreviousSisterVoice(previousSisterVoice);
-    previousSisterVoice = this;
-    nextSisterVoice = this;
+    previousSisterVoice_->setNextSisterVoice(nextSisterVoice_);
+    nextSisterVoice_->setPreviousSisterVoice(previousSisterVoice_);
+    previousSisterVoice_ = this;
+    nextSisterVoice_ = this;
 }
 
-float sfz::Voice::getAveragePower() const noexcept
+float Voice::getAveragePower() const noexcept
 {
-    if (followPower)
-        return powerFollower.getAveragePower();
+    Impl& impl = *impl_;
+    if (impl.followPower_)
+        return impl.powerFollower_.getAveragePower();
     else
         return 0.0f;
 }
 
-bool sfz::Voice::releasedOrFree() const noexcept
+bool Voice::releasedOrFree() const noexcept
 {
-    if (state != State::playing)
+    Impl& impl = *impl_;
+    if (impl.state_ != State::playing)
         return true;
-    if (!region->flexAmpEG)
-        return egAmplitude.isReleased();
-    else
-        return flexEGs[*region->flexAmpEG]->isReleased();
+
+    return impl.released();
 }
 
-void sfz::Voice::setMaxFiltersPerVoice(size_t numFilters)
+void Voice::setMaxFiltersPerVoice(size_t numFilters)
 {
-    if (numFilters == filters.size())
+    Impl& impl = *impl_;
+    if (numFilters == impl.filters_.size())
         return;
 
-    filters.clear();
+    impl.filters_.clear();
     for (unsigned i = 0; i < numFilters; ++i)
-        filters.emplace_back(resources);
+        impl.filters_.emplace_back(impl.resources_);
 }
 
-void sfz::Voice::setMaxEQsPerVoice(size_t numFilters)
+void Voice::setMaxEQsPerVoice(size_t numFilters)
 {
-    if (numFilters == equalizers.size())
+    Impl& impl = *impl_;
+    if (numFilters == impl.equalizers_.size())
         return;
 
-    equalizers.clear();
+    impl.equalizers_.clear();
     for (unsigned i = 0; i < numFilters; ++i)
-        equalizers.emplace_back(resources);
+        impl.equalizers_.emplace_back(impl.resources_);
 }
 
-void sfz::Voice::setMaxLFOsPerVoice(size_t numLFOs)
+void Voice::setMaxLFOsPerVoice(size_t numLFOs)
 {
-    lfos.resize(numLFOs);
+    Impl& impl = *impl_;
+    Resources& resources = impl.resources_;
+
+    impl.lfos_.resize(numLFOs);
 
     for (size_t i = 0; i < numLFOs; ++i) {
-        auto lfo = absl::make_unique<LFO>();
-        lfo->setSampleRate(sampleRate);
-        lfos[i] = std::move(lfo);
+        auto lfo = absl::make_unique<LFO>(resources);
+        lfo->setSampleRate(impl.sampleRate_);
+        impl.lfos_[i] = std::move(lfo);
     }
 }
 
-void sfz::Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
+void Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
 {
-    flexEGs.resize(numFlexEGs);
+    Impl& impl = *impl_;
+    impl.flexEGs_.resize(numFlexEGs);
 
     for (size_t i = 0; i < numFlexEGs; ++i) {
         auto eg = absl::make_unique<FlexEnvelope>();
-        eg->setSampleRate(sampleRate);
-        flexEGs[i] = std::move(eg);
+        eg->setSampleRate(impl.sampleRate_);
+        impl.flexEGs_[i] = std::move(eg);
     }
 }
 
-void sfz::Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
+void Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
 {
+    Impl& impl = *impl_;
     if (havePitchEG)
-        egPitch.reset(new ADSREnvelope<float>);
+        impl.egPitch_.reset(new ADSREnvelope);
     else
-        egPitch.reset();
+        impl.egPitch_.reset();
 }
 
-void sfz::Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
+void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
 {
+    Impl& impl = *impl_;
     if (haveFilterEG)
-        egFilter.reset(new ADSREnvelope<float>);
+        impl.egFilter_.reset(new ADSREnvelope);
     else
-        egFilter.reset();
+        impl.egFilter_.reset();
 }
 
-void sfz::Voice::setupOscillatorUnison()
+void Voice::setAmplitudeLFOEnabledPerVoice(bool haveAmplitudeLFO)
 {
-    const int m = region->oscillatorMulti;
-    const float d = region->oscillatorDetune;
+    Impl& impl = *impl_;
+    Resources& res = impl.resources_;
+    if (haveAmplitudeLFO) {
+        LFO* lfo = new LFO(res);
+        impl.lfoAmplitude_.reset(lfo);
+        lfo->setSampleRate(impl.sampleRate_);
+    }
+    else
+        impl.lfoAmplitude_.reset();
+}
+
+void Voice::setPitchLFOEnabledPerVoice(bool havePitchLFO)
+{
+    Impl& impl = *impl_;
+    Resources& res = impl.resources_;
+    if (havePitchLFO) {
+        LFO* lfo = new LFO(res);
+        impl.lfoPitch_.reset(lfo);
+        lfo->setSampleRate(impl.sampleRate_);
+    }
+    else
+        impl.lfoPitch_.reset();
+}
+
+void Voice::setFilterLFOEnabledPerVoice(bool haveFilterLFO)
+{
+    Impl& impl = *impl_;
+    Resources& res = impl.resources_;
+    if (haveFilterLFO) {
+        LFO* lfo = new LFO(res);
+        impl.lfoFilter_.reset(lfo);
+        lfo->setSampleRate(impl.sampleRate_);
+    }
+    else
+        impl.lfoFilter_.reset();
+}
+
+void Voice::Impl::setupOscillatorUnison()
+{
+    const int m = region_->oscillatorMulti;
+    const float d = region_->oscillatorDetune;
 
     // 3-9: unison mode, 1: normal/RM, 2: PM/FM
-    if (m < 3 || region->oscillatorMode > 0) {
-        waveUnisonSize = 1;
+    if (m < 3 || region_->oscillatorMode > 0) {
+        waveUnisonSize_ = 1;
         // carrier
-        waveDetuneRatio[0] = 1.0;
-        waveLeftGain[0] = 1.0;
-        waveRightGain[0] = 1.0;
+        waveDetuneRatio_[0] = 1.0;
+        waveLeftGain_[0] = 1.0;
+        waveRightGain_[0] = 1.0;
         // modulator
-        const float modDepth = region->oscillatorModDepth;
-        waveDetuneRatio[1] = centsFactor(d);
-        waveLeftGain[1] = modDepth;
-        waveRightGain[1] = modDepth;
+        const float modDepth = region_->oscillatorModDepth;
+        waveDetuneRatio_[1] = centsFactor(d);
+        waveLeftGain_[1] = modDepth;
+        waveRightGain_[1] = modDepth;
         return;
     }
 
     // oscillator count, aka. unison size
-    waveUnisonSize = m;
+    waveUnisonSize_ = m;
 
     // detune (cents)
     float detunes[config::oscillatorsPerVoice];
@@ -1236,15 +1868,15 @@ void sfz::Voice::setupOscillatorUnison()
 
     // detune (ratio)
     for (int i = 0; i < m; ++i)
-        waveDetuneRatio[i] = centsFactor(detunes[i]);
+        waveDetuneRatio_[i] = centsFactor(detunes[i]);
 
     // gains
-    waveLeftGain[0] = 0.0;
-    waveRightGain[m - 1] = 0.0;
+    waveLeftGain_[0] = 0.0;
+    waveRightGain_[m - 1] = 0.0;
     for (int i = 0; i < m - 1; ++i) {
         float g = 1.0f - float(i) / float(m - 1);
-        waveLeftGain[m - 1 - i] = g;
-        waveRightGain[i] = g;
+        waveLeftGain_[m - 1 - i] = g;
+        waveRightGain_[i] = g;
     }
 
 #if 0
@@ -1263,69 +1895,193 @@ void sfz::Voice::setupOscillatorUnison()
 #endif
 }
 
-void sfz::Voice::switchState(State s)
+void Voice::Impl::switchState(State s)
 {
-    if (s != state) {
-        state = s;
-        if (stateListener)
-            stateListener->onVoiceStateChanged(id, s);
+    if (s != state_) {
+        state_ = s;
+        if (stateListener_)
+            stateListener_->onVoiceStateChanging(id_, s);
     }
 }
 
-void sfz::Voice::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
+void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
 {
-    const auto numFrames = pitchSpan.size();
-    auto bends = resources.bufferPool.getBuffer(numFrames);
-    if (!bends)
-        return;
+    const size_t numFrames = pitchSpan.size();
 
-    const auto events = resources.midiState.getPitchEvents();
+    const EventVector& events = resources_.midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
-        return centsFactor(region->getBendInCents(bend));
+        return region_->getBendInCents(bend);
     };
 
-    if (region->bendStep > 1)
-        pitchBendEnvelope(events, *bends, bendLambda, bendStepFactor);
+    if (region_->bendStep > 1.0f)
+        linearEnvelope(events, pitchSpan, bendLambda, region_->bendStep);
     else
-        pitchBendEnvelope(events, *bends, bendLambda);
-    bendSmoother.process(*bends, *bends);
-    applyGain<float>(*bends, pitchSpan);
+        linearEnvelope(events, pitchSpan, bendLambda);
+    bendSmoother_.process(pitchSpan, pitchSpan);
 
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = resources_.modMatrix;
 
-    if (float* mod = mm.getModulation(pitchTarget)) {
-        for (size_t i = 0; i < numFrames; ++i)
-            pitchSpan[i] *= centsFactor(mod[i]);
-    }
+    if (float* mod = mm.getModulation(pitchTarget_))
+        add<float>(absl::MakeSpan(mod, numFrames), pitchSpan);
 }
 
-void sfz::Voice::resetSmoothers() noexcept
+void Voice::Impl::resetSmoothers() noexcept
 {
-    bendSmoother.reset(1.0f);
-    gainSmoother.reset(0.0f);
+    bendSmoother_.reset(0.0f);
+    gainSmoother_.reset(0.0f);
 }
 
-void sfz::Voice::saveModulationTargets(const Region* region) noexcept
+void Voice::Impl::saveModulationTargets(const Region* region) noexcept
 {
-    ModMatrix& mm = resources.modMatrix;
-    masterAmplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::MasterAmplitude, region->getId()));
-    amplitudeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Amplitude, region->getId()));
-    volumeTarget = mm.findTarget(ModKey::createNXYZ(ModId::Volume, region->getId()));
-    panTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pan, region->getId()));
-    positionTarget = mm.findTarget(ModKey::createNXYZ(ModId::Position, region->getId()));
-    widthTarget = mm.findTarget(ModKey::createNXYZ(ModId::Width, region->getId()));
-    pitchTarget = mm.findTarget(ModKey::createNXYZ(ModId::Pitch, region->getId()));
-    oscillatorDetuneTarget = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorDetune, region->getId()));
-    oscillatorModDepthTarget = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorModDepth, region->getId()));
+    ModMatrix& mm = resources_.modMatrix;
+    masterAmplitudeTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::MasterAmplitude, region->getId()));
+    amplitudeTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Amplitude, region->getId()));
+    volumeTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Volume, region->getId()));
+    panTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Pan, region->getId()));
+    positionTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Position, region->getId()));
+    widthTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Width, region->getId()));
+    pitchTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Pitch, region->getId()));
+    oscillatorDetuneTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorDetune, region->getId()));
+    oscillatorModDepthTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::OscillatorModDepth, region->getId()));
 }
 
-void sfz::Voice::enablePowerFollower() noexcept
+void Voice::enablePowerFollower() noexcept
 {
-    followPower = true;
-    powerFollower.clear();
+    Impl& impl = *impl_;
+    impl.followPower_ = true;
+    impl.powerFollower_.clear();
 }
 
-void sfz::Voice::disablePowerFollower() noexcept
+void Voice::disablePowerFollower() noexcept
 {
-    followPower = false;
+    Impl& impl = *impl_;
+    impl.followPower_ = false;
 }
+
+float Voice::getSampleRate() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.sampleRate_;
+}
+
+int Voice::getSamplesPerBlock() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.samplesPerBlock_;
+}
+
+bool Voice::toBeCleanedUp() const
+{
+    Impl& impl = *impl_;
+    return impl.state_ == State::cleanMeUp;
+}
+
+void Voice::setStateListener(StateListener *l) noexcept
+{
+    Impl& impl = *impl_;
+    impl.stateListener_ = l;
+}
+
+NumericId<Voice> Voice::getId() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.id_;
+}
+
+const TriggerEvent& Voice::getTriggerEvent() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.triggerEvent_;
+}
+
+const Region* Voice::getRegion() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.region_;
+}
+
+LFO* Voice::getLFO(size_t index)
+{
+    Impl& impl = *impl_;
+    return impl.lfos_[index].get();
+}
+
+FlexEnvelope* Voice::getFlexEG(size_t index)
+{
+    Impl& impl = *impl_;
+    return impl.flexEGs_[index].get();
+}
+
+int Voice::getAge() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.age_;
+}
+
+Duration Voice::getLastDataDuration() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.dataDuration_;
+}
+
+Duration Voice::getLastAmplitudeDuration() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.amplitudeDuration_;
+}
+
+Duration Voice::getLastFilterDuration() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.filterDuration_;
+}
+
+Duration Voice::getLastPanningDuration() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.panningDuration_;
+}
+
+LFO* Voice::getAmplitudeLFO()
+{
+    Impl& impl = *impl_;
+    return impl.lfoAmplitude_.get();
+}
+
+LFO* Voice::getPitchLFO()
+{
+    Impl& impl = *impl_;
+    return impl.lfoPitch_.get();
+}
+
+LFO* Voice::getFilterLFO()
+{
+    Impl& impl = *impl_;
+    return impl.lfoFilter_.get();
+}
+
+ADSREnvelope* Voice::getAmplitudeEG()
+{
+    Impl& impl = *impl_;
+    return &impl.egAmplitude_;
+}
+
+ADSREnvelope* Voice::getPitchEG()
+{
+    Impl& impl = *impl_;
+    return impl.egPitch_.get();
+}
+
+ADSREnvelope* Voice::getFilterEG()
+{
+    Impl& impl = *impl_;
+    return impl.egFilter_.get();
+}
+
+const TriggerEvent& Voice::getTriggerEvent()
+{
+    Impl& impl = *impl_;
+    return impl.triggerEvent_;
+}
+
+} // namespace sfz

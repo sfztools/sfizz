@@ -35,23 +35,10 @@ public:
     }
 
     sfz::MidiState midiState;
-    sfz::Region region{0, midiState};
-    sfz::ADSREnvelope<float> envelope;
+    sfz::Region region{0};
+    sfz::ADSREnvelope envelope;
     std::vector<float> output;
 };
-
-BENCHMARK_DEFINE_F(EnvelopeFixture, Scalar)(benchmark::State& state)
-{
-    for (auto _ : state) {
-        envelope.reset(region.amplitudeEG, region, midiState, 0, 0, sampleRate);
-        envelope.startRelease(releaseTime);
-        for (int offset = 0; offset < envelopeSize; offset += static_cast<int>(state.range(0)))
-            for (auto& out: output)
-                out = envelope.getNextValue();
-        benchmark::DoNotOptimize(output);
-    }
-    state.counters["Blocks"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsIterationInvariantRate);
-}
 
 BENCHMARK_DEFINE_F(EnvelopeFixture, Block)(benchmark::State& state)
 {
@@ -66,6 +53,5 @@ BENCHMARK_DEFINE_F(EnvelopeFixture, Block)(benchmark::State& state)
     state.counters["Blocks"] = benchmark::Counter(envelopeSize / static_cast<double>(state.range(0)), benchmark::Counter::kIsIterationInvariantRate);
 }
 
-BENCHMARK_REGISTER_F(EnvelopeFixture, Scalar)->RangeMultiplier(2)->Range((2 << 6), (2 << 11));
 BENCHMARK_REGISTER_F(EnvelopeFixture, Block)->RangeMultiplier(2)->Range((2 << 6), (2 << 11));
 BENCHMARK_MAIN();

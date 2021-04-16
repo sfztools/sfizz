@@ -1,8 +1,8 @@
 #include "EQPool.h"
-#include <thread>
-#include "absl/algorithm/container.h"
 #include "SIMDHelpers.h"
-#include "SwapAndPop.h"
+#include "utility/SwapAndPop.h"
+#include <absl/algorithm/container.h>
+#include <thread>
 
 sfz::EQHolder::EQHolder(Resources& resources)
 : resources(resources)

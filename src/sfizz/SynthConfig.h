@@ -13,12 +13,20 @@ struct SynthConfig
 {
     bool freeWheeling { false };
 
-    int liveSampleQuality { sfz::Default::sampleQuality };
-    int freeWheelingSampleQuality { sfz::Default::sampleQualityInFreewheelingMode };
+    int liveSampleQuality { Default::sampleQuality };
+    int freeWheelingSampleQuality { Default::freewheelingSampleQuality };
+
+    int liveOscillatorQuality { Default::oscillatorQuality };
+    int freeWheelingOscillatorQuality { Default::freewheelingOscillatorQuality };
 
     int currentSampleQuality() const noexcept
     {
         return freeWheeling ? freeWheelingSampleQuality : liveSampleQuality;
+    }
+
+    int currentOscillatorQuality() const noexcept
+    {
+        return freeWheeling ? freeWheelingOscillatorQuality : liveOscillatorQuality;
     }
 };
 }

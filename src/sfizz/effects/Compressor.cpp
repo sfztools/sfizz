@@ -17,32 +17,26 @@
 */
 
 #include "Compressor.h"
+#include "gen/compressor.hxx"
 #include "Opcode.h"
 #include "AudioSpan.h"
 #include "MathHelpers.h"
+#include "OversamplerHelpers.h"
 #include "absl/memory/memory.h"
 
 static constexpr int _oversampling = 2;
-#define FAUST_UIMACROS 1
-#include "gen/compressor.cxx"
 
 namespace sfz {
 namespace fx {
 
     struct Compressor::Impl {
         faustCompressor _compressor[2];
-        bool _stlink = false;
-        float _inputGain = 1.0;
+        bool _stlink { Default::compSTLink };
+        float _inputGain { Default::compGain };
         AudioBuffer<float, 2> _tempBuffer2x { 2, _oversampling * config::defaultSamplesPerBlock };
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
-        hiir::Downsampler2xFpu<12> _downsampler2x[EffectChannels];
-        hiir::Upsampler2xFpu<12> _upsampler2x[EffectChannels];
-
-        #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
-            float get_##ident(size_t i) const noexcept { return _compressor[i].var; } \
-            void set_##ident(size_t i, float value) noexcept { _compressor[i].var = value; }
-        FAUST_LIST_ACTIVES(DEFINE_SET_GET);
-        #undef DEFINE_SET_GET
+        hiir::Downsampler2x<12> _downsampler2x[EffectChannels];
+        hiir::Upsampler2x<12> _upsampler2x[EffectChannels];
     };
 
     Compressor::Compressor()
@@ -61,15 +55,13 @@ namespace fx {
     {
         Impl& impl = *_impl;
         for (faustCompressor& comp : impl._compressor) {
-            comp.classInit(sampleRate);
-            comp.instanceConstants(sampleRate);
+            comp.classInit(_oversampling * sampleRate);
+            comp.instanceConstants(_oversampling * sampleRate);
         }
 
-        static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-
         for (unsigned c = 0; c < EffectChannels; ++c) {
-            impl._downsampler2x[c].set_coefs(coefs2x);
-            impl._upsampler2x[c].set_coefs(coefs2x);
+            impl._downsampler2x[c].set_coefs(OSCoeffs2x);
+            impl._upsampler2x[c].set_coefs(OSCoeffs2x);
         }
 
         clear();
@@ -163,36 +155,38 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("comp_attack"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Attack(c, *value);
+                {
+                    auto value = opc.read(Default::compAttack);
+                    for (faustCompressor& comp : impl._compressor)
+                        comp.setAttack(value);
                 }
                 break;
             case hash("comp_release"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Release(c, *value);
+                {
+                    auto value = opc.read(Default::compRelease);
+                    for (faustCompressor& comp : impl._compressor)
+                        comp.setRelease(value);
                 }
                 break;
             case hash("comp_threshold"):
-                if (auto value = readOpcode<float>(opc.value, {-100.0, 0.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Threshold(c, *value);
+                {
+                    auto value = opc.read(Default::compThreshold);
+                    for (faustCompressor& comp : impl._compressor)
+                        comp.setThreshold(value);
                 }
                 break;
             case hash("comp_ratio"):
-                if (auto value = readOpcode<float>(opc.value, {1.0, 50.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Ratio(c, *value);
+                {
+                    auto value = opc.read(Default::compRatio);
+                    for (faustCompressor& comp : impl._compressor)
+                        comp.setRatio(value);
                 }
                 break;
             case hash("comp_gain"):
-                if (auto value = readOpcode<float>(opc.value, {-100.0, 100.0}))
-                    impl._inputGain = db2mag(*value);
+                impl._inputGain = opc.read(Default::compGain);
                 break;
             case hash("comp_stlink"):
-                if (auto value = readBooleanFromOpcode(opc))
-                    impl._stlink = *value;
+                impl._stlink = opc.read(Default::compSTLink);
                 break;
             }
         }

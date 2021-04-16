@@ -4,10 +4,10 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "Macros.h"
 #include "ScopedFTZ.h"
 #include "MathHelpers.h"
 #include "SIMDConfig.h"
+#include "utility/Macros.h"
 #include "effects/impl/ResonantArray.h"
 #include "effects/impl/ResonantArraySSE.h"
 #include "effects/impl/ResonantArrayAVX.h"

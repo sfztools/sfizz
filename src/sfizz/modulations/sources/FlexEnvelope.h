@@ -6,19 +6,20 @@
 
 #pragma once
 #include "../ModGenerator.h"
+#include "../../VoiceManager.h"
 
 namespace sfz {
 class Synth;
 
 class FlexEnvelopeSource : public ModGenerator {
 public:
-    explicit FlexEnvelopeSource(Synth &synth);
+    explicit FlexEnvelopeSource(VoiceManager& manager);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
-    Synth* synth_ = nullptr;
+    VoiceManager& voiceManager_;
 };
 
 } // namespace sfz

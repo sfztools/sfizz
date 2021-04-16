@@ -5,9 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Tuning.h"
-#include "Debug.h"
-#include "absl/types/optional.h"
 #include "Tunings.h" // Surge tuning library
+#include "utility/Debug.h"
+#include <absl/types/optional.h>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -162,50 +162,59 @@ Tuning::~Tuning()
 
 bool Tuning::loadScalaFile(const fs::path& path)
 {
+    Tunings::Scale scl;
     fs::ifstream stream(path);
+
     if (stream.bad()) {
         DBG("Cannot open scale file: " << path);
-        return false;
+        goto failure;
     }
 
-    Tunings::Scale scl;
     try {
         scl = Tunings::readSCLStream(stream);
     }
     catch (Tunings::TuningError& error) {
         DBG("Tuning: " << error.what());
-        return false;
+        goto failure;
     }
 
     if (scl.count <= 0) {
         DBG("The scale file is empty: " << path);
-        return false;
+        goto failure;
     }
 
     impl_->updateScale(scl, path);
     return true;
+
+failure:
+    loadEqualTemperamentScale();
+    return false;
 }
 
 bool Tuning::loadScalaString(const std::string& text)
 {
+    Tunings::Scale scl;
     std::istringstream stream(text);
 
-    Tunings::Scale scl;
     try {
         scl = Tunings::readSCLStream(stream);
     }
     catch (Tunings::TuningError& error) {
         DBG("Tuning: " << error.what());
-        return false;
+        goto failure;
     }
 
     if (scl.count <= 0) {
         DBG("Error loading scala string: " << text);
-        return false;
+        goto failure;
     }
 
     impl_->updateScale(scl);
     return true;
+
+failure:
+    loadEqualTemperamentScale();
+    return false;
 }
 
 void Tuning::setScalaRootKey(int rootKey)

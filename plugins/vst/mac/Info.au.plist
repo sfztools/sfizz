@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleExecutable</key>
+    <string>@SFIZZ_AU_BUNDLE_EXECUTABLE@</string>
+    <key>CFBundleIdentifier</key>
+    <string>@SFIZZ_AU_BUNDLE_IDENTIFIER@</string>
+    <key>CFBundleName</key>
+    <string>sfizz</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>BNDL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleVersion</key>
+    <string>@SFIZZ_AU_BUNDLE_VERSION@</string>
+    <key>CSResourcesFileMapped</key>
+    <true/>
+    <key>AudioComponents</key>
+    <array>
+        <dict>
+            <key>description</key>
+            <string>@PROJECT_NAME@</string>
+            <key>factoryFunction</key>
+            <string>AUWrapperFactory</string>
+            <key>manufacturer</key>
+            <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@</string>
+            <key>name</key>
+            <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@: @PROJECT_NAME@</string>
+            <key>sandboxSafe</key>
+            <true/>
+            <key>type</key>
+            <string>@SFIZZ_AU_BUNDLE_TYPE@</string>
+            <key>subtype</key>
+            <string>@SFIZZ_AU_BUNDLE_SUBTYPE@</string>
+            <key>tags</key>
+            <array>
+                <string>Sampler</string>
+                <string>Synthesizer</string>
+            </array>
+            <key>version</key>
+            <integer>@SFIZZ_AU_DECIMAL_VERSION@</integer>
+        </dict>
+    </array>
+</dict>
+</plist>

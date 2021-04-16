@@ -94,6 +94,7 @@ public:
 
     static TemporaryFile fileWav;
     static TemporaryFile fileFlac;
+    static TemporaryFile fileAiff;
     static TemporaryFile fileOgg;
 
     std::vector<float> workBuffer;
@@ -101,6 +102,7 @@ public:
 
 TemporaryFile AudioReaderFixture::fileWav = createAudioFile(SF_FORMAT_WAV|SF_FORMAT_PCM_16);
 TemporaryFile AudioReaderFixture::fileFlac = createAudioFile(SF_FORMAT_FLAC|SF_FORMAT_PCM_16);
+TemporaryFile AudioReaderFixture::fileAiff = createAudioFile(SF_FORMAT_AIFF|SF_FORMAT_PCM_16);
 TemporaryFile AudioReaderFixture::fileOgg = createAudioFile(SF_FORMAT_OGG|SF_FORMAT_VORBIS);
 
 TemporaryFile AudioReaderFixture::createAudioFile(int format)
@@ -146,16 +148,12 @@ static void doReaderBenchmark(const fs::path& path, std::vector<float> &buffer, 
 
 static void doEntireRead(const fs::path& path)
 {
-#if !defined(_WIN32)
-    SndfileHandle handle(path.c_str());
-#else
-    SndfileHandle handle(path.wstring().c_str());
-#endif
-    if (handle.error())
-        throw std::runtime_error("cannot open sound file for reading");
+    sfz::AudioReaderPtr reader = sfz::createAudioReader(path, false);
+    if (!reader)
+        return;
 
-    std::vector<float> buffer(static_cast<size_t>(2 * handle.frames()));
-    handle.read(buffer.data(), buffer.size());
+    std::vector<float> buffer(static_cast<size_t>(2 * reader->frames()));
+    reader->readNextBlock(buffer.data(), buffer.size());
 }
 
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireWav)(benchmark::State& state)
@@ -200,6 +198,27 @@ BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseFlac)(benchmark::State& state)
     }
 }
 
+BENCHMARK_DEFINE_F(AudioReaderFixture, EntireAiff)(benchmark::State& state)
+{
+    for (auto _ : state) {
+        doEntireRead(fileAiff.path());
+    }
+}
+
+BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardAiff)(benchmark::State& state)
+{
+    for (auto _ : state) {
+        doReaderBenchmark(fileAiff.path(), workBuffer, sfz::AudioReaderType::Forward);
+    }
+}
+
+BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseAiff)(benchmark::State& state)
+{
+    for (auto _ : state) {
+        doReaderBenchmark(fileAiff.path(), workBuffer, sfz::AudioReaderType::Reverse);
+    }
+}
+
 BENCHMARK_DEFINE_F(AudioReaderFixture, EntireOgg)(benchmark::State& state)
 {
     for (auto _ : state) {
@@ -214,12 +233,14 @@ BENCHMARK_DEFINE_F(AudioReaderFixture, ForwardOgg)(benchmark::State& state)
     }
 }
 
-//BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
-//{
-//    for (auto _ : state) {
-//        doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
-//    }
-//}
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+BENCHMARK_DEFINE_F(AudioReaderFixture, ReverseOgg)(benchmark::State& state)
+{
+   for (auto _ : state) {
+       doReaderBenchmark(fileOgg.path(), workBuffer, sfz::AudioReaderType::Reverse);
+   }
+}
+#endif
 
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardWav)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseWav)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
@@ -227,7 +248,12 @@ BENCHMARK_REGISTER_F(AudioReaderFixture, EntireWav)->Range(1, 1);
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardFlac)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseFlac)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
 BENCHMARK_REGISTER_F(AudioReaderFixture, EntireFlac)->Range(1, 1);
+BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardAiff)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseAiff)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+BENCHMARK_REGISTER_F(AudioReaderFixture, EntireAiff)->Range(1, 1);
 BENCHMARK_REGISTER_F(AudioReaderFixture, ForwardOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
-//BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+#if !defined(ST_AUDIO_FILE_USE_SNDFILE)
+BENCHMARK_REGISTER_F(AudioReaderFixture, ReverseOgg)->RangeMultiplier(2)->Range((1 << 6), (1 << 10));
+#endif
 BENCHMARK_REGISTER_F(AudioReaderFixture, EntireOgg)->Range(1, 1);
 BENCHMARK_MAIN();

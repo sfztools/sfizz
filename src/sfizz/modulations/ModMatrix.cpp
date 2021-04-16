@@ -11,7 +11,7 @@
 #include "Buffer.h"
 #include "Config.h"
 #include "SIMDHelpers.h"
-#include "Debug.h"
+#include "utility/Debug.h"
 #include <absl/container/flat_hash_map.h>
 #include <absl/strings/string_view.h>
 #include <vector>
@@ -38,6 +38,8 @@ struct ModMatrix::Impl {
 
     struct ConnectionData {
         float sourceDepth_ {};
+        ModKey sourceDepthMod_ {};
+        TargetId sourceDepthModId_ {};
         float velToDepth_ {};
     };
 
@@ -193,7 +195,7 @@ ModMatrix::TargetId ModMatrix::findTarget(const ModKey& key) const
     return TargetId(it->second);
 }
 
-bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth, float velToDepth)
+bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth, const ModKey& sourceDepthMod, float velToDepth)
 {
     Impl& impl = *impl_;
     unsigned sourceIndex = sourceId.number();
@@ -205,6 +207,11 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth,
     Impl::Target& target = impl.targets_[targetIndex];
     Impl::ConnectionData& conn = target.connectedSources[sourceIndex];
     conn.sourceDepth_ = sourceDepth;
+    conn.sourceDepthMod_ = sourceDepthMod;
+
+    if (sourceDepthMod)
+        conn.sourceDepthModId_ = registerTarget(sourceDepthMod);
+
     conn.velToDepth_ = velToDepth;
 
     return true;
@@ -412,26 +419,43 @@ float* ModMatrix::getModulation(TargetId targetId)
                 sourceDepth += triggerValue * velToDepth;
             }
 
+            const float* sourceDepthMod = getModulation(sourcesPos->second.sourceDepthModId_);
+
             if (isFirstSource) {
-                if (sourceDepth != 1) {
+                if (sourceDepth == 1 && !sourceDepthMod)
+                    copy(absl::Span<const float>(sourceBuffer), buffer);
+                else if (!sourceDepthMod) {
                     for (uint32_t i = 0; i < numFrames; ++i)
                         buffer[i] = sourceDepth * sourceBuffer[i];
                 }
+                else if (targetFlags & kModIsMultiplicative) {
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] = (sourceDepth * sourceDepthMod[i]) * sourceBuffer[i];
+                }
                 else {
-                    copy(absl::Span<const float>(sourceBuffer), buffer);
+                    ASSERT(targetFlags & kModIsAdditive);
+                    for (uint32_t i = 0; i < numFrames; ++i)
+                        buffer[i] = (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
                 }
                 isFirstSource = false;
             }
             else {
                 if (targetFlags & kModIsMultiplicative) {
-                    multiplyMul1<float>(sourceDepth, sourceBuffer, buffer);
-                }
-                else if (targetFlags & kModIsPercentMultiplicative) {
-                    multiplyMul1<float>(0.01f * sourceDepth, sourceBuffer, buffer);
+                    if (!sourceDepthMod)
+                        multiplyMul1<float>(sourceDepth, sourceBuffer, buffer);
+                    else {
+                        for (uint32_t i = 0; i < numFrames; ++i)
+                            buffer[i] *= (sourceDepth * sourceDepthMod[i]) * sourceBuffer[i];
+                    }
                 }
                 else {
                     ASSERT(targetFlags & kModIsAdditive);
-                    multiplyAdd1<float>(sourceDepth, sourceBuffer, buffer);
+                    if (!sourceDepthMod)
+                        multiplyAdd1<float>(sourceDepth, sourceBuffer, buffer);
+                    else {
+                        for (uint32_t i = 0; i < numFrames; ++i)
+                            buffer[i] += (sourceDepth + sourceDepthMod[i]) * sourceBuffer[i];
+                    }
                 }
             }
         }
@@ -443,8 +467,6 @@ float* ModMatrix::getModulation(TargetId targetId)
     if (isFirstSource) {
         if (targetFlags & kModIsMultiplicative)
             fill(buffer, 1.0f);
-        else if (targetFlags & kModIsPercentMultiplicative)
-            fill(buffer, 100.0f);
         else {
             ASSERT(targetFlags & kModIsAdditive);
             fill(buffer, 0.0f);

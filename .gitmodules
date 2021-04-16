@@ -4,18 +4,41 @@
 	branch = lts_2020_02_25
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/base"]
-	path = vst/external/VST_SDK/VST3_SDK/base
+	path = plugins/vst/external/VST_SDK/VST3_SDK/base
 	url = https://github.com/steinbergmedia/vst3_base.git
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/pluginterfaces"]
-	path = vst/external/VST_SDK/VST3_SDK/pluginterfaces
-	url = https://github.com/sfztools/vst3_pluginterfaces.git
+	path = plugins/vst/external/VST_SDK/VST3_SDK/pluginterfaces
+	url = https://github.com/steinbergmedia/vst3_pluginterfaces.git
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/public.sdk"]
-	path = vst/external/VST_SDK/VST3_SDK/public.sdk
-	url = https://github.com/sfztools/vst3_public_sdk.git
+	path = plugins/vst/external/VST_SDK/VST3_SDK/public.sdk
+	url = https://github.com/steinbergmedia/vst3_public_sdk.git
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/vstgui4"]
-	path = editor/external/vstgui4
+	path = plugins/editor/external/vstgui4
 	url = https://github.com/sfztools/vstgui.git
 	shallow = true
+[submodule "external/st_audiofile/thirdparty/dr_libs"]
+	path = external/st_audiofile/thirdparty/dr_libs
+	url = https://github.com/mackron/dr_libs.git
+	shallow = true
+[submodule "external/st_audiofile/thirdparty/stb_vorbis"]
+	path = external/st_audiofile/thirdparty/stb_vorbis
+	url = https://github.com/sfztools/stb_vorbis.git
+	shallow = true
+[submodule "external/st_audiofile/thirdparty/libaiff"]
+	path = external/st_audiofile/thirdparty/libaiff
+	url = https://github.com/sfztools/libaiff.git
+	shallow = true
+[submodule "vst/external/sfzt_auwrapper"]
+	path = plugins/vst/external/sfzt_auwrapper
+	url = https://github.com/sfztools/sfzt_auwrapper.git
+	shallow = true
+[submodule "external/filesystem"]
+	path = external/filesystem
+	url = https://github.com/gulrak/filesystem.git
+	shallow = true
+[submodule "external/simde"]
+	path = external/simde
+	url = https://github.com/simd-everywhere/simde.git

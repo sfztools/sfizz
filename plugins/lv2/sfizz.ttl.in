@@ -1,0 +1,407 @@
+@prefix atom:    <http://lv2plug.in/ns/ext/atom#> .
+@prefix bufsize: <http://lv2plug.in/ns/ext/buf-size#> .
+@prefix doap:    <http://usefulinc.com/ns/doap#> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix lv2:     <http://lv2plug.in/ns/lv2core#> .
+@prefix midi:    <http://lv2plug.in/ns/ext/midi#> .
+@prefix opts:    <http://lv2plug.in/ns/ext/options#> .
+@prefix param:   <http://lv2plug.in/ns/ext/parameters#> .
+@prefix patch:   <http://lv2plug.in/ns/ext/patch#> .
+@prefix pg:      <http://lv2plug.in/ns/ext/port-groups#> .
+@prefix pprop:   <http://lv2plug.in/ns/ext/port-props#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rsz:     <http://lv2plug.in/ns/ext/resize-port#> .
+@prefix state:   <http://lv2plug.in/ns/ext/state#> .
+@prefix time:    <http://lv2plug.in/ns/ext/time#> .
+@prefix ui:      <http://lv2plug.in/ns/extensions/ui#> .
+@prefix units:   <http://lv2plug.in/ns/extensions/units#> .
+@prefix urid:    <http://lv2plug.in/ns/ext/urid#> .
+@prefix work:    <http://lv2plug.in/ns/ext/worker#> .
+@prefix midnam:  <http://ardour.org/lv2/midnam#> .
+
+midnam:interface a lv2:ExtensionData .
+midnam:update a lv2:Feature .
+
+<@LV2PLUGIN_URI@#config>
+  a pg:Group ;
+  lv2:symbol "config" ;
+  lv2:name "Configuration",
+    "Configuration"@fr ,
+    "Impostazioni"@it .
+
+<@LV2PLUGIN_URI@#tuning>
+  a pg:Group ;
+  lv2:symbol "tuning" ;
+  lv2:name "Tuning",
+    "Accordage"@fr ,
+    "Accordatura"@it .
+
+<@LV2PLUGIN_URI@#status>
+  a pg:Group ;
+  lv2:symbol "status" ;
+  lv2:name "status",
+    "Statut"@fr .
+
+<@LV2PLUGIN_URI@:sfzfile>
+  a lv2:Parameter ;
+  rdfs:label "SFZ file",
+    "Fichier SFZ"@fr ,
+    "File SFZ"@it ;
+  rdfs:range atom:Path .
+
+<@LV2PLUGIN_URI@:tuningfile>
+  a lv2:Parameter ;
+  pg:group <@LV2PLUGIN_URI@#tuning> ;
+  rdfs:label "Scala file",
+    "Fichier Scala"@fr ,
+    "File Scala"@it ;
+  rdfs:range atom:Path .
+
+<@LV2PLUGIN_URI@>
+  a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
+
+  doap:name "@LV2PLUGIN_NAME@" ;
+  doap:license <https://spdx.org/licenses/@LV2PLUGIN_SPDX_LICENSE_ID@> ;
+  doap:maintainer [
+    foaf:name     "@LV2PLUGIN_AUTHOR@" ;
+    foaf:homepage <@LV2PLUGIN_URI@> ;
+    foaf:mbox     <mailto:@LV2PLUGIN_EMAIL@> ;
+  ] ;
+  rdfs:comment "@LV2PLUGIN_COMMENT@",
+    "Échantillonneur SFZ"@fr ,
+    "Campionatore SFZ"@it ;
+
+  lv2:minorVersion @LV2PLUGIN_VERSION_MINOR@ ;
+  lv2:microVersion @LV2PLUGIN_VERSION_MICRO@ ;
+
+  lv2:requiredFeature urid:map, bufsize:boundedBlockLength, work:schedule ;
+  lv2:optionalFeature lv2:hardRTCapable, opts:options, state:mapPath, state:freePath ;
+  lv2:extensionData opts:interface, state:interface, work:interface ;
+
+  lv2:optionalFeature midnam:update ;
+  lv2:extensionData midnam:interface ;
+
+  opts:supportedOption param:sampleRate ;
+  opts:supportedOption bufsize:maxBlockLength, bufsize:nominalBlockLength ;
+
+  @LV2PLUGIN_IF_ENABLE_UI@ui:ui <@LV2PLUGIN_URI@#ui> ;
+
+  patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
+                 <@LV2PLUGIN_URI@:tuningfile> ;
+
+  lv2:port [
+    a lv2:InputPort, atom:AtomPort ;
+    atom:bufferType atom:Sequence ;
+    atom:supports patch:Message, midi:MidiEvent, time:Position, <@LV2PLUGIN_URI@:OSCBlob> ;
+    lv2:designation lv2:control ;
+    lv2:index 0 ;
+    lv2:symbol "control" ;
+    lv2:name "Control",
+      "Contrôle"@fr ;
+    rsz:minimumSize 524288 ;
+  ] , [
+    a lv2:OutputPort, atom:AtomPort ;
+    atom:bufferType atom:Sequence ;
+    atom:supports patch:Message, <@LV2PLUGIN_URI@:OSCBlob> ;
+    lv2:index 1 ;
+    lv2:symbol "notify" ;
+    lv2:name "Notify",
+      "Notification"@fr ;
+    rsz:minimumSize 524288 ;
+  ] , [
+    a lv2:OutputPort, atom:AtomPort ;
+    atom:bufferType atom:Sequence ;
+    atom:supports patch:Message ;
+    lv2:designation lv2:control ;
+    lv2:index 2 ;
+    lv2:symbol "automate" ;
+    lv2:name "Automate",
+      "Automatisation"@fr ;
+    rsz:minimumSize 524288 ;
+  ] , [
+    a lv2:AudioPort, lv2:OutputPort ;
+    lv2:index 3 ;
+    lv2:symbol "out_left" ;
+    lv2:name "Left Output",
+      "Sortie gauche"@fr ,
+      "Uscita Sinistra"@it
+  ] , [
+    a lv2:AudioPort, lv2:OutputPort ;
+    lv2:index 4 ;
+    lv2:symbol "out_right" ;
+    lv2:name "Right Output",
+      "Sortie droite"@fr ,
+      "Uscita Destra"@it
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 5 ;
+    lv2:symbol "volume" ;
+    lv2:name "Volume" ;
+    lv2:default 0.0 ;
+    lv2:minimum -80.0 ;
+    lv2:maximum 6.0 ;
+    units:unit units:db
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 6 ;
+    lv2:symbol "num_voices" ;
+    lv2:name "Polyphony",
+      "Polyphonie"@fr ,
+      "Polifonia"@it ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:portProperty pprop:notAutomatic ;
+    lv2:portProperty pprop:expensive ;
+    lv2:portProperty lv2:integer ;
+    lv2:portProperty lv2:enumeration ;
+    lv2:default 64 ;
+    lv2:minimum 8 ;
+    lv2:maximum 256 ;
+    lv2:scalePoint [ rdfs:label "8 voices",
+      "8 voix"@fr ,
+      "8 Voci"@it;
+      rdf:value 8
+    ] ;
+    lv2:scalePoint [ rdfs:label "16 voices",
+      "16 voix"@fr ,
+      "16 Voci"@it;
+      rdf:value 16
+    ] ;
+    lv2:scalePoint [ rdfs:label "32 voices",
+      "32 voix"@fr ,
+      "32 Voci"@it;
+      rdf:value 32
+    ] ;
+    lv2:scalePoint [ rdfs:label "64 voices",
+      "64 voix"@fr ,
+      "64 Voci"@it;
+      rdf:value 64
+    ] ;
+    lv2:scalePoint [ rdfs:label "128 voices",
+      "128 voix"@fr ,
+      "128 Voci"@it;
+      rdf:value 128
+    ] ;
+    lv2:scalePoint [ rdfs:label "256 voices",
+      "256 voix"@fr ,
+      "256 Voci"@it;
+      rdf:value 256
+    ] ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 7 ;
+    lv2:symbol "oversampling" ;
+    lv2:name "Oversampling factor",
+      "Facteur de suréchantillonnage"@fr ,
+      "Fattore Sovracampionamento"@it ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:portProperty pprop:notAutomatic ;
+    lv2:portProperty pprop:expensive ;
+    lv2:portProperty lv2:integer ;
+    lv2:portProperty lv2:enumeration ;
+    lv2:default 1 ;
+    lv2:minimum 1 ;
+    lv2:maximum 8 ;
+    lv2:scalePoint [ rdfs:label "x1 oversampling",
+      "suréchantillonnage x1"@fr ,
+      "x1 Sovracampionamento"@it;
+      rdf:value 1
+    ] ;
+    lv2:scalePoint [ rdfs:label "x2 oversampling",
+      "suréchantillonnage x2"@fr ,
+      "x2 Sovracampionamento"@it;
+      rdf:value 2
+    ] ;
+    lv2:scalePoint [ rdfs:label "x4 oversampling",
+      "suréchantillonnage x4"@fr ,
+      "x4 Sovracampionamento"@it;
+      rdf:value 4
+    ] ;
+    lv2:scalePoint [ rdfs:label "x8 oversampling",
+      "suréchantillonnage x8"@fr ,
+      "x8 Sovracampionamento"@it;
+      rdf:value 8
+    ] ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 8 ;
+    lv2:symbol "preload_size" ;
+    lv2:name "Preload size",
+      "Taille préchargée"@fr ,
+      "Grandezza Precaricamento"@it ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:portProperty pprop:notAutomatic ;
+    lv2:portProperty pprop:expensive ;
+    lv2:portProperty lv2:integer ;
+    lv2:portProperty lv2:enumeration ;
+    lv2:default 8192 ;
+    lv2:minimum 1024 ;
+    lv2:maximum 65536 ;
+    lv2:scalePoint [ rdfs:label "4 KB",
+      "4 Ko"@fr;
+      rdf:value 1024
+    ] ;
+    lv2:scalePoint [ rdfs:label "8 KB",
+      "8 Ko"@fr;
+      rdf:value 2048
+    ] ;
+    lv2:scalePoint [ rdfs:label "16 KB",
+      "16 Ko"@fr;
+      rdf:value 4096
+    ] ;
+    lv2:scalePoint [ rdfs:label "32 KB",
+      "32 Ko"@fr;
+      rdf:value 8192
+    ] ;
+    lv2:scalePoint [ rdfs:label "64 KB",
+      "64 Ko"@fr;
+      rdf:value 16384
+    ] ;
+    lv2:scalePoint [ rdfs:label "128 KB",
+      "128 Ko"@fr;
+      rdf:value 32768
+    ] ;
+    lv2:scalePoint [ rdfs:label "256 KB",
+      "256 Ko"@fr;
+      rdf:value 65536
+    ] ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 9 ;
+    lv2:symbol "freewheeling" ;
+    lv2:name "Freewheeling",
+      "En roue libre (freewheeling)"@fr ,
+      "A Ruota Libera"@it ;
+    lv2:designation lv2:freeWheeling ;
+    lv2:portProperty lv2:toggled ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 1 ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 10 ;
+    lv2:symbol "scala_root_key" ;
+    lv2:name "Scala root key",
+      "Tonalité de base Scala"@fr ,
+      "Tonalità di base Scala"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 60 ;
+    lv2:minimum 0 ;
+    lv2:maximum 127 ;
+    units:unit units:midiNote
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 11 ;
+    lv2:symbol "tuning_frequency" ;
+    lv2:name "Tuning frequency",
+      "Fréquence d'accordage"@fr ,
+      "Frequenza di accordatura"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 440.0 ;
+    lv2:minimum 300.0 ;
+    lv2:maximum 500.0 ;
+    units:unit units:hz
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 12 ;
+    lv2:symbol "stretched_tuning" ;
+    lv2:name "Stretched tuning",
+      "Accordage étiré"@fr ,
+      "Tensione di accordatura"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 0.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 1.0 ;
+    units:unit units:coef
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 13 ;
+    lv2:symbol "sample_quality" ;
+    lv2:name "Sample quality",
+      "Qualité des échantillons"@fr ,
+      "Qualità del campione"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 2.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 10.0
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 14 ;
+    lv2:symbol "oscillator_quality" ;
+    lv2:name "Oscillator quality",
+      "Qualité des oscillateurs"@fr ,
+      "Qualità dell'oscillatore"@it ;
+    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    lv2:default 1.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 3.0
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 15 ;
+    lv2:symbol "active_voices" ;
+    lv2:name "Active voices",
+      "Voix utilisées"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 256 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 16 ;
+    lv2:symbol "num_curves" ;
+    lv2:name "Number of curves",
+      "Nombre de courbes"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 17 ;
+    lv2:symbol "num_masters" ;
+    lv2:name "Number of masters",
+      "Nombre de maîtres"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 18 ;
+    lv2:symbol "num_groups" ;
+    lv2:name "Number of groups",
+      "Nombre de groupes"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 19 ;
+    lv2:symbol "num_regions" ;
+    lv2:name "Number of regions",
+      "Nombre de régions"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] , [
+    a lv2:OutputPort, lv2:ControlPort ;
+    lv2:index 20 ;
+    lv2:symbol "num_samples" ;
+    lv2:name "Number of samples",
+      "Nombre d'échantillons"@fr ;
+    pg:group <@LV2PLUGIN_URI@#status> ;
+    lv2:portProperty lv2:integer ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 65535 ;
+  ] ;
+
+  rdfs:seeAlso <controllers.ttl> .

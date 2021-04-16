@@ -1,0 +1,15 @@
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix ui:   <http://lv2plug.in/ns/extensions/ui#> .
+@prefix urid: <http://lv2plug.in/ns/ext/urid#> .
+
+<@LV2PLUGIN_URI@#ui>
+    lv2:extensionData ui:idleInterface ;
+    lv2:extensionData ui:showInterface ;
+    lv2:requiredFeature ui:idleInterface ;
+    lv2:optionalFeature ui:noUserResize ;
+    lv2:optionalFeature ui:resize ;
+    lv2:optionalFeature ui:parent ;
+    lv2:optionalFeature ui:touch ;
+    lv2:requiredFeature urid:map ;
+    lv2:requiredFeature urid:unmap ;
+    lv2:requiredFeature <http://lv2plug.in/ns/ext/instance-access> .

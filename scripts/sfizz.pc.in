@@ -7,6 +7,6 @@ Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
-Requires.private: sndfile
+Requires.private:@SFIZZ_PC_REQUIRES@
 Libs: -L${libdir} -l@PROJECT_NAME@
 Cflags: -I${includedir}

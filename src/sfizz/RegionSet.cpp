@@ -1,9 +1,16 @@
 #include "RegionSet.h"
 
+sfz::RegionSet::RegionSet(RegionSet* parentSet, OpcodeScope level)
+    : parent(parentSet), level(level)
+{
+    voices.reserve(config::maxVoices);
+    if (parentSet != nullptr)
+        parentSet->addSubset(this);
+}
+
 void sfz::RegionSet::setPolyphonyLimit(unsigned limit) noexcept
 {
     polyphonyLimit = limit;
-    voices.reserve(limit);
 }
 
 void sfz::RegionSet::addRegion(Region* region) noexcept

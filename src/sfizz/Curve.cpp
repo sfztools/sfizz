@@ -7,8 +7,8 @@
 #include "Curve.h"
 #include "Opcode.h"
 #include "SIMDHelpers.h"
-#include "Debug.h"
-#include "spline/spline.h"
+#include "utility/Debug.h"
+#include <spline/spline.h>
 #include <cmath>
 
 namespace sfz
@@ -21,8 +21,7 @@ Curve Curve::buildCurveFromHeader(
 {
     Curve curve;
     bool fillStatus[NumValues] = {};
-    const Range<float> fullRange { -HUGE_VALF, +HUGE_VALF };
-
+    const OpcodeSpec<float> fullRange {0.0f, Range<float>{ -1e16, 1e16 }, 0 };
     auto setPoint = [&curve, &fillStatus](int i, float x) {
         curve._points[i] = x;
         fillStatus[i] = true;
@@ -40,11 +39,7 @@ Curve Curve::buildCurveFromHeader(
         if (index >= NumValues)
             continue;
 
-        auto valueOpt = readOpcode<float>(opc.value, fullRange);
-        if (!valueOpt)
-            continue;
-
-        setPoint(static_cast<int>(index), *valueOpt);
+        setPoint(static_cast<int>(index), opc.read(fullRange));
     }
 
     curve.fill(itp, fillStatus);
@@ -267,12 +262,8 @@ void CurveSet::addCurveFromHeader(absl::Span<const Opcode> members)
     int curveIndex = -1;
     Curve::Interpolator itp = Curve::Interpolator::Linear;
 
-    if (const Opcode* opc = findOpcode(hash("curve_index"))) {
-        if (auto opt = readOpcode<int>(opc->value, {0, 255}))
-            curveIndex = *opt;
-        else
-            DBG("Invalid value for curve index: " << opc->value);
-    }
+    if (const Opcode* opc = findOpcode(hash("curve_index")))
+        curveIndex = opc->read(Default::curveCC);
 
 #if 0 // potential sfizz extension
     if (const Opcode* opc = findOpcode(hash("sfizz:curve_interpolator"))) {

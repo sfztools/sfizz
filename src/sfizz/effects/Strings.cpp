@@ -116,7 +116,7 @@ namespace fx {
         auto outputR = absl::MakeSpan(outputs[1], nframes);
 
         absl::Span<float> wet = _tempBuffer.getSpan(2).first(nframes);
-        sfz::fill(wet, 0.01f *_wet); // TOD strings_wet_oncc modulation...
+        sfz::fill(wet, _wet); // TOD strings_wet_oncc modulation...
 
         sfz::copy(inputL, outputL);
         sfz::copy(inputR, outputR);
@@ -132,10 +132,10 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("strings_number"):
-                setValueFromOpcode(opc, strings->_numStrings, {0, MaximumNumStrings});
+                strings->_numStrings = opc.read(Default::stringsNumber);
                 break;
             case hash("strings_wet"):
-                setValueFromOpcode(opc, strings->_wet, {0.0f, 100.0f});
+                strings->_wet = opc.read(Default::effect);
                 break;
             }
         }

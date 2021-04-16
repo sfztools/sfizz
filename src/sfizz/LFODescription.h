@@ -5,44 +5,43 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "Defaults.h"
+#include "CCMap.h"
+#include "modulations/ModKey.h"
 #include <absl/types/optional.h>
 #include <vector>
 
 namespace sfz {
 
-enum class LFOWave : int {
-    Triangle,
-    Sine,
-    Pulse75,
-    Square,
-    Pulse25,
-    Pulse12_5,
-    Ramp,
-    Saw,
-    // ARIA extra
-    RandomSH = 12,
-};
-
 struct LFODescription {
     LFODescription();
     ~LFODescription();
     static const LFODescription& getDefault();
-    float freq = 0; // lfoN_freq
-    float phase0 = 0; // lfoN_phase
-    float delay = 0; // lfoN_delay
-    float fade = 0; // lfoN_fade
-    unsigned count = 0; // lfoN_count
+    float freq  { Default::lfoFreq }; // lfoN_freq
+    float beats { Default::lfoBeats }; // lfoN_beats
+    float phase0 { Default::lfoPhase }; // lfoN_phase
+    CCMap<float> phaseCC { Default::lfoPhaseMod }; // lfoN_phase_cc
+    float delay { Default::lfoDelay }; // lfoN_delay
+    CCMap<float> delayCC { Default::lfoDelayMod }; // lfoN_phase_cc
+    float fade { Default::lfoFade }; // lfoN_fade
+    CCMap<float> fadeCC { Default::lfoFadeMod }; // lfoN_phase_cc
+    unsigned count { Default::lfoCount }; // lfoN_count
     struct Sub {
-        LFOWave wave = LFOWave::Triangle; // lfoN_wave[X]
-        float offset = 0; // lfoN_offset[X]
-        float ratio = 1; // lfoN_ratio[X]
-        float scale = 1; // lfoN_scale[X]
+        LFOWave wave { Default::lfoWave }; // lfoN_wave[X]
+        float offset { Default::lfoOffset }; // lfoN_offset[X]
+        float ratio { Default::lfoRatio }; // lfoN_ratio[X]
+        float scale { Default::lfoScale }; // lfoN_scale[X]
     };
     struct StepSequence {
         std::vector<float> steps {}; // lfoN_stepX - normalized to unity
     };
     absl::optional<StepSequence> seq;
     std::vector<Sub> sub;
+
+    // modulations
+    ModKey beatsKey;
+    ModKey freqKey;
+    ModKey phaseKey;
 };
 
 } // namespace sfz

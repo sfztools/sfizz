@@ -1,7 +1,7 @@
 #include "FilterPool.h"
 #include "SIMDHelpers.h"
-#include "SwapAndPop.h"
-#include "absl/algorithm/container.h"
+#include "utility/SwapAndPop.h"
+#include <absl/algorithm/container.h>
 #include <thread>
 #include <chrono>
 
@@ -30,14 +30,14 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
     // Setup the base values
     baseCutoff = description->cutoff;
     if (description->random != 0) {
-        fast_real_distribution<float> dist { -description->random, description->random };
+        fast_real_distribution<float> dist { 0.0f, description->random };
         baseCutoff *= centsFactor(dist(Random::randomGenerator));
     }
-    const auto keytrack = description->keytrack * (noteNumber - description->keycenter);
+    const auto keytrack = description->keytrack * float(noteNumber - description->keycenter);
     baseCutoff *= centsFactor(keytrack);
-    const auto veltrack = static_cast<float>(description->veltrack) * velocity;
+    const auto veltrack = description->veltrack * velocity;
     baseCutoff *= centsFactor(veltrack);
-    baseCutoff = Default::filterCutoffRange.clamp(baseCutoff);
+    baseCutoff = Default::filterCutoff.bounds.clamp(baseCutoff);
 
     baseGain = description->gain;
     baseResonance = description->resonance;
@@ -75,7 +75,7 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
         for (size_t i = 0; i < numFrames; ++i)
             (*cutoffSpan)[i] *= centsFactor(mod[i]);
     }
-    sfz::clampAll(*cutoffSpan, Default::filterCutoffRange);
+    sfz::clampAll(*cutoffSpan, Default::filterCutoff.bounds);
 
     fill<float>(*resonanceSpan, baseResonance);
     if (float* mod = mm.getModulation(resonanceTarget))

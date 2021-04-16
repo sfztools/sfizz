@@ -23,10 +23,15 @@ enum class ModId : int {
     Controller = _SourcesStart,
     Envelope,
     LFO,
+    AmpLFO,
+    PitchLFO,
+    FilLFO,
     AmpEG,
     PitchEG,
     FilEG,
-
+    ChannelAftertouch,
+    PolyAftertouch,
+    PerVoiceController,
     _SourcesEnd,
 
     //--------------------------------------------------------------------------
@@ -49,6 +54,41 @@ enum class ModId : int {
     EqBandwidth,
     OscillatorDetune,
     OscillatorModDepth,
+    PitchEGDepth,
+    FilEGDepth,
+    AmpLFODepth,
+    AmpLFOFrequency,
+    PitchLFODepth,
+    PitchLFOFrequency,
+    FilLFODepth,
+    FilLFOFrequency,
+    LFOFrequency,
+    LFOBeats,
+    LFOPhase,
+    LFOAmplitudeDepth,
+    LFOPanDepth,
+    LFOWidthDepth,
+    LFOPositionDepth,
+    LFOPitchDepth,
+    LFOVolumeDepth,
+    LFOFilCutoffDepth,
+    LFOFilResonanceDepth,
+    LFOFilGainDepth,
+    LFOEqGainDepth,
+    LFOEqFrequencyDepth,
+    LFOEqBandwidthDepth,
+    EGAmplitudeDepth,
+    EGPanDepth,
+    EGWidthDepth,
+    EGPositionDepth,
+    EGPitchDepth,
+    EGVolumeDepth,
+    EGFilCutoffDepth,
+    EGFilResonanceDepth,
+    EGFilGainDepth,
+    EGEqGainDepth,
+    EGEqFrequencyDepth,
+    EGEqBandwidthDepth,
 
     _TargetsEnd,
     // [/targets] --------------------------------------------------------------
@@ -70,8 +110,6 @@ enum ModFlags : int {
     kModIsAdditive = 1 << 3,
     //! This target is multiplicative (T)
     kModIsMultiplicative = 1 << 4,
-    //! This target is %-multiplicative (T)
-    kModIsPercentMultiplicative = 1 << 5,
 };
 
 namespace ModIds {

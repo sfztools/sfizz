@@ -5,20 +5,19 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "LeakDetector.h"
 #include "Region.h"
 #include "MidiState.h"
+#include "utility/LeakDetector.h"
 #include <absl/types/span.h>
 namespace sfz {
 /**
  * @brief Describe an attack/delay/sustain/release envelope that can
  * produce its coefficient in a blockwise manner for SIMD-type operations.
- *
- * @tparam Type the underlying type
  */
-template <class Type>
 class ADSREnvelope {
 public:
+    using Float = float;
+
     ADSREnvelope() = default;
     /**
      * @brief Resets the ADSR envelope given a Region, the current midi state, and a delay and
@@ -32,24 +31,18 @@ public:
      */
     void reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
     /**
-     * @brief Get the next value for the envelope
-     *
-     * @return Type
-     */
-    Type getNextValue() noexcept;
-    /**
      * @brief Get a block of values for the envelope. This method tries hard to be efficient
      * and hopefully it is.
      *
      * @param output
      */
-    void getBlock(absl::Span<Type> output) noexcept;
+    void getBlock(absl::Span<Float> output) noexcept;
     /**
      * @brief Set the release time for the envelope
      *
      * @param timeInSeconds
      */
-    void setReleaseTime(Type timeInSeconds) noexcept;
+    void setReleaseTime(Float timeInSeconds) noexcept;
     /**
      * @brief Start the envelope release after a delay.
      *
@@ -62,26 +55,26 @@ public:
      * @return true
      * @return false
      */
-    bool isSmoothing() const noexcept;
+    bool isSmoothing() const noexcept { return currentState != State::Done; }
     /**
      * @brief Is the envelope released?
      *
      * @return true
      * @return false
      */
-    bool isReleased() const noexcept;
+    bool isReleased() const noexcept { return currentState >= State::Release || shouldRelease; }
     /**
      * @brief Get the remaining delay samples
      *
      * @return int
      */
-    int getRemainingDelay() const noexcept;
+    int getRemainingDelay() const noexcept { return delay; }
 
 private:
     float sampleRate { config::defaultSampleRate };
-    Type secondsToSamples (Type timeInSeconds) const noexcept;
-    Type secondsToLinRate (Type timeInSeconds) const noexcept;
-    Type secondsToExpRate (Type timeInSeconds) const noexcept;
+    int secondsToSamples(Float timeInSeconds) const noexcept;
+    Float secondsToLinRate(Float timeInSeconds) const noexcept;
+    Float secondsToExpRate(Float timeInSeconds) const noexcept;
 
     enum class State {
         Delay,
@@ -90,22 +83,23 @@ private:
         Decay,
         Sustain,
         Release,
+        Fadeout,
         Done
     };
     State currentState { State::Done };
-    Type currentValue { 0.0 };
+    Float currentValue { 0.0 };
     int delay { 0 };
-    Type attackStep { 0 };
-    Type decayRate { 0 };
-    Type releaseRate { 0 };
+    Float attackStep { 0 };
+    Float decayRate { 0 };
+    Float releaseRate { 0 };
     int hold { 0 };
-    Type start { 0 };
-    Type peak { 0 };
-    Type sustain { 0 };
-    Type sustainThreshold { config::virtuallyZero };
+    Float start { 0 };
+    Float sustain { 0 };
+    Float sustainThreshold { config::virtuallyZero };
     int releaseDelay { 0 };
     bool shouldRelease { false };
     bool freeRunning { false };
+    Float transitionDelta {};
     LEAK_DETECTOR(ADSREnvelope);
 };
 

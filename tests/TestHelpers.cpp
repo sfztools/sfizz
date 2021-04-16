@@ -81,6 +81,55 @@ unsigned numPlayingVoices(const sfz::Synth& synth)
     });
 }
 
+const std::vector<std::string> playingSamples(const sfz::Synth& synth)
+{
+    std::vector<std::string> samples;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->releasedOrFree()) {
+            if (auto region = voice->getRegion())
+                samples.push_back(region->sampleId->filename());
+        }
+    }
+    return samples;
+}
+
+const std::vector<float> playingVelocities(const sfz::Synth& synth)
+{
+    std::vector<float> velocities;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->releasedOrFree())
+            velocities.push_back(voice->getTriggerEvent().value);
+    }
+    return velocities;
+}
+
+const std::vector<std::string> activeSamples(const sfz::Synth& synth)
+{
+    std::vector<std::string> samples;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->isFree()) {
+            const sfz::Region* region = voice->getRegion();
+            if (region)
+                samples.push_back(region->sampleId->filename());
+        }
+    }
+    return samples;
+}
+
+const std::vector<float> activeVelocities(const sfz::Synth& synth)
+{
+    std::vector<float> velocities;
+    for (int i = 0; i < synth.getNumVoices(); ++i) {
+        const auto* voice = synth.getVoiceView(i);
+        if (!voice->isFree())
+            velocities.push_back(voice->getTriggerEvent().value);
+    }
+    return velocities;
+}
+
 std::string createDefaultGraph(std::vector<std::string> lines, int numRegions)
 {
     for (int regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
@@ -123,4 +172,38 @@ std::string createModulationDotGraph(std::vector<std::string> lines)
     graph += "}\n";
 
     return graph;
+}
+
+void simpleMessageReceiver(void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+{
+    (void)delay;
+    auto& messageList = *reinterpret_cast<std::vector<std::string>*>(data);
+
+    std::string newMessage = absl::StrCat(path, ",", sig, " : { ");
+    for (unsigned i = 0, n = strlen(sig); i < n; ++i) {
+        switch(sig[i]){
+        case 'i':
+            absl::StrAppend(&newMessage, args[i].i);
+            break;
+        case 'f':
+            absl::StrAppend(&newMessage, args[i].f);
+            break;
+        case 'd':
+            absl::StrAppend(&newMessage, args[i].d);
+            break;
+        case 'h':
+            absl::StrAppend(&newMessage, args[i].h);
+            break;
+        case 's':
+            absl::StrAppend(&newMessage, args[i].s);
+            break;
+        }
+
+        if (i == (n - 1))
+            absl::StrAppend(&newMessage, " }");
+        else
+            absl::StrAppend(&newMessage, ", ");
+    }
+
+    messageList.push_back(std::move(newMessage));
 }

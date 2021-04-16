@@ -20,32 +20,26 @@
 */
 
 #include "Gate.h"
+#include "gen/gate.hxx"
 #include "Opcode.h"
 #include "AudioSpan.h"
 #include "MathHelpers.h"
+#include "OversamplerHelpers.h"
 #include "absl/memory/memory.h"
 
 static constexpr int _oversampling = 2;
-#define FAUST_UIMACROS 1
-#include "gen/gate.cxx"
 
 namespace sfz {
 namespace fx {
 
     struct Gate::Impl {
         faustGate _gate[2];
-        bool _stlink = false;
+        bool _stlink { Default::gateSTLink };
         float _inputGain = 1.0;
         AudioBuffer<float, 2> _tempBuffer2x { 2, _oversampling * config::defaultSamplesPerBlock };
         AudioBuffer<float, 2> _gain2x { 2, _oversampling * config::defaultSamplesPerBlock };
-        hiir::Downsampler2xFpu<12> _downsampler2x[EffectChannels];
-        hiir::Upsampler2xFpu<12> _upsampler2x[EffectChannels];
-
-        #define DEFINE_SET_GET(type, ident, name, var, def, min, max, step) \
-            float get_##ident(size_t i) const noexcept { return _gate[i].var; } \
-            void set_##ident(size_t i, float value) noexcept { _gate[i].var = value; }
-        FAUST_LIST_ACTIVES(DEFINE_SET_GET);
-        #undef DEFINE_SET_GET
+        hiir::Downsampler2x<12> _downsampler2x[EffectChannels];
+        hiir::Upsampler2x<12> _upsampler2x[EffectChannels];
     };
 
     Gate::Gate()
@@ -64,15 +58,13 @@ namespace fx {
     {
         Impl& impl = *_impl;
         for (faustGate& gate : impl._gate) {
-            gate.classInit(sampleRate);
-            gate.instanceConstants(sampleRate);
+            gate.classInit(_oversampling * sampleRate);
+            gate.instanceConstants(_oversampling * sampleRate);
         }
 
-        static constexpr double coefs2x[12] = { 0.036681502163648017, 0.13654762463195794, 0.27463175937945444, 0.42313861743656711, 0.56109869787919531, 0.67754004997416184, 0.76974183386322703, 0.83988962484963892, 0.89226081800387902, 0.9315419599631839, 0.96209454837808417, 0.98781637073289585 };
-
         for (unsigned c = 0; c < EffectChannels; ++c) {
-            impl._downsampler2x[c].set_coefs(coefs2x);
-            impl._upsampler2x[c].set_coefs(coefs2x);
+            impl._downsampler2x[c].set_coefs(OSCoeffs2x);
+            impl._upsampler2x[c].set_coefs(OSCoeffs2x);
         }
 
         clear();
@@ -166,33 +158,35 @@ namespace fx {
         for (const Opcode& opc : members) {
             switch (opc.lettersOnlyHash) {
             case hash("gate_attack"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Attack(c, *value);
+                {
+                    auto value = opc.read(Default::gateAttack);
+                    for (faustGate& gate : impl._gate)
+                        gate.setAttack(value);
                 }
                 break;
             case hash("gate_hold"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Hold(c, *value);
+                {
+                    auto value = opc.read(Default::gateHold);
+                    for (faustGate& gate : impl._gate)
+                        gate.setHold(value);
                 }
                 break;
             case hash("gate_release"):
-                if (auto value = readOpcode<float>(opc.value, {0.0, 10.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Release(c, *value);
+                {
+                    auto value = opc.read(Default::gateRelease);
+                    for (faustGate& gate : impl._gate)
+                        gate.setRelease(value);
                 }
                 break;
             case hash("gate_threshold"):
-                if (auto value = readOpcode<float>(opc.value, {-100.0, 0.0})) {
-                    for (size_t c = 0; c < 2; ++c)
-                        impl.set_Threshold(c, *value);
+                {
+                    auto value = opc.read(Default::gateThreshold);
+                    for (faustGate& gate : impl._gate)
+                        gate.setThreshold(value);
                 }
                 break;
             case hash("gate_stlink"):
-                if (auto value = readBooleanFromOpcode(opc))
-                    impl._stlink = *value;
-                break;
+                impl._stlink = opc.read(Default::gateSTLink);
             }
         }
 

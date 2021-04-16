@@ -7,16 +7,13 @@
 #pragma once
 #include "absl/types/span.h"
 #include "ghc/fs_std.hpp"
+#include <st_audiofile.h>
 #include <system_error>
 #include <memory>
 #include <cstdio>
-#if defined(_WIN32)
-#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
-#include <windows.h>
-#endif
-#include <sndfile.h>
 
 namespace sfz {
+struct InstrumentInfo;
 
 /**
  * @brief Designation of a particular kind of audio reader
@@ -42,7 +39,7 @@ public:
     virtual unsigned channels() const = 0;
     virtual unsigned sampleRate() const = 0;
     virtual size_t readNextBlock(float* buffer, size_t frames) = 0;
-    virtual bool getInstrument(SF_INSTRUMENT* instrument) = 0;
+    virtual bool getInstrument(InstrumentInfo* instrument) = 0;
 };
 
 typedef std::unique_ptr<AudioReader> AudioReaderPtr;

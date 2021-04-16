@@ -16,7 +16,7 @@ public:
 
     virtual void init(int) = 0;
     virtual void instanceClear() = 0;
-    virtual void compute(int, float **, float **) = 0;
+    virtual void compute(int, const float *const *, float *const *) = 0;
 
     virtual void configureStandard(float, float, float) {}
     virtual void configureEq(float, float, float) {}
@@ -40,59 +40,59 @@ protected:
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include "gen/filters/sfzApf1p.cxx"
-#include "gen/filters/sfzBpf1p.cxx"
-#include "gen/filters/sfzBpf2p.cxx"
-#include "gen/filters/sfzBpf4p.cxx"
-#include "gen/filters/sfzBpf6p.cxx"
-#include "gen/filters/sfzBrf1p.cxx"
-#include "gen/filters/sfzBrf2p.cxx"
-#include "gen/filters/sfzHpf1p.cxx"
-#include "gen/filters/sfzHpf2p.cxx"
-#include "gen/filters/sfzHpf4p.cxx"
-#include "gen/filters/sfzHpf6p.cxx"
-#include "gen/filters/sfzLpf1p.cxx"
-#include "gen/filters/sfzLpf2p.cxx"
-#include "gen/filters/sfzLpf4p.cxx"
-#include "gen/filters/sfzLpf6p.cxx"
-#include "gen/filters/sfzPink.cxx"
-#include "gen/filters/sfzLpf2pSv.cxx"
-#include "gen/filters/sfzHpf2pSv.cxx"
-#include "gen/filters/sfzBpf2pSv.cxx"
-#include "gen/filters/sfzBrf2pSv.cxx"
-#include "gen/filters/sfzLsh.cxx"
-#include "gen/filters/sfzHsh.cxx"
-#include "gen/filters/sfzPeq.cxx"
-#include "gen/filters/sfzEqPeak.cxx"
-#include "gen/filters/sfzEqLshelf.cxx"
-#include "gen/filters/sfzEqHshelf.cxx"
+#include "gen/filters/sfzApf1p.hxx"
+#include "gen/filters/sfzBpf1p.hxx"
+#include "gen/filters/sfzBpf2p.hxx"
+#include "gen/filters/sfzBpf4p.hxx"
+#include "gen/filters/sfzBpf6p.hxx"
+#include "gen/filters/sfzBrf1p.hxx"
+#include "gen/filters/sfzBrf2p.hxx"
+#include "gen/filters/sfzHpf1p.hxx"
+#include "gen/filters/sfzHpf2p.hxx"
+#include "gen/filters/sfzHpf4p.hxx"
+#include "gen/filters/sfzHpf6p.hxx"
+#include "gen/filters/sfzLpf1p.hxx"
+#include "gen/filters/sfzLpf2p.hxx"
+#include "gen/filters/sfzLpf4p.hxx"
+#include "gen/filters/sfzLpf6p.hxx"
+#include "gen/filters/sfzPink.hxx"
+#include "gen/filters/sfzLpf2pSv.hxx"
+#include "gen/filters/sfzHpf2pSv.hxx"
+#include "gen/filters/sfzBpf2pSv.hxx"
+#include "gen/filters/sfzBrf2pSv.hxx"
+#include "gen/filters/sfzLsh.hxx"
+#include "gen/filters/sfzHsh.hxx"
+#include "gen/filters/sfzPeq.hxx"
+#include "gen/filters/sfzEqPeak.hxx"
+#include "gen/filters/sfzEqLshelf.hxx"
+#include "gen/filters/sfzEqHshelf.hxx"
 
-#include "gen/filters/sfz2chApf1p.cxx"
-#include "gen/filters/sfz2chBpf1p.cxx"
-#include "gen/filters/sfz2chBpf2p.cxx"
-#include "gen/filters/sfz2chBpf4p.cxx"
-#include "gen/filters/sfz2chBpf6p.cxx"
-#include "gen/filters/sfz2chBrf1p.cxx"
-#include "gen/filters/sfz2chBrf2p.cxx"
-#include "gen/filters/sfz2chHpf1p.cxx"
-#include "gen/filters/sfz2chHpf2p.cxx"
-#include "gen/filters/sfz2chHpf4p.cxx"
-#include "gen/filters/sfz2chHpf6p.cxx"
-#include "gen/filters/sfz2chLpf1p.cxx"
-#include "gen/filters/sfz2chLpf2p.cxx"
-#include "gen/filters/sfz2chLpf4p.cxx"
-#include "gen/filters/sfz2chLpf6p.cxx"
-#include "gen/filters/sfz2chPink.cxx"
-#include "gen/filters/sfz2chLpf2pSv.cxx"
-#include "gen/filters/sfz2chHpf2pSv.cxx"
-#include "gen/filters/sfz2chBpf2pSv.cxx"
-#include "gen/filters/sfz2chBrf2pSv.cxx"
-#include "gen/filters/sfz2chLsh.cxx"
-#include "gen/filters/sfz2chHsh.cxx"
-#include "gen/filters/sfz2chPeq.cxx"
-#include "gen/filters/sfz2chEqPeak.cxx"
-#include "gen/filters/sfz2chEqLshelf.cxx"
-#include "gen/filters/sfz2chEqHshelf.cxx"
+#include "gen/filters/sfz2chApf1p.hxx"
+#include "gen/filters/sfz2chBpf1p.hxx"
+#include "gen/filters/sfz2chBpf2p.hxx"
+#include "gen/filters/sfz2chBpf4p.hxx"
+#include "gen/filters/sfz2chBpf6p.hxx"
+#include "gen/filters/sfz2chBrf1p.hxx"
+#include "gen/filters/sfz2chBrf2p.hxx"
+#include "gen/filters/sfz2chHpf1p.hxx"
+#include "gen/filters/sfz2chHpf2p.hxx"
+#include "gen/filters/sfz2chHpf4p.hxx"
+#include "gen/filters/sfz2chHpf6p.hxx"
+#include "gen/filters/sfz2chLpf1p.hxx"
+#include "gen/filters/sfz2chLpf2p.hxx"
+#include "gen/filters/sfz2chLpf4p.hxx"
+#include "gen/filters/sfz2chLpf6p.hxx"
+#include "gen/filters/sfz2chPink.hxx"
+#include "gen/filters/sfz2chLpf2pSv.hxx"
+#include "gen/filters/sfz2chHpf2pSv.hxx"
+#include "gen/filters/sfz2chBpf2pSv.hxx"
+#include "gen/filters/sfz2chBrf2pSv.hxx"
+#include "gen/filters/sfz2chLsh.hxx"
+#include "gen/filters/sfz2chHsh.hxx"
+#include "gen/filters/sfz2chPeq.hxx"
+#include "gen/filters/sfz2chEqPeak.hxx"
+#include "gen/filters/sfz2chEqLshelf.hxx"
+#include "gen/filters/sfz2chEqHshelf.hxx"
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
@@ -105,8 +105,8 @@ protected:
 template <class F> struct sfzFilter : public F {
     void configureStandard(float cutoff, float q, float pksh) override
     {
-        F::fCutoff = cutoff;
-        F::fQ = q;
+        this->setCutoff(cutoff);
+        this->setResonance(q);
         (void)pksh;
     }
 };
@@ -118,7 +118,7 @@ template <class F> struct sfzFilter : public F {
 template <class F> struct sfzFilterNoQ : public F {
     void configureStandard(float cutoff, float q, float pksh) override
     {
-        F::fCutoff = cutoff;
+        this->setCutoff(cutoff);
         (void)q;
         (void)pksh;
     }
@@ -144,9 +144,9 @@ template <class F> struct sfzFilterNoCutoff : public F {
 template <class F> struct sfzFilterPkSh : public F {
     void configureStandard(float cutoff, float q, float pksh) override
     {
-        F::fCutoff = cutoff;
-        F::fQ = q;
-        F::fPkShGain = pksh;
+        this->setCutoff(cutoff);
+        this->setResonance(q);
+        this->setPeakShelfGain(pksh);
     }
 };
 
@@ -157,9 +157,9 @@ template <class F> struct sfzFilterPkSh : public F {
 template <class F> struct sfzFilterEq : public F {
     void configureEq(float cutoff, float bw, float pksh) override
     {
-        F::fCutoff = cutoff;
-        F::fBandwidth = bw;
-        F::fPkShGain = pksh;
+        this->setCutoff(cutoff);
+        this->setBandwidth(bw);
+        this->setPeakShelfGain(pksh);
     }
 };
 
@@ -216,3 +216,33 @@ struct sfz2chPeq final : public sfzFilterPkSh<faust2chPeq> {};
 struct sfz2chEqPeak final : public sfzFilterEq<faust2chEqPeak> {};
 struct sfz2chEqLshelf final : public sfzFilterEq<faust2chEqLshelf> {};
 struct sfz2chEqHshelf final : public sfzFilterEq<faust2chEqHshelf> {};
+
+#define SFZ_EACH_FILTER(F) \
+    F(Apf1p) \
+    F(Bpf1p) \
+    F(Bpf2p) \
+    F(Bpf4p) \
+    F(Bpf6p) \
+    F(Brf1p) \
+    F(Brf2p) \
+    F(Hpf1p) \
+    F(Hpf2p) \
+    F(Hpf4p) \
+    F(Hpf6p) \
+    F(Lpf1p) \
+    F(Lpf2p) \
+    F(Lpf4p) \
+    F(Lpf6p) \
+    F(Pink) \
+    F(Lpf2pSv) \
+    F(Hpf2pSv) \
+    F(Bpf2pSv) \
+    F(Brf2pSv) \
+    F(Lsh) \
+    F(Hsh) \
+    F(Peq)
+
+#define SFZ_EACH_EQ(F) \
+    F(Peak) \
+    F(Lshelf) \
+    F(Hshelf)

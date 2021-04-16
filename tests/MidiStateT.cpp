@@ -82,3 +82,11 @@ TEST_CASE("[MidiState] Extended CCs")
     sfz::MidiState state;
     state.ccEvent(0, 142, 64_norm); // should not trap
 }
+
+TEST_CASE("[MidiState] Last note velocity")
+{
+    sfz::MidiState state;
+    state.noteOnEvent(0, 62, 64_norm);
+    state.noteOnEvent(0, 60, 10_norm);
+    REQUIRE(state.getLastVelocity() == 10_norm);
+}

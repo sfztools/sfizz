@@ -6,10 +6,10 @@
 
 #pragma once
 #include "../Opcode.h"
-#include "ghc/fs_std.hpp"
-#include "absl/types/optional.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
+#include <ghc/fs_std.hpp>
+#include <absl/types/optional.h>
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 #include <string>
 #include <memory>
 
@@ -26,6 +26,8 @@ class Parser {
 public:
     Parser();
     ~Parser();
+
+    void clear();
 
     void addExternalDefinition(absl::string_view id, absl::string_view value);
     void clearExternalDefinitions();
@@ -71,7 +73,6 @@ private:
     void processDirective();
     void processHeader();
     void processOpcode();
-    void reset();
 
     // errors and warnings
     void emitError(const SourceRange& range, const std::string& message);

@@ -7,11 +7,13 @@
 #include "DataHelpers.h"
 #include "sfizz/Synth.h"
 #include "sfizz/LFO.h"
+#include "sfizz/Region.h"
 #include "catch2/catch.hpp"
 
 static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRate, size_t numFrames)
 {
     sfz::Synth synth;
+    sfz::Resources& resources = synth.getResources();
 
     if (!synth.loadSfzFile(sfzPath))
         return false;
@@ -19,25 +21,32 @@ static bool computeLFO(DataPoints& dp, const fs::path& sfzPath, double sampleRat
     if (synth.getNumRegions() != 1)
         return false;
 
+    size_t bufferSize = static_cast<size_t>(synth.getSamplesPerBlock());
+
     const std::vector<sfz::LFODescription>& desc = synth.getRegionView(0)->lfos;
     size_t numLfos = desc.size();
-    std::vector<sfz::LFO> lfos(numLfos);
+    std::vector<std::unique_ptr<sfz::LFO>> lfos(numLfos);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].setSampleRate(sampleRate);
-        lfos[l].configure(&desc[l]);
+        sfz::LFO* lfo = new sfz::LFO(resources);
+        lfos[l].reset(lfo);
+        lfo->setSampleRate(sampleRate);
+        lfo->configure(&desc[l]);
     }
 
     std::vector<float> outputMemory(numLfos * numFrames);
 
     for (size_t l = 0; l < numLfos; ++l) {
-        lfos[l].start(0);
+        lfos[l]->start(0);
     }
 
     std::vector<absl::Span<float>> lfoOutputs(numLfos);
     for (size_t l = 0; l < numLfos; ++l) {
         lfoOutputs[l] = absl::MakeSpan(&outputMemory[l * numFrames], numFrames);
-        lfos[l].process(lfoOutputs[l]);
+        for (size_t i = 0, currentFrames; i < numFrames; i += currentFrames) {
+            currentFrames = std::min(numFrames - i, bufferSize);
+            lfos[l]->process(lfoOutputs[l].subspan(i, currentFrames));
+        }
     }
 
     dp.rows = numFrames;

@@ -1,0 +1,190 @@
+// -*- C++ -*-
+// SPDX-License-Identifier: BSL-1.0
+//
+//          Copyright Jean Pierre Cimalando 2019-2020.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+//
+#include "layout.h"
+#include "reader.h"
+#include <absl/strings/ascii.h>
+#include <absl/strings/string_view.h>
+#include <unordered_map>
+#include <iostream>
+
+///
+typedef std::unordered_map<std::string, std::string> Metadata;
+
+static Metadata metadata_from_comment(absl::string_view comment)
+{
+    Metadata md;
+
+    while (!comment.empty()) {
+        absl::string_view line;
+
+        size_t pos = comment.find_first_of("\r\n");
+        if (pos != comment.npos) {
+            line = comment.substr(0, pos);
+            comment.remove_prefix(pos + 1);
+        }
+        else {
+            line = comment;
+            comment = {};
+        }
+
+        line = absl::StripAsciiWhitespace(line);
+        if (line.empty() || line[0] == '#')
+            continue;
+
+        std::string key, value;
+        pos = line.find_first_of('=');
+        if (pos != comment.npos) {
+            key = std::string(line.substr(0, pos));
+            value = std::string(line.substr(pos + 1));
+        }
+        else
+            key = std::string(line);
+
+        md.emplace(std::move(key), std::move(value));
+    }
+
+    return md;
+}
+
+///
+static std::string cstrQuote(absl::string_view text)
+{
+    std::string cstr;
+    cstr.reserve(2 * text.size() + 2);
+
+    cstr.push_back('"');
+
+    for (char c : text) {
+        switch (c) {
+        case '\a' :
+            cstr.append("\\a");
+            break;
+        case '\b' :
+            cstr.append("\\b");
+            break;
+        case '\t' :
+            cstr.append("\\t");
+            break;
+        case '\n' :
+            cstr.append("\\n");
+            break;
+        case '\v' :
+            cstr.append("\\v");
+            break;
+        case '\f' :
+            cstr.append("\\f");
+            break;
+        case '\r' :
+            cstr.append("\\r");
+            break;
+        case '"':
+        case '\\':
+            cstr.push_back('\\');
+            cstr.push_back(c);
+            break;
+        default:
+            cstr.push_back(c);
+            break;
+        }
+    }
+
+    cstr.push_back('"');
+    return cstr;
+}
+
+///
+static void codegen_item(int& idCounter, int parentId, int parentX, int parentY, const LayoutItem& item, absl::string_view oldPalette)
+{
+    const Metadata md = metadata_from_comment(item.comment);
+
+    absl::string_view tag = "-1";
+    absl::string_view newPalette;
+
+    Metadata::const_iterator it;
+    it = md.find("tag");
+    if (it != md.end())
+        tag = it->second;
+    it = md.find("palette");
+    if (it != md.end())
+        newPalette = it->second;
+
+    absl::string_view currentPalette = newPalette.empty() ? oldPalette : newPalette;
+
+    int id = idCounter++;
+    int myX = item.x;
+    int myY = item.y;
+    if (parentId == -1) {
+        myX = 0;
+        myY = 0;
+    }
+    int relX = myX - parentX;
+    int relY = myY - parentY;
+
+    //std::cout << "// Begin " << id << " " << item.classname << " {" << item.label << "}" << "\n";
+
+    if (!newPalette.empty())
+        std::cout << "enterPalette(" << newPalette << ");\n";
+
+    absl::string_view label;
+    if (!item.label.empty() && item.labeltype != "NO_LABEL")
+        label = item.label;
+
+    absl::string_view align = "kCenterText";
+    if (item.align & 4)
+        align = "kLeftText";
+    else if (item.align & 8)
+        align = "kRightText";
+
+    std::cout << "auto"/*item.classname*/ << "* const view__" << id << " = create" << item.classname << "(CRect(" << relX << ", " << relY << ", " << (relX + item.w) << ", " << (relY + item.h) <<  "), " << tag << ", " << cstrQuote(label) << ", " << align << ", " << item.labelsize << ");\n";
+
+    if (!item.id.empty())
+        std::cout << item.id << " = view__" << id << ";\n";
+
+    if (parentId != -1)
+        std::cout << "view__" << parentId << "->addView(view__" << id << ");\n";
+
+    if (item.hidden)
+        std::cout << "view__" << id << "->setVisible(false);\n";
+
+    for (const LayoutItem& subItem : item.items)
+        codegen_item(idCounter, id, myX, myY, subItem, currentPalette);
+
+    if (!newPalette.empty())
+        std::cout << "enterPalette(" << oldPalette << ");\n";
+
+    //std::cout << "// End " << id << " " << item.classname << " {" << item.label << "}" << "\n";
+}
+
+static void codegen_layout(const LayoutItem& item)
+{
+    int idCounter = 0;
+    codegen_item(idCounter, -1, 0, 0, item, "defaultPalette");
+}
+
+///
+int main(int argc, char *argv[])
+{
+    if (argc != 2) {
+        std::cerr << "Please indicate a fluid design file.\n";
+        return 1;
+    }
+
+    Layout layout = read_file_layout(argv[1]);
+
+    if (layout.items.size() != 1) {
+        std::cerr << "There must be exactly 1 top level component.";
+        return 1;
+    }
+
+    std::cout << "/* This file is generated by the layout maker tool. */\n";
+
+    codegen_layout(layout.items[0]);
+
+    return 0;
+}

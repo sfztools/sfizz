@@ -5,10 +5,11 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "LeakDetector.h"
 #include "SfzHelpers.h"
+#include "utility/LeakDetector.h"
 #include <vector>
 #include <absl/algorithm/container.h>
+#include <absl/types/optional.h>
 
 namespace sfz {
 /**
@@ -52,6 +53,22 @@ public:
         auto it = absl::c_lower_bound(container, index, CCDataComparator<ValueType> {});
         if (it == container.end() || it->cc != index) {
             return defaultValue;
+        } else {
+            return it->data;
+        }
+    }
+
+    /**
+     * @brief Returns the held object at the index, or a default value if not present
+     *
+     * @param index
+     * @return const ValueType&
+     */
+    absl::optional<ValueType> get(int index) const noexcept
+    {
+        auto it = absl::c_lower_bound(container, index, CCDataComparator<ValueType> {});
+        if (it == container.end() || it->cc != index) {
+            return {};
         } else {
             return it->data;
         }

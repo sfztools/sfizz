@@ -24,264 +24,304 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include "Range.h"
-#include "Config.h"
 #include <limits>
 #include <cstdint>
+#include <type_traits>
+#include "Range.h"
+#include "Config.h"
+#include "SfzFilter.h"
+#include "SfzHelpers.h"
+#include "LFOCommon.h"
+#include "MathHelpers.h"
+#include "utility/Macros.h"
 
-enum class SfzTrigger { attack, release, release_key, first, legato };
-enum class SfzLoopMode { no_loop, one_shot, loop_continuous, loop_sustain };
-enum class SfzOffMode { fast, normal, time };
-enum class SfzVelocityOverride { current, previous };
-enum class SfzCrossfadeCurve { gain, power };
-enum class SfzSelfMask { mask, dontMask };
 
 namespace sfz
 {
+
+enum class Trigger { attack = 0, release, release_key, first, legato };
+enum class LoopMode { no_loop = 0, one_shot, loop_continuous, loop_sustain };
+enum class OffMode { fast = 0, normal, time };
+enum class VelocityOverride { current = 0, previous };
+enum class CrossfadeCurve { gain = 0, power };
+enum class SelfMask { mask = 0, dontMask };
+enum class OscillatorEnabled { Auto = -1, Off = 0, On = 1 };
+
+enum OpcodeFlags : int {
+    kCanBeNote = 1,
+    kEnforceLowerBound = 1 << 1,
+    kEnforceUpperBound = 1 << 2,
+    kEnforceBounds = kEnforceLowerBound|kEnforceUpperBound,
+    kPermissiveLowerBound = 1 << 3,
+    kPermissiveUpperBound = 1 << 4,
+    kPermissiveBounds = kPermissiveLowerBound|kPermissiveUpperBound,
+    kNormalizePercent = 1 << 5,
+    kNormalizeMidi = 1 << 6,
+    kNormalizeBend = 1 << 7,
+    kWrapPhase = 1 << 8,
+    kDb2Mag = 1 << 9,
+};
+
+template<class T>
+struct OpcodeSpec
+{
+    T defaultInputValue;
+    Range<T> bounds;
+    int flags;
+
+    using Intermediate = typename std::conditional<
+        std::is_integral<T>::value || std::is_enum<T>::value, int64_t, T>::type;
+
+    template <class U>
+    using IsNormalizable = std::integral_constant<
+        bool, std::is_arithmetic<U>::value && !std::is_same<U, bool>::value>;
+
+    /**
+     * @brief Normalizes an input as needed for the spec
+     *
+     * @tparam U
+     * @param input
+     * @return U
+     */
+    template<class U=T>
+    typename std::enable_if<IsNormalizable<U>::value, U>::type normalizeInput(U input) const
+    {
+        constexpr int needsOperation {
+            kNormalizePercent |
+            kNormalizeMidi |
+            kNormalizeBend |
+            kDb2Mag
+        };
+
+        if (!(flags & needsOperation))
+            return input;
+        else if (flags & kNormalizePercent)
+            return static_cast<U>(input / U(100));
+        else if (flags & kNormalizeMidi)
+            return static_cast<U>(input / U(127));
+        else if (flags & kNormalizeBend)
+            return static_cast<U>(input / U(8191));
+        else if (flags & kDb2Mag)
+            return static_cast<U>(db2mag(input));
+        else // just in case
+            return input;
+    }
+
+    /**
+     * @brief Normalizes an input as needed for the spec
+     *
+     * @tparam U
+     * @param input
+     * @return U
+     */
+    template<class U=T>
+    typename std::enable_if<!IsNormalizable<U>::value, U>::type normalizeInput(U input) const
+    {
+        return input;
+    }
+
+    operator T() const { return normalizeInput(defaultInputValue); }
+};
+
 namespace Default
 {
-    // The categories match http://sfzformat.com/
-    // ******* SFZ 1 *******
-    // Sound source: sample playback
-	constexpr float delay { 0.0 };
-	constexpr float delayRandom { 0.0 };
-	constexpr Range<float> delayRange { 0.0, 100.0 };
-	constexpr int64_t offset { 0 };
-	constexpr int64_t offsetRandom { 0 };
-	constexpr Range<int64_t> offsetRange { 0, std::numeric_limits<uint32_t>::max() };
-	constexpr Range<int64_t> offsetCCRange = offsetRange;
-	constexpr Range<uint32_t> sampleEndRange { 0, std::numeric_limits<uint32_t>::max() };
-	constexpr Range<uint32_t> sampleCountRange { 0, std::numeric_limits<uint32_t>::max() };
-	constexpr SfzLoopMode loopMode { SfzLoopMode::no_loop };
-	constexpr Range<uint32_t> loopRange { 0, std::numeric_limits<uint32_t>::max() };
-	constexpr float loopCrossfade { 1e-3 };
-	constexpr Range<float> loopCrossfadeRange { loopCrossfade, 1.0 };
+    extern const OpcodeSpec<float> delay;
+    extern const OpcodeSpec<float> delayRandom;
+    extern const OpcodeSpec<float> delayMod;
+    extern const OpcodeSpec<int64_t> offset;
+    extern const OpcodeSpec<int64_t> offsetMod;
+    extern const OpcodeSpec<int64_t> offsetRandom;
+    extern const OpcodeSpec<int64_t> sampleEnd;
+    extern const OpcodeSpec<int64_t> sampleEndMod;
+    extern const OpcodeSpec<uint32_t> sampleCount;
+    extern const OpcodeSpec<int64_t> loopStart;
+    extern const OpcodeSpec<int64_t> loopEnd;
+    extern const OpcodeSpec<int64_t> loopMod;
+    extern const OpcodeSpec<uint32_t> loopCount;
+    extern const OpcodeSpec<float> loopCrossfade;
+    extern const OpcodeSpec<float> oscillatorPhase;
+    extern const OpcodeSpec<OscillatorEnabled> oscillator;
+    extern const OpcodeSpec<int32_t> oscillatorMode;
+    extern const OpcodeSpec<int32_t> oscillatorMulti;
+    extern const OpcodeSpec<float> oscillatorDetune;
+    extern const OpcodeSpec<float> oscillatorDetuneMod;
+    extern const OpcodeSpec<float> oscillatorModDepth;
+    extern const OpcodeSpec<float> oscillatorModDepthMod;
+    extern const OpcodeSpec<int32_t> oscillatorQuality;
+    extern const OpcodeSpec<uint32_t> group;
+    extern const OpcodeSpec<float> offTime;
+    extern const OpcodeSpec<uint32_t> polyphony;
+    extern const OpcodeSpec<uint32_t> notePolyphony;
+    extern const OpcodeSpec<uint8_t> key;
+    extern const OpcodeSpec<uint8_t> loKey;
+    extern const OpcodeSpec<uint8_t> hiKey;
+    extern const OpcodeSpec<float> loVel;
+    extern const OpcodeSpec<float> hiVel;
+    extern const OpcodeSpec<float> loCC;
+    extern const OpcodeSpec<float> hiCC;
+    extern const OpcodeSpec<float> loBend;
+    extern const OpcodeSpec<float> hiBend;
+    extern const OpcodeSpec<float> loNormalized;
+    extern const OpcodeSpec<float> hiNormalized;
+    extern const OpcodeSpec<float> loBipolar;
+    extern const OpcodeSpec<float> hiBipolar;
+    extern const OpcodeSpec<float> loChannelAftertouch;
+    extern const OpcodeSpec<float> hiChannelAftertouch;
+    extern const OpcodeSpec<float> loPolyAftertouch;
+    extern const OpcodeSpec<float> hiPolyAftertouch;
+    extern const OpcodeSpec<uint16_t> ccNumber;
+    extern const OpcodeSpec<uint8_t> curveCC;
+    extern const OpcodeSpec<uint16_t> smoothCC;
+    extern const OpcodeSpec<uint8_t> sustainCC;
+    extern const OpcodeSpec<uint8_t> sostenutoCC;
+    extern const OpcodeSpec<bool> checkSustain;
+    extern const OpcodeSpec<bool> checkSostenuto;
+    extern const OpcodeSpec<float> sustainThreshold;
+    extern const OpcodeSpec<float> sostenutoThreshold;
+    extern const OpcodeSpec<float> loBPM;
+    extern const OpcodeSpec<float> hiBPM;
+    extern const OpcodeSpec<uint8_t> sequence;
+    extern const OpcodeSpec<float> volume;
+    extern const OpcodeSpec<float> volumeMod;
+    extern const OpcodeSpec<float> amplitude;
+    extern const OpcodeSpec<float> amplitudeMod;
+    extern const OpcodeSpec<float> pan;
+    extern const OpcodeSpec<float> panMod;
+    extern const OpcodeSpec<float> position;
+    extern const OpcodeSpec<float> positionMod;
+    extern const OpcodeSpec<float> width;
+    extern const OpcodeSpec<float> widthMod;
+    extern const OpcodeSpec<float> ampKeytrack;
+    extern const OpcodeSpec<float> ampVeltrack;
+    extern const OpcodeSpec<float> ampVelcurve;
+    extern const OpcodeSpec<float> ampRandom;
+    extern const OpcodeSpec<bool> rtDead;
+    extern const OpcodeSpec<float> rtDecay;
+    extern const OpcodeSpec<float> filterCutoff;
+    extern const OpcodeSpec<float> filterCutoffMod;
+    extern const OpcodeSpec<float> filterResonance;
+    extern const OpcodeSpec<float> filterResonanceMod;
+    extern const OpcodeSpec<float> filterGain;
+    extern const OpcodeSpec<float> filterGainMod;
+    extern const OpcodeSpec<float> filterRandom;
+    extern const OpcodeSpec<float> filterKeytrack;
+    extern const OpcodeSpec<float> filterVeltrack;
+    extern const OpcodeSpec<float> eqBandwidth;
+    extern const OpcodeSpec<float> eqBandwidthMod;
+    extern const OpcodeSpec<float> eqFrequency;
+    extern const OpcodeSpec<float> eqFrequencyMod;
+    extern const OpcodeSpec<float> eqGain;
+    extern const OpcodeSpec<float> eqGainMod;
+    extern const OpcodeSpec<float> eqVel2Frequency;
+    extern const OpcodeSpec<float> eqVel2Gain;
+    extern const OpcodeSpec<float> pitchKeytrack;
+    extern const OpcodeSpec<float> pitchRandom;
+    extern const OpcodeSpec<float> pitchVeltrack;
+    extern const OpcodeSpec<float> transpose;
+    extern const OpcodeSpec<float> pitch;
+    extern const OpcodeSpec<float> pitchMod;
+    extern const OpcodeSpec<float> bendUp;
+    extern const OpcodeSpec<float> bendDown;
+    extern const OpcodeSpec<float> bendStep;
+    extern const OpcodeSpec<float> ampLFODepth;
+    extern const OpcodeSpec<float> pitchLFODepth;
+    extern const OpcodeSpec<float> filLFODepth;
+    extern const OpcodeSpec<float> lfoFreq;
+    extern const OpcodeSpec<float> lfoFreqMod;
+    extern const OpcodeSpec<float> lfoBeats;
+    extern const OpcodeSpec<float> lfoBeatsMod;
+    extern const OpcodeSpec<float> lfoPhase;
+    extern const OpcodeSpec<float> lfoPhaseMod;
+    extern const OpcodeSpec<float> lfoDelay;
+    extern const OpcodeSpec<float> lfoDelayMod;
+    extern const OpcodeSpec<float> lfoFade;
+    extern const OpcodeSpec<float> lfoFadeMod;
+    extern const OpcodeSpec<uint32_t> lfoCount;
+    extern const OpcodeSpec<uint32_t> lfoSteps;
+    extern const OpcodeSpec<float> lfoStepX;
+    extern const OpcodeSpec<LFOWave> lfoWave;
+    extern const OpcodeSpec<float> lfoOffset;
+    extern const OpcodeSpec<float> lfoRatio;
+    extern const OpcodeSpec<float> lfoScale;
+    extern const OpcodeSpec<float> egTime;
+    extern const OpcodeSpec<float> egRelease;
+    extern const OpcodeSpec<float> egTimeMod;
+    extern const OpcodeSpec<float> egSustain;
+    extern const OpcodeSpec<float> egPercent;
+    extern const OpcodeSpec<float> egPercentMod;
+    extern const OpcodeSpec<float> egDepth;
+    extern const OpcodeSpec<float> egVel2Depth;
+    extern const OpcodeSpec<bool> flexEGAmpeg;
+    extern const OpcodeSpec<bool> flexEGDynamic;
+    extern const OpcodeSpec<int32_t> flexEGSustain;
+    extern const OpcodeSpec<float> flexEGPointTime;
+    extern const OpcodeSpec<float> flexEGPointLevel;
+    extern const OpcodeSpec<float> flexEGPointShape;
+    extern const OpcodeSpec<int32_t> sampleQuality;
+    extern const OpcodeSpec<int32_t> octaveOffset;
+    extern const OpcodeSpec<int32_t> noteOffset;
+    extern const OpcodeSpec<float> effect;
+    extern const OpcodeSpec<float> effectPercent;
+    extern const OpcodeSpec<LFOWave> apanWaveform;
+    extern const OpcodeSpec<float> apanFrequency;
+    extern const OpcodeSpec<float> apanPhase;
+    extern const OpcodeSpec<float> apanLevel;
+    extern const OpcodeSpec<float> distoTone;
+    extern const OpcodeSpec<float> distoDepth;
+    extern const OpcodeSpec<uint32_t> distoStages;
+    extern const OpcodeSpec<float> compAttack;
+    extern const OpcodeSpec<float> compRelease;
+    extern const OpcodeSpec<float> compThreshold;
+    extern const OpcodeSpec<bool> compSTLink;
+    extern const OpcodeSpec<float> compRatio;
+    extern const OpcodeSpec<float> compGain;
+    extern const OpcodeSpec<float> fverbSize;
+    extern const OpcodeSpec<float> fverbPredelay;
+    extern const OpcodeSpec<float> fverbTone;
+    extern const OpcodeSpec<float> fverbDamp;
+    extern const OpcodeSpec<float> gateAttack;
+    extern const OpcodeSpec<float> gateRelease;
+    extern const OpcodeSpec<bool> gateSTLink;
+    extern const OpcodeSpec<float> gateHold;
+    extern const OpcodeSpec<float> gateThreshold;
+    extern const OpcodeSpec<float> lofiBitred;
+    extern const OpcodeSpec<float> lofiDecim;
+    extern const OpcodeSpec<float> rectify;
+    extern const OpcodeSpec<uint32_t> stringsNumber;
+    extern const OpcodeSpec<Trigger> trigger;
+    extern const OpcodeSpec<OffMode> offMode;
+    extern const OpcodeSpec<LoopMode> loopMode;
+    extern const OpcodeSpec<CrossfadeCurve> crossfadeCurve;
+    extern const OpcodeSpec<VelocityOverride> velocityOverride;
+    extern const OpcodeSpec<SelfMask> selfMask;
+    extern const OpcodeSpec<FilterType> filter;
+    extern const OpcodeSpec<EqType> eq;
 
-    // common defaults
-    constexpr Range<uint8_t> midi7Range { 0, 127 };
-    constexpr Range<float> float7Range { 0.0f, 127.0f };
-    constexpr Range<float> normalizedRange { 0.0f, 1.0f };
-    constexpr Range<float> symmetricNormalizedRange { -1.0, 1.0 };
+    // Default/max count for objects
+    constexpr int numEQs { 3 };
+    constexpr int numFilters { 2 };
+    constexpr int numFlexEGs { 4 };
+    constexpr int numFlexEGPoints { 8 };
+    constexpr int numLFOs { 4 };
+    constexpr int numLFOSubs { 2 };
+    constexpr int numLFOSteps { 8 };
+    constexpr int maxDistoStages { 4 };
+    constexpr unsigned maxStrings { 88 };
 
-    // Wavetable oscillator
-    constexpr float oscillatorPhase { 0.0 };
-    constexpr Range<float> oscillatorPhaseRange { -1.0, 1.0 };
-    constexpr int oscillatorMode { 0 };
-    constexpr int oscillatorMulti { 1 };
-    constexpr Range<int> oscillatorModeRange { 0, 2 };
-    constexpr Range<int> oscillatorMultiRange { 1, config::oscillatorsPerVoice };
-    constexpr float oscillatorDetune { 0 };
-    constexpr Range<float> oscillatorDetuneRange { -12000, 12000 };
-    constexpr Range<float> oscillatorDetuneCCRange { -12000, 12000 };
-    constexpr float oscillatorModDepth { 0 };
-    constexpr Range<float> oscillatorModDepthRange { 0, 10000 }; // depth%, allowed to be >100 for FM
-    constexpr Range<float> oscillatorModDepthCCRange { 0, 10000 };
-    constexpr int oscillatorQuality { 1 };
-    constexpr Range<int> oscillatorQualityRange { 0, 3 };
-
-    // Instrument setting: voice lifecycle
-	constexpr uint32_t group { 0 };
-	constexpr Range<uint32_t> groupRange { 0, std::numeric_limits<uint32_t>::max() };
-	constexpr SfzOffMode offMode { SfzOffMode::fast };
-	constexpr float offTime { 6e-3f };
-    constexpr Range<uint32_t> polyphonyRange { 0, config::maxVoices };
-    constexpr SfzSelfMask selfMask { SfzSelfMask::mask };
-
-        // Region logic: key mapping
-	constexpr Range<uint8_t> keyRange { 0, 127 };
-    constexpr auto velocityRange = normalizedRange;
-
-        // Region logic: MIDI conditions
-	constexpr Range<uint8_t> channelRange { 1, 16 };
-	constexpr Range<uint8_t> midiChannelRange { 0, 15 };
-    constexpr Range<uint8_t> smoothCCRange { 0, 100 };
-    constexpr float smoothTauPerStep { 3e-3 };
-    constexpr Range<uint8_t> curveCCRange { 0, 255 };
-    constexpr Range<uint16_t> ccNumberRange { 0, config::numCCs };
-    constexpr auto ccValueRange = normalizedRange;
-    constexpr Range<int> bendRange = { -8192, 8192 };
-    constexpr Range<float> bendValueRange = symmetricNormalizedRange;
-    constexpr int bend { 0 };
-	constexpr SfzVelocityOverride velocityOverride { SfzVelocityOverride::current };
-
-    // Region logic: internal conditions
-	constexpr Range<float> randRange { 0.0, 1.0 };
-	constexpr Range<uint8_t> aftertouchRange { 0, 127 };
-	constexpr uint8_t aftertouch { 0 };
-	constexpr Range<float> bpmRange { 0.0, 500.0 };
-	constexpr float bpm { 120.0 };
-	constexpr uint8_t sequenceLength{ 1 };
-	constexpr uint8_t sequencePosition{ 1 };
-	constexpr Range<uint8_t> sequenceRange { 1, 100 };
-
-    // Region logic: Triggers
-	constexpr SfzTrigger trigger { SfzTrigger::attack };
-        constexpr Range<float> ccTriggerValueRange = normalizedRange;
-
-        // Performance parameters: amplifier
-	constexpr float globalVolume { -7.35f };
-	constexpr float volume { 0.0f };
-	constexpr Range<float> volumeRange { -144.0, 48.0 };
-	constexpr Range<float> volumeCCRange { -144.0, 48.0 };
-	constexpr float amplitude { 100.0 };
-	constexpr Range<float> amplitudeRange { 0.0, 1e8 };
-	constexpr float pan { 0.0 };
-	constexpr Range<float> panRange { -100.0, 100.0 };
-	constexpr Range<float> panCCRange { -200.0, 200.0 };
-	constexpr float position { 0.0 };
-	constexpr Range<float> positionRange { -100.0, 100.0 };
-	constexpr Range<float> positionCCRange { -200.0, 200.0 };
-	constexpr float width { 100.0 };
-	constexpr Range<float> widthRange { -100.0, 100.0 };
-	constexpr Range<float> widthCCRange { -200.0, 200.0 };
-	constexpr uint8_t ampKeycenter { 60 };
-	constexpr float ampKeytrack { 0.0 };
-	constexpr Range<float> ampKeytrackRange { -96, 12 };
-	constexpr float ampVeltrack { 100.0 };
-	constexpr Range<float> ampVeltrackRange { -100.0, 100.0 };
-	constexpr Range<float> ampVelcurveRange { 0.0, 1.0 };
-	constexpr float ampRandom { 0.0 };
-	constexpr Range<float> ampRandomRange { 0.0, 24.0 };
-	constexpr Range<uint8_t> crossfadeKeyInRange { 0, 0 };
-	constexpr Range<uint8_t> crossfadeKeyOutRange { 127, 127 };
+    // Default values for ranges
+    constexpr Range<uint8_t> crossfadeKeyInRange { 0, 0 };
+    constexpr Range<uint8_t> crossfadeKeyOutRange { 127, 127 };
     constexpr Range<float> crossfadeVelInRange { 0.0f, 0.0f };
     constexpr Range<float> crossfadeVelOutRange { 1.0f, 1.0f };
     constexpr Range<float> crossfadeCCInRange { 0.0f, 0.0f };
     constexpr Range<float> crossfadeCCOutRange { 1.0f, 1.0f };
-    constexpr SfzCrossfadeCurve crossfadeKeyCurve { SfzCrossfadeCurve::power };
-	constexpr SfzCrossfadeCurve crossfadeVelCurve { SfzCrossfadeCurve::power };
-	constexpr SfzCrossfadeCurve crossfadeCCCurve { SfzCrossfadeCurve::power };
-	constexpr float rtDecay { 0.0f };
-	constexpr bool rtDead { false };
-	constexpr Range<float> rtDecayRange { 0.0f, 200.0f };
 
-    // Performance parameters: Filters
-    constexpr int numFilters { 2 };
-    constexpr float filterCutoff { 0 };
-    constexpr float filterResonance { 0 };
-    constexpr float filterGain { 0 };
-    constexpr int filterKeytrack { 0 };
-    constexpr uint8_t filterKeycenter { 60 };
-    constexpr float filterRandom { 0 };
-    constexpr int filterVeltrack { 0 };
-    constexpr float filterCutoffCC { 0 };
-    constexpr float filterResonanceCC { 0 };
-    constexpr float filterGainCC { 0 };
-    constexpr Range<float> filterCutoffRange { 0.0f, 20000.0f };
-    constexpr Range<float> filterCutoffModRange { -12000, 12000 };
-    constexpr Range<float> filterGainRange { -96.0f, 96.0f };
-    constexpr Range<float> filterGainModRange { -96.0f, 96.0f };
-    constexpr Range<int> filterKeytrackRange { 0, 1200 };
-    constexpr Range<float> filterRandomRange { 0, 12000 };
-    constexpr Range<int> filterVeltrackRange { -12000, 12000 };
-    constexpr Range<float> filterResonanceRange { 0.0f, 96.0f };
-    constexpr Range<float> filterResonanceModRange { 0.0f, 96.0f };
+    // Various defaut values
+    // e.g. "additional" or multiple defautl values
+    constexpr int freewheelingSampleQuality { 10 };
+    constexpr int freewheelingOscillatorQuality { 3 };
+    constexpr float globalVolume { -7.35f };
+    constexpr float defaultEQFreq [numEQs] { 50.0f, 500.0f, 5000.0f };
+} // namespace Default
 
-    // Performance parameters: EQ
-    constexpr int numEQs { 3 };
-    constexpr float eqBandwidth { 1.0f };
-    constexpr float eqBandwidthCC { 0.0f };
-    constexpr float eqFrequencyUnset { 0.0f };
-    constexpr float eqFrequency1 { 50.0f };
-    constexpr float eqFrequency2 { 500.0f };
-    constexpr float eqFrequency3 { 5000.0f };
-    constexpr float eqFrequencyCC { 0.0f };
-    constexpr float eqGain { 0.0f };
-    constexpr float eqGainCC { 0.0f };
-    constexpr float eqVel2frequency { 0.0f };
-    constexpr float eqVel2gain { 0.0f };
-    constexpr Range<float> eqBandwidthRange { 0.001f, 4.0f };
-    constexpr Range<float> eqBandwidthModRange { -4.0f, 4.0f };
-    constexpr Range<float> eqFrequencyRange { 0.0f, 30000.0f };
-    constexpr Range<float> eqFrequencyModRange { -30000.0f, 30000.0f };
-    constexpr Range<float> eqGainRange { -96.0f, 96.0f };
-    constexpr Range<float> eqGainModRange { -96.0f, 96.0f };
-
-     // Performance parameters: pitch
-	constexpr uint8_t pitchKeycenter { 60 };
-	constexpr int pitchKeytrack { 100 };
-	constexpr Range<int> pitchKeytrackRange { -1200, 1200 };
-	constexpr float pitchRandom { 0 };
-	constexpr Range<float> pitchRandomRange { 0, 12000 };
-	constexpr int pitchVeltrack { 0 };
-	constexpr Range<int> pitchVeltrackRange { -12000, 12000 };
-	constexpr int transpose { 0 };
-	constexpr Range<int> transposeRange { -127, 127 };
-	constexpr int tune { 0 };
-	constexpr Range<int> tuneRange { -12000, 12000 }; // ±100 in SFZv1, more in ARIA
-    constexpr Range<float> tuneCCRange { -12000, 12000 };
-    constexpr Range<int> bendBoundRange { -12000, 12000 };
-    constexpr Range<int> bendStepRange { 1, 1200 };
-    constexpr int bendUp { 200 }; // No range here because the bounds can be inverted
-    constexpr int bendDown { -200 };
-    constexpr int bendStep { 1 };
-    constexpr uint8_t bendSmooth { 0 };
-
-     // Modulation: LFO
-    constexpr int numLFOs { 4 };
-    constexpr int numLFOSubs { 2 };
-    constexpr int numLFOSteps { 8 };
-    constexpr Range<float> lfoFreqRange { 0.0, 100.0 };
-    constexpr Range<float> lfoPhaseRange { 0.0, 1.0 };
-    constexpr Range<float> lfoDelayRange { 0.0, 30.0 };
-    constexpr Range<float> lfoFadeRange { 0.0, 30.0 };
-    constexpr Range<unsigned> lfoCountRange { 0, 1000 };
-    constexpr Range<unsigned> lfoStepsRange { 0, static_cast<unsigned>(config::maxLFOSteps) };
-    constexpr Range<float> lfoStepXRange { -100.0, 100.0 };
-    constexpr Range<int> lfoWaveRange { 0, 15 };
-    constexpr Range<float> lfoOffsetRange { -1.0, 1.0 };
-    constexpr Range<float> lfoRatioRange { 0.0, 100.0 };
-    constexpr Range<float> lfoScaleRange { 0.0, 1.0 };
-
-    // Envelope generators
-	constexpr float attack { 0 };
-	constexpr float decay { 0 };
-	constexpr float delayEG { 0 };
-	constexpr float hold { 0 };
-	constexpr float release { 0 };
-	constexpr float ampegRelease { 0.001 }; // Default release to avoid clicks
-	constexpr float vel2release { 0.0f };
-	constexpr float start { 0.0 };
-	constexpr float sustain { 100.0 };
-    constexpr uint16_t sustainCC { 64 };
-    constexpr float sustainThreshold { 0.0039f }; // sforzando default (0.5f/127.0f)
-	constexpr float vel2sustain { 0.0 };
-	constexpr int depth { 0 };
-	constexpr Range<float> egTimeRange { 0.0, 100.0 };
-	constexpr Range<float> egPercentRange { 0.0, 100.0 };
-	constexpr Range<int> egDepthRange { -12000, 12000 };
-	constexpr Range<float> egOnCCTimeRange { -100.0, 100.0 };
-	constexpr Range<float> egOnCCPercentRange { -100.0, 100.0 };
-	constexpr Range<float> pitchEgDepthRange { -12000.0, 12000.0 };
-	constexpr Range<float> filterEgDepthRange { -12000.0, 12000.0 };
-
-    // Flex envelope generators
-    constexpr int numFlexEGs { 4 };
-    constexpr int numFlexEGPoints { 8 };
-    constexpr int flexEGDynamic { 0 };
-    constexpr int flexEGSustain { 0 };
-    constexpr float flexEGPointTime { 0 };
-    constexpr float flexEGPointLevel { 0 };
-    constexpr float flexEGPointShape { 0 };
-    constexpr Range<int> flexEGDynamicRange { 0, 1 };
-    constexpr Range<int> flexEGSustainRange { 0, 100 };
-    constexpr Range<float> flexEGPointTimeRange { 0.0f, 100.0f };
-    constexpr Range<float> flexEGPointLevelRange { -1.0f, 1.0f };
-    constexpr Range<float> flexEGPointShapeRange { -100.0f, 100.0f };
-
-    // ***** SFZ v2 ********
-    constexpr int sampleQuality { 1 };
-    constexpr int sampleQualityInFreewheelingMode { 10 }; // for future use, possibly excessive
-    constexpr Range<int> sampleQualityRange { 1, 10 }; // sample_quality
-
-	constexpr bool checkSustain { true }; // sustain_sw
-	constexpr bool checkSostenuto { true }; // sostenuto_sw
-    constexpr Range<int> octaveOffsetRange { -10, 10 }; // octave_offset
-    constexpr Range<int> noteOffsetRange { -127, 127 }; // note_offset
-
-    constexpr Range<int> apanWaveformRange { 0, std::numeric_limits<int>::max() };
-    constexpr Range<float> apanFrequencyRange { 0, std::numeric_limits<float>::max() };
-    constexpr Range<float> apanPhaseRange { 0.0, 1.0 };
-    constexpr Range<float> apanLevelRange { 0.0, 100.0 };
-}
-}
+} // namespace sfz

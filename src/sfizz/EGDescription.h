@@ -26,10 +26,10 @@
 #pragma once
 #include "Config.h"
 #include "Defaults.h"
-#include "Macros.h"
-#include "LeakDetector.h"
 #include "SfzHelpers.h"
 #include "MidiState.h"
+#include "utility/Macros.h"
+#include "utility/LeakDetector.h"
 #include <absl/types/optional.h>
 
 namespace sfz {
@@ -66,21 +66,21 @@ struct EGDescription {
     EGDescription& operator=(const EGDescription&) = default;
     EGDescription& operator=(EGDescription&&) = default;
 
-    float attack { Default::attack };
-    float decay { Default::decay };
-    float delay { Default::delayEG };
-    float hold { Default::hold };
-    float release { Default::release };
-    float start { Default::start };
-    float sustain { Default::sustain };
-    int depth { Default::depth };
-    float vel2attack { Default::attack };
-    float vel2decay { Default::decay };
-    float vel2delay { Default::delayEG };
-    float vel2hold { Default::hold };
-    float vel2release { Default::vel2release };
-    float vel2sustain { Default::vel2sustain };
-    int vel2depth { Default::depth };
+    float attack { Default::egTime };
+    float decay { Default::egTime };
+    float delay { Default::egTime };
+    float hold { Default::egTime };
+    float release { Default::egTime };
+    float start { Default::egPercent };
+    float sustain { Default::egSustain };
+    float depth { Default::egDepth };
+    float vel2attack { Default::egTimeMod };
+    float vel2decay { Default::egTimeMod };
+    float vel2delay { Default::egTimeMod };
+    float vel2hold { Default::egTimeMod };
+    float vel2release { Default::egPercentMod };
+    float vel2sustain { Default::egPercentMod };
+    float vel2depth { Default::egVel2Depth };
 
     CCMap<float> ccAttack;
     CCMap<float> ccDecay;
@@ -104,7 +104,7 @@ struct EGDescription {
         for (auto& mod: ccAttack) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTimeRange.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the decay with possibly a CC modifier and a velocity modifier
@@ -120,7 +120,7 @@ struct EGDescription {
         for (auto& mod: ccDecay) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTimeRange.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the delay with possibly a CC modifier and a velocity modifier
@@ -136,7 +136,7 @@ struct EGDescription {
         for (auto& mod: ccDelay) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTimeRange.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the holding duration with possibly a CC modifier and a velocity modifier
@@ -152,7 +152,7 @@ struct EGDescription {
         for (auto& mod: ccHold) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTimeRange.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the release duration with possibly a CC modifier and a velocity modifier
@@ -168,7 +168,7 @@ struct EGDescription {
         for (auto& mod: ccRelease) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egTimeRange.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the starting level with possibly a CC modifier and a velocity modifier
@@ -184,7 +184,7 @@ struct EGDescription {
         for (auto& mod: ccStart) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egPercentRange.clamp(returnedValue);
+        return returnedValue;
     }
     /**
      * @brief Get the sustain level with possibly a CC modifier and a velocity modifier
@@ -200,7 +200,7 @@ struct EGDescription {
         for (auto& mod: ccSustain) {
             returnedValue += state.getCCValue(mod.cc) * mod.data;
         }
-        return Default::egPercentRange.clamp(returnedValue);
+        return returnedValue;
     }
     LEAK_DETECTOR(EGDescription);
 };

@@ -96,7 +96,7 @@ namespace Tunings
         int middleNote = 60;
         int tuningConstantNote = 60;
         double tuningFrequency = MIDI_0_FREQ * 32.0, tuningPitch = 32.0; // pitch = frequency / MIDI_0_FREQ
-        int octaveDegrees = 12;
+        int octaveDegrees = 0;
         int keys[MAX_CAPACITY]; // rather than an 'x' we use a '-1' for skipped keys
     };
 
