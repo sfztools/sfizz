@@ -319,7 +319,8 @@ void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 {
-
+    (void)synth;
+    (void)prefix;
 }
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
