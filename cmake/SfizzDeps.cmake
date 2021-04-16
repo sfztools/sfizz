@@ -220,7 +220,9 @@ if(JACK_FOUND)
 endif()
 
 # The Qt library
-find_package(Qt5 COMPONENTS Widgets)
+if(SFIZZ_DEMOS OR SFIZZ_DEVTOOLS)
+    find_package(Qt5 COMPONENTS Widgets)
+endif()
 
 # The fmidi library
 add_library(sfizz_fmidi STATIC
