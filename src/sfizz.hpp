@@ -980,7 +980,7 @@ public:
      *
      * @return A XML string.
      */
-    std::string exportMidnam(const char* model);
+    std::string exportMidnam(const std::string& model) const;
 
     /**
      * @addtogroup Messaging

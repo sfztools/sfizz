@@ -319,7 +319,8 @@ void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 {
-
+    (void)synth;
+    (void)prefix;
 }
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
@@ -408,6 +409,11 @@ const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index)
         return NULL;
 
     return ccLabels[label_index].second.c_str();
+}
+
+void sfizz_free_memory(void* ptr)
+{
+    free(ptr);
 }
 
 sfizz_client_t* sfizz_create_client(void* data)

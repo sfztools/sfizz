@@ -338,7 +338,7 @@ void sfz::Sfizz::enableLogging(const std::string& prefix) noexcept
 
 void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
 {
-
+    (void)prefix;
 }
 
 void sfz::Sfizz::disableLogging() noexcept
@@ -361,7 +361,7 @@ void sfz::Sfizz::clearExternalDefinitions()
     synth->synth.getParser().clearExternalDefinitions();
 }
 
-std::string sfz::Sfizz::exportMidnam(const char* model)
+std::string sfz::Sfizz::exportMidnam(const std::string& model) const
 {
     return synth->synth.exportMidnam(model);
 }
