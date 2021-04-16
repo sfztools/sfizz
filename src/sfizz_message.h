@@ -32,22 +32,22 @@ extern "C" {
  * @since 1.0.0
  */
 typedef struct {
-    const uint8_t* data;
-    uint32_t size;
+    const uint8_t* data; /**< Pointer to the data */
+    uint32_t size; /**< Data size */
 } sfizz_blob_t;
 
 /**
- * @brief Representation of an argument of variant type in OSC format
+ * @brief Representation of an argument of variant type in OSC format as a union
  * @since 1.0.0
  */
 typedef union {
-    int32_t i;
-    int64_t h;
-    float f;
-    double d;
-    const char* s;
-    const sfizz_blob_t* b;
-    uint8_t m[4];
+    int32_t i; /**< int32_t union value */
+    int64_t h; /**< int64_t union value */
+    float f; /**< float union value */
+    double d; /**< double union value */
+    const char* s; /**< char* union value */
+    const sfizz_blob_t* b; /**< blob union value */
+    uint8_t m[4]; /**< 4-byte midi message union value */
 } sfizz_arg_t;
 
 /**
