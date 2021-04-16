@@ -333,6 +333,10 @@ if(SFIZZ_SHARED)
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "runtime"
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT "development"
             PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT "development")
+        set(SFIZZ_PC_REQUIRES "")
+        if(SFIZZ_USE_SNDFILE)
+            set(SFIZZ_PC_REQUIRES "${SFIZZ_PC_REQUIRES} sndfile")
+        endif()
         configure_file(${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
         install(FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
