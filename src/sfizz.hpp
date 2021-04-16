@@ -26,11 +26,13 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+//! @cond Doxygen_Suppress
 #if defined _WIN32
   #define SFIZZ_DEPRECATED_API __declspec(deprecated)
 #else
   #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
 #endif
+//! @endcond
 
 struct sfizz_synth_t;
 
@@ -69,7 +71,14 @@ public:
     Sfizz();
     ~Sfizz();
 
+    /**
+     * @brief Move constructor.
+     */
     Sfizz(Sfizz&& other) noexcept;
+
+    /**
+     * @brief Move assignment operator.
+     */
     Sfizz& operator=(Sfizz&& other) noexcept;
 
     Sfizz(const Sfizz& other) = delete;
@@ -993,7 +1002,9 @@ private:
     };
 
 public:
+//! @cond Doxygen_Suppress
     using ClientPtr = std::unique_ptr<Client, ClientDeleter>;
+//! @endcond
 
     /**
      * @brief Create a new messaging client
@@ -1058,7 +1069,7 @@ public:
 private:
     sfizz_synth_t* synth {};
 };
-
+//! @cond Doxygen_Suppress
 using ClientPtr = Sfizz::ClientPtr;
-
+//! @endcond
 }

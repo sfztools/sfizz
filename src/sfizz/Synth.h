@@ -677,7 +677,7 @@ public:
 
     /**
      * @brief Dispatch the incoming message to the synth engine
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client sending the message.
      * @param delay        The delay of the message in the block, in samples.
@@ -689,7 +689,7 @@ public:
 
     /**
      * @brief Set the function which receives broadcast messages from the synth engine.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param broadcast    The pointer to the receiving function.
      * @param data         The opaque data pointer which is passed to the receiver.
