@@ -22,7 +22,11 @@
 
     - Tags in ALIASES list needs to be escaped (parsed by tag_list_as_string())
       to avoid Doxygen convert them in its own tag structure, by loosing some
-      details (e.g.: <b style=\"color:blue\">true</b> becomes <bold>true</bold>).
+      details (e.g.: <b style=\"color:blue\">true</b> becomes <bold>true</bold>,
+      use \<b\> as escaping and replace double quotes with apostrophe instead).
+
+    - Some link references are lost like in
+      `sfizz_export_midnam` -> `sfizz_free_memory`
 
     - Merge the work done previously to be able to fully automate the process
       to be used in various CIs.
