@@ -315,7 +315,12 @@ add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sf
 add_library(sfizz::static ALIAS sfizz_static)
 target_include_directories(sfizz_static PUBLIC .)
 target_link_libraries(sfizz_static PRIVATE sfizz::internal)
-set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+set_target_properties(sfizz_static PROPERTIES PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+if(MSVC)
+    set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz_static")
+else()
+    set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz")
+endif()
 
 # Shared library and installation target
 if(SFIZZ_SHARED)
