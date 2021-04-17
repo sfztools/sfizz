@@ -30,7 +30,8 @@ add_library(vst3sdk STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstnoteexpressiontypes.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstparameters.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstpresetfile.cpp"
-    "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstrepresentation.cpp")
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstrepresentation.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/utility/stringconvert.cpp")
 if(WIN32)
     target_sources(vst3sdk PRIVATE
         "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp")
@@ -79,23 +80,23 @@ add_library(vst3sdk_hosting STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/connectionproxy.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/eventlist.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/hostclasses.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/parameterchanges.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/plugprovider.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/processdata.cpp")
-if(FALSE)
-    if(WIN32)
-        target_sources(vst3sdk_hosting PRIVATE
-            "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_win32.cpp")
-    elseif(APPLE)
-        target_sources(vst3sdk_hosting PRIVATE
-            "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_mac.mm")
-    else()
-        target_sources(vst3sdk_hosting PRIVATE
-            "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_linux.cpp")
-    endif()
+if(WIN32)
+    target_sources(vst3sdk_hosting PRIVATE
+        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_win32.cpp")
+elseif(APPLE)
+    target_sources(vst3sdk_hosting PRIVATE
+        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_mac.mm")
+else()
+    target_sources(vst3sdk_hosting PRIVATE
+        "${VST3SDK_BASEDIR}/public.sdk/source/vst/hosting/module_linux.cpp")
+    target_link_libraries(vst3sdk_hosting PRIVATE sfizz::dl)
 endif()
-target_link_libraries(vst3sdk_hosting PUBLIC vst3sdk)
+target_link_libraries(vst3sdk_hosting PUBLIC vst3sdk PRIVATE sfizz::stdfs)
 
 # --- VSTGUI ---
 add_library(vst3sdk_vstgui STATIC EXCLUDE_FROM_ALL

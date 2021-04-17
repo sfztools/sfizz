@@ -59,6 +59,14 @@ else()
     sfizz_add_vendor_abseil()
 endif()
 
+# Find Linux system libraries
+add_library(dl INTERFACE)
+if(NOT WIN32 AND NOT APPLE)
+    find_library(DL_LIBRARY "dl")
+    target_link_libraries(dl INTERFACE "${DL_LIBRARY}")
+endif()
+add_library(sfizz::dl ALIAS dl)
+
 # The jsl utility library for C++
 add_library(sfizz_jsl INTERFACE)
 add_library(sfizz::jsl ALIAS sfizz_jsl)
@@ -214,7 +222,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # The jack library
-if(SFIZZ_JACK)
+if(SFIZZ_JACK OR (SFIZZ_STANDALONE AND NOT WIN32 AND NOT APPLE))
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(JACK "jack" REQUIRED)
 elseif()
@@ -229,6 +237,26 @@ if(JACK_FOUND)
     target_include_directories(sfizz_jacklib INTERFACE ${JACK_INCLUDE_DIRS})
     target_link_libraries(sfizz_jacklib INTERFACE ${JACK_LIBRARIES})
     link_directories(${JACK_LIBRARY_DIRS})
+endif()
+
+# The X11 library
+if(SFIZZ_STANDALONE AND NOT WIN32 AND NOT APPLE)
+    find_package(X11 REQUIRED)
+    add_library(sfizz_x11 INTERFACE)
+    target_include_directories(sfizz_x11 INTERFACE "${X11_INCLUDE_DIR}")
+    target_link_libraries(sfizz_x11 INTERFACE "${X11_X11_LIB}")
+    add_library(sfizz::x11 ALIAS sfizz_x11)
+endif()
+
+# The GtkMM library
+if(SFIZZ_STANDALONE AND NOT WIN32 AND NOT APPLE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTKMM "gtkmm-3.0" REQUIRED)
+    add_library(sfizz_gtkmm INTERFACE)
+    target_include_directories(sfizz_gtkmm INTERFACE ${GTKMM_INCLUDE_DIRS})
+    target_link_libraries(sfizz_gtkmm INTERFACE ${GTKMM_LIBRARIES})
+    link_libraries(${GTKMM_LIBRARY_DIRS})
+    add_library(sfizz::gtkmm ALIAS sfizz_gtkmm)
 endif()
 
 # The Qt library
@@ -271,3 +299,45 @@ endif()
 if(SFIZZ_BENCHMARKS)
     find_package(benchmark CONFIG REQUIRED)
 endif()
+
+# Find C++ filesystem
+function(sfizz_find_std_fs TARGET)
+    add_library("${TARGET}" INTERFACE)
+
+    set(_fs_src
+"#include <filesystem>
+int main() { return std::filesystem::exists(\"myfile\") ? 0 : 1; }")
+    set(_expfs_src
+"#include <experimental/filesystem>
+int main() { return std::experimental::filesystem::exists(\"myfile\") ? 0 : 1; }")
+
+    check_cxx_source_compiles("${_fs_src}" HAVE_STDFS_DIRECT)
+    check_cxx_source_compiles("${_expfs_src}" HAVE_STDFS_EXPERIMENTAL_DIRECT)
+    if(HAVE_STDFS_DIRECT OR HAVE_STDFS_EXPERIMENTAL_DIRECT)
+        return()
+    endif()
+
+    find_library(STDCPPFS_LIBRARY "stdc++fs")
+    if(STDCPPFS_LIBRARY)
+        set(CMAKE_REQUIRED_LIBRARIES "${STDCPPFS_LIBRARY}")
+        check_cxx_source_compiles("${_fs_src}" HAVE_STDFS_LIBSTDCPPFS)
+        check_cxx_source_compiles("${_expfs_src}" HAVE_STDFS_EXPERIMENTAL_LIBSTDCPPFS)
+        if(HAVE_STDFS_LIBSTDCPPFS OR HAVE_STDFS_EXPERIMENTAL_LIBSTDCPPFS)
+            target_link_libraries("${TARGET}" INTERFACE "${STDCPPFS_LIBRARY}")
+            return()
+        endif()
+    endif()
+
+    find_library(CPPFS_LIBRARY "c++fs")
+    if(CPPFS_LIBRARY)
+        set(CMAKE_REQUIRED_LIBRARIES "${CPPFS_LIBRARY}")
+        check_cxx_source_compiles("${_fs_src}" HAVE_STDFS_STDCPPFS)
+        check_cxx_source_compiles("${_expfs_src}" HAVE_STDFS_EXPERIMENTAL_STDCPPFS)
+        if(HAVE_STDFS_STDCPPFS OR HAVE_STDFS_EXPERIMENTAL_STDCPPFS)
+            target_link_libraries("${TARGET}" INTERFACE "${CPPFS_LIBRARY}")
+            return()
+        endif()
+    endif()
+endfunction()
+sfizz_find_std_fs(stdfs)
+add_library(sfizz::stdfs ALIAS stdfs)
