@@ -36,9 +36,14 @@ We invite you to check out the [GOVERNANCE](GOVERNANCE.md) file to see how the o
 
 ## Dependencies and licenses
 
+The sfizz library has the option to be compiled against either the `dr_libs`
+audio libraries, which is now the default option, or `libsndfile`.
+
+- [dr_libs] is licensed under the MIT No Attribution license
+- [libsndfile] is licensed under the GNU Lesser General Public License v2.1
+
 The sfizz library makes primary use of:
 
-- [libsndfile], licensed under the GNU Lesser General Public License v2.1
 - [Abseil], licensed under the Apache License 2.0
 - [atomic_queue] by Maxim Egorushkin, licensed under the MIT license
 - [filesystem] by Steffen Schümann, licensed under the BSD 3-Clause license
