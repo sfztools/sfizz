@@ -76,6 +76,7 @@ The sfizz library also uses in some subprojects:
 [pugixml]:      https://pugixml.org/
 [cephes]:       https://www.netlib.org/cephes/
 [cpuid]:        https://github.com/steinwurf/cpuid
+[dr_libs]:      https://github.com/mackron/dr_libs
 [faust-libraries]: https://github.com/grame-cncm/faustlibraries
 [hiir]:         http://ldesoras.free.fr/prod.html#src_hiir
 [KISS FFT]:     http://kissfft.sourceforge.net/
