@@ -28,5 +28,7 @@ struct SynthConfig
     {
         return freeWheeling ? freeWheelingOscillatorQuality : liveOscillatorQuality;
     }
+
+    int OSFactor { 1 };
 };
 }
