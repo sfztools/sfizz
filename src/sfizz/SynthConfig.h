@@ -14,13 +14,19 @@ struct SynthConfig
     bool freeWheeling { false };
 
     int liveSampleQuality { Default::sampleQuality };
-    int freeWheelingSampleQuality { Default::freewheelingQuality };
+    int freeWheelingSampleQuality { Default::freewheelingSampleQuality };
+
+    int liveOscillatorQuality { Default::oscillatorQuality };
+    int freeWheelingOscillatorQuality { Default::freewheelingOscillatorQuality };
 
     int currentSampleQuality() const noexcept
     {
         return freeWheeling ? freeWheelingSampleQuality : liveSampleQuality;
     }
 
-    int OSFactor { 1 };
+    int currentOscillatorQuality() const noexcept
+    {
+        return freeWheeling ? freeWheelingOscillatorQuality : liveOscillatorQuality;
+    }
 };
 }

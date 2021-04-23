@@ -8,7 +8,7 @@ else()
     endif()
 endif()
 
-project (sfizz VERSION 0.5.2 LANGUAGES CXX C)
+project (sfizz VERSION 1.0.0 LANGUAGES CXX C)
 set (PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 
 # External configuration CMake scripts
@@ -27,6 +27,7 @@ option_ex (SFIZZ_LV2               "Enable LV2 plug-in build" ON)
 option_ex (SFIZZ_LV2_UI            "Enable LV2 plug-in user interface" ON)
 option_ex (SFIZZ_VST               "Enable VST plug-in build" ON)
 option_ex (SFIZZ_AU                "Enable AU plug-in build" APPLE)
+option_ex (SFIZZ_VST2              "Enable VST2 plug-in build (unsupported)" OFF)
 option_ex (SFIZZ_BENCHMARKS        "Enable benchmarks build" OFF)
 option_ex (SFIZZ_TESTS             "Enable tests build" OFF)
 option_ex (SFIZZ_DEMOS             "Enable feature demos build" OFF)

@@ -20,11 +20,14 @@ enum {
     kPidScalaRootKey,
     kPidTuningFrequency,
     kPidStretchedTuning,
+    kPidSampleQuality,
+    kPidOscillatorQuality,
     kPidAftertouch,
     kPidPitchBend,
     kPidCC0,
     kPidCCLast = kPidCC0 + sfz::config::numCCs - 1,
     /* Reserved */
+    kNumParameters,
 };
 
 struct SfizzRange {
@@ -67,10 +70,14 @@ struct SfizzRange {
             return {440.0, 300.0, 500.0};
         case kPidStretchedTuning:
             return {0.0, 0.0, 1.0};
+        case kPidSampleQuality:
+            return {2.0, 0.0, 10.0};
+        case kPidOscillatorQuality:
+            return {1.0, 0.0, 3.0};
         case kPidAftertouch:
             return {0.0, 0.0, 1.0};
         case kPidPitchBend:
-            return {0.5, 0.0, 1.0};
+            return {0.0, -1.0, 1.0};
         default:
             if (id >= kPidCC0 && id <= kPidCCLast)
                 return {0.0, 0.0, 1.0};

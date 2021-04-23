@@ -36,9 +36,14 @@ We invite you to check out the [GOVERNANCE](GOVERNANCE.md) file to see how the o
 
 ## Dependencies and licenses
 
+The sfizz library has the option to be compiled against either the `dr_libs`
+audio libraries, which is now the default option, or `libsndfile`.
+
+- [dr_libs] is licensed under the MIT No Attribution license
+- [libsndfile] is licensed under the GNU Lesser General Public License v2.1
+
 The sfizz library makes primary use of:
 
-- [libsndfile], licensed under the GNU Lesser General Public License v2.1
 - [Abseil], licensed under the Apache License 2.0
 - [atomic_queue] by Maxim Egorushkin, licensed under the MIT license
 - [filesystem] by Steffen Schümann, licensed under the BSD 3-Clause license
@@ -48,6 +53,7 @@ The sfizz library makes primary use of:
 - [pugixml] by Arseny Kapoulkine, licensed under the MIT license
 - [cephes] by Stephen Moshier, licensed under the BSD 3-Clause license
 - [cpuid] by Steinwurf ApS, licensed under the BSD 3-Clause license
+- [faust-libraries] by GRAME, Julius O. Smith III and Eric Tarr, licensed under the STK-4.3 license and a permissive variant of the LGPL license
 
 The sfizz library also uses in some subprojects:
 
@@ -70,6 +76,8 @@ The sfizz library also uses in some subprojects:
 [pugixml]:      https://pugixml.org/
 [cephes]:       https://www.netlib.org/cephes/
 [cpuid]:        https://github.com/steinwurf/cpuid
+[dr_libs]:      https://github.com/mackron/dr_libs
+[faust-libraries]: https://github.com/grame-cncm/faustlibraries
 [hiir]:         http://ldesoras.free.fr/prod.html#src_hiir
 [KISS FFT]:     http://kissfft.sourceforge.net/
 [JACK]:         https://github.com/jackaudio/jack2

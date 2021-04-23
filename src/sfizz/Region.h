@@ -166,7 +166,7 @@ struct Region {
      * @param midiState
      * @return uint32_t
      */
-    uint64_t getOffset(const MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
+    uint64_t getOffset(const MidiState& midiState) const noexcept;
     /**
      * @brief Get the region delay in seconds
      *
@@ -180,7 +180,7 @@ struct Region {
      *
      * @return uint32_t
      */
-    uint32_t getSampleEnd(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t getSampleEnd(MidiState& midiState) const noexcept;
     /**
      * @brief Parse a new opcode into the region to fill in the proper parameters.
      * This must be called multiple times for each opcode applying to this region.
@@ -260,8 +260,8 @@ struct Region {
 
     void offsetAllKeys(int offset) noexcept;
 
-    uint32_t loopStart(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
-    uint32_t loopEnd(MidiState& midiState, Oversampling factor = Oversampling::x1) const noexcept;
+    uint32_t loopStart(MidiState& midiState) const noexcept;
+    uint32_t loopEnd(MidiState& midiState) const noexcept;
 
     /**
      * @brief Get the gain this region contributes into the input of the Nth

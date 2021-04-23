@@ -415,9 +415,9 @@ void SActionMenu::onItemClicked(int32_t index)
 }
 
 ///
-void STextButton::setHoverColor(const CColor& color)
+void STextButton::setHighlightColor(const CColor& color)
 {
-    hoverColor_ = color;
+    highlightColor_ = color;
     invalid();
 }
 
@@ -433,11 +433,19 @@ void STextButton::setInactive(bool b)
     invalid();
 }
 
+void STextButton::setHighlighted(bool b)
+{
+    highlighted_ = b;
+    invalid();
+}
+
 void STextButton::draw(CDrawContext* context)
 {
     CColor backupColor = textColor;
-    if (hovered_)
-        textColor = hoverColor_; // textColor is protected
+    if (inactive_)
+        textColor = inactiveColor_; // textColor is protected
+    else if (hovered_ || highlighted_)
+        textColor = highlightColor_;
     else if (inactive_)
         textColor = inactiveColor_;
     CTextButton::draw(context);
@@ -682,6 +690,9 @@ SControlsPanel::SControlsPanel(const CRect& size)
         CScrollView::kVerticalScrollbar|CScrollView::kDontDrawFrame|CScrollView::kAutoHideScrollbars),
       listener_(new ControlSlotListener(this))
 {
+    // slot 0 always exists, keep the default style on the views there
+    getOrCreateSlot(0);
+
     setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
 
     setScrollbarWidth(10.0);
@@ -740,6 +751,8 @@ SControlsPanel::ControlSlot* SControlsPanel::getOrCreateSlot(uint32_t index)
         return true;
     });
 
+    syncSlotStyle(index);
+
     return slot;
 }
 
@@ -770,6 +783,66 @@ void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
     else
         box->setNameLabelText(getDefaultLabelText(index).c_str());
     box->invalid();
+}
+
+void SControlsPanel::setNameLabelFont(CFontRef font)
+{
+    slots_[0]->box->setNameLabelFont(font);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setNameLabelFontColor(CColor color)
+{
+    slots_[0]->box->setNameLabelFontColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setCCLabelFont(CFontRef font)
+{
+    slots_[0]->box->setCCLabelFont(font);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setCCLabelBackColor(CColor color)
+{
+    slots_[0]->box->setCCLabelBackColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setCCLabelFontColor(CColor color)
+{
+    slots_[0]->box->setCCLabelFontColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setKnobActiveTrackColor(CColor color)
+{
+    slots_[0]->box->setKnobActiveTrackColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setKnobInactiveTrackColor(CColor color)
+{
+    slots_[0]->box->setKnobInactiveTrackColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setKnobLineIndicatorColor(CColor color)
+{
+    slots_[0]->box->setKnobLineIndicatorColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setKnobFont(CFontRef font)
+{
+    slots_[0]->box->setKnobFont(font);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setKnobFontColor(CColor color)
+{
+    slots_[0]->box->setKnobFontColor(color);
+    syncAllSlotStyles();
 }
 
 void SControlsPanel::recalculateSubViews()
@@ -850,6 +923,42 @@ void SControlsPanel::updateLayout()
     setContainerSize(CRect(0.0, 0.0, viewBounds.getWidth(), containerBottom + verticalPadding));
 
     invalid();
+}
+
+void SControlsPanel::syncAllSlotStyles()
+{
+    uint32_t count = static_cast<uint32_t>(slots_.size());
+    for (uint32_t index = 0; index < count; ++index)
+        syncSlotStyle(index);
+}
+
+void SControlsPanel::syncSlotStyle(uint32_t index)
+{
+    if (index >= slots_.size())
+        return;
+
+    const SKnobCCBox* ref = slots_[0]->box;
+    SKnobCCBox* cur = slots_[index]->box;
+
+    if (!cur)
+        return;
+
+    if (cur != ref) {
+        cur->setNameLabelFont(ref->getNameLabelFont());
+        cur->setNameLabelFontColor(ref->getNameLabelFontColor());
+
+        cur->setCCLabelFont(ref->getCCLabelFont());
+        cur->setCCLabelFontColor(ref->getCCLabelFontColor());
+        cur->setCCLabelBackColor(ref->getCCLabelBackColor());
+
+        cur->setKnobActiveTrackColor(ref->getKnobActiveTrackColor());
+        cur->setKnobInactiveTrackColor(ref->getKnobInactiveTrackColor());
+        cur->setKnobLineIndicatorColor(ref->getKnobLineIndicatorColor());
+        cur->setKnobFont(ref->getKnobFont());
+        cur->setKnobFontColor(ref->getKnobFontColor());
+    }
+
+    cur->invalid();
 }
 
 void SControlsPanel::ControlSlotListener::valueChanged(CControl* pControl)

@@ -42,6 +42,8 @@ struct sfizz_plugin_t
     const float *scala_root_key_port {};
     const float *tuning_frequency_port {};
     const float *stretch_tuning_port {};
+    const float *sample_quality_port {};
+    const float *oscillator_quality_port {};
     float *active_voices_port {};
     float *num_curves_port {};
     float *num_masters_port {};

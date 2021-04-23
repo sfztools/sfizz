@@ -18,33 +18,33 @@ widget_class aboutView {
     xywh {200 260 400 100}
     class DescriptionBox
   }
-  Fl_Box lblHover_ {selected
-    xywh {465 435 315 25} labelsize 12 hide
+  Fl_Box lblHover_ {
+    xywh {460 435 315 25} labelsize 12 hide
     class HoverBox
   }
   Fl_Button {} {
-    comment {tag=kTagButtonSfztools} selected
-    xywh {465 405 40 40} labelsize 30
+    comment {tag=kTagButtonSfztools}
+    xywh {460 405 40 40} labelsize 30
     class ButtonSfztools
   }
   Fl_Button {} {
-    comment {tag=kTagButtonGithub} selected
-    xywh {535 405 40 40} labelsize 30
+    comment {tag=kTagButtonGithub}
+    xywh {530 405 40 40} labelsize 30
     class ButtonGithub
   }
   Fl_Button {} {
-    comment {tag=kTagButtonDiscord} selected
-    xywh {605 405 40 40} labelsize 30
+    comment {tag=kTagButtonDiscord}
+    xywh {600 405 40 40} labelsize 30
     class ButtonDiscord
   }
   Fl_Button {} {
-    comment {tag=kTagButtonOpencollective} selected
-    xywh {675 405 40 40} labelsize 30
+    comment {tag=kTagButtonOpencollective}
+    xywh {670 405 40 40} labelsize 30
     class ButtonOpencollective
   }
   Fl_Button {} {
-    comment {tag=kTagButtonSfzformat} selected
-    xywh {745 405 40 40} labelsize 30
+    comment {tag=kTagButtonSfzformat}
+    xywh {740 405 40 40} labelsize 30
     class ButtonSfzformat
   }
   Fl_Box {} {
@@ -61,7 +61,7 @@ System}
 %HostProgram%
 %HostCPU%
 %HostBits% bits
-%HostOS%}
+%HostOS%} selected
     xywh {105 375 345 90} align 20
     class SysInfoValueBox
   }

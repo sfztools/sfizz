@@ -615,8 +615,24 @@ void Synth::Impl::finalizeSfzLoad()
                 continue;
             }
 
-            region.hasWavetableSample = fileInformation->wavetable ||
-                fileInformation->end < config::wavetableMaxFrames;
+            region.hasWavetableSample = fileInformation->wavetable.has_value();
+
+            if (fileInformation->end < config::wavetableMaxFrames) {
+                auto sample = resources_.filePool.loadFile(*region.sampleId);
+                bool allZeros = true;
+                int numChannels = sample->information.numChannels;
+                for (int i = 0; i < numChannels; ++i) {
+                    allZeros &= allWithin(sample->preloadedData.getConstSpan(i),
+                        -config::virtuallyZero, config::virtuallyZero);
+                }
+
+                if (allZeros) {
+                    region.sampleId.reset(new FileId("*silence"));
+                    region.hasWavetableSample = false;
+                } else {
+                    region.hasWavetableSample |= true;
+                }
+            }
         }
 
         if (!region.isOscillator()) {
@@ -657,8 +673,10 @@ void Synth::Impl::finalizeSfzLoad()
                 return Default::offsetMod.bounds.clamp(sumOffsetCC);
             }();
 
-            if (!resources_.filePool.preloadFile(*region.sampleId, maxOffset))
+            if (!resources_.filePool.preloadFile(*region.sampleId, maxOffset)) {
                 removeCurrentRegion();
+                continue;
+            }
         }
         else if (!region.isGenerator()) {
             if (!resources_.wavePool.createFileWave(resources_.filePool, std::string(region.sampleId->filename()))) {
@@ -917,26 +935,6 @@ void Synth::setSampleRate(float sampleRate) noexcept
     }
 }
 
-void Synth::Impl::updateRegions() noexcept
-{
-    std::unique_lock<SpinMutex> lock { regionUpdatesMutex_, std::try_to_lock };
-    if (!lock.owns_lock())
-        return;
-
-    absl::c_sort(regionUpdates_, [](const OpcodeUpdate& lhs, const OpcodeUpdate& rhs) {
-        return lhs.delay < rhs.delay;
-    });
-
-    for (auto& update: regionUpdates_) {
-        if (!update.region)
-            continue;
-
-        update.region->parseOpcode(update.opcode, false);
-    }
-
-    regionUpdates_.clear();
-}
-
 void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     Impl& impl = *impl_;
@@ -965,8 +963,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         impl.lastGarbageCollection_ = now;
         impl.resources_.filePool.triggerGarbageCollection();
     }
-
-    impl.updateRegions();
 
     auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
@@ -1086,24 +1082,34 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     SFIZZ_CHECK(isReasonableAudio(buffer.getConstSpan(1)));
 }
 
-void Synth::noteOn(int delay, int noteNumber, uint8_t velocity) noexcept
+void Synth::noteOn(int delay, int noteNumber, int velocity) noexcept
+{
+    const float normalizedVelocity = normalizeVelocity(velocity);
+    hdNoteOn(delay, noteNumber, normalizedVelocity);
+}
+
+void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
-    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
     impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 }
 
-void Synth::noteOff(int delay, int noteNumber, uint8_t velocity) noexcept
+void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
+{
+    const float normalizedVelocity = normalizeVelocity(velocity);
+    hdNoteOff(delay, noteNumber, normalizedVelocity);
+}
+
+void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-    UNUSED(velocity);
+    UNUSED(normalizedVelocity);
     Impl& impl = *impl_;
-    const auto normalizedVelocity = normalizeVelocity(velocity);
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
@@ -1236,7 +1242,7 @@ void Synth::Impl::startDelayedSostenutoReleases(Layer* layer, int delay, SisterV
     layer->delayedSostenutoReleases_.clear();
 }
 
-void Synth::cc(int delay, int ccNumber, uint8_t ccValue) noexcept
+void Synth::cc(int delay, int ccNumber, int ccValue) noexcept
 {
     const auto normalizedCC = normalizeCC(ccValue);
     hdcc(delay, ccNumber, normalizedCC);
@@ -1338,10 +1344,13 @@ float Synth::getDefaultHdcc(int ccNumber)
 
 void Synth::pitchWheel(int delay, int pitch) noexcept
 {
-    ASSERT(pitch <= 8192);
-    ASSERT(pitch >= -8192);
+    const float normalizedPitch = normalizeBend(float(pitch));
+    hdPitchWheel(delay, normalizedPitch);
+}
+
+void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
+{
     Impl& impl = *impl_;
-    const auto normalizedPitch = normalizeBend(float(pitch));
 
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.resources_.midiState.pitchBendEvent(delay, normalizedPitch);
@@ -1357,13 +1366,13 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
     impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
 
-void Synth::aftertouch(int delay, uint8_t aftertouch) noexcept
+void Synth::channelAftertouch(int delay, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
-    hdAftertouch(delay, normalizedAftertouch);
+    hdChannelAftertouch(delay, normalizedAftertouch);
 }
 
-void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
+void Synth::hdChannelAftertouch(int delay, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
@@ -1381,7 +1390,7 @@ void Synth::hdAftertouch(int delay, float normAftertouch) noexcept
     impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
 }
 
-void Synth::polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept
+void Synth::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
     hdPolyAftertouch(delay, noteNumber, normalizedAftertouch);
@@ -1407,6 +1416,12 @@ void Synth::tempo(int delay, float secondsPerBeat) noexcept
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     impl.resources_.beatClock.setTempo(delay, secondsPerBeat);
+}
+
+void Synth::bpmTempo(int delay, float beatsPerMinute) noexcept
+{
+    // TODO make this the main tempo function and remove the deprecated other one
+    return tempo(delay, 60 / beatsPerMinute);
 }
 
 void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
@@ -1664,9 +1679,9 @@ int Synth::getSampleQuality(ProcessMode mode)
 
 void Synth::setSampleQuality(ProcessMode mode, int quality)
 {
-    SFIZZ_CHECK(quality >= 1 && quality <= 10);
+    SFIZZ_CHECK(quality >= 0 && quality <= 10);
     Impl& impl = *impl_;
-    quality = clamp(quality, 1, 10);
+    quality = clamp(quality, 0, 10);
 
     switch (mode) {
     case ProcessLive:
@@ -1674,6 +1689,39 @@ void Synth::setSampleQuality(ProcessMode mode, int quality)
         break;
     case ProcessFreewheeling:
         impl.resources_.synthConfig.freeWheelingSampleQuality = quality;
+        break;
+    default:
+        SFIZZ_CHECK(false);
+        break;
+    }
+}
+
+int Synth::getOscillatorQuality(ProcessMode mode)
+{
+    Impl& impl = *impl_;
+    switch (mode) {
+    case ProcessLive:
+        return impl.resources_.synthConfig.liveOscillatorQuality;
+    case ProcessFreewheeling:
+        return impl.resources_.synthConfig.freeWheelingOscillatorQuality;
+    default:
+        SFIZZ_CHECK(false);
+        return 0;
+    }
+}
+
+void Synth::setOscillatorQuality(ProcessMode mode, int quality)
+{
+    SFIZZ_CHECK(quality >= 0 && quality <= 3);
+    Impl& impl = *impl_;
+    quality = clamp(quality, 0, 3);
+
+    switch (mode) {
+    case ProcessLive:
+        impl.resources_.synthConfig.liveOscillatorQuality = quality;
+        break;
+    case ProcessFreewheeling:
+        impl.resources_.synthConfig.freeWheelingOscillatorQuality = quality;
         break;
     default:
         SFIZZ_CHECK(false);
@@ -1822,28 +1870,6 @@ void Synth::Impl::setupModMatrix()
     mm.init();
 }
 
-void Synth::setOversamplingFactor(Oversampling factor) noexcept
-{
-    Impl& impl = *impl_;
-
-    // fast path
-    if (factor == impl.oversamplingFactor_)
-        return;
-
-    for (auto& voice : impl.voiceManager_)
-        voice.reset();
-
-    impl.resources_.filePool.emptyFileLoadingQueues();
-    impl.resources_.filePool.setOversamplingFactor(factor);
-    impl.oversamplingFactor_ = factor;
-}
-
-Oversampling Synth::getOversamplingFactor() const noexcept
-{
-    Impl& impl = *impl_;
-    return impl.oversamplingFactor_;
-}
-
 void Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     Impl& impl = *impl_;
@@ -1934,12 +1960,6 @@ void Synth::enableLogging(absl::string_view prefix) noexcept
 {
     Impl& impl = *impl_;
     impl.resources_.logger.enableLogging(prefix);
-}
-
-void Synth::setLoggingPrefix(absl::string_view prefix) noexcept
-{
-    Impl& impl = *impl_;
-    impl.resources_.logger.setPrefix(prefix);
 }
 
 void Synth::disableLogging() noexcept

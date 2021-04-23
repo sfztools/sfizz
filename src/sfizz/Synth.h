@@ -316,6 +316,21 @@ public:
      */
     void setSampleQuality(ProcessMode mode, int quality);
     /**
+     * @brief Get the default oscillator quality for the given mode.
+     *
+     * @param mode the processing mode
+     *
+     * @return the quality setting
+     */
+    int getOscillatorQuality(ProcessMode mode);
+    /**
+     * @brief Set the default oscillator quality for the given mode.
+     *
+     * @param mode the processing mode
+     * @param quality the quality setting
+     */
+    void setOscillatorQuality(ProcessMode mode, int quality);
+    /**
      * @brief Get the current value for the volume, in dB.
      *
      * @return float
@@ -337,7 +352,16 @@ public:
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-    void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOn(int delay, int noteNumber, int velocity) noexcept;
+    /**
+     * @brief Send a high-precision note on event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number
+     * @param velocity the normalized midi note velocity, in domain 0 to 1
+     */
+    void hdNoteOn(int delay, int noteNumber, float velocity) noexcept;
     /**
      * @brief Send a note off event to the synth
      *
@@ -346,7 +370,16 @@ public:
      * @param noteNumber the midi note number
      * @param velocity the midi note velocity
      */
-    void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int noteNumber, int velocity) noexcept;
+    /**
+     * @brief Send a high-precision note off event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number
+     * @param velocity the normalized midi note velocity, in domain 0 to 1
+     */
+    void hdNoteOff(int delay, int noteNumber, float velocity) noexcept;
     /**
      * @brief Send a CC event to the synth
      *
@@ -355,7 +388,7 @@ public:
      * @param ccNumber the cc number
      * @param ccValue the cc value
      */
-    void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void cc(int delay, int ccNumber, int ccValue) noexcept;
     /**
      * @brief Send a high precision CC event to the synth
      *
@@ -397,6 +430,15 @@ public:
      * @param pitch the pitch value centered between -8192 and 8192
      */
     void pitchWheel(int delay, int pitch) noexcept;
+   /**
+     * @brief Send a high-precision pitch bend event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to
+     *              renderBlock().
+     * @param pitch the normalized pitch value centered between -1 and 1
+     */
+    void hdPitchWheel(int delay, float pitch) noexcept;
     /**
      * @brief Send a aftertouch event to the synth
      *
@@ -404,7 +446,7 @@ public:
      *              the block in the next call to renderBlock().
      * @param aftertouch the aftertouch value
      */
-    void aftertouch(int delay, uint8_t aftertouch) noexcept;
+    void channelAftertouch(int delay, int aftertouch) noexcept;
     /**
      * @brief Send a high precision aftertouch event to the synth
      *
@@ -412,7 +454,7 @@ public:
      *              the block in the next call to renderBlock().
      * @param normAftertouch the normalized aftertouch value, in domain 0 to 1
      */
-    void hdAftertouch(int delay, float normAftertouch) noexcept;
+    void hdChannelAftertouch(int delay, float normAftertouch) noexcept;
     /**
      * @brief Send a tempo event to the synth
      *
@@ -423,13 +465,22 @@ public:
      */
     void tempo(int delay, float secondsPerQuarter) noexcept;
     /**
+     * @brief Send a tempo event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock(), and ordered with respect to
+     *              calls to tempo(), timeSignature(), timePosition(), and playbackState().
+     * @param beatsPerMinute the new tempo, in beats per minute
+     */
+    void bpmTempo(int delay, float beatsPerMinute) noexcept;
+    /**
      * @brief Send a polyphonic aftertouch event to the synth
      *
      * @param delay
      * @param noteNumber
      * @param normAftertouch
      */
-    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+    void polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept;
     /**
      * @brief Send a polyphonic aftertouch event to the synth
      *
@@ -502,26 +553,6 @@ public:
      * @param numVoices
      */
     void setNumVoices(int numVoices) noexcept;
-
-    /**
-     * @brief Set the oversampling factor to a new value.
-     * It will kill all the voices, and trigger a reloading of every file in
-     * the FilePool under the new oversampling.
-     * This function takes a lock and disables the callback; prefer calling
-     * it out of the RT thread. It can also take a long time to return.
-     * If the new oversampling factor is the same as the current one, it will
-     * release the lock immediately and exit.
-     *
-     * @param factor
-     */
-    void setOversamplingFactor(Oversampling factor) noexcept;
-
-    /**
-     * @brief get the current oversampling factor
-     *
-     * @return Oversampling
-     */
-    Oversampling getOversamplingFactor() const noexcept;
 
     /**
      * @brief Set the preloaded file size.
@@ -600,12 +631,6 @@ public:
      */
     void enableLogging(absl::string_view prefix = "") noexcept;
     /**
-     * @brief Enable logging of timings to sidecar CSV files. This can produce
-     * many outputs so use with caution.
-     *
-     */
-    void setLoggingPrefix(absl::string_view prefix) noexcept;
-    /**
      * @brief Disable logging;
      *
      */
@@ -652,7 +677,7 @@ public:
 
     /**
      * @brief Dispatch the incoming message to the synth engine
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client sending the message.
      * @param delay        The delay of the message in the block, in samples.
@@ -664,7 +689,7 @@ public:
 
     /**
      * @brief Set the function which receives broadcast messages from the synth engine.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param broadcast    The pointer to the receiving function.
      * @param data         The opaque data pointer which is passed to the receiver.

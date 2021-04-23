@@ -13,7 +13,9 @@
 #include "DlgAbout.h"
 #include "ImageHelpers.h"
 #include "NativeHelpers.h"
+#include "VSTGUIHelpers.h"
 #include "BitArray.h"
+#include "Theme.h"
 #include "plugin/MessageUtils.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
@@ -31,6 +33,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 
 #include "utility/vstgui_before.h"
 #include "vstgui/vstgui.h"
@@ -41,7 +44,10 @@ using namespace VSTGUI;
 const int Editor::viewWidth { 800 };
 const int Editor::viewHeight { 475 };
 
-struct Editor::Impl : EditorController::Receiver, IControlListener {
+struct Editor::Impl : EditorController::Receiver,
+                      public IControlListener,
+                      public Theme::ChangeListener
+{
     EditorController* ctrl_ = nullptr;
     CFrame* frame_ = nullptr;
     SharedPointer<SFrameDisabler> frameDisabler_;
@@ -49,6 +55,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     std::string currentSfzFile_;
     std::string currentScalaFile_;
+    std::string currentThemeName_;
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
 
@@ -66,6 +73,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
 
     unsigned activePanel_ = 0;
     CViewContainer* subPanels_[kNumPanels] = {};
+    STextButton* panelButtons_[kNumPanels] = {};
 
     enum {
         kTagLoadSfzFile,
@@ -84,10 +92,13 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
         kTagSetScalaRootKey,
         kTagSetTuningFrequency,
         kTagSetStretchedTuning,
+        kTagSetSampleQuality,
+        kTagSetOscillatorQuality,
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
         kTagAbout,
+        kTagThemeMenu,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -111,9 +122,13 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
+    SValueMenu *sampleQualitySlider_ = nullptr;
+    SValueMenu *oscillatorQualitySlider_ = nullptr;
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
+    COptionMenu* themeMenu_ = nullptr;
+    std::unique_ptr<Theme> theme_;
 
     STitleContainer* userFilesGroup_ = nullptr;
     STextButton* userFilesDirButton_ = nullptr;
@@ -224,6 +239,7 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void performCCEndEdit(unsigned cc);
 
     void setActivePanel(unsigned panelId);
+    void setupCurrentPanel();
     void applyBackgroundForCurrentPanel();
 
     static void formatLabel(CTextLabel* label, const char* fmt, ...);
@@ -234,6 +250,10 @@ struct Editor::Impl : EditorController::Receiver, IControlListener {
     void enterOrLeaveEdit(CControl* ctl, bool enter);
     void controlBeginEdit(CControl* ctl) override;
     void controlEndEdit(CControl* ctl) override;
+
+    // Theme
+    void onThemeChanged() override;
+    std::vector<std::function<void()>> OnThemeChanged;
 
     // Misc
     static std::string getUnicodeNoteName(unsigned key)
@@ -273,6 +293,9 @@ Editor::~Editor()
 void Editor::open(CFrame& frame)
 {
     Impl& impl = *impl_;
+
+    fprintf(stderr, "[sfizz] The resource path of the bundle is %s\n",
+            getResourceBasePath().u8string().c_str());
 
     impl.frame_ = &frame;
     frame.addView(impl.mainView_.get());
@@ -384,6 +407,24 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             if (stretchedTuningSlider_)
                 stretchedTuningSlider_->setValue(value);
             updateStretchedTuningLabel(value);
+        }
+        break;
+    case EditId::SampleQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = sampleQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
+        }
+        break;
+    case EditId::OscillatorQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = oscillatorQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
         }
         break;
     case EditId::CanEditUserFilesDir:
@@ -554,6 +595,7 @@ void Editor::Impl::tickOSCQueue(CVSTGUITimer* timer)
 void Editor::Impl::createFrameContents()
 {
     CViewContainer* mainView;
+    Theme* theme;
 
     SharedPointer<CBitmap> iconShaded = owned(new CBitmap("logo_text_shaded.png"));
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
@@ -564,96 +606,65 @@ void Editor::Impl::createFrameContents()
     backgroundBitmap_ = background;
 
     {
-        const CColor frameBackground = { 0xd3, 0xd7, 0xcf };
+        theme = new Theme;
+        theme_.reset(theme);
 
-        struct Theme {
-            CColor boxBackground;
-            CColor text;
-            CColor inactiveText;
-            CColor highlightedText;
-            CColor titleBoxText;
-            CColor titleBoxBackground;
-            CColor icon;
-            CColor iconHighlight;
-            CColor valueText;
-            CColor valueBackground;
-            CColor knobActiveTrackColor;
-            CColor knobInactiveTrackColor;
-            CColor knobLineIndicatorColor;
-        };
+        theme->listener = this;
+        OnThemeChanged.clear();
+        OnThemeChanged.reserve(128);
 
-        Theme lightTheme;
-        lightTheme.boxBackground = { 0xba, 0xbd, 0xb6 };
-        lightTheme.text = { 0x00, 0x00, 0x00 };
-        lightTheme.inactiveText = { 0xb2, 0xb2, 0xb2 };
-        lightTheme.highlightedText = { 0xfd, 0x98, 0x00 };
-        lightTheme.titleBoxText = { 0xff, 0xff, 0xff };
-        lightTheme.titleBoxBackground = { 0x2e, 0x34, 0x36 };
-        lightTheme.icon = lightTheme.text;
-        lightTheme.iconHighlight = { 0xfd, 0x98, 0x00 };
-        lightTheme.valueText = { 0xff, 0xff, 0xff };
-        lightTheme.valueBackground = { 0x2e, 0x34, 0x36 };
-        lightTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
-        lightTheme.knobInactiveTrackColor = { 0x30, 0x30, 0x30 };
-        lightTheme.knobLineIndicatorColor = { 0x00, 0x00, 0x00 };
-        Theme darkTheme;
-        darkTheme.boxBackground = { 0x2e, 0x34, 0x36 };
-        darkTheme.text = { 0xff, 0xff, 0xff };
-        darkTheme.inactiveText = { 0xb2, 0xb2, 0xb2 };
-        darkTheme.highlightedText = { 0xfd, 0x98, 0x00 };
-        darkTheme.titleBoxText = { 0x00, 0x00, 0x00 };
-        darkTheme.titleBoxBackground = { 0xba, 0xbd, 0xb6 };
-        darkTheme.icon = { 0xb2, 0xb2, 0xb2 };
-        darkTheme.iconHighlight = { 0xfd, 0x98, 0x00 };
-        darkTheme.valueText = { 0x00, 0x00, 0x00 };
-        darkTheme.valueBackground = { 0x9a, 0x9a, 0x9a };
-        darkTheme.knobActiveTrackColor = { 0x00, 0xb6, 0x2a };
-        darkTheme.knobInactiveTrackColor = { 0x60, 0x60, 0x60 };
-        darkTheme.knobLineIndicatorColor = { 0xff, 0xff, 0xff };
-        Theme& defaultTheme = lightTheme;
-
-        Theme* theme = &defaultTheme;
-        auto enterTheme = [&theme](Theme& t) { theme = &t; };
+        Palette& invertedPalette = theme->invertedPalette;
+        Palette& defaultPalette = theme->normalPalette;
+        Palette* palette = &defaultPalette;
+        auto enterPalette = [&palette](Palette& p) { palette = &p; };
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
             container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
             return container;
         };
-        auto createRoundedGroup = [&theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createRoundedGroup = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             auto* box =  new SBoxContainer(bounds);
             box->setCornerRadius(10.0);
-            box->setBackgroundColor(theme->boxBackground);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setBackgroundColor(palette->boxBackground);
+            });
             return box;
         };
-        auto createTitleGroup = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
+        auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
-            box->setBackgroundColor(theme->boxBackground);
-            box->setTitleFontColor(theme->titleBoxText);
-            box->setTitleBackgroundColor(theme->titleBoxBackground);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setBackgroundColor(palette->boxBackground);
+                box->setTitleFontColor(palette->titleBoxText);
+                box->setTitleBackgroundColor(palette->titleBoxBackground);
+            });
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             box->setTitleFont(font);
             return box;
         };
         auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CKickButton(bounds, this, tag, iconShaded);
+            return new CKickButton(bounds, this, tag, 0.0f, iconShaded);
         };
-        auto createLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setFontColor(theme->text);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->text);
+            });
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
         };
-        auto createInactiveLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createInactiveLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setFontColor(theme->inactiveText);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->inactiveText);
+            });
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
@@ -666,31 +677,25 @@ void Editor::Impl::createFrameContents()
             hline->setBackgroundColor(CColor(0xff, 0xff, 0xff, 0xff));
             return hline;
         };
-        auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
-        };
-        auto createStyledKnob = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
-            knob->setActiveTrackColor(theme->knobActiveTrackColor);
-            knob->setInactiveTrackColor(theme->knobInactiveTrackColor);
-            knob->setLineIndicatorColor(theme->knobLineIndicatorColor);
-            return knob;
-        };
-        auto createValueLabel = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createValueLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setFontColor(theme->text);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->text);
+            });
             lbl->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
         };
-        auto createBadge = [&theme](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createBadge = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(theme->valueBackground);
-            lbl->setFontColor(theme->valueText);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setBackColor(palette->valueBackground);
+                lbl->setFontColor(palette->valueText);
+            });
             lbl->setHoriAlign(align);
             lbl->setStyle(CParamDisplay::kRoundRectStyle);
             lbl->setRoundRectRadius(5.0);
@@ -713,14 +718,16 @@ void Editor::Impl::createFrameContents()
             return button;
         };
 #endif
-        auto createClickableLabel = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createClickableLabel = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             STextButton* button = new STextButton(bounds, this, tag, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
-            button->setTextColor(theme->text);
-            button->setInactiveColor(theme->inactiveText);
-            button->setHoverColor(theme->highlightedText);
+            OnThemeChanged.push_back([button, palette]() {
+                button->setTextColor(palette->text);
+                button->setInactiveColor(palette->inactiveText);
+                button->setHighlightColor(palette->highlightedText);
+            });
             button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, CColor(0x00, 0x00, 0x00, 0x00), CColor(0x00, 0x00, 0x00, 0x00)));
@@ -728,38 +735,58 @@ void Editor::Impl::createFrameContents()
             button->setGradientHighlighted(gradient);
             return button;
         };
-        auto createValueButton = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+        auto createValueButton = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             STextButton* button = new STextButton(bounds, this, tag, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             button->setFont(font);
             button->setTextAlignment(align);
-            button->setTextColor(theme->valueText);
-            button->setInactiveColor(theme->inactiveText);
-            button->setHoverColor(theme->highlightedText);
+            OnThemeChanged.push_back([button, palette]() {
+                button->setTextColor(palette->valueText);
+                button->setInactiveColor(palette->inactiveText);
+                button->setHighlightColor(palette->highlightedText);
+                SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, palette->valueBackground, palette->valueBackground));
+                button->setGradient(gradient);
+                button->setGradientHighlighted(gradient);
+            });
             button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
-            SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, theme->valueBackground, theme->valueBackground));
-            button->setGradient(gradient);
-            button->setGradientHighlighted(gradient);
             return button;
         };
-        auto createValueMenu = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
+        auto createValueMenu = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
             SValueMenu* vm = new SValueMenu(bounds, this, tag);
             vm->setHoriAlign(align);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             vm->setFont(font);
-            vm->setFontColor(theme->valueText);
-            vm->setBackColor(theme->valueBackground);
+            OnThemeChanged.push_back([vm, palette]() {
+                vm->setFontColor(palette->valueText);
+                vm->setBackColor(palette->valueBackground);
+            });
             vm->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             vm->setStyle(CParamDisplay::kRoundRectStyle);
             vm->setRoundRectRadius(5.0);
             return vm;
         };
-        auto createGlyphButton = [this, &theme](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
+        auto createOptionMenu = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
+            auto* cb = new COptionMenu(bounds, this, tag);
+            cb->setHoriAlign(align);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            cb->setFont(font);
+            OnThemeChanged.push_back([cb, palette]() {
+                cb->setFontColor(palette->valueText);
+                cb->setBackColor(palette->valueBackground);
+            });
+            cb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            cb->setStyle(CParamDisplay::kRoundRectStyle);
+            cb->setRoundRectRadius(5.0);
+            return cb;
+        };
+        auto createGlyphButton = [this, &palette](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
-            btn->setTextColor(theme->icon);
-            btn->setHoverColor(theme->iconHighlight);
+            OnThemeChanged.push_back([btn, palette]() {
+                btn->setTextColor(palette->icon);
+                btn->setHighlightColor(palette->iconHighlight);
+            });
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setGradient(nullptr);
@@ -795,44 +822,72 @@ void Editor::Impl::createFrameContents()
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
             return btn;
         };
-        auto createPiano = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
+        auto createPiano = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SPiano* piano = new SPiano(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             piano->setFont(font);
+            OnThemeChanged.push_back([piano, palette]() {
+                piano->setFontColor(palette->text);
+                piano->setBackColor(palette->boxBackground);
+            });
             return piano;
         };
-        auto createChevronDropDown = [this, &theme](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
+        auto createChevronDropDown = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             SActionMenu* menu = new SActionMenu(bounds, this);
             menu->setTitle(u8"\ue0d7");
             menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
-            menu->setFontColor(theme->icon);
-            menu->setHoverColor(theme->iconHighlight);
+            OnThemeChanged.push_back([menu, palette]() {
+                menu->setFontColor(palette->icon);
+                menu->setHoverColor(palette->iconHighlight);
+            });
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
         };
-        auto createChevronValueDropDown = [this, &theme](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+        auto createChevronValueDropDown = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             SValueMenu* menu = new SValueMenu(bounds, this, tag);
             menu->setValueToStringFunction2([](float, std::string& result, CParamDisplay*) -> bool {
                 result = u8"\ue0d7";
                 return true;
             });
             menu->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
-            menu->setFontColor(theme->icon);
-            menu->setHoverColor(theme->iconHighlight);
+            OnThemeChanged.push_back([menu, palette]() {
+                menu->setFontColor(palette->icon);
+                menu->setHoverColor(palette->iconHighlight);
+            });
             menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
             return menu;
         };
-        auto createKnobCCBox = [this, &theme](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int fontsize) {
+        auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            return new CAnimKnob(bounds, this, tag, 31, 48, knob48);
+        };
+        auto createStyledKnob = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            SStyledKnob* knob = new SStyledKnob(bounds, this, tag);
+            OnThemeChanged.push_back([knob, palette]() {
+                knob->setActiveTrackColor(palette->knobActiveTrack);
+                knob->setInactiveTrackColor(palette->knobInactiveTrack);
+                knob->setLineIndicatorColor(palette->knobLineIndicator);
+            });
+            return knob;
+        };
+        auto createKnobCCBox = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int fontsize) {
             SKnobCCBox* box = new SKnobCCBox(bounds, this, tag);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             box->setNameLabelText(label);
             box->setNameLabelFont(font);
-            box->setNameLabelFontColor(theme->text);
             box->setKnobFont(font);
-            box->setKnobFontColor(theme->text);
-            box->setKnobLineIndicatorColor(theme->knobLineIndicatorColor);
+            box->setCCLabelText(label);
+            box->setCCLabelFont(font);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setNameLabelFontColor(palette->knobText);
+                box->setCCLabelFontColor(palette->knobLabelText);
+                box->setCCLabelBackColor(palette->knobLabelBackground);
+                box->setKnobFontColor(palette->knobText);
+                box->setKnobLineIndicatorColor(palette->knobLineIndicator);
+                box->setKnobActiveTrackColor(palette->knobActiveTrack);
+                box->setKnobInactiveTrackColor(palette->knobInactiveTrack);
+            });
             box->setValueToStringFunction([](float value, std::string& text) -> bool {
                 text = std::to_string(std::lround(value * 127));
                 return true;
@@ -844,14 +899,29 @@ void Editor::Impl::createFrameContents()
             container->setBackground(background);
             return container;
         };
-        auto createControlsPanel = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             auto* panel = new SControlsPanel(bounds);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            panel->setNameLabelFont(font);
+            panel->setKnobFont(font);
+            panel->setCCLabelFont(font);
+            OnThemeChanged.push_back([panel, palette]() {
+                panel->setNameLabelFontColor(palette->knobText);
+                panel->setCCLabelFontColor(palette->knobLabelText);
+                panel->setCCLabelBackColor(palette->knobLabelBackground);
+                panel->setKnobFontColor(palette->knobText);
+                panel->setKnobLineIndicatorColor(palette->knobLineIndicator);
+                panel->setKnobActiveTrackColor(palette->knobActiveTrack);
+                panel->setKnobInactiveTrackColor(palette->knobInactiveTrack);
+            });
             return panel;
         };
 
         #include "layout/main.hpp"
 
-        mainView->setBackgroundColor(frameBackground);
+        OnThemeChanged.push_back([mainView, theme]() {
+            mainView->setBackgroundColor(theme->frameBackground);
+        });
 
 #if LINUX
         if (!isZenityAvailable()) {
@@ -880,6 +950,10 @@ void Editor::Impl::createFrameContents()
 
         mainView_ = owned(mainView);
     }
+
+    ///
+    currentThemeName_ = theme->loadCurrentName();
+    theme->load(currentThemeName_);
 
     ///
     SAboutDialog* aboutDialog = new SAboutDialog(mainView->getViewSize());
@@ -916,6 +990,8 @@ void Editor::Impl::createFrameContents()
     adjustMinMaxToEditRange(tuningFrequencySlider_, EditId::TuningFrequency);
     tuningFrequencySlider_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
     adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
+    adjustMinMaxToEditRange(sampleQualitySlider_, EditId::SampleQuality);
+    adjustMinMaxToEditRange(oscillatorQualitySlider_, EditId::OscillatorQuality);
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
@@ -996,6 +1072,37 @@ void Editor::Impl::createFrameContents()
         menu->addEntry("Open SFZ folder", kTagOpenSfzFolder);
     }
 
+    if (SValueMenu *menu = sampleQualitySlider_) {
+        static const std::array<const char*, 11> labels {{
+            "Nearest", "Linear", "Polynomial",
+            "Sinc 8", "Sinc 12", "Sinc 16", "Sinc 24",
+            "Sinc 36", "Sinc 48", "Sinc 60", "Sinc 72",
+        }};
+        for (size_t i = 0; i < labels.size(); ++i)
+            menu->addEntry(labels[i], float(i));
+        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+            int index = int(value);
+            if (index < 0 || unsigned(index) >= labels.size())
+                return false;
+            result = labels[unsigned(index)];
+            return true;
+        });
+    }
+    if (SValueMenu *menu = oscillatorQualitySlider_) {
+        static const std::array<const char*, 4> labels {{
+            "Nearest", "Linear", "High", "Dual-High",
+        }};
+        for (size_t i = 0; i < labels.size(); ++i)
+            menu->addEntry(labels[i], float(i));
+        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+            int index = int(value);
+            if (index < 0 || unsigned(index) >= labels.size())
+                return false;
+            result = labels[unsigned(index)];
+            return true;
+        });
+    }
+
     if (SPiano* piano = piano_) {
         piano->onKeyPressed = [this](unsigned key, float vel) {
             uint8_t msg[3];
@@ -1051,7 +1158,20 @@ void Editor::Impl::createFrameContents()
         panel->setVisible(currentPanel == activePanel_);
     }
 
-    applyBackgroundForCurrentPanel();
+    setupCurrentPanel();
+
+    if (COptionMenu* menu = themeMenu_) {
+        const std::vector<std::string>& names = Theme::getAvailableNames();
+        size_t index = ~size_t(0);
+        for (size_t i = 0, n = names.size(); i < n; ++i) {
+            const std::string& name = names[i];
+            menu->addEntry(UTF8String(name));
+            if (name == currentThemeName_)
+                index = i;
+        }
+        if (index != ~size_t(0))
+            menu->setCurrent(index);
+    }
 }
 
 void Editor::Impl::chooseSfzFile()
@@ -1566,6 +1686,16 @@ void Editor::Impl::updateBackgroundImage(const char* filepath)
     applyBackgroundForCurrentPanel();
 }
 
+void Editor::Impl::setupCurrentPanel()
+{
+    for (unsigned i = 0; i < kNumPanels; ++i) {
+        if (STextButton* button = panelButtons_[i])
+            button->setHighlighted(i == activePanel_);
+    }
+
+    applyBackgroundForCurrentPanel();
+}
+
 void Editor::Impl::applyBackgroundForCurrentPanel()
 {
     CBitmap* bitmap;
@@ -1627,7 +1757,7 @@ void Editor::Impl::setActivePanel(unsigned panelId)
         if (subPanels_[panelId])
             subPanels_[panelId]->setVisible(true);
         activePanel_ = panelId;
-        applyBackgroundForCurrentPanel();
+        setupCurrentPanel();
     }
 }
 
@@ -1761,6 +1891,14 @@ void Editor::Impl::valueChanged(CControl* ctl)
         updateTuningFrequencyLabel(value);
         break;
 
+    case kTagSetSampleQuality:
+        ctrl.uiSendValue(EditId::SampleQuality, value);
+        break;
+
+    case kTagSetOscillatorQuality:
+        ctrl.uiSendValue(EditId::OscillatorQuality, value);
+        break;
+
     case kTagSetStretchedTuning:
         ctrl.uiSendValue(EditId::StretchTuning, value);
         updateStretchedTuningLabel(value);
@@ -1778,6 +1916,14 @@ void Editor::Impl::valueChanged(CControl* ctl)
             break;
 
         Call::later([this]() { aboutDialog_->setVisible(true); });
+        break;
+
+    case kTagThemeMenu:
+        {
+            currentThemeName_ = Theme::getAvailableNames()[int(value)];
+            Theme::storeCurrentName(currentThemeName_);
+            theme_->load(currentThemeName_);
+        }
         break;
 
     default:
@@ -1823,4 +1969,12 @@ void Editor::Impl::controlBeginEdit(CControl* ctl)
 void Editor::Impl::controlEndEdit(CControl* ctl)
 {
     enterOrLeaveEdit(ctl, false);
+}
+
+void Editor::Impl::onThemeChanged()
+{
+    for (std::function<void()> &function : OnThemeChanged) {
+        if (function)
+            function();
+    }
 }

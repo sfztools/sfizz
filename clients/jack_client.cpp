@@ -95,7 +95,7 @@ int process(jack_nframes_t numFrames, void* arg)
             // Not implemented
             break;
         case midi::channelPressure:
-            synth->aftertouch(event.time, event.buffer[1]);
+            synth->channelAftertouch(event.time, event.buffer[1]);
             break;
         case midi::pitchBend:
             synth->pitchWheel(event.time, midi::buildAndCenterPitch(event.buffer[1], event.buffer[2]));

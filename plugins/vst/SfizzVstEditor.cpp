@@ -8,10 +8,11 @@
 #include "SfizzVstState.h"
 #include "SfizzVstParameters.h"
 #include "SfizzVstUpdates.h"
-#include "SfizzFileScan.h"
 #include "editor/Editor.h"
 #include "editor/EditIds.h"
+#include "plugin/SfizzFileScan.h"
 #include "plugin/InstrumentDescription.h"
+#include "pluginterfaces/vst/ivsthostapplication.h"
 #include "IdleUpdateHandler.h"
 #if !defined(__APPLE__) && !defined(_WIN32)
 #include "X11RunLoop.h"
@@ -98,13 +99,23 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         update->deferUpdate();
 
     // let the editor know about plugin format
-    uiReceiveValue(EditId::PluginFormat, std::string("VST3"));
+    absl::string_view pluginFormatName = "VST3";
 
     if (FUnknownPtr<Vst::IHostApplication> app { controller->getHostContext() }) {
         Vst::String128 name;
         app->getName(name);
         uiReceiveValue(EditId::PluginHost, std::string(Steinberg::String(name).text8()));
+
+        void* interfacePtr;
+        if (app->queryInterface(Vst::IVst3ToAUWrapper_iid, &interfacePtr) == kResultTrue)
+            pluginFormatName = "Audio Unit";
+        else if (app->queryInterface(Vst::IVst3ToVst2Wrapper_iid, &interfacePtr) == kResultTrue)
+            pluginFormatName = "VST2";
+        else if (app->queryInterface(Vst::IVst3ToAAXWrapper_iid, &interfacePtr) == kResultTrue)
+            pluginFormatName = "AAX";
     }
+
+    uiReceiveValue(EditId::PluginFormat, std::string(pluginFormatName));
 
     absl::optional<fs::path> userFilesDir = SfizzPaths::getSfzConfigDefaultPath();
     uiReceiveValue(EditId::CanEditUserFilesDir, 1);
@@ -279,6 +290,12 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
         case kPidStretchedTuning:
             uiReceiveValue(EditId::StretchTuning, range.denormalize(value));
             break;
+        case kPidSampleQuality:
+            uiReceiveValue(EditId::SampleQuality, range.denormalize(value));
+            break;
+        case kPidOscillatorQuality:
+            uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
+            break;
         default:
             if (id >= kPidCC0 && id <= kPidCCLast) {
                 int cc = int(id - kPidCC0);
@@ -372,6 +389,12 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
             break;
         case EditId::StretchTuning:
             normalizeAndSet(kPidStretchedTuning, v.to_float());
+            break;
+        case EditId::SampleQuality:
+            normalizeAndSet(kPidSampleQuality, v.to_float());
+            break;
+        case EditId::OscillatorQuality:
+            normalizeAndSet(kPidOscillatorQuality, v.to_float());
             break;
 
         case EditId::UserFilesDir:
@@ -479,6 +502,8 @@ Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
     case EditId::ScalaRootKey: return kPidScalaRootKey;
     case EditId::TuningFrequency: return kPidTuningFrequency;
     case EditId::StretchTuning: return kPidStretchedTuning;
+    case EditId::SampleQuality: return kPidSampleQuality;
+    case EditId::OscillatorQuality: return kPidOscillatorQuality;
     default:
         if (editIdIsCC(id))
             return kPidCC0 + ccForEditId(id);

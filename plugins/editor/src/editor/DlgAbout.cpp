@@ -113,7 +113,7 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Misc Icons", fontsize));
             btn->setTextColor(kWhiteCColor);
-            btn->setHoverColor(CColor(0xfd, 0x98, 0x00, 0xff));
+            btn->setHighlightColor(CColor(0xfd, 0x98, 0x00, 0xff));
             btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
             btn->setGradient(nullptr);
@@ -161,9 +161,12 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
 
     ///
     sysInfoTemplate_ = lblSysInfoValue_->getText();
+    sysInfoVariables_["%Pluginformat%"] = {};
     sysInfoVariables_["%HostOS%"] = getOperatingSystemName();
     sysInfoVariables_["%HostCPU%"] = getProcessorName();
     sysInfoVariables_["%HostBits%"] = std::to_string(8 * sizeof(void*));
+    sysInfoVariables_["%HostProgram%"] = getCurrentProcessName();
+    updateSysInfo();
 }
 
 void SAboutDialog::setPluginFormat(const std::string& pluginFormat)

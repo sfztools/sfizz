@@ -590,6 +590,17 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             getOrCreateConnection(source, target).sourceDepth = opcode.read(Default::filterCutoffMod);
         }
         break;
+    case hash("cutoff&_polyaft"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const ModKey source = ModKey::createNXYZ(ModId::PolyAftertouch, id);
+            const ModKey target = ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex);
+            getOrCreateConnection(source, target).sourceDepth = opcode.read(Default::filterCutoffMod);
+        }
+        break;
     case hash("fil&_keytrack"): // also fil_keytrack
         {
             const auto filterIndex = opcode.parameters.front() - 1;
@@ -931,7 +942,7 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
         getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), sourceDepthKey).sourceDepth
             = opcode.read(depthModSpec);
         break;
-    case_any_lfo("depthpolyaft"): // NOLINT bugprone-branch-clone
+    case_any_lfo("depthpolyaft"):
         getOrCreateConnection(sourceKey, targetKey).sourceDepthMod = sourceDepthKey;
         getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), sourceDepthKey).sourceDepth
             = opcode.read(depthModSpec);
@@ -945,11 +956,11 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, LFODescription& lfo)
     case_any_lfo_any_ccN("freq"): // also freqcc&
         processGenericCc(opcode, Default::lfoFreqMod, lfo.freqKey);
         break;
-    case_any_lfo("freqchanaft"): // NOLINT bugprone-branch-clone
+    case_any_lfo("freqchanaft"):
         getOrCreateConnection(ModKey::createNXYZ(ModId::ChannelAftertouch), lfo.freqKey).sourceDepth
             = opcode.read(Default::lfoFreqMod);
         break;
-    case_any_lfo("freqpolyaft"): // NOLINT bugprone-branch-clone
+    case_any_lfo("freqpolyaft"):
         getOrCreateConnection(ModKey::createNXYZ(ModId::PolyAftertouch, id), lfo.freqKey).sourceDepth
             = opcode.read(Default::lfoFreqMod);
         break;
@@ -1693,14 +1704,13 @@ float sfz::Region::getPhase() const noexcept
     return phase;
 }
 
-uint64_t sfz::Region::getOffset(const MidiState& midiState, Oversampling factor) const noexcept
+uint64_t sfz::Region::getOffset(const MidiState& midiState) const noexcept
 {
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
     uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: offsetCC)
         finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
-
-    return Default::offset.bounds.clamp(finalOffset) * static_cast<uint64_t>(factor);
+    return Default::offset.bounds.clamp(finalOffset);
 }
 
 float sfz::Region::getDelay(const MidiState& midiState) const noexcept
@@ -1714,34 +1724,34 @@ float sfz::Region::getDelay(const MidiState& midiState) const noexcept
     return Default::delay.bounds.clamp(finalDelay);
 }
 
-uint32_t sfz::Region::getSampleEnd(MidiState& midiState, Oversampling factor) const noexcept
+uint32_t sfz::Region::getSampleEnd(MidiState& midiState) const noexcept
 {
     int64_t end = sampleEnd;
     for (const auto& mod: endCC)
         end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
     end = clamp(end, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(end) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(end);
 }
 
-uint32_t sfz::Region::loopStart(MidiState& midiState, Oversampling factor) const noexcept
+uint32_t sfz::Region::loopStart(MidiState& midiState) const noexcept
 {
     auto start = loopRange.getStart();
     for (const auto& mod: loopStartCC)
         start += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
     start = clamp(start, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(start) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(start);
 }
 
-uint32_t sfz::Region::loopEnd(MidiState& midiState, Oversampling factor) const noexcept
+uint32_t sfz::Region::loopEnd(MidiState& midiState) const noexcept
 {
     auto end = loopRange.getEnd();
     for (const auto& mod: loopEndCC)
         end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
 
     end = clamp(end, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(end) * static_cast<uint32_t>(factor);
+    return static_cast<uint32_t>(end);
 }
 
 float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept

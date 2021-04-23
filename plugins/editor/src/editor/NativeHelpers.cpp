@@ -137,6 +137,24 @@ std::string getProcessorName()
     std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
     return valueUTF8.get();
 }
+
+std::string getCurrentProcessName()
+{
+    DWORD size = 32768;
+    std::unique_ptr<WCHAR[]> buffer(new WCHAR[size]());
+
+    if (!GetModuleFileNameW(nullptr, buffer.get(), size))
+        return {};
+
+    buffer[size - 1] = L'\0';
+    const WCHAR* name = buffer.get();
+
+    if (const WCHAR* pos = wcsrchr(name, L'\\'))
+        name = pos + 1;
+
+    std::unique_ptr<char[]> nameUTF8(stringToUTF8(name));
+    return nameUTF8.get();
+}
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
@@ -151,6 +169,7 @@ std::string getProcessorName()
 #include <cstring>
 #include <cerrno>
 extern "C" { extern char **environ; }
+extern "C" { extern char *__progname; }
 
 static bool openFileByMimeType(const char *filename, const char *mimetype)
 {
@@ -243,35 +262,40 @@ bool isZenityAvailable()
 std::string getOperatingSystemName()
 {
     std::string name;
-    name.reserve(256);
 
-#if GLIB_CHECK_VERSION(2, 64, 0)
-    if (char *osName = g_get_os_info(G_OS_INFO_KEY_NAME)) {
-        name.append(osName);
-        g_free(osName);
-    }
-    else {
-        name.append("Unknown");
+    std::ifstream in("/etc/os-release", std::ios::binary);
+    if (!in)
+        in = std::ifstream("/usr/lib/os-release", std::ios::binary);
+    if (in) {
+        std::string line;
+        line.reserve(256);
+        for (bool found = false; !found && std::getline(in, line); ) {
+            const char prefix[] = "PRETTY_NAME=";
+            size_t length = sizeof(prefix) - 1;
+            found = line.size() >= length && !memcmp(line.data(), prefix, length);
+            if (found) {
+                if (char* value = g_shell_unquote(line.c_str() + length, nullptr)) {
+                    name.assign(value);
+                    g_free(value);
+                }
+            }
+        }
+        in.close();
     }
 
-    if (char *osVersion = g_get_os_info(G_OS_INFO_KEY_VERSION_ID)) {
-        name.push_back(' ');
-        name.append(osVersion);
-        g_free(osVersion);
+    if (name.empty()) {
+        utsname un {};
+        int ret = uname(&un);
+        if (ret != -1 && un.sysname[0] != '\0')
+            name.append(un.sysname);
+        else {
+            name.append("Unknown");
+        }
+        if (ret != -1 && un.release[0] != '\0') {
+            name.push_back(' ');
+            name.append(un.release);
+        }
     }
-#else
-    utsname un {};
-    int ret = uname(&un);
-    if (ret != -1 && un.sysname[0] != '\0')
-        name.append(un.sysname);
-    else {
-        name.append("Unknown");
-    }
-    if (ret != -1 && un.release[0] != '\0') {
-        name.push_back(' ');
-        name.append(un.release);
-    }
-#endif
 
     return name;
 }
@@ -293,6 +317,26 @@ std::string getProcessorName()
 
     if (name.empty())
         name = "Unknown";
+
+    return name;
+}
+
+std::string getCurrentProcessName()
+{
+    std::string name;
+
+    const std::string commPath = "/proc/" + std::to_string(getpid()) + "/comm";
+
+    if (std::ifstream in { commPath, std::ios::binary }) {
+        name.reserve(256);
+        for (int c; (c = in.get()) != std::char_traits<char>::eof() && c != '\n'; )
+            name.push_back(static_cast<unsigned char>(c));
+    }
+
+    if (name.empty()) {
+        if (const char* progname = __progname)
+            name.assign(progname);
+    }
 
     return name;
 }

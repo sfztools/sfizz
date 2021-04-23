@@ -1364,45 +1364,54 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             Layer& layer = *impl.layers_[idx];      \
             Region& region = layer.getRegion();
 
+        #define GET_FILTER_OR_BREAK(idx)          \
+            if (idx >= region.filters.size())     \
+                break;                            \
+            auto& filter = region.filters[idx];
+
+        #define GET_LFO_OR_BREAK(idx)             \
+            if (idx >= region.lfos.size())        \
+                break;                            \
+            auto& lfo = region.lfos[idx];
+
+        #define GET_LFO_SUB_OR_BREAK(idx)         \
+            if (idx >= lfo.sub.size())            \
+                break;                            \
+            auto& sub = lfo.sub[idx];
+
         MATCH("/region&/pitch_keycenter", "i") {
             GET_REGION_OR_BREAK(indices[0])
-            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
-            Impl::OpcodeUpdate update { delay, &region,
-                Opcode { "pitch_keycenter", std::to_string(args[0].i) } };
-            impl.regionUpdates_.emplace_back(update);
+            region.pitchKeycenter = Opcode::transform(Default::key, args[0].i);
         } break;
 
         MATCH("/region&/loop_mode", "s") {
             GET_REGION_OR_BREAK(indices[0])
-            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
-            Impl::OpcodeUpdate update { delay, &region,
-                Opcode { "loop_mode", args[0].s } };
-            impl.regionUpdates_.emplace_back(update);
+            region.loopMode = Opcode::readOptional(Default::loopMode, args[0].s);
         } break;
 
         MATCH("/region&/filter&/type", "s") {
             GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] >= region.filters.size())
-                break;
-
-            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
-            Impl::OpcodeUpdate update { delay, &region,
-                Opcode { absl::StrCat("fil", indices[1] + 1 , "_type "), args[0].s } };
-            impl.regionUpdates_.emplace_back(update);
+            GET_FILTER_OR_BREAK(indices[1])
+            filter.type = Opcode::read(Default::filter, args[0].s);
         } break;
 
         MATCH("/region&/lfo&/wave", "i") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] >= region.lfos.size())
-                break;
+            indices[2] = 0;
+            goto set_lfoN_wave;
+        } break;
 
-            std::lock_guard<SpinMutex> lock { impl.regionUpdatesMutex_ };
-            Impl::OpcodeUpdate update { delay, &region,
-                Opcode { absl::StrCat("lfo", indices[1] + 1, "_wave1"), std::to_string(args[0].i) } };
-            impl.regionUpdates_.emplace_back(update);
+        MATCH("/region&/lfo&/wave&", "i") {
+        set_lfoN_wave:
+            GET_REGION_OR_BREAK(indices[0])
+            GET_LFO_OR_BREAK(indices[1])
+            GET_LFO_SUB_OR_BREAK(indices[2])
+            sub.wave = Opcode::transform(Default::lfoWave, args[0].i);
         } break;
 
         #undef GET_REGION_OR_BREAK
+        #undef GET_FILTER_OR_BREAK
+        #undef GET_LFO_OR_BREAK
+        #undef GET_LFO_SUB_OR_BREAK
 
         //----------------------------------------------------------------------
         // Voices

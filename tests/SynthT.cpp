@@ -111,22 +111,6 @@ TEST_CASE("[Synth] Check that we can change the size of the preload before and a
     synth.renderBlock(buffer);
 }
 
-TEST_CASE("[Synth] Check that we can change the oversampling factor before and after loading")
-{
-    sfz::Synth synth;
-    synth.setOversamplingFactor(sfz::Oversampling::x2);
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
-    synth.setOversamplingFactor(sfz::Oversampling::x4);
-
-    synth.noteOn(0, 36, 24);
-    synth.noteOn(0, 36, 89);
-    synth.renderBlock(buffer);
-    synth.setOversamplingFactor(sfz::Oversampling::x2);
-    synth.renderBlock(buffer);
-}
-
-
 TEST_CASE("[Synth] All notes offs/all sounds off")
 {
     sfz::Synth synth;
@@ -584,7 +568,7 @@ TEST_CASE("[Synth] sample quality")
     synth.noteOn(0, 60, 100);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 1);
-    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::freewheelingQuality);
+    REQUIRE(synth.getVoiceView(0)->getCurrentSampleQuality() == sfz::Default::freewheelingSampleQuality);
     synth.allSoundOff();
     synth.disableFreeWheeling();
 
@@ -1817,13 +1801,30 @@ TEST_CASE("[Keyswitches] Trigger from aftertouch extended CC")
     )");
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 0);
-    synth.aftertouch(0, 90);
+    synth.channelAftertouch(0, 90);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 0);
-    synth.aftertouch(0, 110);
+    synth.channelAftertouch(0, 110);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 1);
-    synth.aftertouch(0, 120);
+    synth.channelAftertouch(0, 120);
     synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 2);
+}
+
+TEST_CASE("[Synth] Short empty files are turned into *silence")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/aftertouch_trigger.sfz", R"(
+        <region> sample=silence.wav
+    )");
+    synth.dispatchMessage(client, 0, "/region0/sample", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/sample,s : { *silence }",
+    };
+    REQUIRE(messageList == expected);
 }

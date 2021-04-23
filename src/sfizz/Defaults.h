@@ -33,6 +33,7 @@
 #include "SfzHelpers.h"
 #include "LFOCommon.h"
 #include "MathHelpers.h"
+#include "utility/Macros.h"
 
 
 namespace sfz
@@ -67,6 +68,9 @@ struct OpcodeSpec
     T defaultInputValue;
     Range<T> bounds;
     int flags;
+
+    using Intermediate = typename std::conditional<
+        std::is_integral<T>::value || std::is_enum<T>::value, int64_t, T>::type;
 
     template <class U>
     using IsNormalizable = std::integral_constant<
@@ -314,7 +318,8 @@ namespace Default
 
     // Various defaut values
     // e.g. "additional" or multiple defautl values
-    constexpr int freewheelingQuality { 10 };
+    constexpr int freewheelingSampleQuality { 10 };
+    constexpr int freewheelingOscillatorQuality { 3 };
     constexpr float globalVolume { -7.35f };
     constexpr float defaultEQFreq [numEQs] { 50.0f, 500.0f, 5000.0f };
 } // namespace Default

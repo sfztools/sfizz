@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<sfizz-theme>
+    <color name="frameBackground">#d3d7cf</color>
+    <palette name="normal">
+        <color name="boxBackground">#babdb6</color>
+        <color name="text">#000000</color>
+        <color name="inactiveText">#b2b2b2</color>
+        <color name="highlightedText">#fd9800</color>
+        <color name="titleBoxText">#ffffff</color>
+        <color name="titleBoxBackground">#2e3436</color>
+        <color name="valueText">#ffffff</color>
+        <color name="valueBackground">#2e3436</color>
+        <color name="icon">#000000</color>
+        <color name="iconHighlight">#fd9800</color>
+        <color name="knobActiveTrack">#00aa11</color>
+        <color name="knobInactiveTrack">#303030</color>
+        <color name="knobLineIndicator">#000000</color>
+        <color name="knobText">#000000</color>
+        <color name="knobLabelText">#ffffff</color>
+        <color name="knobLabelBackground">#006b0b</color>
+    </palette>
+    <palette name="inverted">
+        <color name="boxBackground">#2e3436</color>
+        <color name="text">#ffffff</color>
+        <color name="inactiveText">#b2b2b2</color>
+        <color name="highlightedText">#fd9800</color>
+        <color name="titleBoxText">#000000</color>
+        <color name="titleBoxBackground">#babdb6</color>
+        <color name="valueText">#000000</color>
+        <color name="valueBackground">#9a9a9a</color>
+        <color name="icon">#b2b2b2</color>
+        <color name="iconHighlight">#fd9800</color>
+        <color name="knobActiveTrack">#00aa11</color>
+        <color name="knobInactiveTrack">#606060</color>
+        <color name="knobLineIndicator">#ffffff</color>
+        <color name="knobText">#ffffff</color>
+        <color name="knobLabelText">#ffffff</color>
+        <color name="knobLabelBackground">#006b0b</color>
+    </palette>
+</sfizz-theme>

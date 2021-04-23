@@ -123,6 +123,13 @@ public:
     int getCurrentSampleQuality() const noexcept;
 
     /**
+     * @brief Get the oscillator quality determined by the active region.
+     *
+     * @return int
+     */
+    int getCurrentOscillatorQuality() const noexcept;
+
+    /**
      * @brief Register a note-off event; this may trigger a release.
      *
      * @param delay

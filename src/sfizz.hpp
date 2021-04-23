@@ -26,6 +26,14 @@
   #define SFIZZ_EXPORTED_API
 #endif
 
+//! @cond Doxygen_Suppress
+#if defined _WIN32
+  #define SFIZZ_DEPRECATED_API __declspec(deprecated)
+#else
+  #define SFIZZ_DEPRECATED_API __attribute__ ((deprecated))
+#endif
+//! @endcond
+
 struct sfizz_synth_t;
 
 namespace sfz
@@ -63,7 +71,14 @@ public:
     Sfizz();
     ~Sfizz();
 
+    /**
+     * @brief Move constructor.
+     */
     Sfizz(Sfizz&& other) noexcept;
+
+    /**
+     * @brief Move assignment operator.
+     */
     Sfizz& operator=(Sfizz&& other) noexcept;
 
     Sfizz(const Sfizz& other) = delete;
@@ -290,7 +305,7 @@ public:
      *
      * @param[in] mode  The processing mode.
      *
-     * @return The sample quality for the given mode, in the range 1 to 10.
+     * @return The sample quality for the given mode, in the range 0 to 10.
      */
     int getSampleQuality(ProcessMode mode);
 
@@ -305,12 +320,45 @@ public:
      * @since 0.4.0
      *
      * @param[in] mode    The processing mode.
-     * @param[in] quality The desired sample quality, in the range 1 to 10.
+     * @param[in] quality The desired sample quality, in the range 0 to 10.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
     void setSampleQuality(ProcessMode mode, int quality);
+
+    /**
+     * @brief Get the default oscillator quality.
+     *
+     * This is the quality setting which the engine uses when the instrument
+     * does not use the opcode `oscillator_quality`. The engine uses distinct
+     * default quality settings for live mode and freewheeling mode,
+     * which both can be accessed by the means of this function.
+     * @since 1.0.0
+     *
+     * @param[in] mode  The processing mode.
+     *
+     * @return The oscillator quality for the given mode, in the range 0 to 3.
+     */
+    int getOscillatorQuality(ProcessMode mode);
+
+    /**
+     * @brief Set the default oscillator quality.
+     *
+     * This is the quality setting which the engine uses when the instrument
+     * does not use the opcode `oscillator_quality`. The engine uses distinct
+     * default quality settings for live mode and freewheeling mode,
+     * which both can be accessed by the means of this function.
+     *
+     * @since 1.0.0
+     *
+     * @param[in] mode    The processing mode.
+     * @param[in] quality The desired oscillator quality, in the range 0 to 3.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void setOscillatorQuality(ProcessMode mode, int quality);
 
     /**
      * @brief Return the current value for the volume, in dB.
@@ -342,13 +390,31 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
-     * @param velocity the midi note velocity.
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the midi note velocity, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void noteOn(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOn(int delay, int noteNumber, int velocity) noexcept;
+
+    /**
+     * @brief Send a high-precision note on event to the synth.
+     * @since 1.0.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the normalized midi note velocity, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdNoteOn(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Send a note off event to the synth.
@@ -360,13 +426,31 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the midi note number.
-     * @param velocity the midi note velocity.
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the midi note velocity, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void noteOff(int delay, int noteNumber, uint8_t velocity) noexcept;
+    void noteOff(int delay, int noteNumber, int velocity) noexcept;
+
+    /**
+     * @brief Send a note off event to the synth.
+     * @since 1.0.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the midi note number, in domain 0 to 127.
+     * @param velocity the normalized midi note velocity, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdNoteOff(int delay, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Send a CC event to the synth
@@ -378,13 +462,13 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
-     * @param ccValue the cc value.
+     * @param ccNumber the cc number, in domain 0 to 127.
+     * @param ccValue the cc value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void cc(int delay, int ccNumber, uint8_t ccValue) noexcept;
+    void cc(int delay, int ccNumber, int ccValue) noexcept;
 
     /**
      * @brief Send a high precision CC event to the synth
@@ -396,7 +480,7 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
+     * @param ccNumber the cc number, in domain 0 to 127.
      * @param normValue the normalized cc value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -414,11 +498,11 @@ public:
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param ccNumber the cc number.
+     * @param ccNumber the cc number, in domain 0 to 127.
      * @param normValue the normalized cc value, in domain 0 to 1.
      *
      * @par Thread-safety constraints
@@ -445,6 +529,24 @@ public:
     void pitchWheel(int delay, int pitch) noexcept;
 
     /**
+     * @brief Send a high-precision pitch bend event to the synth
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 1.0.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param pitch the normalized pitch, in domain -1 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdPitchWheel(int delay, float pitch) noexcept;
+
+    /**
      * @brief Send an aftertouch event to the synth.
      *
      * This command should be delay-ordered with all other midi-type events
@@ -455,32 +557,88 @@ public:
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param aftertouch the aftertouch value.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void aftertouch(int delay, uint8_t aftertouch) noexcept;
+    SFIZZ_DEPRECATED_API void aftertouch(int delay, int aftertouch) noexcept;
 
     /**
-     * @brief Send a polyphonic aftertouch event to the synth. This feature is
-     *          experimental and needs more testing in the internal engine.
+     * @brief Send a channel aftertouch (channel pressure) event to the synth.
      *
      * This command should be delay-ordered with all other midi-type events
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
      * synth is undefined.
      *
-     * @since 0.6.0
+     * @since 0.2.0
      *
      * @param delay the delay at which the event occurs; this should be lower
      *              than the size of the block in the next call to renderBlock().
-     * @param noteNumber the note number.
-     * @param aftertouch the aftertouch value.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
      *
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void polyAftertouch(int delay, int noteNumber, uint8_t aftertouch) noexcept;
+    void channelAftertouch(int delay, int aftertouch) noexcept;
+
+    /**
+     * @brief Send a high-precision aftertouch event to the synth.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 1.0.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param aftertouch the normalized aftertouch value, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdChannelAftertouch(int delay, float aftertouch) noexcept;
+
+    /**
+     * @brief Send a polyphonic aftertouch event to the synth.
+     *        This feature is experimental and needs more testing in the internal engine.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 1.0.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the note number, in domain 0 to 127.
+     * @param aftertouch the aftertouch value, in domain 0 to 127.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept;
+
+    /**
+     * @brief Send a high-precision polyphonic aftertouch event to the synth.
+     *        This feature is experimental and needs more testing in the internal engine.
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @since 1.0.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param noteNumber the note number, in domain 0 to 127.
+     * @param aftertouch the normalized aftertouch value, in domain 0 to 1.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void hdPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept;
 
     /**
      * @brief Send a tempo event to the synth.
@@ -498,7 +656,25 @@ public:
      * @par Thread-safety constraints
      * - @b RT: the function must be invoked from the Real-time thread
      */
-    void tempo(int delay, float secondsPerBeat) noexcept;
+    SFIZZ_DEPRECATED_API void tempo(int delay, float secondsPerBeat) noexcept;
+
+    /**
+     * @brief Send a tempo event to the synth.
+     *
+     * This command should be delay-ordered with all other time/signature commands, namely
+     * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
+     * of the synth is undefined.
+     *
+     * @since 1.0.0
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param beatsPerMinute the new tempo, in beats per minute.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void bpmTempo(int delay, float beatsPerMinute) noexcept;
 
     /**
      * @brief Send the time signature.
@@ -598,18 +774,8 @@ public:
     /**
      * @brief Set the oversampling factor to a new value.
      *
-     * It will kill all the voices, and trigger a reloading of every file in
-     * the FilePool under the new oversampling.
+     * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
      *
-     * Increasing this value (up to x8 oversampling) improves the
-     * quality of the output at the expense of memory consumption and
-     * background loading speed. The main render path still uses the
-     * same linear interpolation algorithm and should not see its
-     * performance decrease, but the files are oversampled upon loading
-     * which increases the stress on the background loader and reduce
-     * the loading speed. You can tweak the size of the preloaded data
-     * to compensate for the memory increase, but the full loading will
-     * need to take place anyway.
      *
      * @since 0.2.0
      *
@@ -626,6 +792,9 @@ public:
     /**
      * @brief Return the current oversampling factor.
      * @since 0.2.0
+     *
+     * As of 1.0, This is an inactive stub for future work on oversampling in the engine.
+     *
      */
     int getOversamplingFactor() const noexcept;
 
@@ -726,7 +895,7 @@ public:
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void enableLogging() noexcept;
+    SFIZZ_DEPRECATED_API void enableLogging() noexcept;
 
     /**
      * @brief Enable logging of timings to sidecar CSV files.
@@ -752,7 +921,7 @@ public:
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void setLoggingPrefix(const std::string& prefix) noexcept;
+    SFIZZ_DEPRECATED_API void setLoggingPrefix(const std::string& prefix) noexcept;
 
     /**
      * @brief Disable logging of timings to sidecar CSV files.
@@ -813,6 +982,16 @@ public:
     const std::vector<std::pair<uint16_t, std::string>>& getCCLabels() const noexcept;
 
     /**
+     * @brief Export a MIDI Name document describing the currently loaded SFZ file.
+     * @since 1.0.0
+     *
+     * @param model  The model name used if a non-empty string, otherwise generated.
+     *
+     * @return A XML string.
+     */
+    std::string exportMidnam(const std::string& model) const;
+
+    /**
      * @addtogroup Messaging
      * @{
      */
@@ -823,11 +1002,13 @@ private:
     };
 
 public:
+//! @cond Doxygen_Suppress
     using ClientPtr = std::unique_ptr<Client, ClientDeleter>;
+//! @endcond
 
     /**
      * @brief Create a new messaging client
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param data         The opaque data pointer which is passed to the receiver.
      * @return             The new client.
@@ -836,7 +1017,7 @@ public:
 
     /**
      * @brief Get the client data
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client.
      * @return             The client data.
@@ -845,7 +1026,7 @@ public:
 
     /**
      * @brief Set the function which receives reply messages from the synth engine.
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client.
      * @param receive      The pointer to the receiving function.
@@ -855,7 +1036,7 @@ public:
     /**
      * @brief Send a message to the synth engine
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param client       The client sending the message.
      * @param delay        The delay of the message in the block, in samples.
@@ -871,7 +1052,7 @@ public:
     /**
      * @brief Set the function which receives broadcast messages from the synth engine.
      *
-     * @since 0.6.0
+     * @since 1.0.0
      *
      * @param broadcast    The pointer to the receiving function.
      * @param data         The opaque data pointer which is passed to the receiver.
@@ -888,7 +1069,7 @@ public:
 private:
     sfizz_synth_t* synth {};
 };
-
+//! @cond Doxygen_Suppress
 using ClientPtr = Sfizz::ClientPtr;
-
+//! @endcond
 }

@@ -40,7 +40,8 @@ fi
 
 set -x
 
-brew install dylibbundler
+# -- Install if necessary; only if using external libraries (eg. jack, sndfile)
+#brew install dylibbundler
 
 cd ~; npm install appdmg; cd -
 ~/node_modules/appdmg/bin/appdmg.js --version

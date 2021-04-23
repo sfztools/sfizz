@@ -18,6 +18,8 @@ enum class EditId : int {
     ScalaRootKey,
     TuningFrequency,
     StretchTuning,
+    SampleQuality,
+    OscillatorQuality,
     CanEditUserFilesDir,
     UserFilesDir,
     FallbackFilesDir,

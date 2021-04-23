@@ -236,6 +236,12 @@ connect_port(LV2_Handle instance,
     case SFIZZ_STRETCH_TUNING:
         self->stretch_tuning_port = (const float *)data;
         break;
+    case SFIZZ_SAMPLE_QUALITY:
+        self->sample_quality_port = (const float *)data;
+        break;
+    case SFIZZ_OSCILLATOR_QUALITY:
+        self->oscillator_quality_port = (const float *)data;
+        break;
     case SFIZZ_ACTIVE_VOICES:
         self->active_voices_port = (float *)data;
         break;
@@ -307,7 +313,7 @@ sfizz_lv2_update_timeinfo(sfizz_plugin_t *self, int delay, int updates)
     if (updates & SFIZZ_TIMEINFO_SIGNATURE)
         sfizz_send_time_signature(self->synth, delay, self->beats_per_bar, self->beat_unit);
     if (updates & SFIZZ_TIMEINFO_TEMPO)
-        sfizz_send_tempo(self->synth, delay, 60.0f / self->bpm_tempo);
+        sfizz_send_bpm_tempo(self->synth, delay, self->bpm_tempo);
     if (updates & SFIZZ_TIMEINFO_SPEED)
         sfizz_send_playback_state(self->synth, delay, self->speed > 0);
 }
@@ -330,7 +336,8 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
         lv2_atom_forge_frame_time(forge, 0) &&
         lv2_atom_forge_atom(forge, osc_size, self->sfizz_osc_blob_uri) &&
         lv2_atom_forge_raw(forge, osc_temp, osc_size);
-    lv2_atom_forge_pad(forge, osc_size);
+    if (write_ok)
+        lv2_atom_forge_pad(forge, osc_size);
 
     (void)write_ok;
 }
@@ -688,7 +695,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         break;
 #endif
     case LV2_MIDI_MSG_CHANNEL_PRESSURE:
-        sfizz_send_aftertouch(self->synth,
+        sfizz_send_channel_aftertouch(self->synth,
                       (int)ev->time.frames,
                       msg[1]);
         break;
@@ -975,6 +982,8 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_set_volume(self->synth, *(self->volume_port));
     sfizz_set_scala_root_key(self->synth, *(self->scala_root_key_port));
     sfizz_set_tuning_frequency(self->synth, *(self->tuning_frequency_port));
+    sfizz_set_sample_quality(self->synth, SFIZZ_PROCESS_LIVE, (int)(*self->sample_quality_port));
+    sfizz_set_oscillator_quality(self->synth, SFIZZ_PROCESS_LIVE, (int)(*self->oscillator_quality_port));
     sfizz_lv2_check_stretch_tuning(self);
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);
@@ -1698,7 +1707,7 @@ midnam_export(LV2_Handle instance)
 static void
 midnam_free(char *string)
 {
-    free(string);
+    sfizz_free_memory(string);
 }
 
 static const void *

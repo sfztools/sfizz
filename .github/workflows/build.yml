@@ -73,13 +73,17 @@ jobs:
           -DSFIZZ_STATIC_DEPENDENCIES=OFF \
           -DSFIZZ_LV2=ON \
           -DCMAKE_CXX_STANDARD=17
-    - name: Build
+    - name: Build tests
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "$BUILD_TYPE" -j 2
+      run: cmake --build . --config "$BUILD_TYPE" -j 2 --target sfizz_tests
     - name: Test
       shell: bash
       run: ${{runner.workspace}}/build/tests/sfizz_tests
+    - name: Build all
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "$BUILD_TYPE" -j 2
     - name: Install
       working-directory: ${{runner.workspace}}/build
       shell: bash
@@ -152,11 +156,14 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
        cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
-    - name: Build
+    - name: Build tests
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
+      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
     - name: Test
       run: ${{runner.workspace}}/build/tests/Release/sfizz_tests
+    - name: Build all
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
     - name: Create installer
       working-directory: ${{runner.workspace}}/build
       run: iscc /O"." /F"${Env:install_name}" /dARCH="${Env:platform}" innosetup.iss
@@ -184,11 +191,23 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
        cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
-    - name: Build
+    - name: Build tests
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
+      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
     - name: Test
       run: ${{runner.workspace}}/build/tests/Release/sfizz_tests
+    - name: Build all
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
+    - name: Install pluginval
+      run: |
+        Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_Windows.zip -OutFile pluginval.zip
+        Expand-Archive pluginval.zip -DestinationPath pluginval
+        echo "$(Get-Location)\pluginval" | Out-File -FilePath ${Env:GITHUB_PATH} -Encoding utf8 -Append
+        pluginval\pluginval --version
+    - name: Validate VST3
+      working-directory: ${{runner.workspace}}/build
+      run: pluginval --validate-in-process --validate sfizz.vst3
     - name: Create installer
       working-directory: ${{runner.workspace}}/build
       run: iscc /O"." /F"${Env:install_name}" /dARCH="${Env:platform}" innosetup.iss
@@ -417,6 +436,12 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Win64 MinGW tarball
+      - uses: actions/download-artifact@v2
+        with:
+          name: Win32 installer
+      - uses: actions/download-artifact@v2
+        with:
+          name: Win64 installer
       - uses: actions/download-artifact@v2
         with:
           name: Source code tarball

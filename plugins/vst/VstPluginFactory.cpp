@@ -4,19 +4,21 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "SfizzVstProcessor.h"
-#include "SfizzVstController.h"
+#include "SfizzVstIDs.h"
 #include "VstPluginDefs.h"
 #include "public.sdk/source/main/pluginfactory.h"
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 
+class SfizzVstProcessor;
+class SfizzVstController;
+
 BEGIN_FACTORY_DEF(VSTPLUGIN_VENDOR,
                   VSTPLUGIN_URL,
                   "mailto:" VSTPLUGIN_EMAIL)
 
-DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstProcessor::cid),
+DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstProcessor_cid),
             PClassInfo::kManyInstances,
             kVstAudioEffectClass,
             VSTPLUGIN_NAME,
@@ -24,9 +26,9 @@ DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstProcessor::cid),
             Vst::PlugType::kInstrumentSynth,
             VSTPLUGIN_VERSION,
             kVstVersionString,
-            SfizzVstProcessor::createInstance)
+            createInstance<SfizzVstProcessor>)
 
-DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstController::cid),
+DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstController_cid),
             PClassInfo::kManyInstances,
             kVstComponentControllerClass,
             VSTPLUGIN_NAME,
@@ -34,16 +36,6 @@ DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstController::cid),
             "",						// not used here
             VSTPLUGIN_VERSION,
             kVstVersionString,
-            SfizzVstController::createInstance)
+            createInstance<SfizzVstController>)
 
 END_FACTORY
-
-bool InitModule()
-{
-    return true;
-}
-
-bool DeinitModule()
-{
-    return true;
-}

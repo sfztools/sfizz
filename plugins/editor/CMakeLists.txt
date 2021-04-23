@@ -20,14 +20,23 @@ set(EDITOR_RESOURCES
     Fonts/sfizz-fluentui-system-f20.ttf
     Fonts/sfizz-misc-icons.ttf
     Fonts/Roboto-Regular.ttf
+    Themes/Default/theme.xml
     PARENT_SCOPE)
 
-function(copy_editor_resources SOURCE_DIR DESTINATION_DIR)
+function(copy_editor_resources TARGET SOURCE_DIR DESTINATION_DIR)
+    set(_deps)
     foreach(res ${EDITOR_RESOURCES})
         get_filename_component(_dir "${res}" DIRECTORY)
         file(MAKE_DIRECTORY "${DESTINATION_DIR}/${_dir}")
-        file(COPY "${SOURCE_DIR}/${res}" DESTINATION "${DESTINATION_DIR}/${_dir}")
+        add_custom_command(
+            OUTPUT "${DESTINATION_DIR}/${res}"
+            COMMAND "${CMAKE_COMMAND}" "-E" "copy"
+                    "${SOURCE_DIR}/${res}" "${DESTINATION_DIR}/${res}"
+            DEPENDS "${SOURCE_DIR}/${res}")
+        list(APPEND _deps "${DESTINATION_DIR}/${res}")
     endforeach()
+    add_custom_target("${TARGET}_editor_resources" DEPENDS ${_deps})
+    add_dependencies("${TARGET}" "${TARGET}_editor_resources")
 endfunction()
 
 set(UI_FILES layout/main.fl layout/about.fl)
@@ -50,12 +59,16 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/GUIPiano.cpp
     src/editor/DlgAbout.h
     src/editor/DlgAbout.cpp
+    src/editor/Theme.h
+    src/editor/Theme.cpp
     src/editor/ColorHelpers.h
     src/editor/ColorHelpers.cpp
     src/editor/ImageHelpers.h
     src/editor/ImageHelpers.cpp
     src/editor/NativeHelpers.h
     src/editor/NativeHelpers.cpp
+    src/editor/VSTGUIHelpers.h
+    src/editor/VSTGUIHelpers.cpp
     src/editor/layout/main.hpp
     src/editor/layout/about.hpp
     src/editor/utility/vstgui_after.h
@@ -74,7 +87,8 @@ if(APPLE)
     find_library(APPLE_CORESERVICES_LIBRARY "CoreServices")
     find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
     target_sources(sfizz_editor PRIVATE
-        src/editor/NativeHelpers.mm)
+        src/editor/NativeHelpers.mm
+        src/editor/VSTGUIHelpers.mm)
     target_link_libraries(sfizz_editor PRIVATE
         "${APPLE_APPKIT_LIBRARY}"
         "${APPLE_CORESERVICES_LIBRARY}"
@@ -101,7 +115,8 @@ else()
     target_include_directories(sfizz_editor PRIVATE ${sfizz-gio_INCLUDE_DIRS})
     target_link_libraries(sfizz_editor PRIVATE ${sfizz-gio_LIBRARIES})
 endif()
-target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::stb_image sfizz::bit_array sfizz::filesystem)
+target_link_libraries(sfizz_editor PRIVATE sfizz::colorspaces sfizz::stb_image
+    sfizz::bit_array sfizz::filesystem sfizz::pugixml)
 
 # layout tool
 if(NOT CMAKE_CROSSCOMPILING)

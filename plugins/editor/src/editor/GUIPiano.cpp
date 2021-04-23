@@ -33,7 +33,6 @@ struct SPiano::Impl {
 
     float keyUsedHue_ = 0.55;
     float keySwitchHue_ = 0.0;
-    float keyUsedAndSwitchHue_ = 0.85;
     float whiteKeyChroma_ = 0.9;
     float blackKeyChroma_ = 0.75;
     float whiteKeyLuma_ = 0.9;
@@ -126,19 +125,37 @@ void SPiano::setKeyValue(unsigned key, float value)
     invalid();
 }
 
-int SPiano::getKeyRole(unsigned key)
+SPiano::KeyRole SPiano::getKeyRole(unsigned key)
 {
     Impl& impl = *impl_;
-    int role = 0;
+    KeyRole role = KeyRole::Unused;
 
     if (key < 128) {
-        if (impl.keyUsed_.test(key))
-            role |= KeyRole::Note;
         if (impl.keyswitchUsed_.test(key))
-            role |= KeyRole::Switch;
+            role = KeyRole::Switch;
+        else if (impl.keyUsed_.test(key))
+            role = KeyRole::Note;
     }
 
     return role;
+}
+
+void SPiano::setBackColor(const CColor &color)
+{
+    Impl& impl = *impl_;
+    if (impl.backgroundFill_ != color) {
+        impl.backgroundFill_ = color;
+        invalid();
+    }
+}
+
+void SPiano::setFontColor(const CColor &color)
+{
+    Impl& impl = *impl_;
+    if (impl.labelStroke_ != color) {
+        impl.labelStroke_ = color;
+        invalid();
+    }
 }
 
 void SPiano::draw(CDrawContext* dc)
@@ -155,7 +172,7 @@ void SPiano::draw(CDrawContext* dc)
         SharedPointer<CGraphicsPath> path;
         path = owned(dc->createGraphicsPath());
         path->addRoundRect(dim.bounds, impl.backgroundRadius_);
-        dc->setFillColor(CColor(0xca, 0xca, 0xca));
+        dc->setFillColor(impl.backgroundFill_);
         dc->drawGraphicsPath(path, CDrawContext::kPathFilled);
     }
 
@@ -171,12 +188,6 @@ void SPiano::draw(CDrawContext* dc)
                     goto whiteKeyDefault;
                 hcy.h = impl.keyUsedHue_;
                 break;
-            case KeyRole::Note|KeyRole::Switch:
-                if (!allKeysUsed) {
-                    hcy.h = impl.keyUsedAndSwitchHue_;
-                    break;
-                }
-                // fall through
             case KeyRole::Switch:
                 hcy.h = impl.keySwitchHue_;
                 break;
@@ -217,12 +228,6 @@ void SPiano::draw(CDrawContext* dc)
                     goto blackKeyDefault;
                 hcy.h = impl.keyUsedHue_;
                 break;
-            case KeyRole::Note|KeyRole::Switch:
-                if (!allKeysUsed) {
-                    hcy.h = impl.keyUsedAndSwitchHue_;
-                    break;
-                }
-                // fall through
             case KeyRole::Switch:
                 hcy.h = impl.keySwitchHue_;
                 break;

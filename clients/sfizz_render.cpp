@@ -66,7 +66,6 @@ int main(int argc, char** argv)
     bool help { false };
     bool useEOT { false };
     int quality { 2 };
-    int oversampling { 1 };
 
     options.add_options()
         ("sfz", "SFZ file", cxxopts::value<std::string>())
@@ -74,7 +73,6 @@ int main(int argc, char** argv)
         ("wav", "Output wav file", cxxopts::value<std::string>())
         ("b,blocksize", "Block size for the sfizz callbacks", cxxopts::value(blockSize))
         ("s,samplerate", "Output sample rate", cxxopts::value(sampleRate))
-        ("oversampling", "Internal oversampling factor", cxxopts::value(oversampling))
         ("q,quality", "Resampling quality", cxxopts::value(quality))
         ("v,verbose", "Verbose output", cxxopts::value(verbose))
         ("log", "Produce logs", cxxopts::value<std::string>())
@@ -125,23 +123,6 @@ int main(int argc, char** argv)
 
     if (params.count("log") > 0)
         synth.enableLogging(params["log"].as<std::string>());
-
-    const auto osFactor = [oversampling] {
-        switch (oversampling){
-        case 1:
-            return sfz::Oversampling::x1;
-        case 2:
-            return sfz::Oversampling::x2;
-        case 4:
-            return sfz::Oversampling::x4;
-        case 5:
-            return sfz::Oversampling::x8;
-        default:
-            LOG_ERROR("Bad oversampling factor: " << oversampling);
-            std::exit(-1);
-        }
-    }();
-    synth.setOversamplingFactor(osFactor);
 
     ERROR_IF(!synth.loadSfzFile(sfzPath), "There was an error loading the SFZ file.");
     LOG_INFO(synth.getNumRegions() << " regions in the SFZ.");

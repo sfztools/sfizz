@@ -29,16 +29,19 @@ public:
     void setKeyswitchUsed(unsigned key, bool used);
     void setKeyValue(unsigned key, float value);
 
-    enum KeyRole : int {
+    enum class KeyRole : int {
         Unused = 0,
         Note   = 1 << 0,
         Switch = 1 << 1,
     };
 
-    int getKeyRole(unsigned key);
+    KeyRole getKeyRole(unsigned key);
 
     std::function<void(unsigned, float)> onKeyPressed;
     std::function<void(unsigned, float)> onKeyReleased;
+
+    void setBackColor(const CColor&);
+    void setFontColor(const CColor&);
 
 protected:
     void draw(CDrawContext* dc) override;

@@ -114,15 +114,23 @@ void sfizz_set_sample_rate(sfizz_synth_t* synth, float sample_rate)
     synth->synth.setSampleRate(sample_rate);
 }
 
-void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, char velocity)
+void sfizz_send_note_on(sfizz_synth_t* synth, int delay, int note_number, int velocity)
 {
     synth->synth.noteOn(delay, note_number, velocity);
 }
-void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, char velocity)
+void sfizz_send_hd_note_on(sfizz_synth_t* synth, int delay, int note_number, float velocity)
+{
+    synth->synth.hdNoteOn(delay, note_number, velocity);
+}
+void sfizz_send_note_off(sfizz_synth_t* synth, int delay, int note_number, int velocity)
 {
     synth->synth.noteOff(delay, note_number, velocity);
 }
-void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, char cc_value)
+void sfizz_send_hd_note_off(sfizz_synth_t* synth, int delay, int note_number, float velocity)
+{
+    synth->synth.hdNoteOff(delay, note_number, velocity);
+}
+void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_number, int cc_value)
 {
     synth->synth.cc(delay, cc_number, cc_value);
 }
@@ -138,17 +146,37 @@ void sfizz_send_pitch_wheel(sfizz_synth_t* synth, int delay, int pitch)
 {
     synth->synth.pitchWheel(delay, pitch);
 }
-void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, char aftertouch)
+void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch)
 {
-    synth->synth.aftertouch(delay, aftertouch);
+    synth->synth.hdPitchWheel(delay, pitch);
 }
-void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, char aftertouch)
+void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
+{
+    synth->synth.channelAftertouch(delay, aftertouch);
+}
+void sfizz_send_channel_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
+{
+    synth->synth.channelAftertouch(delay, aftertouch);
+}
+void sfizz_send_hd_channel_aftertouch(sfizz_synth_t* synth, int delay, float aftertouch)
+{
+    synth->synth.hdChannelAftertouch(delay, aftertouch);
+}
+void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, int aftertouch)
 {
     synth->synth.polyAftertouch(delay, note_number, aftertouch);
+}
+void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_number, float aftertouch)
+{
+    synth->synth.hdPolyAftertouch(delay, note_number, aftertouch);
 }
 void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter)
 {
     synth->synth.tempo(delay, seconds_per_quarter);
+}
+void sfizz_send_bpm_tempo(sfizz_synth_t* synth, int delay, float beats_per_minute)
+{
+    synth->synth.bpmTempo(delay, beats_per_minute);
 }
 void sfizz_send_time_signature(sfizz_synth_t* synth, int delay, int beats_per_bar, int beat_unit)
 {
@@ -180,31 +208,14 @@ void sfizz_set_preload_size(sfizz_synth_t* synth, unsigned int preload_size)
     synth->synth.setPreloadSize(preload_size);
 }
 
-sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t* synth)
+sfizz_oversampling_factor_t sfizz_get_oversampling_factor(sfizz_synth_t*)
 {
-    return static_cast<sfizz_oversampling_factor_t>(synth->synth.getOversamplingFactor());
+    return SFIZZ_OVERSAMPLING_X1;
 }
 
-bool sfizz_set_oversampling_factor(sfizz_synth_t* synth, sfizz_oversampling_factor_t oversampling)
+bool sfizz_set_oversampling_factor(sfizz_synth_t*, sfizz_oversampling_factor_t)
 {
-    using sfz::Oversampling;
-    switch(oversampling)
-    {
-        case SFIZZ_OVERSAMPLING_X1:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x1);
-            return true;
-        case SFIZZ_OVERSAMPLING_X2:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x2);
-            return true;
-        case SFIZZ_OVERSAMPLING_X4:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x4);
-            return true;
-        case SFIZZ_OVERSAMPLING_X8:
-            synth->synth.setOversamplingFactor(sfz::Oversampling::x8);
-            return true;
-        default:
-            return false;
-    }
+    return true;
 }
 
 int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)
@@ -215,6 +226,16 @@ int sfizz_get_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)
 void sfizz_set_sample_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality)
 {
     return synth->synth.setSampleQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
+}
+
+int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode)
+{
+    return synth->synth.getOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode));
+}
+
+void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality)
+{
+    return synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
@@ -288,19 +309,23 @@ bool sfizz_should_reload_scala(sfizz_synth_t* synth)
     return synth->synth.shouldReloadScala();
 }
 
-void sfizz_enable_logging(sfizz_synth_t* synth)
+void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 {
-    return synth->synth.enableLogging();
+    if (prefix)
+        synth->synth.enableLogging(prefix);
+    else
+        synth->synth.enableLogging();
 }
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 {
-    return synth->synth.setLoggingPrefix(prefix);
+    (void)synth;
+    (void)prefix;
 }
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
-    return synth->synth.disableLogging();
+    synth->synth.disableLogging();
 }
 
 void sfizz_all_sound_off(sfizz_synth_t* synth)
@@ -384,6 +409,11 @@ const char * sfizz_get_cc_label_text(sfizz_synth_t* synth, int label_index)
         return NULL;
 
     return ccLabels[label_index].second.c_str();
+}
+
+void sfizz_free_memory(void* ptr)
+{
+    free(ptr);
 }
 
 sfizz_client_t* sfizz_create_client(void* data)

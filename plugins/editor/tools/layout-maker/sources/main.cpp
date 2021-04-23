@@ -99,22 +99,22 @@ static std::string cstrQuote(absl::string_view text)
 }
 
 ///
-static void codegen_item(int& idCounter, int parentId, int parentX, int parentY, const LayoutItem& item, absl::string_view oldTheme)
+static void codegen_item(int& idCounter, int parentId, int parentX, int parentY, const LayoutItem& item, absl::string_view oldPalette)
 {
     const Metadata md = metadata_from_comment(item.comment);
 
     absl::string_view tag = "-1";
-    absl::string_view newTheme;
+    absl::string_view newPalette;
 
     Metadata::const_iterator it;
     it = md.find("tag");
     if (it != md.end())
         tag = it->second;
-    it = md.find("theme");
+    it = md.find("palette");
     if (it != md.end())
-        newTheme = it->second;
+        newPalette = it->second;
 
-    absl::string_view currentTheme = newTheme.empty() ? oldTheme : newTheme;
+    absl::string_view currentPalette = newPalette.empty() ? oldPalette : newPalette;
 
     int id = idCounter++;
     int myX = item.x;
@@ -128,8 +128,8 @@ static void codegen_item(int& idCounter, int parentId, int parentX, int parentY,
 
     //std::cout << "// Begin " << id << " " << item.classname << " {" << item.label << "}" << "\n";
 
-    if (!newTheme.empty())
-        std::cout << "enterTheme(" << newTheme << ");\n";
+    if (!newPalette.empty())
+        std::cout << "enterPalette(" << newPalette << ");\n";
 
     absl::string_view label;
     if (!item.label.empty() && item.labeltype != "NO_LABEL")
@@ -153,10 +153,10 @@ static void codegen_item(int& idCounter, int parentId, int parentX, int parentY,
         std::cout << "view__" << id << "->setVisible(false);\n";
 
     for (const LayoutItem& subItem : item.items)
-        codegen_item(idCounter, id, myX, myY, subItem, currentTheme);
+        codegen_item(idCounter, id, myX, myY, subItem, currentPalette);
 
-    if (!newTheme.empty())
-        std::cout << "enterTheme(" << oldTheme << ");\n";
+    if (!newPalette.empty())
+        std::cout << "enterPalette(" << oldPalette << ");\n";
 
     //std::cout << "// End " << id << " " << item.classname << " {" << item.label << "}" << "\n";
 }
@@ -164,7 +164,7 @@ static void codegen_item(int& idCounter, int parentId, int parentX, int parentY,
 static void codegen_layout(const LayoutItem& item)
 {
     int idCounter = 0;
-    codegen_item(idCounter, -1, 0, 0, item, "defaultTheme");
+    codegen_item(idCounter, -1, 0, 0, item, "defaultPalette");
 }
 
 ///

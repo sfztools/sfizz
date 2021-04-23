@@ -7,6 +7,7 @@
 #include "SfizzVstController.h"
 #include "SfizzVstEditor.h"
 #include "SfizzVstParameters.h"
+#include "SfizzVstIDs.h"
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
 
@@ -38,31 +39,45 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     parameters.addParameter(
         SfizzRange::getForParameter(kPidNumVoices).createParameter(
             Steinberg::String("Polyphony"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidOversampling).createParameter(
             Steinberg::String("Oversampling"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidPreloadSize).createParameter(
             Steinberg::String("Preload size"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidScalaRootKey).createParameter(
             Steinberg::String("Scala root key"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidTuningFrequency).createParameter(
             Steinberg::String("Tuning frequency"), pid++, Steinberg::String("Hz"),
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
     parameters.addParameter(
         SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
             Steinberg::String("Stretched tuning"), pid++, nullptr,
-            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidSampleQuality).createParameter(
+            Steinberg::String("Sample quality"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidOscillatorQuality).createParameter(
+            Steinberg::String("Oscillator quality"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI special controllers
-    parameters.addParameter(Steinberg::String("Aftertouch"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
-    parameters.addParameter(Steinberg::String("Pitch bend"), nullptr, 0, 0.5, 0, pid++, Vst::kRootUnitId);
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidAftertouch).createParameter(
+            Steinberg::String("Aftertouch"), pid++, nullptr,
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidPitchBend).createParameter(
+            Steinberg::String("Pitch bend"), pid++, nullptr,
+            0, Vst::ParameterInfo::kCanAutomate, Vst::kRootUnitId));
 
     // MIDI controllers
     for (unsigned i = 0; i < sfz::config::numCCs; ++i) {
@@ -72,7 +87,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         shortTitle.printf("CC%u", i);
 
         parameters.addParameter(
-            SfizzRange::getForParameter(kPidStretchedTuning).createParameter(
+            SfizzRange::getForParameter(kPidCC0 + i).createParameter(
                 title, pid++, nullptr, 0, Vst::ParameterInfo::kCanAutomate,
                 Vst::kRootUnitId, shortTitle));
     }
@@ -173,6 +188,8 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     setParam(kPidScalaRootKey, s.scalaRootKey);
     setParam(kPidTuningFrequency, s.tuningFrequency);
     setParam(kPidStretchedTuning, s.stretchedTuning);
+    setParam(kPidSampleQuality, s.sampleQuality);
+    setParam(kPidOscillatorQuality, s.oscillatorQuality);
 
     uint32 ccLimit = uint32(std::min(s.controllers.size(), size_t(sfz::config::numCCs)));
     for (uint32 cc = 0; cc < ccLimit; ++cc) {
@@ -286,7 +303,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         const uint8* pos = reinterpret_cast<const uint8*>(data);
         const uint8* end = pos + size;
 
-        while (end - pos >= sizeof(uint32) + sizeof(float)) {
+        while (static_cast<size_t>(end - pos) >= sizeof(uint32) + sizeof(float)) {
             Vst::ParamID pid = *reinterpret_cast<const uint32*>(pos);
             pos += sizeof(uint32);
             float value = *reinterpret_cast<const float*>(pos);
@@ -333,8 +350,10 @@ FUnknown* SfizzVstController::createInstance(void*)
     return static_cast<Vst::IEditController*>(new SfizzVstController);
 }
 
-/*
-  Note(jpc) Generated at random with uuidgen.
-  Can't find docs on it... maybe it's to register somewhere?
- */
-FUID SfizzVstController::cid(0x7129736c, 0xbc784134, 0xbb899d56, 0x2ebafe4f);
+template <>
+FUnknown* createInstance<SfizzVstController>(void* context)
+{
+    return SfizzVstController::createInstance(context);
+}
+
+FUID SfizzVstController::cid = SfizzVstController_cid;

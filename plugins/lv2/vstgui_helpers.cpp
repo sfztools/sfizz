@@ -22,6 +22,7 @@
 #if MAC
 #include "vstgui/plugin-bindings/getpluginbundle.h"
 #endif
+#include "vstgui/lib/vstguiinit.h"
 
 #if LINUX
 void Lv2IdleRunLoop::execIdle()
@@ -214,3 +215,32 @@ BundleRefInitializer::~BundleRefInitializer()
 
 } // namespace VSTGUI
 #endif
+
+namespace VSTGUI {
+
+static volatile size_t gVstguiInitCount = 0;
+static std::mutex gVstguiInitMutex;
+
+VSTGUIInitializer::VSTGUIInitializer()
+{
+    std::lock_guard<std::mutex> lock(gVstguiInitMutex);
+    if (gVstguiInitCount++ == 0) {
+#if WINDOWS
+        VSTGUI::init((HINSTANCE)hInstance);
+#elif MAC
+        VSTGUI::init((CFBundleRef)gBundleRef);
+#else
+        VSTGUI::init(soHandle);
+#endif
+    }
+}
+
+VSTGUIInitializer::~VSTGUIInitializer()
+{
+    std::lock_guard<std::mutex> lock(gVstguiInitMutex);
+    if (--gVstguiInitCount == 0) {
+        VSTGUI::exit();
+    }
+}
+
+} // namespace VSTGUI

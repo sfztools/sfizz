@@ -24,6 +24,10 @@ struct st_audio_file {
         struct { uint64_t frames; } mp3;
         struct { uint32_t channels; float sample_rate; uint64_t frames; } ogg;
     } cache;
+
+    union {
+        stb_vorbis_alloc ogg;
+    } alloc;
 };
 
 static st_audio_file* st_generic_open_file(const void* filename, int widepath)
@@ -96,15 +100,42 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
 
     // Try OGG
     {
-        af->ogg =
+        int err = 0;
+        char* alloc_buffer = NULL;
+        int alloc_size = 0;
+        const int alloc_max_size = 16 * 1024 * 1024;
+
+        af->alloc.ogg.alloc_buffer = NULL;
+        af->alloc.ogg.alloc_buffer_length_in_bytes = 0;
+
+        int try_again;
+        do {
+            af->ogg =
 #if defined(_WIN32)
-            widepath ? stb_vorbis_open_filename_w((const wchar_t*)filename, NULL, NULL) :
+                widepath ? stb_vorbis_open_filename_w((const wchar_t*)filename, NULL, NULL) :
 #endif
-            stb_vorbis_open_filename((const char*)filename, NULL, NULL);
-        if (af->ogg) {
+                stb_vorbis_open_filename((const char*)filename, &err, &af->alloc.ogg);
+            try_again = 0;
+            if (!af->ogg && err == VORBIS_outofmem) {
+                int next_size = alloc_size ? (int)(alloc_size * 3L / 2) : (128 * 1024);
+                if (next_size <= alloc_max_size) {
+                    free(alloc_buffer);
+                    alloc_size = next_size;
+                    alloc_buffer = (char*)malloc(alloc_size);
+                    af->alloc.ogg.alloc_buffer = alloc_buffer;
+                    af->alloc.ogg.alloc_buffer_length_in_bytes = alloc_size;
+                    try_again = alloc_buffer != NULL;
+                }
+            }
+        } while (try_again);
+
+        if (!af->ogg)
+            free(alloc_buffer);
+        else {
             af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg);
             if (af->cache.ogg.frames == 0) {
                 stb_vorbis_close(af->ogg);
+                free(alloc_buffer);
                 free(af);
                 return NULL;
             }
@@ -173,6 +204,7 @@ void st_close(st_audio_file* af)
         break;
     case st_audio_file_ogg:
         stb_vorbis_close(af->ogg);
+        free(af->alloc.ogg.alloc_buffer);
         break;
     case st_audio_file_mp3:
         drmp3_uninit(af->mp3);
