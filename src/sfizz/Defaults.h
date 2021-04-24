@@ -60,6 +60,7 @@ enum OpcodeFlags : int {
     kNormalizeBend = 1 << 7,
     kWrapPhase = 1 << 8,
     kDb2Mag = 1 << 9,
+    kFillGap = 1 << 10, // Fill in the gap when converting from discrete midi values to float, so that 13 is actually 13.999999...
 };
 
 template<class T>
@@ -97,8 +98,12 @@ struct OpcodeSpec
             return input;
         else if (flags & kNormalizePercent)
             return static_cast<U>(input / U(100));
-        else if (flags & kNormalizeMidi)
-            return static_cast<U>(input / U(127));
+        else if (flags & kNormalizeMidi) {
+            if ((flags & kFillGap) && (input <= U(126)) && input >= 0)
+                return std::nextafter(static_cast<U>((input + 1.0f) / U(127)), 0.0f);
+            else
+                return static_cast<U>(input / U(127));
+        }
         else if (flags & kNormalizeBend)
             return static_cast<U>(input / U(8191));
         else if (flags & kDb2Mag)
@@ -159,6 +164,10 @@ namespace Default
     extern const OpcodeSpec<float> hiVel;
     extern const OpcodeSpec<float> loCC;
     extern const OpcodeSpec<float> hiCC;
+    extern const OpcodeSpec<float> xfoutLoCC;
+    extern const OpcodeSpec<float> xfoutHiCC;
+    extern const OpcodeSpec<float> xfinHiCC;
+    extern const OpcodeSpec<float> xfinLoCC;
     extern const OpcodeSpec<float> loBend;
     extern const OpcodeSpec<float> hiBend;
     extern const OpcodeSpec<float> loNormalized;

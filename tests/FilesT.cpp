@@ -245,7 +245,8 @@ TEST_CASE("[Files] Pizz basic")
         REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(12, 22));
         almostEqualRanges(synth.getRegionView(i)->velocityRange, { 97_norm, 127_norm });
         REQUIRE(synth.getRegionView(i)->pitchKeycenter == 21);
-        almostEqualRanges(synth.getRegionView(i)->ccConditions.getWithDefault(107), { 0_norm, 13_norm });
+        almostEqualRanges(synth.getRegionView(i)->ccConditions.getWithDefault(107),
+            { 0_norm, std::nextafter(14_norm, 0.0f) }); // Fill in the gap from 13_norm to "almost 14_norm"
     }
     almostEqualRanges(synth.getRegionView(0)->randRange, { 0, 0.25 });
     almostEqualRanges(synth.getRegionView(1)->randRange, { 0.25, 0.5 });

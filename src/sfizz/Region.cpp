@@ -495,28 +495,28 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::loCC)
+            opcode.read(Default::xfinLoCC)
         );
         break;
     case hash("xfin_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::loCC) // loCC for the proper default
+            opcode.read(Default::xfinHiCC)
         );
         break;
     case hash("xfout_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::hiCC) // hiCC for the proper default
+            opcode.read(Default::xfoutLoCC)
         );
         break;
     case hash("xfout_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::hiCC)
+            opcode.read(Default::xfoutHiCC)
         );
         break;
     case hash("xf_cccurve"):
