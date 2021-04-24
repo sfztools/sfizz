@@ -86,11 +86,11 @@ public:
     float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
-     * @brief Get the velocity of the last note played
+     * @brief Get the velocity override value (sw_vel in SFZ)
      *
      * @return float
      */
-    float getLastVelocity() const noexcept;
+    float getVelocityOverride() const noexcept;
 
     /**
      * @brief Register a pitch bend event
@@ -190,13 +190,6 @@ public:
     const EventVector& getPitchEvents() const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
 
-    /**
-     * @brief Get the alternate state value, for extended CC 137
-     *
-     * @return float
-     */
-    float getAlternateState() const noexcept { return alternate; }
-
 private:
 
     /**
@@ -237,6 +230,11 @@ private:
     MidiNoteArray<float> lastNoteVelocities;
 
     /**
+     * @brief Velocity override value (sw_vel in SFZ)
+     */
+    float velocityOverride;
+
+    /**
      * @brief Last note played
      */
     int lastNotePlayed { 0 };
@@ -272,5 +270,7 @@ private:
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float alternate { 0.0f };
     unsigned internalClock { 0 };
+    fast_real_distribution<float> unipolarDist { 0.0f, 1.0f };
+    fast_real_distribution<float> bipolarDist { -1.0f, 1.0f };
 };
 }
