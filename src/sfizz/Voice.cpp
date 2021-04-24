@@ -304,8 +304,6 @@ struct Voice::Impl
     PowerFollower powerFollower_;
 
     ExtendedCCValues extendedCCValues_;
-    fast_real_distribution<float> unipolarDist { 0.0f, 1.0f };
-    fast_real_distribution<float> bipolarDist { -1.0f, 1.0f };
 };
 
 Voice::Voice(int voiceNumber, Resources& resources)
@@ -389,10 +387,10 @@ const ExtendedCCValues& Voice::getExtendedCCValues() const noexcept
 
 void Voice::Impl::updateExtendedCCValues() noexcept
 {
-    extendedCCValues_.unipolar = unipolarDist(Random::randomGenerator);
-    extendedCCValues_.bipolar = bipolarDist(Random::randomGenerator);
-    extendedCCValues_.alternate = resources_.midiState.getAlternateState();
-    extendedCCValues_.noteGate = resources_.midiState.getActiveNotes() > 0 ? 1.0f : 0.0f;
+    extendedCCValues_.unipolar = resources_.midiState.getCCValue(ExtendedCCs::unipolarRandom);
+    extendedCCValues_.bipolar = resources_.midiState.getCCValue(ExtendedCCs::bipolarRandom);
+    extendedCCValues_.alternate = resources_.midiState.getCCValue(ExtendedCCs::alternate);
+    extendedCCValues_.noteGate = resources_.midiState.getCCValue(ExtendedCCs::keyboardNoteGate);
 }
 
 bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
@@ -410,7 +408,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         impl.triggerEvent_.number = region.pitchKeycenter;
 
     if (region.velocityOverride == VelocityOverride::previous)
-        impl.triggerEvent_.value = resources.midiState.getLastVelocity();
+        impl.triggerEvent_.value = resources.midiState.getVelocityOverride();
 
     if (region.disabled()) {
         impl.switchState(State::cleanMeUp);
@@ -1998,6 +1996,18 @@ const Region* Voice::getRegion() const noexcept
 {
     Impl& impl = *impl_;
     return impl.region_;
+}
+
+int Voice::getRemainingDelay() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.initialDelay_;
+}
+
+int Voice::getSourcePosition() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.sourcePosition_;
 }
 
 LFO* Voice::getLFO(size_t index)

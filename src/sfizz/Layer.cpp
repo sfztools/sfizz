@@ -69,7 +69,7 @@ bool Layer::registerNoteOn(int noteNumber, float velocity, float randValue) noex
         return false;
 
     if (region.velocityOverride == VelocityOverride::previous)
-        velocity = midiState_.getLastVelocity();
+        velocity = midiState_.getVelocityOverride();
 
     const bool velOk = region.velocityRange.containsWithEnd(velocity);
     const bool randOk = region.randRange.contains(randValue) || (randValue >= 1.0f && region.randRange.isValid() && region.randRange.getEnd() >= 1.0f);
@@ -131,8 +131,6 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
 
 bool Layer::registerCC(int ccNumber, float ccValue) noexcept
 {
-    ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
-
     const Region& region = region_;
 
     if (ccNumber == region.sustainCC)

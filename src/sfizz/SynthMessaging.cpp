@@ -1454,6 +1454,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         } break;
 
+        MATCH("/voice&/remaining_delay", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getRemainingDelay());
+        } break;
+
+        MATCH("/voice&/source_position", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getSourcePosition());
+        } break;
+
         #undef MATCH
         // TODO...
     }

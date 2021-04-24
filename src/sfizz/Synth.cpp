@@ -1073,8 +1073,8 @@ void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexce
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
     impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
+    impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
@@ -1087,20 +1087,19 @@ void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexc
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-    UNUSED(normalizedVelocity);
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? getNoteVelocity(noteNumber) : velocity);
+    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
     const auto replacedVelocity = impl.resources_.midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : impl.voiceManager_)
         voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
     impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
-    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept

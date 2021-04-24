@@ -416,6 +416,19 @@ public:
      */
     const ExtendedCCValues& getExtendedCCValues() const noexcept;
 
+    /**
+     * @brief Get the remaining delay before the sample starts, in samples
+     *
+     * @return int
+     */
+    int getRemainingDelay() const noexcept;
+    /**
+     * @brief Get the current position in the source sample
+     *
+     * @return int
+     */
+    int getSourcePosition() const noexcept;
+
 public:
     /**
      * @brief Check if the voice already belongs to a sister ring
