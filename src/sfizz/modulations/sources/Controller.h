@@ -11,7 +11,7 @@
 
 namespace sfz {
 
-struct Resources;
+class Resources;
 
 class ControllerSource : public ModGenerator {
 public:

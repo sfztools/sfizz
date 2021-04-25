@@ -10,6 +10,10 @@
 #include "SIMDHelpers.h"
 #include "Config.h"
 #include "Resources.h"
+#include "BufferPool.h"
+#include "BeatClock.h"
+#include "MidiState.h"
+#include "modulations/ModMatrix.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModId.h"
 #include <array>
@@ -61,7 +65,7 @@ void LFO::setSampleRate(double sampleRate)
 void LFO::configure(const LFODescription* desc)
 {
     Impl& impl = *impl_;
-    ModMatrix& modMatrix = impl.resources_.modMatrix;
+    ModMatrix& modMatrix = impl.resources_.getModMatrix();
     impl.desc_ = desc ? desc : &LFODescription::getDefault();
     impl.beatsKeyId = modMatrix.findTarget(desc->beatsKey);
     impl.freqKeyId = modMatrix.findTarget(desc->freqKey);
@@ -73,7 +77,7 @@ void LFO::start(unsigned triggerDelay)
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
     const float sampleRate = impl.sampleRate_;
-    const MidiState& state = impl.resources_.midiState;
+    const MidiState& state = impl.resources_.getMidiState();
 
     impl.subPhases_.fill(0.0f);
     impl.sampleHoldMem_.fill(0.0f);
@@ -230,7 +234,7 @@ void LFO::process(absl::Span<float> out)
 {
     Impl& impl = *impl_;
     const LFODescription& desc = *impl.desc_;
-    BufferPool& pool = impl.resources_.bufferPool;
+    BufferPool& pool = impl.resources_.getBufferPool();
     size_t numFrames = out.size();
 
     fill(out, 0.0f);
@@ -323,9 +327,9 @@ void LFO::processFadeIn(absl::Span<float> out)
 void LFO::generatePhase(unsigned nth, absl::Span<float> phases)
 {
     Impl& impl = *impl_;
-    BufferPool& bufferPool = impl.resources_.bufferPool;
-    BeatClock& beatClock = impl.resources_.beatClock;
-    ModMatrix& modMatrix = impl.resources_.modMatrix;
+    BufferPool& bufferPool = impl.resources_.getBufferPool();
+    BeatClock& beatClock = impl.resources_.getBeatClock();
+    ModMatrix& modMatrix = impl.resources_.getModMatrix();
     const LFODescription& desc = *impl.desc_;
     const LFODescription::Sub& sub = desc.sub[nth];
     const float samplePeriod = 1.0f / impl.sampleRate_;

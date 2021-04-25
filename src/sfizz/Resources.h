@@ -5,64 +5,56 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "SynthConfig.h"
-#include "MidiState.h"
-#include "FilePool.h"
-#include "BufferPool.h"
-#include "Logger.h"
-#include "Wavetables.h"
-#include "Curve.h"
-#include "Tuning.h"
-#include "BeatClock.h"
-#include "Metronome.h"
-#include "modulations/ModMatrix.h"
 #include "absl/types/optional.h"
+#include <memory>
 
-namespace sfz
+namespace sfz {
+
+struct SynthConfig;
+class BufferPool;
+class MidiState;
+class Logger;
+class CurveSet;
+class FilePool;
+struct WavetablePool;
+class Tuning;
+class StretchTuning;
+class ModMatrix;
+class BeatClock;
+class Metronome;
+
+class Resources
 {
-class WavetableMulti;
+public:
+    Resources();
+    ~Resources();
 
-struct Resources
-{
-    SynthConfig synthConfig;
-    BufferPool bufferPool;
-    MidiState midiState;
-    Logger logger;
-    CurveSet curves;
-    FilePool filePool { logger };
-    WavetablePool wavePool;
-    Tuning tuning;
-    absl::optional<StretchTuning> stretch;
-    ModMatrix modMatrix;
-    BeatClock beatClock;
-    Metronome metronome;
+    void setSampleRate(float samplerate);
+    void setSamplesPerBlock(int samplesPerBlock);
+    void clear();
 
-    void setSampleRate(float samplerate)
-    {
-        midiState.setSampleRate(samplerate);
-        modMatrix.setSampleRate(samplerate);
-        beatClock.setSampleRate(samplerate);
-        metronome.init(samplerate);
-    }
+    #define ACCESSOR_RW(Accessor, RetTy) \
+        RetTy const& Accessor() const noexcept; \
+        RetTy& Accessor() noexcept { return const_cast<RetTy&>(const_cast<const Resources*>(this)->Accessor()); }
 
-    void setSamplesPerBlock(int samplesPerBlock)
-    {
-        bufferPool.setBufferSize(samplesPerBlock);
-        midiState.setSamplesPerBlock(samplesPerBlock);
-        modMatrix.setSamplesPerBlock(samplesPerBlock);
-        beatClock.setSamplesPerBlock(samplesPerBlock);
-    }
+    ACCESSOR_RW(getSynthConfig, SynthConfig);
+    ACCESSOR_RW(getBufferPool, BufferPool);
+    ACCESSOR_RW(getMidiState, MidiState);
+    ACCESSOR_RW(getLogger, Logger);
+    ACCESSOR_RW(getCurves, CurveSet);
+    ACCESSOR_RW(getFilePool, FilePool);
+    ACCESSOR_RW(getWavePool, WavetablePool);
+    ACCESSOR_RW(getTuning, Tuning);
+    ACCESSOR_RW(getStretch, absl::optional<StretchTuning>);
+    ACCESSOR_RW(getModMatrix, ModMatrix);
+    ACCESSOR_RW(getBeatClock, BeatClock);
+    ACCESSOR_RW(getMetronome, Metronome);
 
-    void clear()
-    {
-        curves = CurveSet::createPredefined();
-        filePool.clear();
-        wavePool.clearFileWaves();
-        logger.clear();
-        midiState.reset();
-        modMatrix.clear();
-        beatClock.clear();
-        metronome.clear();
-    }
+    #undef ACCESSOR_RW
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
-}
+
+} // namespace sfz

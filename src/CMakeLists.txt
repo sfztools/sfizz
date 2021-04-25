@@ -161,6 +161,7 @@ set(SFIZZ_SOURCES
     sfizz/WindowedSinc.cpp
     sfizz/Interpolators.cpp
     sfizz/Layer.cpp
+    sfizz/Resources.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
