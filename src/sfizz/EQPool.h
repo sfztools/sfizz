@@ -1,12 +1,14 @@
 #pragma once
 #include "SfzFilter.h"
-#include "Region.h"
-#include "Resources.h"
+#include "Defaults.h"
+#include "modulations/ModMatrix.h"
 #include <vector>
 #include <memory>
 
-namespace sfz
-{
+namespace sfz {
+struct Region;
+class Resources;
+struct EQDescription;
 
 class EQHolder
 {
@@ -52,4 +54,4 @@ private:
     ModMatrix::TargetId bandwidthTarget;
 };
 
-}
+} // namespace sfz

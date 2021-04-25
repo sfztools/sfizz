@@ -10,6 +10,7 @@
 #include "Region.h"
 #include "Resources.h"
 #include "AudioSpan.h"
+#include "Logger.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
 #include <memory>

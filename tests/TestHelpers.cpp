@@ -6,6 +6,7 @@
 
 #include "TestHelpers.h"
 #include "sfizz/modulations/ModId.h"
+#include <absl/strings/str_cat.h>
 
 size_t RegionCCView::size() const
 {

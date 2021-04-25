@@ -1,13 +1,14 @@
 #pragma once
 #include "SfzFilter.h"
-#include "Region.h"
-#include "Resources.h"
 #include "Defaults.h"
+#include "modulations/ModMatrix.h"
 #include <vector>
 #include <memory>
 
-namespace sfz
-{
+namespace sfz {
+struct Region;
+class Resources;
+struct FilterDescription;
 
 class FilterHolder
 {
@@ -54,4 +55,4 @@ private:
     bool prepared { false };
 };
 
-}
+} // namespace sfz

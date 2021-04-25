@@ -10,7 +10,7 @@
 #include <memory>
 
 namespace sfz {
-struct Resources;
+class Resources;
 struct Region;
 
 enum class LFOWave : int;

@@ -10,7 +10,6 @@
 #include "Messaging.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
-#include "parser/Parser.h"
 #include <ghc/fs_std.hpp>
 #include <absl/strings/string_view.h>
 #include <memory>
@@ -22,12 +21,16 @@ template <size_t> class BitArray;
 namespace sfz {
 
 // Forward declarations for the introspection methods
+class Parser;
 class RegionSet;
 class PolyphonyGroup;
 class EffectBus;
 struct Region;
 struct Layer;
 class Voice;
+
+using CCNamePair = std::pair<uint16_t, std::string>;
+using NoteNamePair = std::pair<uint8_t, std::string>;
 
 /**
  * @brief This class is the core of the sfizz library. In C++ it is the main point
@@ -641,6 +644,18 @@ public:
      *
      */
     void allSoundOff() noexcept;
+
+    /**
+     * @brief Add external definitions prior to loading.
+     *
+     */
+    void addExternalDefinition(const std::string& id, const std::string& value);
+
+    /**
+     * @brief Clears external definitions for the next file loading.
+     *
+     */
+    void clearExternalDefinitions();
 
     /**
      * @brief Get the parser.

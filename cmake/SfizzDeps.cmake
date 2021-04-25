@@ -183,9 +183,21 @@ add_library(sfizz::atomic_queue ALIAS sfizz_atomic_queue)
 target_include_directories(sfizz_atomic_queue INTERFACE "external/atomic_queue/include")
 
 # The ghc::filesystem library
-add_library(sfizz_filesystem INTERFACE)
+if(FALSE)
+    # header-only
+    add_library(sfizz_filesystem INTERFACE)
+    target_include_directories(sfizz_filesystem INTERFACE "external/filesystem/include")
+else()
+    # static library
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp" "#include <ghc/fs_std_impl.hpp>")
+    add_library(sfizz_filesystem_impl STATIC "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp")
+    target_include_directories(sfizz_filesystem_impl PUBLIC "external/filesystem/include")
+    #
+    add_library(sfizz_filesystem INTERFACE)
+    target_compile_definitions(sfizz_filesystem INTERFACE "GHC_FILESYSTEM_FWD")
+    target_link_libraries(sfizz_filesystem INTERFACE sfizz_filesystem_impl)
+endif()
 add_library(sfizz::filesystem ALIAS sfizz_filesystem)
-target_include_directories(sfizz_filesystem INTERFACE "external/filesystem/include")
 
 # The atomic library
 add_library(sfizz_atomic INTERFACE)

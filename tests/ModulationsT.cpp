@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "sfizz/modulations/ModMatrix.h"
 #include "sfizz/modulations/ModId.h"
 #include "sfizz/modulations/ModKey.h"
 #include "sfizz/Synth.h"
@@ -89,7 +90,7 @@ pan_oncc36=12.5 pan_stepcc36=0.5
 width_oncc425=29
 )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 20 {curve=3, smooth=0, step=0}" -> "Amplitude {0}")",
         R"("Controller 42 {curve=0, smooth=32, step=0}" -> "Pitch {0}")",
@@ -108,7 +109,7 @@ TEST_CASE("[Modulations] Filter CC connections")
         resonance3=-1 resonance3_oncc1=2 resonance3_smoothcc1=10
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 1 {curve=0, smooth=10, step=0}" -> "FilterResonance {0, N=3}")",
         R"("Controller 2 {curve=2, smooth=0, step=0}" -> "FilterCutoff {0, N=2}")",
@@ -126,7 +127,7 @@ TEST_CASE("[Modulations] EQ CC connections")
         eq3_bw_oncc1=2 eq3_bw_smoothcc1=10
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 1 {curve=0, smooth=10, step=0}" -> "EqBandwidth {0, N=3}")",
         R"("Controller 2 {curve=0, smooth=0, step=0.1}" -> "EqGain {0, N=1}")",
@@ -147,7 +148,7 @@ TEST_CASE("[Modulations] LFO Filter connections")
         lfo6_freq=3 lfo6_fil1gain=-1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("LFO 1 {0}" -> "FilterCutoff {0, N=1}")",
         R"("LFO 2 {0}" -> "FilterCutoff {0, N=1}")",
@@ -171,7 +172,7 @@ TEST_CASE("[Modulations] EG Filter connections")
         eg6_time1=3 eg6_fil1gain=-1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("EG 1 {0}" -> "FilterCutoff {0, N=1}")",
         R"("EG 2 {0}" -> "FilterCutoff {0, N=1}")",
@@ -195,7 +196,7 @@ TEST_CASE("[Modulations] LFO EQ connections")
         lfo6_freq=3 lfo6_eq1freq=-1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("LFO 1 {0}" -> "EqBandwidth {0, N=1}")",
         R"("LFO 2 {0}" -> "EqFrequency {0, N=2}")",
@@ -219,7 +220,7 @@ TEST_CASE("[Modulations] EG EQ connections")
         eg6_freq=3 eg6_eq1freq=-1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("EG 1 {0}" -> "EqBandwidth {0, N=1}")",
         R"("EG 2 {0}" -> "EqFrequency {0, N=2}")",
@@ -244,7 +245,7 @@ TEST_CASE("[Modulations] FlexEG Ampeg target")
         eg1_ampeg=1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
         R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
@@ -269,7 +270,7 @@ TEST_CASE("[Modulations] FlexEG Ampeg target with 2 FlexEGs")
         eg2_ampeg=1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
         R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
@@ -296,7 +297,7 @@ TEST_CASE("[Modulations] FlexEG Ampeg target with multiple EGs targeting ampeg")
         eg2_ampeg=1
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
         R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
@@ -313,7 +314,7 @@ TEST_CASE("[Modulations] Override the default volume controller")
         <region> sample=*sine tune_oncc7=1200
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("AmplitudeEG {0}" -> "MasterAmplitude {0}")",
         R"("Controller 10 {curve=1, smooth=10, step=0}" -> "Pan {0}")",
@@ -330,7 +331,7 @@ TEST_CASE("[Modulations] Override the default pan controller")
         <region> sample=*sine on_locc10=127 on_hicc10=127
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createModulationDotGraph({
         R"("AmplitudeEG {0}" -> "MasterAmplitude {0}")",
         R"("Controller 11 {curve=4, smooth=10, step=0}" -> "Amplitude {0}")",
@@ -346,7 +347,7 @@ TEST_CASE("[Modulations] Aftertouch connections")
         <region> sample=*sine cutoff2_chanaft=1000
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("ChannelAftertouch" -> "FilterCutoff {0, N=1}")",
         R"("ChannelAftertouch" -> "FilterCutoff {1, N=2}")",
@@ -362,7 +363,7 @@ TEST_CASE("[Modulations] LFO v1 connections")
         <region> sample=*sine fillfo_freq=1.0
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("AmplitudeLFO {0}" -> "Volume {0}")",
         R"("PitchLFO {1}" -> "Pitch {1}")",
@@ -379,7 +380,7 @@ TEST_CASE("[Modulations] LFO v1 CC connections")
         <region> sample=*sine fillfo_depth_oncc3=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 1 {curve=0, smooth=0, step=0}" -> "AmplitudeLFODepth {0}")",
         R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchLFODepth {1}")",
@@ -399,7 +400,7 @@ TEST_CASE("[Modulations] LFO v1 CC frequency connections")
         <region> sample=*sine fillfo_freqcc3=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 1 {curve=0, smooth=0, step=0}" -> "AmplitudeLFOFrequency {0}")",
         R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchLFOFrequency {1}")",
@@ -419,7 +420,7 @@ TEST_CASE("[Modulations] LFO v1 aftertouch connections")
         <region> sample=*sine fillfo_depthchanaft=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("ChannelAftertouch" -> "AmplitudeLFODepth {0}")",
         R"("ChannelAftertouch" -> "PitchLFODepth {1}")",
@@ -439,7 +440,7 @@ TEST_CASE("[Modulations] LFO v1 aftertouch frequency connections")
         <region> sample=*sine fillfo_freqchanaft=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("ChannelAftertouch" -> "AmplitudeLFOFrequency {0}")",
         R"("ChannelAftertouch" -> "PitchLFOFrequency {1}")",
@@ -459,7 +460,7 @@ TEST_CASE("[Modulations] LFO v1 poly aftertouch connections")
         <region> sample=*sine fillfo_depthpolyaft=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("PolyAftertouch" -> "AmplitudeLFODepth {0}")",
         R"("PolyAftertouch" -> "PitchLFODepth {1}")",
@@ -479,7 +480,7 @@ TEST_CASE("[Modulations] LFO v1 poly aftertouch frequency connections")
         <region> sample=*sine fillfo_freqpolyaft=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("PolyAftertouch" -> "AmplitudeLFOFrequency {0}")",
         R"("PolyAftertouch" -> "PitchLFOFrequency {1}")",
@@ -498,7 +499,7 @@ TEST_CASE("[Modulations] EG v1 CC connections")
         <region> sample=*sine fileg_depth_oncc3=-3600
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 2 {curve=0, smooth=0, step=0}" -> "PitchEGDepth {0}")",
         R"("Controller 3 {curve=0, smooth=0, step=0}" -> "FilterEGDepth {1}")",
@@ -523,7 +524,7 @@ TEST_CASE("[Modulations] LFO CC connections")
             pitch_oncc137=1200
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 128 {curve=0, smooth=0, step=0}" -> "Pitch {0}")",
         R"("Controller 129 {curve=0, smooth=0, step=0}" -> "Pitch {0}")",
@@ -547,7 +548,7 @@ TEST_CASE("[Modulations] Extended CCs connections")
         lfo3_freq=0.1 lfo3_phase_cc1=2 lfo3_phase_smoothcc1=10 lfo3_phase_stepcc1=0.2 lfo3_phase_curvecc1=1 lfo3_amplitude=50
     )");
 
-    const std::string graph = synth.getResources().modMatrix.toDotGraph();
+    const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("LFO 1 {0}" -> "Volume {0}")",
         R"("LFO 2 {0}" -> "Pitch {0}")",

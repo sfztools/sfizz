@@ -141,7 +141,7 @@ TEST_CASE("[Synth] Reset all controllers")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    const auto& midiState = synth.getResources().midiState;
+    const sfz::MidiState& midiState = synth.getResources().getMidiState();
     synth.cc(0, 12, 64);
     synth.renderBlock(buffer);
     REQUIRE(midiState.getCCValue(12) == 64_norm);
@@ -401,7 +401,7 @@ TEST_CASE("[Synth] Gain to mix")
 TEST_CASE("[Synth] Basic curves")
 {
     sfz::Synth synth;
-    const auto& curves = synth.getResources().curves;
+    const sfz::CurveSet& curves = synth.getResources().getCurves();
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/curves.sfz", R"(
         <region> sample=*sine
         <curve>curve_index=18 v000=0 v095=0.5 v127=1

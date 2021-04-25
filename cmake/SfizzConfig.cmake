@@ -1,4 +1,5 @@
 include(CMakeDependentOption)
+include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(GNUWarnings)
 
@@ -20,6 +21,18 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" AND CMAKE_CXX_STANDARD LESS 17)
 elseif((SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2) AND CMAKE_CXX_STANDARD LESS 14)
     # if the UI is part of the build, make it 14
     set(CMAKE_CXX_STANDARD 14)
+endif()
+
+# Set build profiling options
+if(SFIZZ_PROFILE_BUILD)
+    check_c_compiler_flag("-ftime-trace" SFIZZ_HAVE_CFLAG_FTIME_TRACE)
+    check_cxx_compiler_flag("-ftime-trace" SFIZZ_HAVE_CXXFLAG_FTIME_TRACE)
+    if(SFIZZ_HAVE_CFLAG_FTIME_TRACE)
+        add_compile_options("$<$<COMPILE_LANGUAGE:C>:-ftime-trace>")
+    endif()
+    if(SFIZZ_HAVE_CXXFLAG_FTIME_TRACE)
+        add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-ftime-trace>")
+    endif()
 endif()
 
 # Process sources as UTF-8

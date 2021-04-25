@@ -37,8 +37,8 @@ ControllerSource::~ControllerSource()
 float ControllerSource::Impl::getLastTransformedValue(uint16_t cc, uint8_t curveIndex) const noexcept
 {
     ASSERT(res_);
-    const Curve& curve = res_->curves.getCurve(curveIndex);
-    const auto lastCCValue = res_->midiState.getCCValue(cc);
+    const Curve& curve = res_->getCurves().getCurve(curveIndex);
+    const auto lastCCValue = res_->getMidiState().getCCValue(cc);
     return curve.evalNormalized(lastCCValue);
 }
 
@@ -89,8 +89,8 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
 {
     const ModKey::Parameters p = sourceKey.parameters();
     const Resources& res = *impl_->res_;
-    const Curve& curve = res.curves.getCurve(p.curve);
-    const MidiState& ms = res.midiState;
+    const Curve& curve = res.getCurves().getCurve(p.curve);
+    const MidiState& ms = res.getMidiState();
     bool canShortcut = false;
 
     auto transformValue = [p, &curve](float x) {
@@ -110,7 +110,7 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue =
                 voice && voice->getTriggerEvent().type == TriggerEventType::NoteOn ?
-                impl_->res_->midiState.getPolyAftertouch(voice->getTriggerEvent().number) : 0.0f;
+                impl_->res_->getMidiState().getPolyAftertouch(voice->getTriggerEvent().number) : 0.0f;
 
             sfz::fill(buffer, quantize(fillValue));
             canShortcut = true;
