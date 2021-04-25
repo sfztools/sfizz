@@ -8,6 +8,7 @@
 #include "sfizz/Synth.h"
 #include "sfizz/Voice.h"
 #include "sfizz/SfzHelpers.h"
+#include "sfizz/parser/Parser.h"
 #include "sfizz/modulations/ModId.h"
 #include "sfizz/modulations/ModKey.h"
 #include "catch2/catch.hpp"

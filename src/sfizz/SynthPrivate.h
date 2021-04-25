@@ -13,6 +13,8 @@
 #include "modulations/sources/ChannelAftertouch.h"
 #include "modulations/sources/PolyAftertouch.h"
 #include "modulations/sources/LFO.h"
+#include "parser/Parser.h"
+#include "parser/ParserListener.h"
 
 namespace sfz {
 

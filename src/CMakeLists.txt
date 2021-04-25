@@ -202,6 +202,7 @@ set(SFIZZ_PARSER_HEADERS
     sfizz/Range.h
     sfizz/Opcode.h
     sfizz/parser/Parser.h
+    sfizz/parser/ParserListener.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
     sfizz/SfzHelpers.h)

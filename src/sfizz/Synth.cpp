@@ -28,6 +28,7 @@
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
 #include "Interpolators.h"
+#include "parser/Parser.h"
 #include <absl/algorithm/container.h>
 #include <absl/memory/memory.h>
 #include <absl/strings/str_replace.h>
@@ -1994,6 +1995,18 @@ void Synth::allSoundOff() noexcept
         voice.reset();
     for (auto& effectBus : impl.effectBuses_)
         effectBus->clear();
+}
+
+void Synth::addExternalDefinition(const std::string& id, const std::string& value)
+{
+    Impl& impl = *impl_;
+    impl.parser_.addExternalDefinition(id, value);
+}
+
+void Synth::clearExternalDefinitions()
+{
+    Impl& impl = *impl_;
+    impl.parser_.clearExternalDefinitions();
 }
 
 const BitArray<config::numCCs>& Synth::getUsedCCs() const noexcept
