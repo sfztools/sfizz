@@ -13,6 +13,7 @@
 #include <absl/strings/numbers.h>
 #include <absl/strings/string_view.h>
 #include <map>
+#include <vector>
 #include <string>
 #include <cstdio>
 #include <cstring>
