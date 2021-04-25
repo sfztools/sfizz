@@ -44,6 +44,7 @@ jobs:
       run: |
         sudo apt-get update && \
         sudo apt-get install \
+          ninja-build \
           libjack-jackd2-dev \
           libsndfile1-dev \
           libcairo2-dev \
@@ -64,7 +65,8 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake "$GITHUB_WORKSPACE" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+        cmake "$GITHUB_WORKSPACE" -G Ninja \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DSFIZZ_JACK=ON \
           -DSFIZZ_VST=ON \
           -DSFIZZ_LV2_UI=ON \
@@ -239,7 +241,7 @@ jobs:
       shell: bash
       run: |
         pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm base-devel git wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
+        pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -263,7 +265,7 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        i686-w64-mingw32-cmake "$GITHUB_WORKSPACE" \
+        i686-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DENABLE_LTO=OFF \
           -DSFIZZ_JACK=OFF \
@@ -308,7 +310,7 @@ jobs:
       shell: bash
       run: |
         pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm base-devel git wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
+        pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -332,7 +334,7 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        x86_64-w64-mingw32-cmake "$GITHUB_WORKSPACE" \
+        x86_64-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DENABLE_LTO=OFF \
           -DSFIZZ_JACK=OFF \
