@@ -37,7 +37,7 @@ static const char* kMsgIdSetPreloadSize = "SetPreloadSize";
 static const char* kMsgIdReceiveMessage = "ReceiveMessage";
 static const char* kMsgIdNoteEvents = "NoteEvents";
 
-static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 50 };
+static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 20 };
 
 SfizzVstProcessor::SfizzVstProcessor()
     : _oscTemp(new uint8_t[kOscTempSize]),
@@ -105,6 +105,8 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth->playbackState(0, 0);
 
     _noteEventsCurrentCycle.fill(-1.0f);
+
+    _editorIsOpen = false;
 
     return result;
 }
@@ -221,6 +223,7 @@ tresult PLUGIN_API SfizzVstProcessor::setActive(TBool state)
     if (state) {
         synth->setSampleRate(processSetup.sampleRate);
         synth->setSamplesPerBlock(processSetup.maxSamplesPerBlock);
+        _rmsFollower.init(processSetup.sampleRate);
         initializeEventProcessor(processSetup, kNumParameters);
         startBackgroundWork();
     } else {
@@ -285,6 +288,24 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     synth.setOscillatorQuality(sfz::Sfizz::ProcessLive, _state.oscillatorQuality);
 
     synth.renderBlock(outputs, numFrames, numChannels);
+
+    // Update levels, if editor is open, otherwise skip
+    RMSFollower& rmsFollower = _rmsFollower;
+    if (_editorIsOpen) {
+        rmsFollower.process(outputs[0], outputs[1], numFrames);
+        simde__m128 rms = _rmsFollower.getRMS();
+        float left = reinterpret_cast<float*>(&rms)[0];
+        float right = reinterpret_cast<float*>(&rms)[1];
+        if (Vst::IParameterChanges* pcs = data.outputParameterChanges) {
+            int32 index;
+            if (Vst::IParamValueQueue* vq = pcs->addParameterData(kPidLeftLevel, index))
+                vq->addPoint(0, left, index);
+            if (Vst::IParamValueQueue* vq = pcs->addParameterData(kPidRightLevel, index))
+                vq->addPoint(0, right, index);
+        }
+    }
+    else
+        rmsFollower.clear();
 
     // Request OSC updates
     sfz::Client& client = *_client;
@@ -387,6 +408,9 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         break;
     case kPidPitchBend:
         synth.hdPitchWheel(sampleOffset, range.denormalize(value));
+        break;
+    case kPidEditorOpen:
+        _editorIsOpen = value != 0;
         break;
     default:
         if (id >= kPidCC0 && id <= kPidCCLast) {
@@ -713,7 +737,7 @@ void SfizzVstProcessor::doBackgroundIdle(size_t idleCounter)
         sendMessage(notification);
     }
 
-    if (idleCounter % 10 == 0) {
+    if (idleCounter % 25 == 0) {
         if (_synth->shouldReloadFile()) {
             fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
             std::lock_guard<SpinMutex> lock(_processMutex);

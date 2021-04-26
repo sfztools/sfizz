@@ -61,6 +61,12 @@ if(SFIZZ_LV2_UI)
     endif()
 endif()
 
+# Define a preprocessor variable to indicate a build with UI enabled
+if(SFIZZ_LV2_UI)
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME} PRIVATE "SFIZZ_LV2_UI=1")
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "SFIZZ_LV2_UI=1")
+endif()
+
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir
 # <build_dir>/lv2/<plugin_name>_lv2.<ext> to
 # <build_dir>/lv2/<plugin_name>.lv2/<plugin_name>.<ext>

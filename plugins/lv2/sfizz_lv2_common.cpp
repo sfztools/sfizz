@@ -31,6 +31,13 @@ bool sfizz_lv2_fetch_description(
     return true;
 }
 
+#if defined(SFIZZ_LV2_UI)
+void sfizz_lv2_set_ui_active(sfizz_plugin_t *self, bool ui_active)
+{
+    self->ui_active = ui_active;
+}
+#endif
+
 struct sfizz_lv2_ccmap {
     LV2_URID *cc_to_urid;
     int *urid_to_cc;

@@ -366,6 +366,41 @@ private:
 };
 
 ///
+class SLevelMeter : public CView {
+public:
+    explicit SLevelMeter(const CRect& size);
+
+    float getValue() const { return value_; }
+    void setValue(float value);
+
+    float getDangerThreshold() const { return dangerThreshold_; }
+    void setDangerThreshold(float thres) { dangerThreshold_ = thres; invalid(); }
+
+    CColor getFrameColor() const { return frameColor_; }
+    void setFrameColor(CColor color) { frameColor_ = color; invalid(); }
+    CColor getBackColor() const { return backColor_; }
+    void setBackColor(CColor color) { backColor_ = color; invalid(); }
+
+    CColor getNormalFillColor() const { return safeFillColor_; }
+    void setNormalFillColor(CColor color) { safeFillColor_ = color; invalid(); }
+    CColor getDangerFillColor() const { return dangerFillColor_; }
+    void setDangerFillColor(CColor color) { dangerFillColor_ = color; invalid(); }
+
+protected:
+    void draw(CDrawContext* dc) override;
+
+private:
+    float value_ = 0;
+    float dangerThreshold_ = 0.5;
+    float dbMin_ = -40;
+    float dbMax_ = 0;
+    CColor frameColor_;
+    CColor safeFillColor_;
+    CColor dangerFillColor_;
+    CColor backColor_;
+};
+
+///
 class SPlaceHolder : public CView {
 public:
     explicit SPlaceHolder(const CRect& size, const CColor& color = {0xff, 0x00, 0x00, 0xff});

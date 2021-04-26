@@ -7,6 +7,7 @@
 #pragma once
 #include "SfizzVstState.h"
 #include "OrderedEventProcessor.h"
+#include "plugin/RMSFollower.h"
 #include "sfizz/RTSemaphore.h"
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
@@ -62,6 +63,10 @@ private:
 
     // whether allowed to perform events (owns the processing lock)
     bool _canPerformEventsAndParameters {};
+
+    // level meters
+    RMSFollower _rmsFollower;
+    bool _editorIsOpen = false;
 
     // client
     sfz::ClientPtr _client;

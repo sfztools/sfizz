@@ -134,10 +134,6 @@ widget_class mainView {open
         xywh {610 70 60 5} labelsize 12 hide
         class ValueLabel
       }
-      Fl_Box {} {
-        xywh {745 20 35 55} box BORDER_BOX
-        class VMeter
-      }
       Fl_Box volumeCCKnob_ {
         label Volume
         comment {tag=kTagSetCCVolume}
@@ -149,6 +145,14 @@ widget_class mainView {open
         comment {tag=kTagSetCCPan}
         xywh {655 10 70 90} box BORDER_BOX labelsize 12 align 17
         class KnobCCBox
+      }
+      Fl_Box leftMeter_ {
+        xywh {740 10 15 90} box BORDER_BOX
+        class VMeter
+      }
+      Fl_Box rightMeter_ {selected
+        xywh {760 10 15 90} box BORDER_BOX
+        class VMeter
       }
     }
   }

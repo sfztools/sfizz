@@ -92,6 +92,22 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
                 Vst::kRootUnitId, shortTitle));
     }
 
+    // Volume levels
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidLeftLevel).createParameter(
+            Steinberg::String("Left level"), pid++, nullptr,
+            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidRightLevel).createParameter(
+            Steinberg::String("Right level"), pid++, nullptr,
+            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+
+    // Editor status
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidEditorOpen).createParameter(
+            Steinberg::String("Editor open"), pid++, nullptr,
+            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+
     // Initial MIDI mapping
     for (int32 i = 0; i < Vst::kCountCtrlNumber; ++i) {
         Vst::ParamID id = Vst::kNoParamId;
@@ -308,6 +324,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             pos += sizeof(uint32);
             float value = *reinterpret_cast<const float*>(pos);
             pos += sizeof(float);
+            #pragma message("setParam() on non-UI thread is dangerous on Reaper, make it deferred instead")
             setParam(pid, value);
         }
     }

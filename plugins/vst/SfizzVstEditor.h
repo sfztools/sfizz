@@ -37,15 +37,14 @@ public:
         return static_cast<SfizzVstController*>(Vst::VSTGUIEditor::getController());
     }
 
+    void updateEditorIsOpenParameter();
+
     // VSTGUIEditor
     CMessageResult notify(CBaseObject* sender, const char* message) override;
     // FObject
     void PLUGIN_API update(FUnknown* changedUnknown, int32 message) override;
 
     //
-    void updateState(const SfizzVstState& state);
-    void updatePlayState(const SfizzPlayState& playState);
-
 private:
     void processOscQueue();
     void processNoteEventQueue();

@@ -980,6 +980,75 @@ void SControlsPanel::ControlSlotListener::controlEndEdit(CControl* pControl)
 }
 
 ///
+SLevelMeter::SLevelMeter(const CRect& size)
+    : CView(size)
+{
+}
+
+void SLevelMeter::setValue(float value)
+{
+    if (value_ == value)
+        return;
+
+    value_ = value;
+    invalid();
+}
+
+void SLevelMeter::draw(CDrawContext* dc)
+{
+    float dbValue = 20.0f * std::log10(value_);
+    float fill = (dbValue - dbMin_) / (dbMax_ - dbMin_);
+    fill = (fill < 0.0f) ? 0.0f : fill;
+    fill = (fill > 1.0f) ? 1.0f : fill;
+
+    CRect largeBounds = getViewSize();
+    CRect fillBounds = largeBounds;
+    fillBounds.top = largeBounds.bottom - fill * largeBounds.getHeight();
+
+    const CColor safeColor = safeFillColor_;
+    const CColor dangerColor = dangerFillColor_;
+
+    CColor fillColor;
+    if (safeColor == dangerColor) {
+        fillColor = safeColor;
+    }
+    else {
+        float thres = dangerThreshold_;
+        float mix = (fill - thres) / (1.0f - thres);
+        mix = (mix < 0.0f) ? 0.0f : mix;
+
+        CCoord safeH, safeS, safeV, safeA;
+        CCoord dangerH, dangerS, dangerV, dangerA;
+        safeColor.toHSV(safeH, safeS, safeV);
+        dangerColor.toHSV(dangerH, dangerS, dangerV);
+        safeA = safeColor.alpha / 255.0;
+        dangerA = dangerColor.alpha / 255.0;
+
+        CCoord H, S, V, A;
+        H = safeH + mix * (dangerH - safeH);
+        S = safeS + mix * (dangerS - safeS);
+        V = safeV + mix * (dangerV - safeV);
+        A = safeA + mix * (dangerA - safeA);
+
+        fillColor.fromHSV(H, S, V);
+        fillColor.alpha = static_cast<uint8_t>(A * 255.0);
+    }
+
+    dc->setDrawMode(kAliasing);
+
+    if (backColor_.alpha > 0) {
+        dc->setFillColor(backColor_);
+        dc->drawRect(largeBounds, kDrawFilled);
+    }
+
+    dc->setFrameColor(frameColor_);
+    dc->setFillColor(fillColor);
+
+    dc->drawRect(fillBounds, kDrawFilled);
+    dc->drawRect(largeBounds);
+}
+
+///
 SPlaceHolder::SPlaceHolder(const CRect& size, const CColor& color)
     : CView(size), color_(color)
 {
