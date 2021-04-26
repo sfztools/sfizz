@@ -23,6 +23,13 @@
 midnam:interface a lv2:ExtensionData .
 midnam:update a lv2:Feature .
 
+<@LV2PLUGIN_URI@#stereo_output>
+  a pg:StereoGroup, pg:OutputGroup ;
+  lv2:symbol "stereo_output" ;
+  lv2:name "Stereo output",
+    "Sortie stéréo"@fr ,
+    "Uscita stereo"@it .
+
 <@LV2PLUGIN_URI@#config>
   a pg:Group ;
   lv2:symbol "config" ;
@@ -125,14 +132,18 @@ midnam:update a lv2:Feature .
     lv2:symbol "out_left" ;
     lv2:name "Left Output",
       "Sortie gauche"@fr ,
-      "Uscita Sinistra"@it
+      "Uscita Sinistra"@it ;
+    pg:group <@LV2PLUGIN_URI@#stereo_output> ;
+    lv2:designation pg:left
   ] , [
     a lv2:AudioPort, lv2:OutputPort ;
     lv2:index 4 ;
     lv2:symbol "out_right" ;
     lv2:name "Right Output",
       "Sortie droite"@fr ,
-      "Uscita Destra"@it
+      "Uscita Destra"@it ;
+    pg:group <@LV2PLUGIN_URI@#stereo_output> ;
+    lv2:designation pg:right
   ] , [
     a lv2:InputPort, lv2:ControlPort ;
     lv2:index 5 ;
