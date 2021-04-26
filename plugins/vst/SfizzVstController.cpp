@@ -324,6 +324,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             pos += sizeof(uint32);
             float value = *reinterpret_cast<const float*>(pos);
             pos += sizeof(float);
+            #pragma message("setParam() on non-UI thread is dangerous on Reaper, make it deferred instead")
             setParam(pid, value);
         }
     }
