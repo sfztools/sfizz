@@ -478,7 +478,7 @@ instantiate(const LV2_Descriptor *descriptor,
     else
     {
         lv2_log_warning(&self->logger,
-                        "No option array was given upon instantiation; will use default values\n.");
+                        "No option array was given upon instantiation; will use default values.\n");
     }
 
     // We need _some_ information on the block size
