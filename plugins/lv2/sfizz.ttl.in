@@ -97,6 +97,8 @@ midnam:update a lv2:Feature .
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
                  <@LV2PLUGIN_URI@:tuningfile> ;
 
+  pg:mainOutput <@LV2PLUGIN_URI@#stereo_output> ;
+
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
