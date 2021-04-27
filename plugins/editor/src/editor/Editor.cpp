@@ -722,10 +722,10 @@ void Editor::Impl::createFrameContents()
         };
         auto createVMeter = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             SLevelMeter* meter = new SLevelMeter(bounds);
+            meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
             meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
             OnThemeChanged.push_back([meter, palette]() {
-                meter->setFrameColor(palette->inactiveText);
                 meter->setBackColor(palette->knobInactiveTrack);
             });
             return meter;

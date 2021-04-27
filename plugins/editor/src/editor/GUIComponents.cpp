@@ -1034,18 +1034,40 @@ void SLevelMeter::draw(CDrawContext* dc)
         fillColor.alpha = static_cast<uint8_t>(A * 255.0);
     }
 
-    dc->setDrawMode(kAliasing);
+    CCoord radius = radius_;
+    bool isRounded = radius > 0.0;
+
+    dc->setDrawMode(isRounded ? kAntiAliasing : kAliasing);
+
+    SharedPointer<CGraphicsPath> largeRoundRect;
+    SharedPointer<CGraphicsPath> fillRoundRect;
+
+    if (isRounded) {
+        largeRoundRect = owned(dc->createRoundRectGraphicsPath(largeBounds, radius));
+        fillRoundRect = owned(dc->createRoundRectGraphicsPath(fillBounds, radius));
+    }
 
     if (backColor_.alpha > 0) {
         dc->setFillColor(backColor_);
-        dc->drawRect(largeBounds, kDrawFilled);
+        if (!isRounded)
+            dc->drawRect(largeBounds, kDrawFilled);
+        else
+            dc->drawGraphicsPath(largeRoundRect, CDrawContext::kPathFilled);
     }
 
     dc->setFrameColor(frameColor_);
     dc->setFillColor(fillColor);
 
-    dc->drawRect(fillBounds, kDrawFilled);
-    dc->drawRect(largeBounds);
+    if (!isRounded) {
+        if (fill > 0)
+            dc->drawRect(fillBounds, kDrawFilled);
+        dc->drawRect(largeBounds);
+    }
+    else {
+        if (fill > 0 && fillBounds.getHeight() >= radius)
+            dc->drawGraphicsPath(fillRoundRect, CDrawContext::kPathFilled);
+        dc->drawGraphicsPath(largeRoundRect, CDrawContext::kPathStroked);
+    }
 }
 
 ///

@@ -386,6 +386,9 @@ public:
     CColor getDangerFillColor() const { return dangerFillColor_; }
     void setDangerFillColor(CColor color) { dangerFillColor_ = color; invalid(); }
 
+    CCoord getRoundRectRadius() const { return radius_; }
+    void setRoundRectRadius(CCoord radius) { radius_ = radius; invalid(); }
+
 protected:
     void draw(CDrawContext* dc) override;
 
@@ -398,6 +401,7 @@ private:
     CColor safeFillColor_;
     CColor dangerFillColor_;
     CColor backColor_;
+    CCoord radius_ = 5.0;
 };
 
 ///
