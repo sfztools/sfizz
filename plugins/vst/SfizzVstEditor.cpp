@@ -18,6 +18,7 @@
 #include "X11RunLoop.h"
 #endif
 #include <ghc/fs_std.hpp>
+#include <atomic>
 
 using namespace VSTGUI;
 
@@ -92,6 +93,10 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         update->addDependent(this);
     for (FObject* update : triggerUpdates_)
         update->addDependent(this);
+
+    threadChecker_ = Vst::ThreadChecker::create();
+
+    parametersToUpdate_.clear();
 
     Steinberg::IdleUpdateHandler::start();
 
@@ -192,6 +197,7 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
     if (message == CVSTGUITimer::kMsgTimer) {
         processOscQueue();
         processNoteEventQueue();
+        processParameterUpdates();
         updateEditorIsOpenParameter(); // Note(jpc) for Reaper, it can fail at open time
     }
 
@@ -278,49 +284,18 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
     }
 
     if (Vst::RangeParameter* param = Steinberg::FCast<Vst::RangeParameter>(changedUnknown)) {
-        const Vst::ParamValue value = param->getNormalized();
-        const Vst::ParamID id = param->getInfo().id;
-        const SfizzRange range = SfizzRange::getForParameter(id);
-        switch (id) {
-        case kPidVolume:
-            uiReceiveValue(EditId::Volume, range.denormalize(value));
-            break;
-        case kPidNumVoices:
-            uiReceiveValue(EditId::Polyphony, range.denormalize(value));
-            break;
-        case kPidOversampling:
-            uiReceiveValue(EditId::Oversampling, float(1u << (int32)range.denormalize(value)));
-            break;
-        case kPidPreloadSize:
-            uiReceiveValue(EditId::PreloadSize, range.denormalize(value));
-            break;
-        case kPidScalaRootKey:
-            uiReceiveValue(EditId::ScalaRootKey, range.denormalize(value));
-            break;
-        case kPidTuningFrequency:
-            uiReceiveValue(EditId::TuningFrequency, range.denormalize(value));
-            break;
-        case kPidStretchedTuning:
-            uiReceiveValue(EditId::StretchTuning, range.denormalize(value));
-            break;
-        case kPidSampleQuality:
-            uiReceiveValue(EditId::SampleQuality, range.denormalize(value));
-            break;
-        case kPidOscillatorQuality:
-            uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
-            break;
-        case kPidLeftLevel:
-            uiReceiveValue(EditId::LeftLevel, range.denormalize(value));
-            break;
-        case kPidRightLevel:
-            uiReceiveValue(EditId::RightLevel, range.denormalize(value));
-            break;
-        default:
-            if (id >= kPidCC0 && id <= kPidCCLast) {
-                int cc = int(id - kPidCC0);
-                uiReceiveValue(editIdForCC(cc), range.denormalize(value));
-            }
-            break;
+        // Note(jpc) some hosts send us the parameters in the wrong thread...
+        //           store these parameters thread-safely and let the idle
+        //           callback process them later
+        if (threadChecker_->test())
+            updateParameter(param);
+        else {
+            static std::atomic_bool warn_once_flag { false };
+            if (!warn_once_flag.exchange(true))
+                fprintf(stderr, "[sfizz] using a thread-safety workaround for parameter updates\n");
+            const Vst::ParamID id = param->getInfo().id;
+            std::lock_guard<std::mutex> lock(parametersToUpdateMutex_);
+            parametersToUpdate_.insert(id);
         }
         return;
     }
@@ -366,6 +341,73 @@ void SfizzVstEditor::processNoteEventQueue()
         uiReceiveValue(editIdForKey(event.first), event.second);
 
     queue->clear();
+}
+
+void SfizzVstEditor::processParameterUpdates()
+{
+    auto extractNextParamID = [this]() -> Vst::ParamID {
+        Vst::ParamID id = Vst::kNoParamId;
+        std::lock_guard<std::mutex> lock(parametersToUpdateMutex_);
+        auto it = parametersToUpdate_.begin();
+        if (it != parametersToUpdate_.end()) {
+            id = *it;
+            parametersToUpdate_.erase(it);
+        }
+        return id;
+    };
+
+    for (Vst::ParamID id; (id = extractNextParamID()) != Vst::kNoParamId; )
+        updateParameter(getController()->getParameterObject(id));
+}
+
+void SfizzVstEditor::updateParameter(Vst::Parameter* parameterToUpdate)
+{
+    if (Vst::RangeParameter* param = FCast<Vst::RangeParameter>(parameterToUpdate)) {
+        const Vst::ParamID id = param->getInfo().id;
+        const Vst::ParamValue value = param->getNormalized();
+        const SfizzRange range = SfizzRange::getForParameter(id);
+        switch (id) {
+        case kPidVolume:
+            uiReceiveValue(EditId::Volume, range.denormalize(value));
+            break;
+        case kPidNumVoices:
+            uiReceiveValue(EditId::Polyphony, range.denormalize(value));
+            break;
+        case kPidOversampling:
+            uiReceiveValue(EditId::Oversampling, float(1u << (int32)range.denormalize(value)));
+            break;
+        case kPidPreloadSize:
+            uiReceiveValue(EditId::PreloadSize, range.denormalize(value));
+            break;
+        case kPidScalaRootKey:
+            uiReceiveValue(EditId::ScalaRootKey, range.denormalize(value));
+            break;
+        case kPidTuningFrequency:
+            uiReceiveValue(EditId::TuningFrequency, range.denormalize(value));
+            break;
+        case kPidStretchedTuning:
+            uiReceiveValue(EditId::StretchTuning, range.denormalize(value));
+            break;
+        case kPidSampleQuality:
+            uiReceiveValue(EditId::SampleQuality, range.denormalize(value));
+            break;
+        case kPidOscillatorQuality:
+            uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
+            break;
+        case kPidLeftLevel:
+            uiReceiveValue(EditId::LeftLevel, range.denormalize(value));
+            break;
+        case kPidRightLevel:
+            uiReceiveValue(EditId::RightLevel, range.denormalize(value));
+            break;
+        default:
+            if (id >= kPidCC0 && id <= kPidCCLast) {
+                int cc = int(id - kPidCC0);
+                uiReceiveValue(editIdForCC(cc), range.denormalize(value));
+            }
+            break;
+        }
+    }
 }
 
 ///
