@@ -8,8 +8,10 @@
 #include "SfizzVstController.h"
 #include "editor/EditorController.h"
 #include "public.sdk/source/vst/vstguieditor.h"
+#include "public.sdk/source/common/threadchecker.h"
 #include <absl/types/span.h>
 #include <mutex>
+#include <set>
 class Editor;
 #if !defined(__APPLE__) && !defined(_WIN32)
 namespace VSTGUI { class RunLoop; }
@@ -48,6 +50,8 @@ public:
 private:
     void processOscQueue();
     void processNoteEventQueue();
+    void processParameterUpdates();
+    void updateParameter(Vst::Parameter* parameterToUpdate);
 
 protected:
     // EditorController
@@ -84,4 +88,12 @@ private:
     // subscribed updates
     std::vector<IPtr<FObject>> continuousUpdates_;
     std::vector<IPtr<FObject>> triggerUpdates_;
+
+    // thread safety
+    std::unique_ptr<Vst::ThreadChecker> threadChecker_;
+
+    // parameters to process, whose values have received changes
+    // Note(jpc) it's because hosts send us parameter updates in the wrong thread..
+    std::set<Vst::ParamID> parametersToUpdate_;
+    std::mutex parametersToUpdateMutex_;
 };
