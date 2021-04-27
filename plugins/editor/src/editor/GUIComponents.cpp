@@ -1034,10 +1034,10 @@ void SLevelMeter::draw(CDrawContext* dc)
         fillColor.alpha = static_cast<uint8_t>(A * 255.0);
     }
 
-    dc->setDrawMode(kAliasing);
-
     CCoord radius = radius_;
     bool isRounded = radius > 0.0;
+
+    dc->setDrawMode(isRounded ? kAntiAliasing : kAliasing);
 
     SharedPointer<CGraphicsPath> largeRoundRect;
     SharedPointer<CGraphicsPath> fillRoundRect;
