@@ -190,7 +190,6 @@ oscillatorQualitySlider_ = view__71;
 view__67->addView(view__71);
 auto* const view__72 = createTitleGroup(CRect(35, 161, 140, 261), -1, "Theme", kCenterText, 12);
 view__47->addView(view__72);
-view__72->setVisible(false);
 auto* const view__73 = createOptionMenu(CRect(20, 60, 85, 85), kTagThemeMenu, "", kCenterText, 12);
 themeMenu_ = view__73;
 view__72->addView(view__73);

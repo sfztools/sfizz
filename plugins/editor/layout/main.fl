@@ -362,7 +362,7 @@ widget_class mainView {open
     }
     Fl_Group {} {
       label Theme open
-      xywh {40 270 105 100} box ROUNDED_BOX labelsize 12 align 17 hide
+      xywh {40 270 105 100} box ROUNDED_BOX labelsize 12 align 17
       class TitleGroup
     } {
       Fl_Spinner themeMenu_ {

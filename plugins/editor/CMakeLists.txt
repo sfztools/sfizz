@@ -21,6 +21,7 @@ set(EDITOR_RESOURCES
     Fonts/sfizz-misc-icons.ttf
     Fonts/Roboto-Regular.ttf
     Themes/Default/theme.xml
+    Themes/Dark/theme.xml
     PARENT_SCOPE)
 
 function(copy_editor_resources TARGET SOURCE_DIR DESTINATION_DIR)
