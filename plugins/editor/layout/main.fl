@@ -20,7 +20,7 @@ widget_class mainView {open
       class RoundedGroup
     } {
       Fl_Box {} {
-        comment {tag=kTagAbout} selected
+        comment {tag=kTagAbout}
         image {../resources/logo_text_shaded.png} xywh {32 9 120 60}
         class AboutButton
       }
@@ -147,11 +147,11 @@ widget_class mainView {open
         class KnobCCBox
       }
       Fl_Box leftMeter_ {
-        xywh {740 10 15 90} box BORDER_BOX
+        xywh {740 15 15 85} box BORDER_BOX
         class VMeter
       }
       Fl_Box rightMeter_ {selected
-        xywh {760 10 15 90} box BORDER_BOX
+        xywh {760 15 15 85} box BORDER_BOX
         class VMeter
       }
     }
