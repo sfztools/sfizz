@@ -13,6 +13,7 @@
 #include "plugin/SfizzFileScan.h"
 #include "plugin/InstrumentDescription.h"
 #include "base/source/fstreamer.h"
+#include "base/source/updatehandler.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include <ghc/fs_std.hpp>
@@ -73,6 +74,9 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     tresult result = AudioEffect::initialize(context);
     if (result != kResultTrue)
         return result;
+
+    // initialize the update handler
+    Steinberg::UpdateHandler::instance();
 
     addAudioOutput(STR16("Audio Output"), Vst::SpeakerArr::kStereo);
     addEventInput(STR16("Event Input"), 1);
@@ -579,6 +583,20 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
     }
 
     return result;
+}
+
+void PLUGIN_API SfizzVstProcessor::update(FUnknown* changedUnknown, int32 message)
+{
+    if (processUpdate(changedUnknown, message))
+        return;
+
+    AudioEffect::update(changedUnknown, message);
+}
+
+bool SfizzVstProcessor::processUpdate(FUnknown* changedUnknown, int32 message)
+{
+    // TODO
+    return false;
 }
 
 void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args)

@@ -46,6 +46,7 @@ public:
     void processMessagesFromUi();
 
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
+    void PLUGIN_API update(FUnknown* changedUnknown, int32 message) override;
 
     static FUnknown* createInstance(void*);
 
@@ -67,6 +68,9 @@ private:
     // level meters
     RMSFollower _rmsFollower;
     bool _editorIsOpen = false;
+
+    // updates
+    bool processUpdate(FUnknown* changedUnknown, int32 message);
 
     // client
     sfz::ClientPtr _client;
