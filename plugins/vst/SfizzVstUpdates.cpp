@@ -8,61 +8,51 @@
 #include <algorithm>
 #include <cstring>
 
-OSCUpdate::~OSCUpdate()
+void QueuedUpdates::enqueue(IPtr<FObject> update)
 {
-    clear();
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (std::pair<IDependent* const, List>& item : updates_)
+        item.second.push_back(update);
 }
 
-void OSCUpdate::clear()
+auto QueuedUpdates::getUpdates(IDependent* dep) -> List
 {
-    if (allocated_)
-        delete[] reinterpret_cast<const uint8_t*>(data_);
-    data_ = nullptr;
-    size_ = 0;
-    allocated_ = false;
+    std::lock_guard<std::mutex> lock(mutex_);
+    List list;
+    auto it = updates_.find(dep);
+    if (it != updates_.end())
+        std::swap(list, it->second);
+    return list;
 }
 
-void OSCUpdate::setMessage(const void* data, uint32_t size, bool copy)
+void QueuedUpdates::addDependent(IDependent* dep)
 {
-    clear();
+    std::lock_guard<std::mutex> lock(mutex_);
+    FObject::addDependent(dep);
+    updates_.emplace(dep, List());
+}
 
-    if (copy) {
-        uint8_t *buffer = new uint8_t[size];
-        std::memcpy(buffer, data, size);
-        data = buffer;
-    }
-
-    data_ = data;
-    size_ = size;
-    allocated_ = copy;
+void QueuedUpdates::removeDependent(IDependent* dep)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    FObject::removeDependent(dep);
+    updates_.erase(dep);
 }
 
 ///
-NoteUpdate::~NoteUpdate()
+OSCUpdate::OSCUpdate(const uint8* data, uint32 size)
 {
-    clear();
+    uint8* copy = new uint8[size];
+    std::copy_n(data, size, copy);
+    data_.reset(copy);
+    size_ = size;
 }
 
-void NoteUpdate::clear()
+///
+NoteUpdate::NoteUpdate(const Item* items, uint32 count)
 {
-    if (allocated_)
-        delete[] events_;
-    events_ = nullptr;
-    count_ = 0;
-    allocated_ = false;
-}
-
-void NoteUpdate::setEvents(const std::pair<uint32_t, float>* events, uint32_t count, bool copy)
-{
-    clear();
-
-    if (copy) {
-        auto *buffer = new std::pair<uint32_t, float>[count];
-        std::copy_n(events, count, buffer);
-        events = buffer;
-    }
-
-    events_ = events;
+    Item* copy = new Item[count];
+    std::copy_n(items, count, copy);
+    events_.reset(copy);
     count_ = count;
-    allocated_ = copy;
 }

@@ -44,8 +44,7 @@ public:
     REFCOUNT_METHODS(Vst::EditController)
 
 protected:
-    Steinberg::IPtr<OSCUpdate> oscUpdate_;
-    Steinberg::IPtr<NoteUpdate> noteUpdate_;
+    Steinberg::IPtr<QueuedUpdates> queuedUpdates_;
     Steinberg::IPtr<SfzUpdate> sfzUpdate_;
     Steinberg::IPtr<SfzDescriptionUpdate> sfzDescriptionUpdate_;
     Steinberg::IPtr<ScalaUpdate> scalaUpdate_;

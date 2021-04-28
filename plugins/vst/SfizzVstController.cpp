@@ -21,8 +21,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     Steinberg::UpdateHandler::instance();
 
     // create update objects
-    oscUpdate_ = Steinberg::owned(new OSCUpdate);
-    noteUpdate_ = Steinberg::owned(new NoteUpdate);
+    queuedUpdates_ = Steinberg::owned(new QueuedUpdates);
     sfzUpdate_ = Steinberg::owned(new SfzUpdate);
     sfzDescriptionUpdate_ = Steinberg::owned(new SfzDescriptionUpdate);
     scalaUpdate_ = Steinberg::owned(new ScalaUpdate);
@@ -289,10 +288,10 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         if (result != kResultTrue)
             return result;
 
-        // this is a synchronous send, because the update object gets reused
-        oscUpdate_->setMessage(data, size, false);
-        oscUpdate_->changed();
-        oscUpdate_->clear();
+        IPtr<OSCUpdate> update = Steinberg::owned(
+            new OSCUpdate(reinterpret_cast<const uint8*>(data), size));
+        queuedUpdates_->enqueue(update);
+        queuedUpdates_->deferUpdate();
     }
     else if (!strcmp(id, "NoteEvents")) {
         const void* data = nullptr;
@@ -303,10 +302,10 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             const std::pair<uint32_t, float>*>(data);
         uint32 numEvents = size / sizeof(events[0]);
 
-        // this is a synchronous send, because the update object gets reused
-        noteUpdate_->setEvents(events, numEvents, false);
-        noteUpdate_->changed();
-        noteUpdate_->clear();
+        IPtr<NoteUpdate> update = Steinberg::owned(
+            new NoteUpdate(events, numEvents));
+        queuedUpdates_->enqueue(update);
+        queuedUpdates_->deferUpdate();
     }
     else if (!strcmp(id, "Automate")) {
         const void* data = nullptr;
@@ -343,20 +342,17 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
     if (name != Vst::ViewType::kEditor)
         return nullptr;
 
-    std::vector<FObject*> continuousUpdates;
-    continuousUpdates.push_back(sfzUpdate_);
-    continuousUpdates.push_back(sfzDescriptionUpdate_);
-    continuousUpdates.push_back(scalaUpdate_);
-    continuousUpdates.push_back(playStateUpdate_);
+    std::vector<FObject*> updates;
+    updates.push_back(queuedUpdates_);
+    updates.push_back(sfzUpdate_);
+    updates.push_back(sfzDescriptionUpdate_);
+    updates.push_back(scalaUpdate_);
+    updates.push_back(playStateUpdate_);
     for (uint32 i = 0, n = parameters.getParameterCount(); i < n; ++i)
-        continuousUpdates.push_back(parameters.getParameterByIndex(i));
-
-    std::vector<FObject*> triggerUpdates;
-    triggerUpdates.push_back(oscUpdate_);
-    triggerUpdates.push_back(noteUpdate_);
+        updates.push_back(parameters.getParameterByIndex(i));
 
     IPtr<SfizzVstEditor> editor = Steinberg::owned(
-        new SfizzVstEditor(this, absl::MakeSpan(continuousUpdates), absl::MakeSpan(triggerUpdates)));
+        new SfizzVstEditor(this, absl::MakeSpan(updates)));
 
     editor->remember();
     return editor;
