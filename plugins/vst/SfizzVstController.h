@@ -9,6 +9,7 @@
 #include "SfizzVstUpdates.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
+#include "public.sdk/source/common/threadchecker.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include <sfizz_message.h>
@@ -44,6 +45,7 @@ public:
     REFCOUNT_METHODS(Vst::EditController)
 
 protected:
+    std::unique_ptr<Vst::ThreadChecker> threadChecker_;
     Steinberg::IPtr<QueuedUpdates> queuedUpdates_;
     Steinberg::IPtr<SfzUpdate> sfzUpdate_;
     Steinberg::IPtr<SfzDescriptionUpdate> sfzDescriptionUpdate_;

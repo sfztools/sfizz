@@ -10,6 +10,7 @@
 #include "SfizzVstIDs.h"
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
+#include <atomic>
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {
@@ -19,6 +20,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 
     // initialize the update handler
     Steinberg::UpdateHandler::instance();
+
+    // initialize the thread checker
+    threadChecker_ = Vst::ThreadChecker::create();
 
     // create update objects
     queuedUpdates_ = Steinberg::owned(new QueuedUpdates);
@@ -227,6 +231,12 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
     tresult result = EditController::notify(message);
     if (result != kResultFalse)
         return result;
+
+    if (!threadChecker_->test()) {
+        static std::atomic_bool warn_once_flag { false };
+        if (!warn_once_flag.exchange(true))
+            fprintf(stderr, "[sfizz] controller notification arrives from the wrong thread\n");
+    }
 
     const char* id = message->getMessageID();
     Vst::IAttributeList* attr = message->getAttributes();
