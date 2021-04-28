@@ -30,14 +30,10 @@ enum {
     kNoteEventQueueSize = 8192,
 };
 
-SfizzVstEditor::SfizzVstEditor(
-    SfizzVstController* controller,
-    absl::Span<FObject*> continuousUpdates,
-    absl::Span<FObject*> triggerUpdates)
+SfizzVstEditor::SfizzVstEditor(SfizzVstController* controller, absl::Span<FObject*> updates)
     : VSTGUIEditor(controller, &sfizzUiViewRect),
       oscTemp_(new uint8_t[kOscTempSize]),
-      continuousUpdates_(continuousUpdates.begin(), continuousUpdates.end()),
-      triggerUpdates_(triggerUpdates.begin(), triggerUpdates.end())
+      updates_(updates.begin(), updates.end())
 {
 }
 
@@ -69,19 +65,6 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
         editor_.reset(editor);
     }
 
-    {
-        std::lock_guard<std::mutex> lock(oscQueueMutex_);
-        OscByteVec* queue = new OscByteVec;
-        oscQueue_.reset(queue);
-        queue->reserve(kOscQueueSize);
-    }
-    {
-        std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
-        NoteEventsVec* queue = new NoteEventsVec;
-        noteEventQueue_.reset(queue);
-        queue->reserve(kNoteEventQueueSize);
-    }
-
     if (!frame->open(parent, platformType, config)) {
         fprintf(stderr, "[sfizz] error opening frame\n");
         return false;
@@ -89,9 +72,7 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
 
     editor->open(*frame);
 
-    for (FObject* update : continuousUpdates_)
-        update->addDependent(this);
-    for (FObject* update : triggerUpdates_)
+    for (FObject* update : updates_)
         update->addDependent(this);
 
     threadChecker_ = Vst::ThreadChecker::create();
@@ -100,7 +81,7 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
 
     Steinberg::IdleUpdateHandler::start();
 
-    for (FObject* update : continuousUpdates_)
+    for (FObject* update : updates_)
         update->deferUpdate();
 
     // let the editor know about plugin format
@@ -138,9 +119,7 @@ void PLUGIN_API SfizzVstEditor::close()
     if (frame) {
         Steinberg::IdleUpdateHandler::stop();
 
-        for (FObject* update : continuousUpdates_)
-            update->removeDependent(this);
-        for (FObject* update : triggerUpdates_)
+        for (FObject* update : updates_)
             update->removeDependent(this);
 
         if (editor_)
@@ -150,15 +129,6 @@ void PLUGIN_API SfizzVstEditor::close()
         else
             frame->close();
         this->frame = nullptr;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(oscQueueMutex_);
-        oscQueue_.reset();
-    }
-    {
-        std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
-        noteEventQueue_.reset();
     }
 
     updateEditorIsOpenParameter();
@@ -195,8 +165,6 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
 #endif
 
     if (message == CVSTGUITimer::kMsgTimer) {
-        processOscQueue();
-        processNoteEventQueue();
         processParameterUpdates();
         updateEditorIsOpenParameter(); // Note(jpc) for Reaper, it can fail at open time
     }
@@ -206,34 +174,51 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
 
 void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
 {
-    if (OSCUpdate* update = FCast<OSCUpdate>(changedUnknown)) {
-        // this update is synchronous: may happen from non-UI thread
-        uint32 size = update->size();
-        if (size > 0) {
-            const uint8_t* bytes = reinterpret_cast<const uint8_t*>(update->data());
-            std::lock_guard<std::mutex> lock(oscQueueMutex_);
-            if (OscByteVec* queue = oscQueue_.get())
-                std::copy(bytes, bytes + size, std::back_inserter(*queue));
-        }
+    if (processUpdate(changedUnknown, message))
         return;
+
+    Vst::VSTGUIEditor::update(changedUnknown, message);
+}
+
+bool SfizzVstEditor::processUpdate(FUnknown* changedUnknown, int32 message)
+{
+    if (QueuedUpdates* update = FCast<QueuedUpdates>(changedUnknown)) {
+        for (FObject* queuedUpdate : update->getUpdates(this))
+            processUpdate(queuedUpdate, message);
+        return true;
+    }
+
+    if (OSCUpdate* update = FCast<OSCUpdate>(changedUnknown)) {
+        const uint8* oscData = update->data();
+        uint32 oscSize = update->size();
+
+        const char* path;
+        const char* sig;
+        const sfizz_arg_t* args;
+        uint8_t buffer[1024];
+
+        uint32_t msgSize;
+        while ((msgSize = sfizz_extract_message(oscData, oscSize, buffer, sizeof(buffer), &path, &sig, &args)) > 0) {
+            uiReceiveMessage(path, sig, args);
+            oscData += msgSize;
+            oscSize -= msgSize;
+        }
+
+        return true;
     }
 
     if (NoteUpdate* update = FCast<NoteUpdate>(changedUnknown)) {
-        // this update is synchronous: may happen from non-UI thread
+        const NoteUpdate::Item* events = update->events();
         uint32 count = update->count();
-        if (count > 0) {
-            const auto* events = update->events();
-            std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
-            if (NoteEventsVec* queue = noteEventQueue_.get())
-                std::copy(events, events + count, std::back_inserter(*queue));
-        }
-        return;
+        for (uint32 i = 0; i < count; ++i)
+            uiReceiveValue(editIdForKey(events[i].first), events[i].second);
+        return true;
     }
 
     if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
         uiReceiveValue(EditId::SfzFile, path);
-        return;
+        return true;
     }
 
     if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
@@ -268,19 +253,19 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
                 uiReceiveValue(editIdForCCLabel(int(cc)), desc.ccLabel[cc]);
             }
         }
-        return;
+        return true;
     }
 
     if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
         const std::string path = update->getPath();
         uiReceiveValue(EditId::ScalaFile, path);
-        return;
+        return true;
     }
 
     if (PlayStateUpdate* update = FCast<PlayStateUpdate>(changedUnknown)) {
         const SfizzPlayState playState = update->getState();
         uiReceiveValue(EditId::UINumActiveVoices, playState.activeVoices);
-        return;
+        return true;
     }
 
     if (Vst::RangeParameter* param = Steinberg::FCast<Vst::RangeParameter>(changedUnknown)) {
@@ -297,50 +282,10 @@ void PLUGIN_API SfizzVstEditor::update(FUnknown* changedUnknown, int32 message)
             std::lock_guard<std::mutex> lock(parametersToUpdateMutex_);
             parametersToUpdate_.insert(id);
         }
-        return;
+        return true;
     }
 
-    Vst::VSTGUIEditor::update(changedUnknown, message);
-}
-
-void SfizzVstEditor::processOscQueue()
-{
-    std::lock_guard<std::mutex> lock(oscQueueMutex_);
-
-    OscByteVec* queue = oscQueue_.get();
-    if (!queue)
-        return;
-
-    const uint8_t* oscData = queue->data();
-    size_t oscSize = queue->size();
-
-    const char* path;
-    const char* sig;
-    const sfizz_arg_t* args;
-    uint8_t buffer[1024];
-
-    uint32_t msgSize;
-    while ((msgSize = sfizz_extract_message(oscData, oscSize, buffer, sizeof(buffer), &path, &sig, &args)) > 0) {
-        uiReceiveMessage(path, sig, args);
-        oscData += msgSize;
-        oscSize -= msgSize;
-    }
-
-    queue->clear();
-}
-
-void SfizzVstEditor::processNoteEventQueue()
-{
-    std::lock_guard<std::mutex> lock(noteEventQueueMutex_);
-
-    NoteEventsVec* queue = noteEventQueue_.get();
-    if (!queue)
-        return;
-
-    for (std::pair<uint32, float> event : *queue)
-        uiReceiveValue(editIdForKey(event.first), event.second);
-
-    queue->clear();
+    return false;
 }
 
 void SfizzVstEditor::processParameterUpdates()

@@ -25,10 +25,7 @@ class SfizzVstEditor : public Vst::VSTGUIEditor,
 public:
     using Self = SfizzVstEditor;
 
-    SfizzVstEditor(
-        SfizzVstController* controller,
-        absl::Span<FObject*> continuousUpdates,
-        absl::Span<FObject*> triggerUpdates);
+    SfizzVstEditor(SfizzVstController* controller, absl::Span<FObject*> updates);
     ~SfizzVstEditor();
 
     bool PLUGIN_API open(void* parent, const VSTGUI::PlatformType& platformType) override;
@@ -48,8 +45,7 @@ public:
 
     //
 private:
-    void processOscQueue();
-    void processNoteEventQueue();
+    bool processUpdate(FUnknown* changedUnknown, int32 message);
     void processParameterUpdates();
     void updateParameter(Vst::Parameter* parameterToUpdate);
 
@@ -76,18 +72,8 @@ private:
     // messaging
     std::unique_ptr<uint8[]> oscTemp_;
 
-    // editor state
-    // note: might be updated from a non-UI thread
-    typedef std::vector<uint8_t> OscByteVec;
-    std::unique_ptr<OscByteVec> oscQueue_;
-    std::mutex oscQueueMutex_;
-    typedef std::vector<std::pair<uint32, float>> NoteEventsVec;
-    std::unique_ptr<NoteEventsVec> noteEventQueue_;
-    std::mutex noteEventQueueMutex_;
-
     // subscribed updates
-    std::vector<IPtr<FObject>> continuousUpdates_;
-    std::vector<IPtr<FObject>> triggerUpdates_;
+    std::vector<IPtr<FObject>> updates_;
 
     // thread safety
     std::unique_ptr<Vst::ThreadChecker> threadChecker_;

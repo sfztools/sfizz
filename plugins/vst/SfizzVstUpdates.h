@@ -8,62 +8,64 @@
 #include "SfizzVstState.h"
 #include <base/source/fobject.h>
 #include <vector>
+#include <map>
 #include <string>
+#include <memory>
 #include <mutex>
 #include <cstdint>
 
 /**
+ * @brief Update which notifies a FIFO queue of one-time updates
+ */
+class QueuedUpdates : public Steinberg::FObject {
+public:
+    using List = std::vector<IPtr<FObject>>;
+
+    void enqueue(IPtr<FObject> update);
+    List getUpdates(IDependent* dep);
+
+    void addDependent(IDependent* dep) override;
+    void removeDependent(IDependent* dep) override;
+
+    OBJ_METHODS(QueuedUpdates, FObject)
+
+private:
+    std::mutex mutex_;
+    std::map<IDependent*, List> updates_;
+};
+
+/**
  * @brief Update which notifies a single OSC message
- * Is is supposed to be used synchronously.
- * (ie. FObject::changed or UpdateHandler::triggerUpdates)
  */
 class OSCUpdate : public Steinberg::FObject {
 public:
-    OSCUpdate() = default;
-    ~OSCUpdate();
-    void clear();
-    void setMessage(const void* data, uint32_t size, bool copy);
-
-    const void* data() const noexcept { return data_; }
-    const uint32_t size() const noexcept { return size_; }
+    OSCUpdate(const uint8* data, uint32 size);
+    const uint8* data() const noexcept { return data_.get(); }
+    uint32_t size() const noexcept { return size_; }
 
     OBJ_METHODS(OSCUpdate, FObject)
 
 private:
-    const void* data_ = nullptr;
-    uint32_t size_ = 0;
-    bool allocated_ = false;
-
-private:
-    OSCUpdate(const OSCUpdate&) = delete;
-    OSCUpdate& operator=(const OSCUpdate&) = delete;
+    std::unique_ptr<uint8[]> data_;
+    uint32 size_ = 0;
 };
 
 /**
  * @brief Update which notifies one or more note on/off events
- * Is is supposed to be used synchronously.
- * (ie. FObject::changed or UpdateHandler::triggerUpdates)
  */
 class NoteUpdate : public Steinberg::FObject {
 public:
-    NoteUpdate() = default;
-    ~NoteUpdate();
-    void clear();
-    void setEvents(const std::pair<uint32_t, float>* events, uint32_t count, bool copy);
+    using Item = std::pair<uint32_t, float>;
 
-    const std::pair<uint32_t, float>* events() const noexcept { return events_; }
+    NoteUpdate(const Item* items, uint32 count);
+    const Item* events() const noexcept { return events_.get(); }
     const uint32_t count() const noexcept { return count_; }
 
     OBJ_METHODS(NoteUpdate, FObject)
 
 private:
-    const std::pair<uint32_t, float>* events_ = nullptr;
+    std::unique_ptr<Item[]> events_;
     uint32_t count_ = 0;
-    bool allocated_ = false;
-
-private:
-    NoteUpdate(const NoteUpdate&) = delete;
-    NoteUpdate& operator=(const NoteUpdate&) = delete;
 };
 
 /**
