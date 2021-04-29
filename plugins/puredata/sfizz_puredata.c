@@ -230,13 +230,13 @@ static void sfizz_tilde_hdcc(t_sfizz_tilde* self, t_float cc, t_float value)
 
 static void sfizz_tilde_voices(t_sfizz_tilde* self, t_float value)
 {
-    if (spin_mutex_trylock(self->mutex)) {
-        int numvoices = (int)value;
-        if (numvoices < 1)
-            numvoices = 1;
-        sfizz_set_num_voices(self->synth, numvoices);
-        spin_mutex_unlock(self->mutex);
-    }
+    int numvoices = (int)value;
+    if (numvoices < 1)
+        numvoices = 1;
+
+    spin_mutex_lock(self->mutex);
+    sfizz_set_num_voices(self->synth, numvoices);
+    spin_mutex_unlock(self->mutex);
 }
 
 #if defined(_WIN32)
