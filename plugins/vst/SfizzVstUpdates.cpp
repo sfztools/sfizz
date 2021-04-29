@@ -40,12 +40,20 @@ void QueuedUpdates::removeDependent(IDependent* dep)
 }
 
 ///
-OSCUpdate::OSCUpdate(const uint8* data, uint32 size)
+bool OSCUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
 {
-    uint8* copy = new uint8[size];
-    std::copy_n(data, size, copy);
-    data_.reset(copy);
-    size_ = size;
+    return attrs->setBinary("Data", data(), size()) == kResultTrue;
+}
+
+bool OSCUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    const void* data;
+    uint32 size;
+    if (attrs->getBinary("Data", data, size) != kResultTrue)
+        return false;
+    const uint8* data8 = reinterpret_cast<const uint8*>(data);
+    data_.assign(data8, data8 + size);
+    return true;
 }
 
 ///

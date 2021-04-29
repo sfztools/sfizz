@@ -33,6 +33,7 @@ add_library(sfizz-vst3-core STATIC EXCLUDE_FROM_ALL
     SfizzVstState.h
     SfizzVstParameters.h
     SfizzVstUpdates.h
+    SfizzVstUpdates.hpp
     SfizzVstUpdates.cpp
     SfizzVstIDs.h
     OrderedEventProcessor.h
