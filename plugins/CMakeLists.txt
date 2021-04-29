@@ -58,3 +58,7 @@ endif()
 if(SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
     add_subdirectory(vst)
 endif()
+
+if(SFIZZ_PUREDATA)
+    add_subdirectory(puredata)
+endif()

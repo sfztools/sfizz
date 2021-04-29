@@ -1,0 +1,46 @@
+#N canvas 932 395 659 405 12;
+#X declare -lib sfizz;
+#X obj 4 3 cnv 15 650 80 empty empty sfizz 20 30 0 40 -261682 -66577
+0;
+#X text 45 54 A synthesizer for instruments in SFZ format;
+#X obj 241 165 r sfizz-ctl;
+#X text 33 167 create a SFZ instrument;
+#X obj 29 324 midiin;
+#X obj 29 349 s sfizz-ctl;
+#X text 26 301 connect MIDI-in;
+#X obj 162 223 dac~;
+#X msg 180 346 voices \$1;
+#X obj 180 371 s sfizz-ctl;
+#X text 178 302 modify the polyphony;
+#X obj 183 326 hsl 128 15 1 256 0 1 empty empty empty -2 -8 0 10 -262144
+-1 -1 3138 1;
+#X floatatom 273 346 5 0 0 0 - - -;
+#X obj 378 372 s sfizz-ctl;
+#X obj 381 327 hsl 128 15 0 1 0 1 empty empty empty -2 -8 0 10 -262144
+-1 -1 6350 1;
+#X floatatom 471 347 5 0 0 0 - - -;
+#X text 377 303 modulate a parameter;
+#X msg 378 347 hdcc 300 \$1;
+#X obj 27 115 declare -lib sfizz;
+#X obj 163 192 sfizz~ example.sfz;
+#X text 18 93 load the sfizz library;
+#X msg 221 115 \; pd dsp 1;
+#X text 218 94 click to turn on DSP;
+#X text 153 247 output stereo audio;
+#X msg 366 223 reload;
+#X obj 366 248 s sfizz-ctl;
+#X obj 466 248 s sfizz-ctl;
+#X msg 466 223 load example.sfz;
+#X text 364 200 reload the instrument or load another;
+#X connect 2 0 19 0;
+#X connect 4 0 5 0;
+#X connect 8 0 9 0;
+#X connect 11 0 8 0;
+#X connect 11 0 12 0;
+#X connect 14 0 17 0;
+#X connect 14 0 15 0;
+#X connect 17 0 13 0;
+#X connect 19 0 7 0;
+#X connect 19 1 7 1;
+#X connect 24 0 25 0;
+#X connect 27 0 26 0;
