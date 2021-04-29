@@ -595,6 +595,12 @@ void PLUGIN_API SfizzVstProcessor::update(FUnknown* changedUnknown, int32 messag
 
 bool SfizzVstProcessor::processUpdate(FUnknown* changedUnknown, int32 message)
 {
+    if (QueuedUpdates* update = FCast<QueuedUpdates>(changedUnknown)) {
+        for (FObject* queuedUpdate : update->getUpdates(this))
+            processUpdate(queuedUpdate, message);
+        return true;
+    }
+
     // TODO
     return false;
 }
