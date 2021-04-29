@@ -35,7 +35,7 @@ static const char* kRingIdOsc = "Osc";
 static const char* kMsgIdSetNumVoices = "SetNumVoices";
 static const char* kMsgIdSetOversampling = "SetOversampling";
 static const char* kMsgIdSetPreloadSize = "SetPreloadSize";
-static const char* kMsgIdReceiveMessage = "ReceiveMessage";
+static const char* kMsgIdReceiveOSC = "ReceiveOSC";
 static const char* kMsgIdNoteEvents = "NoteEvents";
 
 static constexpr std::chrono::milliseconds kBackgroundIdleInterval { 20 };
@@ -92,7 +92,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     auto onMessage = +[](void* data, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
         {
             auto *self = reinterpret_cast<SfizzVstProcessor*>(data);
-            self->receiveMessage(delay, path, sig, args);
+            self->receiveOSC(delay, path, sig, args);
         };
     _client = _synth->createClient(this);
     _synth->setReceiveCallback(*_client, onMessage);
@@ -605,12 +605,12 @@ bool SfizzVstProcessor::processUpdate(FUnknown* changedUnknown, int32 message)
     return false;
 }
 
-void SfizzVstProcessor::receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
+void SfizzVstProcessor::receiveOSC(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
 {
     uint8_t* oscTemp = _oscTemp.get();
     uint32 oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
     if (oscSize <= kOscTempSize) {
-        if (writeWorkerMessage(kMsgIdReceiveMessage, oscTemp, oscSize))
+        if (writeWorkerMessage(kMsgIdReceiveOSC, oscTemp, oscSize))
             _semaToWorker.post();
     }
 }
@@ -728,7 +728,7 @@ void SfizzVstProcessor::doBackgroundWork()
             std::lock_guard<SpinMutex> lock(_processMutex);
             _synth->setPreloadSize(value);
         }
-        else if (id == kMsgIdReceiveMessage) {
+        else if (id == kMsgIdReceiveOSC) {
             Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
             notification->setMessageID("ReceivedMessage");
             notification->getAttributes()->setBinary("Message", msg->payload<uint8_t>(), msg->size);

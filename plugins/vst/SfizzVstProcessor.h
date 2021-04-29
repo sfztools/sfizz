@@ -75,7 +75,7 @@ private:
     // client
     sfz::ClientPtr _client;
     std::unique_ptr<uint8_t[]> _oscTemp;
-    void receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+    void receiveOSC(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     // misc
     void loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState);
