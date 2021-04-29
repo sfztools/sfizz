@@ -6,13 +6,31 @@
 
 #pragma once
 #include "SfizzVstState.h"
+#include <public.sdk/source/vst/vstcomponentbase.h>
+#include <pluginterfaces/vst/ivstmessage.h>
 #include <base/source/fobject.h>
 #include <vector>
 #include <map>
 #include <string>
 #include <memory>
 #include <mutex>
+#include <cstring>
 #include <cstdint>
+
+/**
+ * @brief Update which is convertible with Vst::IMessage back and forth.
+ */
+template <class T> class IConvertibleToMessage {
+public:
+    virtual ~IConvertibleToMessage() {}
+
+    IPtr<Vst::IMessage> convertToMessage(Vst::ComponentBase* sender) const;
+    static IPtr<T> convertFromMessage(Vst::IMessage& message);
+
+protected:
+    virtual bool saveToAttributes(Vst::IAttributeList* attrs) const = 0;
+    virtual bool loadFromAttributes(Vst::IAttributeList* attrs) = 0;
+};
 
 /**
  * @brief Update which notifies a FIFO queue of one-time updates
@@ -37,17 +55,21 @@ private:
 /**
  * @brief Update which notifies a single OSC message
  */
-class OSCUpdate : public Steinberg::FObject {
+class OSCUpdate : public Steinberg::FObject,
+                  public IConvertibleToMessage<OSCUpdate> {
 public:
-    OSCUpdate(const uint8* data, uint32 size);
-    const uint8* data() const noexcept { return data_.get(); }
-    uint32_t size() const noexcept { return size_; }
+    OSCUpdate() = default;
+    OSCUpdate(const uint8* data, uint32 size) : data_(data, data + size) {}
+    const uint8* data() const noexcept { return data_.data(); }
+    uint32_t size() const noexcept { return static_cast<uint32_t>(data_.size()); }
+
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    bool loadFromAttributes(Vst::IAttributeList* attrs) override;
 
     OBJ_METHODS(OSCUpdate, FObject)
 
 private:
-    std::unique_ptr<uint8[]> data_;
-    uint32 size_ = 0;
+    std::vector<uint8> data_;
 };
 
 /**
@@ -163,3 +185,5 @@ private:
     SfizzPlayState state_ {};
     mutable std::mutex mutex_;
 };
+
+#include "SfizzVstUpdates.hpp"
