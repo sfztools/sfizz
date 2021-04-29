@@ -11,6 +11,8 @@ template <class T>
 IPtr<Vst::IMessage> IConvertibleToMessage<T>::convertToMessage(Vst::ComponentBase* sender) const
 {
     IPtr<Vst::IMessage> message = owned(sender->allocateMessage());
+    if (!message)
+        return nullptr;
     message->setMessageID(static_cast<const T*>(this)->isA());
     if (!saveToAttributes(message->getAttributes()))
         return nullptr;
