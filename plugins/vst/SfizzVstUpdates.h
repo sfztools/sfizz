@@ -25,7 +25,8 @@ public:
     virtual ~IConvertibleToMessage() {}
 
     IPtr<Vst::IMessage> convertToMessage(Vst::ComponentBase* sender) const;
-    static IPtr<T> convertFromMessage(Vst::IMessage& message);
+    bool convertFromMessage(Vst::IMessage& message);
+    static IPtr<T> createFromMessage(Vst::IMessage& message);
 
 protected:
     virtual bool saveToAttributes(Vst::IAttributeList* attrs) const = 0;
@@ -75,25 +76,32 @@ private:
 /**
  * @brief Update which notifies one or more note on/off events
  */
-class NoteUpdate : public Steinberg::FObject {
+class NoteUpdate : public Steinberg::FObject,
+                   public IConvertibleToMessage<NoteUpdate> {
 public:
-    using Item = std::pair<uint32_t, float>;
+    using Item = std::pair<uint32, float>;
 
-    NoteUpdate(const Item* items, uint32 count);
-    const Item* events() const noexcept { return events_.get(); }
-    const uint32_t count() const noexcept { return count_; }
+    NoteUpdate() = default;
+    NoteUpdate(const Item* items, uint32 count) : events_(items, items + count) {}
+    const Item* events() const noexcept { return events_.data(); }
+    const uint32 count() const noexcept { return static_cast<uint32>(events_.size()); }
+
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    bool loadFromAttributes(Vst::IAttributeList* attrs) override;
 
     OBJ_METHODS(NoteUpdate, FObject)
 
 private:
-    std::unique_ptr<Item[]> events_;
-    uint32_t count_ = 0;
+    std::vector<Item> events_;
 };
 
 /**
- * @brief Update which notifies a change of SFZ file.
+ * @brief Abstract update which notifies change of a certain file path.
  */
-class SfzUpdate : public Steinberg::FObject {
+class FilePathUpdate : public Steinberg::FObject {
+protected:
+    FilePathUpdate() = default;
+
 public:
     void setPath(std::string newPath)
     {
@@ -107,7 +115,11 @@ public:
         return path_;
     }
 
-    OBJ_METHODS(SfzUpdate, FObject)
+    OBJ_METHODS(FilePathUpdate, FObject)
+
+protected:
+    bool saveFilePathAttributes_(Vst::IAttributeList* attrs) const;
+    bool loadFilePathAttributes_(Vst::IAttributeList* attrs);
 
 private:
     std::string path_;
@@ -115,9 +127,34 @@ private:
 };
 
 /**
+ * @brief Update which notifies a change of SFZ file.
+ */
+class SfzUpdate : public FilePathUpdate,
+                  public IConvertibleToMessage<SfzUpdate> {
+public:
+    OBJ_METHODS(SfzUpdate, FilePathUpdate)
+
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    bool loadFromAttributes(Vst::IAttributeList* attrs) override;
+};
+
+/**
+ * @brief Update which notifies a change of scala file.
+ */
+class ScalaUpdate : public FilePathUpdate,
+                    public IConvertibleToMessage<ScalaUpdate> {
+public:
+    OBJ_METHODS(ScalaUpdate, FilePathUpdate)
+
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    bool loadFromAttributes(Vst::IAttributeList* attrs) override;
+};
+
+/**
  * @brief Update which notifies a change of SFZ description.
  */
-class SfzDescriptionUpdate : public Steinberg::FObject {
+class SfzDescriptionUpdate : public Steinberg::FObject,
+                             public IConvertibleToMessage<SfzDescriptionUpdate> {
 public:
     void setDescription(std::string newDescription)
     {
@@ -131,6 +168,9 @@ public:
         return description_;
     }
 
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    bool loadFromAttributes(Vst::IAttributeList* attrs) override;
+
     OBJ_METHODS(SfzDescriptionUpdate, FObject)
 
 private:
@@ -139,33 +179,10 @@ private:
 };
 
 /**
- * @brief Update which notifies a change of scala file.
- */
-class ScalaUpdate : public Steinberg::FObject {
-public:
-    void setPath(std::string newPath)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        path_ = std::move(newPath);
-    }
-
-    std::string getPath() const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return path_;
-    }
-
-    OBJ_METHODS(ScalaUpdate, FObject)
-
-private:
-    std::string path_;
-    mutable std::mutex mutex_;
-};
-
-/**
  * @brief Update which indicates the playing SFZ status.
  */
-class PlayStateUpdate : public Steinberg::FObject {
+class PlayStateUpdate : public Steinberg::FObject,
+                        public IConvertibleToMessage<PlayStateUpdate> {
 public:
     void setState(SfizzPlayState newState)
     {
@@ -179,10 +196,45 @@ public:
         return state_;
     }
 
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    virtual bool loadFromAttributes(Vst::IAttributeList* attrs) override;
+
     OBJ_METHODS(PlayStateUpdate, FObject)
 
 private:
     SfizzPlayState state_ {};
+    mutable std::mutex mutex_;
+};
+
+/**
+ * @brief Update which automates a pack of parameters
+ */
+class AutomationUpdate : public Steinberg::FObject,
+                         public IConvertibleToMessage<AutomationUpdate> {
+public:
+    using Item = std::pair<Vst::ParamID, float>;
+
+    AutomationUpdate() = default;
+
+    void setItems(std::vector<Item> newItems)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        items_ = std::move(newItems);
+    }
+
+    std::vector<Item> getItems() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return items_;
+    }
+
+    bool saveToAttributes(Vst::IAttributeList* attrs) const override;
+    bool loadFromAttributes(Vst::IAttributeList* attrs) override;
+
+    OBJ_METHODS(AutomationUpdate, FObject)
+
+private:
+    std::vector<Item> items_;
     mutable std::mutex mutex_;
 };
 

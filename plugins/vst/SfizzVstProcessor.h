@@ -6,6 +6,7 @@
 
 #pragma once
 #include "SfizzVstState.h"
+#include "SfizzVstUpdates.h"
 #include "OrderedEventProcessor.h"
 #include "plugin/RMSFollower.h"
 #include "sfizz/RTSemaphore.h"
@@ -27,6 +28,7 @@ public:
     ~SfizzVstProcessor();
 
     tresult PLUGIN_API initialize(FUnknown* context) override;
+    tresult PLUGIN_API terminate() override;
     tresult PLUGIN_API setBusArrangements(Vst::SpeakerArrangement* inputs, int32 numIns, Vst::SpeakerArrangement* outputs, int32 numOuts) override;
 
     tresult PLUGIN_API connect(IConnectionPoint* other) override;
@@ -56,8 +58,6 @@ public:
 private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
-    Steinberg::IPtr<Vst::IMessage> _loadedSfzMessage;
-    Steinberg::IPtr<Vst::IMessage> _automateMessage;
     bool _isActive = false;
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
@@ -70,6 +70,12 @@ private:
     bool _editorIsOpen = false;
 
     // updates
+    IPtr<QueuedUpdates> _queuedMessages;
+    IPtr<PlayStateUpdate> _playStateUpdate;
+    IPtr<SfzUpdate> _sfzUpdate;
+    IPtr<SfzDescriptionUpdate> _sfzDescriptionUpdate;
+    IPtr<ScalaUpdate> _scalaUpdate;
+    IPtr<AutomationUpdate> _automationUpdate;
     bool processUpdate(FUnknown* changedUnknown, int32 message);
 
     // client

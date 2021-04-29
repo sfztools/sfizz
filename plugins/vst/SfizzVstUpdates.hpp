@@ -10,7 +10,7 @@
 template <class T>
 IPtr<Vst::IMessage> IConvertibleToMessage<T>::convertToMessage(Vst::ComponentBase* sender) const
 {
-    IPtr<Vst::IMessage> message = owned(sender->allocateMessage());
+    IPtr<Vst::IMessage> message = Steinberg::owned(sender->allocateMessage());
     if (!message)
         return nullptr;
     message->setMessageID(static_cast<const T*>(this)->isA());
@@ -20,13 +20,22 @@ IPtr<Vst::IMessage> IConvertibleToMessage<T>::convertToMessage(Vst::ComponentBas
 }
 
 template <class T>
-IPtr<T> IConvertibleToMessage<T>::convertFromMessage(Vst::IMessage& message)
+IPtr<T> IConvertibleToMessage<T>::createFromMessage(Vst::IMessage& message)
 {
     IPtr<T> object;
     if (!strcmp(T::getFClassID(), message.getMessageID())) {
-        object = owned(new T);
+        object = Steinberg::owned(new T);
         if (!object->loadFromAttributes(message.getAttributes()))
             object = nullptr;
     }
     return object;
+}
+
+template <class T>
+bool IConvertibleToMessage<T>::convertFromMessage(Vst::IMessage& message)
+{
+    bool success = false;
+    if (!strcmp(T::getFClassID(), message.getMessageID()))
+        success = loadFromAttributes(message.getAttributes());
+    return success;
 }

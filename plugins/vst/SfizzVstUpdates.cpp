@@ -57,10 +57,118 @@ bool OSCUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
 }
 
 ///
-NoteUpdate::NoteUpdate(const Item* items, uint32 count)
+bool NoteUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
 {
-    Item* copy = new Item[count];
-    std::copy_n(items, count, copy);
-    events_.reset(copy);
-    count_ = count;
+    return attrs->setBinary("Events", events_.data(), events_.size() * sizeof(Item)) == kResultTrue;
+}
+
+bool NoteUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    const void* binData = nullptr;
+    uint32 binSize = 0;
+    if (attrs->getBinary("Events", binData, binSize) != kResultTrue)
+        return false;
+
+    const Item* events = reinterpret_cast<const Item*>(binData);
+    uint32 numEvents = binSize / sizeof(Item);
+
+    events_.assign(events, events + numEvents);
+    return true;
+}
+
+///
+bool FilePathUpdate::saveFilePathAttributes_(Vst::IAttributeList* attrs) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return attrs->setBinary("Path", path_.data(), path_.size()) == kResultTrue;
+}
+
+bool FilePathUpdate::loadFilePathAttributes_(Vst::IAttributeList* attrs)
+{
+    const void* binData = nullptr;
+    uint32 binSize = 0;
+    if (attrs->getBinary("Path", binData, binSize) != kResultTrue)
+        return false;
+    std::lock_guard<std::mutex> lock(mutex_);
+    path_.assign(reinterpret_cast<const char *>(binData), binSize);
+    return true;
+}
+
+///
+bool SfzUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
+{
+    return saveFilePathAttributes_(attrs);
+}
+
+bool SfzUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    return loadFilePathAttributes_(attrs);
+}
+
+///
+bool ScalaUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
+{
+    return saveFilePathAttributes_(attrs);
+}
+
+bool ScalaUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    return loadFilePathAttributes_(attrs);
+}
+
+///
+bool SfzDescriptionUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return attrs->setBinary("Blob", description_.data(), description_.size()) == kResultTrue;
+}
+
+bool SfzDescriptionUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    const void* binData = nullptr;
+    uint32 binSize = 0;
+    if (attrs->getBinary("Blob", binData, binSize) != kResultTrue)
+        return false;
+    std::lock_guard<std::mutex> lock(mutex_);
+    description_.assign(reinterpret_cast<const char *>(binData), binSize);
+    return true;
+}
+
+///
+bool PlayStateUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return attrs->setInt("ActiveVoices", state_.activeVoices) == kResultTrue;
+}
+
+bool PlayStateUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    int64 activeVoices;
+    if (attrs->getInt("ActiveVoices", activeVoices) != kResultTrue)
+        return false;
+    std::lock_guard<std::mutex> lock(mutex_);
+    state_.activeVoices = static_cast<uint32>(activeVoices);
+    return true;
+}
+
+///
+bool AutomationUpdate::saveToAttributes(Vst::IAttributeList* attrs) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return attrs->setBinary("Items", items_.data(), items_.size() * sizeof(Item)) == kResultTrue;
+}
+
+bool AutomationUpdate::loadFromAttributes(Vst::IAttributeList* attrs)
+{
+    const void* binData = nullptr;
+    uint32 binSize = 0;
+    if (attrs->getBinary("Items", binData, binSize) != kResultTrue)
+        return false;
+
+    const Item* events = reinterpret_cast<const Item*>(binData);
+    uint32 numEvents = binSize / sizeof(Item);
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    items_.assign(events, events + numEvents);
+    return true;
 }

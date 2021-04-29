@@ -78,6 +78,20 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     // initialize the update handler
     Steinberg::UpdateHandler::instance();
 
+    _queuedMessages = Steinberg::owned(new QueuedUpdates);
+    _playStateUpdate = Steinberg::owned(new PlayStateUpdate);
+    _sfzUpdate = Steinberg::owned(new SfzUpdate);
+    _sfzDescriptionUpdate = Steinberg::owned(new SfzDescriptionUpdate);
+    _scalaUpdate = Steinberg::owned(new ScalaUpdate);
+    _automationUpdate = Steinberg::owned(new AutomationUpdate);
+
+    _queuedMessages->addDependent(this);
+    _playStateUpdate->addDependent(this);
+    _sfzUpdate->addDependent(this);
+    _sfzDescriptionUpdate->addDependent(this);
+    _scalaUpdate->addDependent(this);
+    _automationUpdate->addDependent(this);
+
     addAudioOutput(STR16("Audio Output"), Vst::SpeakerArr::kStereo);
     addEventInput(STR16("Event Input"), 1);
 
@@ -115,6 +129,18 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     return result;
 }
 
+tresult PLUGIN_API SfizzVstProcessor::terminate()
+{
+    _queuedMessages->removeDependent(this);
+    _playStateUpdate->removeDependent(this);
+    _sfzUpdate->removeDependent(this);
+    _sfzDescriptionUpdate->removeDependent(this);
+    _scalaUpdate->removeDependent(this);
+    _automationUpdate->removeDependent(this);
+
+    return AudioEffect::terminate();
+}
+
 tresult PLUGIN_API SfizzVstProcessor::setBusArrangements(Vst::SpeakerArrangement* inputs, int32 numIns, Vst::SpeakerArrangement* outputs, int32 numOuts)
 {
     bool isStereo = numIns == 0 && numOuts == 1 && outputs[0] == Vst::SpeakerArr::kStereo;
@@ -132,10 +158,7 @@ tresult PLUGIN_API SfizzVstProcessor::connect(IConnectionPoint* other)
         return result;
 
     // when controller connects, send these messages that we couldn't earlier
-    if (_loadedSfzMessage)
-        sendMessage(_loadedSfzMessage);
-    if (_automateMessage)
-        sendMessage(_automateMessage);
+    _queuedMessages->deferUpdate();
 
     return kResultTrue;
 }
@@ -316,7 +339,7 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     synth.sendMessage(client, 0, "/sw/last/current", "", nullptr);
 
     //
-    std::pair<uint32, float> noteEvents[128];
+    NoteUpdate::Item noteEvents[128];
     size_t numNoteEvents = 0;
     for (uint32 key = 0; key < 128; ++key) {
         float value = _noteEventsCurrentCycle[key];
@@ -528,7 +551,7 @@ void SfizzVstProcessor::processMessagesFromUi()
 
 tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 {
-    // Note(jpc) this notification is not necessarily handled by the RT thread
+    // Note(jpc) this notification is not handled by the RT thread
 
     tresult result = AudioEffect::notify(message);
     if (result != kResultFalse)
@@ -563,10 +586,8 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
         _synth->loadScalaFile(_state.scalaFile);
         lock.unlock();
 
-        Steinberg::OPtr<Vst::IMessage> reply { allocateMessage() };
-        reply->setMessageID("LoadedScala");
-        reply->getAttributes()->setBinary("File", _state.scalaFile.data(), _state.scalaFile.size());
-        sendMessage(reply);
+        _scalaUpdate->setPath(_state.scalaFile);
+        _scalaUpdate->deferUpdate();
     }
     else if (!std::strcmp(id, "MidiMessage")) {
         const void* data = nullptr;
@@ -601,7 +622,48 @@ bool SfizzVstProcessor::processUpdate(FUnknown* changedUnknown, int32 message)
         return true;
     }
 
-    // TODO
+    if (OSCUpdate* update = FCast<OSCUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
+    if (PlayStateUpdate* update = FCast<PlayStateUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
+    if (NoteUpdate* update = FCast<NoteUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
+    if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
+    if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
+    if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
+    if (AutomationUpdate* update = FCast<AutomationUpdate>(changedUnknown)) {
+        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
+            sendMessage(message);
+        return true;
+    }
+
     return false;
 }
 
@@ -637,12 +699,6 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool i
 
     const std::string descBlob = getDescriptionBlob(synth.handle());
 
-    Steinberg::OPtr<Vst::IMessage> loadMessage { allocateMessage() };
-    loadMessage->setMessageID("LoadedSfz");
-    Vst::IAttributeList* loadAttrs = loadMessage->getAttributes();
-    loadAttrs->setBinary("File", filePath.data(), filePath.size());
-    loadAttrs->setBinary("Description", descBlob.data(), descBlob.size());
-
     {
         std::vector<absl::optional<float>> newControllers(sfz::config::numCCs);
         const std::vector<absl::optional<float>> oldControllers = std::move(_state.controllers);
@@ -665,26 +721,21 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool i
     }
 
     // create a message which requests the controller to automate initial parameters
-    Steinberg::OPtr<Vst::IMessage> automateMessage { allocateMessage() };
-    automateMessage->setMessageID("Automate");
-    Vst::IAttributeList* automateAttrs = automateMessage->getAttributes();
-    std::string automateBlob;
-    automateBlob.reserve(sfz::config::numCCs * (sizeof(uint32) + sizeof(float)));
+    std::vector<AutomationUpdate::Item> automationItems;
+    automationItems.reserve(sfz::config::numCCs);
     for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
-        uint32 pid = kPidCC0 + cc;
+        Vst::ParamID pid = kPidCC0 + cc;
         float value = _state.controllers[cc].value_or(0.0f);
-        automateBlob.append(reinterpret_cast<const char*>(&pid), sizeof(uint32));
-        automateBlob.append(reinterpret_cast<const char*>(&value), sizeof(float));
+        automationItems.emplace_back(pid, value);
     }
-    automateAttrs->setBinary("Data", automateBlob.data(), uint32(automateBlob.size()));
-
-    // sending can fail if controller is not connected yet, so keep it around
-    _loadedSfzMessage = loadMessage;
-    _automateMessage = automateMessage;
 
     // send message
-    sendMessage(loadMessage);
-    sendMessage(automateMessage);
+    _sfzUpdate->setPath(filePath);
+    _sfzUpdate->deferUpdate();
+    _sfzDescriptionUpdate->setDescription(descBlob);
+    _sfzDescriptionUpdate->deferUpdate();
+    _automationUpdate->setItems(std::move(automationItems));
+    _automationUpdate->deferUpdate();
 }
 
 void SfizzVstProcessor::doBackgroundWork()
@@ -729,16 +780,16 @@ void SfizzVstProcessor::doBackgroundWork()
             _synth->setPreloadSize(value);
         }
         else if (id == kMsgIdReceiveOSC) {
-            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
-            notification->setMessageID("ReceivedMessage");
-            notification->getAttributes()->setBinary("Message", msg->payload<uint8_t>(), msg->size);
-            sendMessage(notification);
+            IPtr<OSCUpdate> update = Steinberg::owned(
+                new OSCUpdate(msg->payload<uint8>(), msg->size));
+            _queuedMessages->enqueue(update);
+            _queuedMessages->deferUpdate();
         }
         else if (id == kMsgIdNoteEvents) {
-            Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
-            notification->setMessageID("NoteEvents");
-            notification->getAttributes()->setBinary("Events", msg->payload<uint8_t>(), msg->size);
-            sendMessage(notification);
+            IPtr<NoteUpdate> update = Steinberg::owned(
+                new NoteUpdate(msg->payload<NoteUpdate::Item>(), msg->size / sizeof(NoteUpdate::Item)));
+            _queuedMessages->enqueue(update);
+            _queuedMessages->deferUpdate();
         }
 
         Clock::time_point currentTime = Clock::now();
@@ -755,10 +806,8 @@ void SfizzVstProcessor::doBackgroundIdle(size_t idleCounter)
     {
         SfizzPlayState ps;
         ps.activeVoices = _synth->getNumActiveVoices();
-        Steinberg::OPtr<Vst::IMessage> notification { allocateMessage() };
-        notification->setMessageID("NotifiedPlayState");
-        notification->getAttributes()->setBinary("PlayState", &ps, sizeof(ps));
-        sendMessage(notification);
+        _playStateUpdate->setState(ps);
+        _playStateUpdate->deferUpdate();
     }
 
     if (idleCounter % 25 == 0) {

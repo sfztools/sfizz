@@ -11,6 +11,7 @@
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
 #include <atomic>
+#include <cassert>
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {
@@ -226,7 +227,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
 
 tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
 {
-    // Note: may be called from any thread (Reaper)
+    // Note: is expected to be called from the controller thread only
 
     tresult result = EditController::notify(message);
     if (result != kResultFalse)
@@ -239,103 +240,62 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
     }
 
     const char* id = message->getMessageID();
-    Vst::IAttributeList* attr = message->getAttributes();
 
     ///
-    auto stringFromBinaryAttribute = [attr](const char* id, absl::string_view& string) -> tresult {
-        const void* data = nullptr;
-        uint32 size = 0;
-        tresult result = attr->getBinary(id, data, size);
-        if (result == kResultTrue)
-            string = absl::string_view(reinterpret_cast<const char*>(data), size);
-        return result;
-    };
-
-    ///
-    if (!strcmp(id, "LoadedSfz")) {
-        absl::string_view sfzFile;
-        absl::string_view sfzDescriptionBlob;
-
-        result = stringFromBinaryAttribute("File", sfzFile);
-        if (result != kResultTrue)
-            return result;
-
-        result = stringFromBinaryAttribute("Description", sfzDescriptionBlob);
-        if (result != kResultTrue)
-            return result;
-
-        sfzUpdate_->setPath(std::string(sfzFile));
+    if (!strcmp(id, SfzUpdate::getFClassID())) {
+        if (!sfzUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
         sfzUpdate_->deferUpdate();
-        sfzDescriptionUpdate_->setDescription(std::string(sfzDescriptionBlob));
+    }
+    else if (!strcmp(id, SfzDescriptionUpdate::getFClassID())) {
+        if (!sfzDescriptionUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
         sfzDescriptionUpdate_->deferUpdate();
     }
-    else if (!strcmp(id, "LoadedScala")) {
-        absl::string_view scalaFile;
-
-        result = stringFromBinaryAttribute("File", scalaFile);
-        if (result != kResultTrue)
-            return result;
-
-        scalaUpdate_->setPath(std::string(scalaFile));
+    else if (!strcmp(id, ScalaUpdate::getFClassID())) {
+        if (!scalaUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
         scalaUpdate_->deferUpdate();
     }
-    else if (!strcmp(id, "NotifiedPlayState")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("PlayState", data, size);
-
-        if (result != kResultTrue)
-            return result;
-
-        playStateUpdate_->setState(*static_cast<const SfizzPlayState*>(data));
+    else if (!strcmp(id, PlayStateUpdate::getFClassID())) {
+        if (!playStateUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
         playStateUpdate_->deferUpdate();
     }
-    else if (!strcmp(id, "ReceivedMessage")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("Message", data, size);
-
-        if (result != kResultTrue)
-            return result;
-
-        IPtr<OSCUpdate> update = Steinberg::owned(
-            new OSCUpdate(reinterpret_cast<const uint8*>(data), size));
-        queuedUpdates_->enqueue(update);
-        queuedUpdates_->deferUpdate();
-    }
-    else if (!strcmp(id, "NoteEvents")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("Events", data, size);
-
-        const auto* events = reinterpret_cast<
-            const std::pair<uint32_t, float>*>(data);
-        uint32 numEvents = size / sizeof(events[0]);
-
-        IPtr<NoteUpdate> update = Steinberg::owned(
-            new NoteUpdate(events, numEvents));
-        queuedUpdates_->enqueue(update);
-        queuedUpdates_->deferUpdate();
-    }
-    else if (!strcmp(id, "Automate")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("Data", data, size);
-
-        if (result != kResultTrue)
-            return result;
-
-        const uint8* pos = reinterpret_cast<const uint8*>(data);
-        const uint8* end = pos + size;
-
-        while (static_cast<size_t>(end - pos) >= sizeof(uint32) + sizeof(float)) {
-            Vst::ParamID pid = *reinterpret_cast<const uint32*>(pos);
-            pos += sizeof(uint32);
-            float value = *reinterpret_cast<const float*>(pos);
-            pos += sizeof(float);
-            #pragma message("setParam() on non-UI thread is dangerous on Reaper, make it deferred instead") //NOLINT
-            setParam(pid, value);
+    else if (!strcmp(id, OSCUpdate::getFClassID())) {
+        IPtr<OSCUpdate> update = OSCUpdate::createFromMessage(*message);
+        if (!update) {
+            assert(false);
+            return kResultFalse;
         }
+        queuedUpdates_->enqueue(update);
+        queuedUpdates_->deferUpdate();
+    }
+    else if (!strcmp(id, NoteUpdate::getFClassID())) {
+        IPtr<NoteUpdate> update = NoteUpdate::createFromMessage(*message);
+        if (!update) {
+            assert(false);
+            return kResultFalse;
+        }
+        queuedUpdates_->enqueue(update);
+        queuedUpdates_->deferUpdate();
+    }
+    else if (!strcmp(id, AutomationUpdate::getFClassID())) {
+        IPtr<AutomationUpdate> update = AutomationUpdate::createFromMessage(*message);
+        if (!update) {
+            assert(false);
+            return kResultFalse;
+        }
+        for (AutomationUpdate::Item item : update->getItems())
+            setParam(item.first, item.second);
     }
 
     return result;
