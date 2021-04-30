@@ -16,6 +16,17 @@ else()
     set(PUREDATA_SUFFIX ".pd_linux")
 endif()
 
+if(APPLE)
+    set(PDPLUGIN_INSTALL_DIR "$ENV{HOME}/Library/Pd" CACHE STRING
+    "Install destination for Puredata bundle [default: $ENV{HOME}/Library/Pd]")
+elseif(MSVC)
+    set(PDPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/Pd/extra" CACHE STRING
+    "Install destination for Puredata bundle [default: ${CMAKE_INSTALL_PREFIX}/Pd/extra]")
+else()
+    set(PDPLUGIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/pd/extra" CACHE STRING
+    "Install destination for Puredata bundle [default: ${CMAKE_INSTALL_PREFIX}/lib/pd/extra]")
+endif()
+
 if(WIN32)
     add_library(pdex-implib STATIC IMPORTED)
     if(MSVC)
