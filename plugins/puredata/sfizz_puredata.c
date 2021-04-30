@@ -237,7 +237,7 @@ static void sfizz_tilde_reload(t_sfizz_tilde* self, t_float value)
 static void sfizz_tilde_hdcc(t_sfizz_tilde* self, t_float f1, t_float f2)
 {
     int cc = (int)f1;
-    if (cc < 0 || cc > 127)
+    if (cc < 0 || cc >= SFIZZ_NUM_CCS)
         return;
     sfizz_automate_hdcc(self->synth, 0, (int)cc, clamp01(f2));
 }

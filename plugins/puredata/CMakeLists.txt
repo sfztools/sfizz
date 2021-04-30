@@ -24,6 +24,7 @@ function(copy_puredata_resources TARGET SOURCE_DIR DESTINATION_DIR)
 endfunction()
 
 add_library(sfizz_puredata MODULE sfizz_puredata.c)
+target_compile_definitions(sfizz_puredata PRIVATE "SFIZZ_NUM_CCS=${SFIZZ_NUM_CCS}")
 target_include_directories(sfizz_puredata PRIVATE "${PUREDATA_INCLUDE_DIR}")
 target_link_libraries(sfizz_puredata PRIVATE sfizz::sfizz)
 
