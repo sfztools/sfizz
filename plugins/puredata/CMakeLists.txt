@@ -25,7 +25,7 @@ endfunction()
 
 add_library(sfizz_puredata MODULE sfizz_puredata.c)
 target_include_directories(sfizz_puredata PRIVATE "${PUREDATA_INCLUDE_DIR}")
-target_link_libraries(sfizz_puredata PRIVATE sfizz::sfizz sfizz::spin_mutex)
+target_link_libraries(sfizz_puredata PRIVATE sfizz::sfizz)
 
 set_target_properties(sfizz_puredata PROPERTIES
     PREFIX ""

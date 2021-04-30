@@ -6,7 +6,6 @@
 
 #include <m_pd.h>
 #include <sfizz.h>
-#include <spin_mutex.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +17,6 @@ typedef struct _sfizz_tilde {
     t_object obj;
     t_outlet* outputs[2];
     sfizz_synth_t* synth;
-    spin_mutex_t* mutex;
     int midi[3];
     int midinum;
     t_symbol* dir;
@@ -44,12 +42,10 @@ static void sfizz_tilde_set_file(t_sfizz_tilde* self, const char* file)
 static bool sfizz_tilde_do_load(t_sfizz_tilde* self)
 {
     bool loaded;
-    spin_mutex_lock(self->mutex);
     if (self->filepath[0] != '\0')
         loaded = sfizz_load_file(self->synth, self->filepath);
     else
         loaded = sfizz_load_string(self->synth, "default.sfz", "<region>sample=*sine");
-    spin_mutex_unlock(self->mutex);
     return loaded;
 }
 
@@ -76,8 +72,6 @@ static void* sfizz_tilde_new(t_symbol* sym, int argc, t_atom argv[])
     sfizz_synth_t* synth = sfizz_create_synth();
     self->synth = synth;
 
-    self->mutex = spin_mutex_create();
-
     sfizz_set_sample_rate(synth, sys_getsr());
     sfizz_set_samples_per_block(synth, sys_getblksize());
 
@@ -96,8 +90,6 @@ static void sfizz_tilde_free(t_sfizz_tilde* self)
         free(self->filepath);
     if (self->synth)
         sfizz_free(self->synth);
-    if (self->mutex)
-        spin_mutex_destroy(self->mutex);
     if (self->outputs[0])
         outlet_free(self->outputs[0]);
     if (self->outputs[1])
@@ -116,14 +108,7 @@ static t_int* sfizz_tilde_perform(t_int* w)
     outputs[1] = (t_sample*)*w++;
     nframes = (t_int)*w++;
 
-    if (spin_mutex_trylock(self->mutex)) {
-        sfizz_render_block(self->synth, outputs, 2, nframes);
-        spin_mutex_unlock(self->mutex);
-    }
-    else {
-        memset(outputs[0], 0, nframes * sizeof(t_sample));
-        memset(outputs[1], 0, nframes * sizeof(t_sample));
-    }
+    sfizz_render_block(self->synth, outputs, 2, nframes);
 
     return w;
 }
@@ -158,10 +143,7 @@ static void sfizz_tilde_midiin(t_sfizz_tilde* self, t_float f)
     case 2:
         switch (midi[0] & 0xf0) {
         case 0xd0: // channel aftertouch
-            if (spin_mutex_trylock(self->mutex)) {
-                sfizz_send_channel_aftertouch(self->synth, 0, midi[1]);
-                spin_mutex_unlock(self->mutex);
-            }
+            sfizz_send_channel_aftertouch(self->synth, 0, midi[1]);
             break;
         }
         break;
@@ -170,35 +152,20 @@ static void sfizz_tilde_midiin(t_sfizz_tilde* self, t_float f)
         case 0x90: // note on
             if (midi[2] == 0)
                 goto noteoff;
-            if (spin_mutex_trylock(self->mutex)) {
-                sfizz_send_note_on(self->synth, 0, midi[1], midi[2]);
-                spin_mutex_unlock(self->mutex);
-            }
+            sfizz_send_note_on(self->synth, 0, midi[1], midi[2]);
             break;
         case 0x80: // note off
         noteoff:
-            if (spin_mutex_trylock(self->mutex)) {
-                sfizz_send_note_off(self->synth, 0, midi[1], midi[2]);
-                spin_mutex_unlock(self->mutex);
-            }
+            sfizz_send_note_off(self->synth, 0, midi[1], midi[2]);
             break;
         case 0xb0: // controller
-            if (spin_mutex_trylock(self->mutex)) {
-                sfizz_send_cc(self->synth, 0, midi[1], midi[2]);
-                spin_mutex_unlock(self->mutex);
-            }
+            sfizz_send_cc(self->synth, 0, midi[1], midi[2]);
             break;
         case 0xa0: // key aftertouch
-            if (spin_mutex_trylock(self->mutex)) {
-                sfizz_send_poly_aftertouch(self->synth, 0, midi[1], midi[2]);
-                spin_mutex_unlock(self->mutex);
-            }
+            sfizz_send_poly_aftertouch(self->synth, 0, midi[1], midi[2]);
             break;
         case 0xe0: // pitch bend
-            if (spin_mutex_trylock(self->mutex)) {
-                sfizz_send_pitch_wheel(self->synth, 0, (midi[1] + (midi[2] << 7)) - 8192);
-                spin_mutex_unlock(self->mutex);
-            }
+            sfizz_send_pitch_wheel(self->synth, 0, (midi[1] + (midi[2] << 7)) - 8192);
             break;
 
         }
@@ -222,10 +189,7 @@ static void sfizz_tilde_reload(t_sfizz_tilde* self, t_float value)
 
 static void sfizz_tilde_hdcc(t_sfizz_tilde* self, t_float cc, t_float value)
 {
-    if (spin_mutex_trylock(self->mutex)) {
-        sfizz_automate_hdcc(self->synth, 0, (int)cc, value);
-        spin_mutex_unlock(self->mutex);
-    }
+    sfizz_automate_hdcc(self->synth, 0, (int)cc, value);
 }
 
 static void sfizz_tilde_voices(t_sfizz_tilde* self, t_float value)
@@ -234,9 +198,7 @@ static void sfizz_tilde_voices(t_sfizz_tilde* self, t_float value)
     if (numvoices < 1)
         numvoices = 1;
 
-    spin_mutex_lock(self->mutex);
     sfizz_set_num_voices(self->synth, numvoices);
-    spin_mutex_unlock(self->mutex);
 }
 
 #if defined(_WIN32)
