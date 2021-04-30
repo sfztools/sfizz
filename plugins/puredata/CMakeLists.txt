@@ -24,7 +24,9 @@ function(copy_puredata_resources TARGET SOURCE_DIR DESTINATION_DIR)
 endfunction()
 
 add_pd_external(sfizz_puredata "sfizz_puredata.c")
-target_compile_definitions(sfizz_puredata PRIVATE "SFIZZ_NUM_CCS=${SFIZZ_NUM_CCS}")
+target_compile_definitions(sfizz_puredata PRIVATE
+    "SFIZZ_NUM_CCS=${SFIZZ_NUM_CCS}"
+    "SFIZZ_VERSION=\"${CMAKE_PROJECT_VERSION}\"")
 target_link_libraries(sfizz_puredata PRIVATE sfizz::sfizz)
 
 set_target_properties(sfizz_puredata PROPERTIES
@@ -35,6 +37,9 @@ if(MINGW)
     set_property(TARGET sfizz_puredata APPEND_STRING
         PROPERTY LINK_FLAGS " -static")
 endif()
+
+# Git build identifier
+target_link_libraries(sfizz_puredata PRIVATE sfizz-git-build-id)
 
 # Copy resources
 copy_puredata_resources(sfizz_puredata
