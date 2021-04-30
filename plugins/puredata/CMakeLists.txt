@@ -23,16 +23,18 @@ function(copy_puredata_resources TARGET SOURCE_DIR DESTINATION_DIR)
     add_dependencies("${TARGET}" "${TARGET}_puredata_resources")
 endfunction()
 
-add_library(sfizz_puredata MODULE sfizz_puredata.c)
+add_pd_external(sfizz_puredata "sfizz_puredata.c")
 target_compile_definitions(sfizz_puredata PRIVATE "SFIZZ_NUM_CCS=${SFIZZ_NUM_CCS}")
-target_include_directories(sfizz_puredata PRIVATE "${PUREDATA_INCLUDE_DIR}")
 target_link_libraries(sfizz_puredata PRIVATE sfizz::sfizz)
 
 set_target_properties(sfizz_puredata PROPERTIES
-    PREFIX ""
-    SUFFIX "${PUREDATA_SUFFIX}"
     OUTPUT_NAME "sfizz"
     LIBRARY_OUTPUT_DIRECTORY "${PUREDATA_BINARY_DIR}/$<0:>")
+
+if(MINGW)
+    set_property(TARGET sfizz_puredata APPEND_STRING
+        PROPERTY LINK_FLAGS " -static")
+endif()
 
 copy_puredata_resources(sfizz_puredata
     "${CMAKE_CURRENT_SOURCE_DIR}"
