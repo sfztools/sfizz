@@ -1,10 +1,11 @@
 find_path(PUREDATA_INCLUDE_DIR "m_pd.h" PATH_SUFFIXES "pd")
 
-if(NOT PUREDATA_INCLUDE_DIR)
-    message(FATAL_ERROR "Cannot find Puredata headers")
+if(PUREDATA_INCLUDE_DIR)
+    message(STATUS "Puredata headers: ${PUREDATA_INCLUDE_DIR}")
+else()
+    message(STATUS "Puredata headers not found, using our own")
+    set(PUREDATA_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/plugins/puredata/external/pd/include")
 endif()
-
-message(STATUS "Puredata headers: ${PUREDATA_INCLUDE_DIR}")
 
 if(WIN32)
     set(PUREDATA_SUFFIX ".dll")
