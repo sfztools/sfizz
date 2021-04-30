@@ -351,6 +351,19 @@ endif()
 # Generic library alias
 add_library(sfizz::sfizz ALIAS sfizz_static)
 
+# Git build identifier
+add_custom_target(sfizz-generate-git-build-id
+    COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+            "-DOUTPUT_FILE=${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c"
+            "-P" "${PROJECT_SOURCE_DIR}/cmake/GitBuildID.cmake"
+    BYPRODUCTS "${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c")
+add_library(sfizz-git-build-id STATIC EXCLUDE_FROM_ALL
+    "sfizz/git-build-id/GitBuildId.h"
+    "${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c")
+target_include_directories(sfizz-git-build-id PUBLIC "sfizz/git-build-id")
+add_dependencies(sfizz-git-build-id sfizz-generate-git-build-id)
+
 # Preserve generated files (Faust)
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)
 
