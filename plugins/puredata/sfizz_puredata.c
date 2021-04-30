@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "GitBuildId.h"
 #include <m_pd.h>
 #include <sfizz.h>
 #include <string.h>
@@ -292,7 +293,10 @@ __attribute__((visibility("default")))
 #endif
 void sfizz_setup()
 {
-    post("sfizz external for Puredata");
+    if (GitBuildId[0])
+        post("sfizz external for Puredata, version '%s.%s'", SFIZZ_VERSION, GitBuildId);
+    else
+        post("sfizz external for Puredata, version '%s'", SFIZZ_VERSION);
 
     cls_sfizz_tilde = class_new(
         gensym("sfizz~"),
