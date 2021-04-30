@@ -15,4 +15,5 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DLV2PLUGIN_INSTALL_DIR=/ \
       -DVSTPLUGIN_INSTALL_DIR=/ \
       -DAUPLUGIN_INSTALL_DIR=/ \
+      -DPDPLUGIN_INSTALL_DIR=/Puredata \
       ..

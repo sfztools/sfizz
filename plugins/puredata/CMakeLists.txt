@@ -36,6 +36,16 @@ if(MINGW)
         PROPERTY LINK_FLAGS " -static")
 endif()
 
+# Copy resources
 copy_puredata_resources(sfizz_puredata
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${PUREDATA_BINARY_DIR}")
+
+# Installation
+if(NOT MSVC)
+    install(DIRECTORY "${PUREDATA_BINARY_DIR}" DESTINATION "${PDPLUGIN_INSTALL_DIR}"
+        COMPONENT "puredata")
+    bundle_dylibs(puredata
+        "${PDPLUGIN_INSTALL_DIR}/sfizz/sfizz${PUREDATA_SUFFIX}"
+        COMPONENT "puredata")
+endif()

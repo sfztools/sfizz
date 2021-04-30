@@ -31,6 +31,13 @@ else
     codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
              "${INSTALL_DIR}"/sfizz.lv2/Contents/Frameworks/*.dylib
   fi
+  # code-sign Puredata and dylibs
+  codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
+           "${INSTALL_DIR}"/Puredata/*/*.pd_darwin
+  if ls "${INSTALL_DIR}"/Puredata/*/*.dylib &> /dev/null; then
+    codesign --sign "${CODESIGN_IDENTITY}" --keychain build.keychain --force --verbose \
+             "${INSTALL_DIR}"/Puredata/*/*.dylib
+  fi
 fi
 
 # Create the DMG
@@ -39,12 +46,13 @@ cat > sfizz-dmg.json << EOF
   "title": "sfizz",
   "background": "${APPVEYOR_BUILD_FOLDER}/mac/dmg-back.png",
   "window": {
-      "size": { "width": 500, "height": 500 }
+      "size": { "width": 650, "height": 500 }
   },
   "contents": [
     { "x": 100, "y": 50, "type": "file", "path": "${INSTALL_DIR}/sfizz.vst3" },
     { "x": 250, "y": 50, "type": "file", "path": "${INSTALL_DIR}/sfizz.component" },
     { "x": 400, "y": 50, "type": "file", "path": "${INSTALL_DIR}/sfizz.lv2" },
+    { "x": 550, "y": 50, "type": "file", "path": "${INSTALL_DIR}/Puredata" },
     { "x": 100, "y": 400, "type": "link", "path": "/Library/Audio/Plug-Ins/VST3" },
     { "x": 250, "y": 400, "type": "link", "path": "/Library/Audio/Plug-Ins/Components" },
     { "x": 400, "y": 400, "type": "link", "path": "/Library/Audio/Plug-Ins/LV2" }
