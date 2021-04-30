@@ -518,7 +518,7 @@ void SfizzVstProcessor::processMessagesFromUi()
                 synth.noteOn(0, data[1] & 0x7f, data[2] & 0x7f);
                 break;
             case 0xb0:
-                synth.automateHdcc(0, data[1] & 0x7f, (data[2] & 0x7f) / 127.0f);
+                synth.automateHdcc(0, data[1] & 0x7f, static_cast<float>(data[2] & 0x7f) / 127.0f);
                 break;
             case 0xe0:
                 synth.pitchWheel(0, (data[2] << 7) + data[1] - 8192);
