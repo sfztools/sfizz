@@ -442,7 +442,7 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
     default:
         if (id >= kPidCC0 && id <= kPidCCLast) {
             int32 ccNumber = static_cast<int32>(id - kPidCC0);
-            synth.hdcc(sampleOffset, ccNumber, value);
+            synth.automateHdcc(sampleOffset, ccNumber, value);
             _state.controllers[ccNumber] = value;
         }
         break;
@@ -518,7 +518,7 @@ void SfizzVstProcessor::processMessagesFromUi()
                 synth.noteOn(0, data[1] & 0x7f, data[2] & 0x7f);
                 break;
             case 0xb0:
-                synth.cc(0, data[1] & 0x7f, data[2] & 0x7f);
+                synth.automateHdcc(0, data[1] & 0x7f, (data[2] & 0x7f) / 127.0f);
                 break;
             case 0xe0:
                 synth.pitchWheel(0, (data[2] << 7) + data[1] - 8192);
@@ -713,7 +713,7 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool i
             for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
                 if (absl::optional<float> value = oldControllers[cc]) {
                     newControllers[cc] = *value;
-                    synth.hdcc(0, int(cc), *value);
+                    synth.automateHdcc(0, int(cc), *value);
                 }
             }
         }
