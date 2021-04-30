@@ -214,7 +214,6 @@ static void sfizz_tilde_midiin(t_sfizz_tilde* self, t_float f)
         case 0xe0: // pitch bend
             sfizz_send_pitch_wheel(self->synth, 0, (midi[1] + (midi[2] << 7)) - 8192);
             break;
-
         }
         break;
     }
