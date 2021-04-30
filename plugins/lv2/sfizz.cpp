@@ -645,7 +645,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
     if (cc != -1) {
         if (atom->type == self->atom_float_uri && atom->size == sizeof(float)) {
             float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
-            sfizz_send_hdcc(self->synth, delay, cc, value);
+            sfizz_automate_hdcc(self->synth, delay, cc, value);
             self->cc_current[cc] = value;
             self->ccauto[cc] = absl::nullopt;
         }
@@ -711,13 +711,28 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         {
             unsigned cc = msg[1];
             float value = float(msg[2]) * (1.0f / 127.0f);
-            sfizz_send_hdcc(self->synth,
-                            (int)ev->time.frames,
-                            (int)cc,
-                            value);
-            self->cc_current[cc] = value;
-            self->ccauto[cc] = value;
-            self->have_ccauto = true;
+
+            switch (cc)
+            {
+            default:
+                {
+                    sfizz_automate_hdcc(self->synth,
+                                        (int)ev->time.frames,
+                                        (int)cc,
+                                        value);
+                    self->cc_current[cc] = value;
+                    self->ccauto[cc] = value;
+                    self->have_ccauto = true;
+                }
+                break;
+            case LV2_MIDI_CTL_ALL_NOTES_OFF:
+                // TODO implemented as all-sound-off
+                sfizz_all_sound_off(self->synth);
+                break;
+            case LV2_MIDI_CTL_ALL_SOUNDS_OFF:
+                sfizz_all_sound_off(self->synth);
+                break;
+            }
         }
         break;
 #endif
@@ -1416,7 +1431,7 @@ restore(LV2_Handle instance,
         absl::optional<float> value = cc_values[cc];
         if (value) {
             // Set CC in the synth
-            sfizz_send_hdcc(self->synth, 0, int(cc), *value);
+            sfizz_automate_hdcc(self->synth, 0, int(cc), *value);
             // Mark CCs for automation with state values
             self->ccauto[cc] = *value;
             self->have_ccauto = true;
