@@ -15,7 +15,7 @@
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {
-    tresult result = EditController::initialize(context);
+    tresult result = EditControllerEx1::initialize(context);
     if (result != kResultTrue)
         return result;
 
@@ -135,7 +135,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 
 tresult PLUGIN_API SfizzVstControllerNoUi::terminate()
 {
-    return EditController::terminate();
+    return EditControllerEx1::terminate();
 }
 
 tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id)
@@ -166,7 +166,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID ta
         }
     }
 
-    return EditController::getParamStringByValue(tag, valueNormalized, string);
+    return EditControllerEx1::getParamStringByValue(tag, valueNormalized, string);
 }
 
 tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized)
@@ -184,7 +184,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID ta
         }
     }
 
-    return EditController::getParamValueByString(tag, string, valueNormalized);
+    return EditControllerEx1::getParamValueByString(tag, string, valueNormalized);
 }
 
 tresult SfizzVstControllerNoUi::setParam(Vst::ParamID tag, float value)
@@ -229,7 +229,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
 {
     // Note: is expected to be called from the controller thread only
 
-    tresult result = EditController::notify(message);
+    tresult result = EditControllerEx1::notify(message);
     if (result != kResultFalse)
         return result;
 

@@ -20,7 +20,7 @@ class SfizzVstEditor;
 using namespace Steinberg;
 using namespace VSTGUI;
 
-class SfizzVstControllerNoUi : public Vst::EditController,
+class SfizzVstControllerNoUi : public Vst::EditControllerEx1,
                                public Vst::IMidiMapping {
 public:
     virtual ~SfizzVstControllerNoUi() {}
@@ -38,11 +38,11 @@ public:
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
     // interfaces
-    OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditController)
+    OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditControllerEx1)
     DEFINE_INTERFACES
     DEF_INTERFACE(Vst::IMidiMapping)
-    END_DEFINE_INTERFACES(Vst::EditController)
-    REFCOUNT_METHODS(Vst::EditController)
+    END_DEFINE_INTERFACES(Vst::EditControllerEx1)
+    REFCOUNT_METHODS(Vst::EditControllerEx1)
 
 protected:
     std::unique_ptr<Vst::ThreadChecker> threadChecker_;
