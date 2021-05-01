@@ -8,10 +8,15 @@
 #include "SfizzVstEditor.h"
 #include "SfizzVstParameters.h"
 #include "SfizzVstIDs.h"
+#include "plugin/InstrumentDescription.h"
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
+#include <absl/strings/match.h>
+#include <ghc/fs_std.hpp>
 #include <atomic>
 #include <cassert>
+
+enum { kProgramListID = 0 };
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {
@@ -31,6 +36,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     sfzDescriptionUpdate_ = Steinberg::owned(new SfzDescriptionUpdate);
     scalaUpdate_ = Steinberg::owned(new ScalaUpdate);
     playStateUpdate_ = Steinberg::owned(new PlayStateUpdate);
+
+    // Unit
+    addUnit(new Vst::Unit(Steinberg::String("Root"), Vst::kRootUnitId, Vst::kNoParentUnitId, kProgramListID));
 
     // Parameters
     Vst::ParamID pid = 0;
@@ -129,6 +137,13 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         }
         midiMapping_[i] = id;
     }
+
+    // Program list
+    IPtr<Vst::ProgramListWithPitchNames> list = Steinberg::owned(
+        new Vst::ProgramListWithPitchNames(Steinberg::String("Programs"), kProgramListID, Vst::kRootUnitId));
+    list->addProgram(Steinberg::String("Default"));
+    addProgramList(list);
+    list->addRef();
 
     return kResultTrue;
 }
@@ -247,6 +262,18 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             assert(false);
             return kResultFalse;
         }
+
+        // update the program name and notify
+        std::string name = fs::u8path(sfzUpdate_->getPath()).filename().u8string();
+        if (absl::EndsWithIgnoreCase(name, ".sfz"))
+            name.resize(name.size() - 4);
+        setProgramName(kProgramListID, 0, Steinberg::String(name.c_str()));
+
+        FUnknownPtr<Vst::IUnitHandler> unitHandler(getComponentHandler());
+        if (unitHandler)
+            unitHandler->notifyProgramListChange(kProgramListID, 0);
+
+        //
         sfzUpdate_->deferUpdate();
     }
     else if (!strcmp(id, SfzDescriptionUpdate::getFClassID())) {
@@ -254,6 +281,29 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             assert(false);
             return kResultFalse;
         }
+
+        // parse the description blob
+        const InstrumentDescription desc = parseDescriptionBlob(
+            sfzDescriptionUpdate_->getDescription());
+
+        // update pitch names and notify
+        Vst::ProgramListWithPitchNames* list =
+            static_cast<Vst::ProgramListWithPitchNames*>(getProgramList(kProgramListID));
+        for (int16 pitch = 0; pitch < 128; ++pitch) {
+            Steinberg::String pitchName;
+            if (!desc.keyLabel[pitch].empty())
+                pitchName = Steinberg::String(desc.keyLabel[pitch].c_str());
+            else if (!desc.keyswitchLabel[pitch].empty())
+                pitchName = Steinberg::String(desc.keyswitchLabel[pitch].c_str());
+
+            list->setPitchName(0, pitch, pitchName);
+        }
+
+        FUnknownPtr<Vst::IUnitHandler> unitHandler(getComponentHandler());
+        if (unitHandler)
+            unitHandler->notifyProgramListChange(kProgramListID, 0);
+
+        //
         sfzDescriptionUpdate_->deferUpdate();
     }
     else if (!strcmp(id, ScalaUpdate::getFClassID())) {
