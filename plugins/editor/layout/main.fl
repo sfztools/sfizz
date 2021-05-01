@@ -11,7 +11,7 @@ widget_class mainView {open
     class Background
   }
   Fl_Group {} {
-    comment {palette=invertedPalette} open
+    comment {palette=invertedPalette} open selected
     xywh {0 0 800 110}
     class LogicalGroup
   } {
@@ -41,27 +41,27 @@ widget_class mainView {open
       }
     }
     Fl_Group {} {open
-      xywh {185 5 395 100} box ROUNDED_BOX
+      xywh {185 5 418 100} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Box {} {
         label {Separator 1}
-        xywh {195 41 375 5} box BORDER_BOX labeltype NO_LABEL
+        xywh {195 41 395 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box {} {
         label {Separator 2}
-        xywh {195 73 375 5} box BORDER_BOX labeltype NO_LABEL
+        xywh {195 73 395 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box sfzFileLabel_ {
         label {DefaultInstrument.sfz}
         comment {tag=kTagLoadSfzFile}
-        xywh {195 13 295 30} labelsize 20 align 20
+        xywh {195 13 320 30} labelsize 20 align 20
         class ClickableLabel
       }
       Fl_Box keyswitchLabel_ {
-        xywh {265 45 305 30} labelsize 20 align 20
+        xywh {265 45 325 35} labelsize 20 align 20
         class Label
       }
       Fl_Box keyswitchBadge_ {
@@ -80,17 +80,17 @@ widget_class mainView {open
       }
       Fl_Button {} {
         comment {tag=kTagPreviousSfzFile}
-        xywh {495 18 25 25} labelsize 24
+        xywh {515 18 25 25} labelsize 24
         class PreviousFileButton
       }
       Fl_Button {} {
         comment {tag=kTagNextSfzFile}
-        xywh {520 18 25 25} labelsize 24
+        xywh {540 18 25 25} labelsize 24
         class NextFileButton
       }
       Fl_Button fileOperationsMenu_ {
         comment {tag=kTagFileOperations}
-        xywh {545 18 25 25} labelsize 24
+        xywh {565 18 25 25} labelsize 24
         class ChevronDropDown
       }
       Fl_Box infoVoicesLabel_ {
@@ -99,30 +99,30 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label {Max:}
-        xywh {325 78 40 25} labelsize 12 align 24
+        xywh {332 78 40 25} labelsize 12 align 24
         class Label
       }
       Fl_Box numVoicesLabel_ {
-        xywh {370 78 35 25} labelsize 12 align 16
+        xywh {378 78 35 25} labelsize 12 align 16
         class Label
       }
       Fl_Box {} {
-        label {Memory:} selected
-        xywh {440 78 60 25} labelsize 12 align 24
+        label {Memory:}
+        xywh {459 78 60 25} labelsize 12 align 24
         class Label
       }
-      Fl_Box memoryLabel_ {selected
-        xywh {505 78 60 25} labelsize 12 align 16
+      Fl_Box memoryLabel_ {
+        xywh {525 78 60 25} labelsize 12 align 16
         class Label
       }
       Fl_Button numVoicesSlider_ {
         comment {tag=kTagSetNumVoices}
-        xywh {405 82 20 20} labelsize 16
+        xywh {420 82 20 20} labelsize 16
         class ChevronValueDropDown
       }
     }
     Fl_Group {} {open
-      xywh {585 5 210 100} box ROUNDED_BOX
+      xywh {608 5 187 100} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Dial {} {
@@ -137,21 +137,21 @@ widget_class mainView {open
       Fl_Box volumeCCKnob_ {
         label Volume
         comment {tag=kTagSetCCVolume}
-        xywh {595 10 70 90} box BORDER_BOX labelsize 12 align 17
+        xywh {614 10 70 90} box BORDER_BOX labelsize 12 align 17
         class KnobCCBox
       }
       Fl_Box panCCKnob_ {
         label Pan
         comment {tag=kTagSetCCPan}
-        xywh {670 10 70 90} box BORDER_BOX labelsize 12 align 17
+        xywh {691 10 70 90} box BORDER_BOX labelsize 12 align 17
         class KnobCCBox
       }
       Fl_Box leftMeter_ {
-        xywh {750 15 15 85} box BORDER_BOX
+        xywh {767 10 9 90} box BORDER_BOX
         class VMeter
       }
       Fl_Box rightMeter_ {
-        xywh {770 15 15 85} box BORDER_BOX
+        xywh {779 10 9 90} box BORDER_BOX
         class VMeter
       }
     }
