@@ -349,10 +349,31 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             keyswitches_[idKeyswitch++] = info;
         }
 
-        Vst::IComponentHandler* componentHandler = getComponentHandler();
-        if (componentHandler)
+        if (Vst::IComponentHandler* componentHandler = getComponentHandler())
             // NOTE(jpc) I think that's the right one, but it needs confirmation
             componentHandler->restartComponent(Vst::kNoteExpressionChanged);
+
+        // update the parameter titles and notify
+        for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
+            Vst::ParamID pid = kPidCC0 + cc;
+            Vst::Parameter* param = getParameterObject(pid);
+            Vst::ParameterInfo& info = param->getInfo();
+            Steinberg::String title;
+            Steinberg::String shortTitle;
+            if (!desc.ccLabel[cc].empty()) {
+                title = desc.ccLabel[cc].c_str();
+                shortTitle = title;
+            }
+            else {
+                title.printf("Controller %u", cc);
+                shortTitle.printf("CC%u", cc);
+            }
+            title.copyTo(info.title);
+            shortTitle.copyTo(info.shortTitle);
+        }
+
+        if (Vst::IComponentHandler* componentHandler = getComponentHandler())
+            componentHandler->restartComponent(Vst::kParamTitlesChanged);
 
         //
         sfzDescriptionUpdate_->deferUpdate();
