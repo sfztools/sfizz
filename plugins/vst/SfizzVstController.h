@@ -11,6 +11,7 @@
 #include "public.sdk/source/vst/vstparameters.h"
 #include "public.sdk/source/common/threadchecker.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
+#include "pluginterfaces/vst/ivstnoteexpression.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include <sfizz_message.h>
 #include <mutex>
@@ -21,7 +22,8 @@ using namespace Steinberg;
 using namespace VSTGUI;
 
 class SfizzVstControllerNoUi : public Vst::EditControllerEx1,
-                               public Vst::IMidiMapping {
+                               public Vst::IMidiMapping,
+                               public Vst::IKeyswitchController {
 public:
     virtual ~SfizzVstControllerNoUi() {}
 
@@ -29,6 +31,9 @@ public:
     tresult PLUGIN_API terminate() override;
 
     tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id) override;
+
+    int32 PLUGIN_API getKeyswitchCount (int32 busIndex, int16 channel) override;
+    tresult PLUGIN_API getKeyswitchInfo (int32 busIndex, int16 channel, int32 keySwitchIndex, Vst::KeyswitchInfo& info) override;
 
     tresult PLUGIN_API getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) override;
     tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized) override;
@@ -41,6 +46,7 @@ public:
     OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditControllerEx1)
     DEFINE_INTERFACES
     DEF_INTERFACE(Vst::IMidiMapping)
+    DEF_INTERFACE(Vst::IKeyswitchController)
     END_DEFINE_INTERFACES(Vst::EditControllerEx1)
     REFCOUNT_METHODS(Vst::EditControllerEx1)
 
@@ -52,6 +58,7 @@ protected:
     Steinberg::IPtr<ScalaUpdate> scalaUpdate_;
     Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
     Vst::ParamID midiMapping_[Vst::kCountCtrlNumber] {};
+    std::vector<Vst::KeyswitchInfo> keyswitches_;
 };
 
 class SfizzVstController : public SfizzVstControllerNoUi, public VSTGUI::VST3EditorDelegate {
