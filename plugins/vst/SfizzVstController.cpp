@@ -167,6 +167,30 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 bus
     return kResultTrue;
 }
 
+int32 PLUGIN_API SfizzVstControllerNoUi::getKeyswitchCount(int32 busIndex, int16 channel)
+{
+    (void)channel;
+
+    if (busIndex != 0)
+        return 0;
+
+    return keyswitches_.size();
+}
+
+tresult PLUGIN_API SfizzVstControllerNoUi::getKeyswitchInfo(int32 busIndex, int16 channel, int32 keySwitchIndex, Vst::KeyswitchInfo& info)
+{
+    (void)channel;
+
+    if (busIndex != 0)
+        return kResultFalse;
+
+    if (keySwitchIndex < 0 || keySwitchIndex >= keyswitches_.size())
+        return kResultFalse;
+
+    info = keyswitches_[keySwitchIndex];
+    return kResultTrue;
+}
+
 tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string)
 {
     switch (tag) {
@@ -291,9 +315,9 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
             static_cast<Vst::ProgramListWithPitchNames*>(getProgramList(kProgramListID));
         for (int16 pitch = 0; pitch < 128; ++pitch) {
             Steinberg::String pitchName;
-            if (!desc.keyLabel[pitch].empty())
+            if (desc.keyUsed.test(pitch) && !desc.keyLabel[pitch].empty())
                 pitchName = Steinberg::String(desc.keyLabel[pitch].c_str());
-            else if (!desc.keyswitchLabel[pitch].empty())
+            else if (desc.keyswitchUsed.test(pitch) && !desc.keyswitchLabel[pitch].empty())
                 pitchName = Steinberg::String(desc.keyswitchLabel[pitch].c_str());
 
             list->setPitchName(0, pitch, pitchName);
@@ -302,6 +326,33 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         FUnknownPtr<Vst::IUnitHandler> unitHandler(getComponentHandler());
         if (unitHandler)
             unitHandler->notifyProgramListChange(kProgramListID, 0);
+
+        // update the key switches and notify
+        size_t idKeyswitch = 0;
+        for (int16 pitch = 0; pitch < 128; ++pitch)
+            idKeyswitch += desc.keyswitchUsed.test(pitch);
+        keyswitches_.resize(idKeyswitch);
+
+        idKeyswitch = 0;
+        for (int16 pitch = 0; pitch < 128; ++pitch) {
+            if (!desc.keyswitchUsed.test(pitch))
+                continue;
+            Vst::KeyswitchInfo info {};
+            info.typeId = Vst::kNoteOnKeyswitchTypeID;
+            Steinberg::String(desc.keyswitchLabel[pitch].c_str()).copyTo(info.title);
+            Steinberg::String(desc.keyswitchLabel[pitch].c_str()).copyTo(info.shortTitle);
+            info.keyswitchMin = pitch; // TODO reexamine this when supporting keyswitch groups
+            info.keyswitchMax = pitch; // TODO reexamine this when supporting keyswitch groups
+            info.keyRemapped = pitch;
+            info.unitId = Vst::kRootUnitId;
+            info.flags = 0;
+            keyswitches_[idKeyswitch++] = info;
+        }
+
+        Vst::IComponentHandler* componentHandler = getComponentHandler();
+        if (componentHandler)
+            // NOTE(jpc) I think that's the right one, but it needs confirmation
+            componentHandler->restartComponent(Vst::kNoteExpressionChanged);
 
         //
         sfzDescriptionUpdate_->deferUpdate();
