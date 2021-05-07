@@ -305,14 +305,18 @@ std::string getProcessorName()
     std::string name;
     std::string line;
     std::ifstream in("/proc/cpuinfo", std::ios::binary);
-    std::regex re("^model name\\s*:\\s*(.*)");
+    try {
+        std::regex re("^model name\\s*:\\s*(.*)");
 
-    line.reserve(256);
+        line.reserve(256);
 
-    while (name.empty() && std::getline(in, line) && !line.empty()) {
-        std::smatch match;
-        if (std::regex_match(line, match, re))
-            name = match[1];
+        while (name.empty() && std::getline(in, line) && !line.empty()) {
+            std::smatch match;
+            if (std::regex_match(line, match, re))
+                name = match[1];
+        }
+    } catch (const std::exception& e) {
+        fprintf(stderr, "[sfizz] can't get processor name: %s\n", e.what());
     }
 
     if (name.empty())
