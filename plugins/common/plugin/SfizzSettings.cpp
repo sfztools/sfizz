@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SfizzSettings.h"
+#include "NativeHelpers.h"
 #include <memory>
 #include <cstdlib>
 
@@ -112,16 +113,7 @@ bool SfizzSettings::store(const char* name, absl::string_view value)
 
 static const fs::path getSettingsPath()
 {
-    fs::path dirPath;
-    const char* env;
-    if ((env = getenv("XDG_CONFIG_HOME")) && env[0] == '/')
-        dirPath = fs::path(env);
-    else if ((env = getenv("HOME")) && env[0] == '/')
-        dirPath = fs::path(env) / ".config";
-    else
-        return {};
-    dirPath /= "SFZTools";
-    dirPath /= "sfizz";
+    const fs::path dirPath = getXdgConfigHome() / "SFZTools" / "sfizz";
     std::error_code ec;
     fs::create_directories(dirPath, ec);
     if (ec)

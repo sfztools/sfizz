@@ -6,5 +6,13 @@
 
 #pragma once
 #include <ghc/fs_std.hpp>
+#include <vector>
 
 const fs::path& getUserDocumentsDirectory();
+
+#if !defined(_WIN32) && !defined(__APPLE__)
+const fs::path& getUserHomeDirectory();
+const fs::path& getXdgConfigHome();
+struct XdgUserDirsEntry { std::string name; fs::path value; };
+std::vector<XdgUserDirsEntry> parseXdgUserDirs(const fs::path& userDirsPath);
+#endif

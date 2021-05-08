@@ -41,10 +41,6 @@ elseif(APPLE)
     target_link_libraries(plugins-common PRIVATE
         "${APPLE_FOUNDATION_LIBRARY}")
 else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GLIB REQUIRED glib-2.0)
-    target_include_directories(plugins-common PRIVATE ${GLIB_INCLUDE_DIRS})
-    target_link_libraries(plugins-common PRIVATE ${GLIB_LIBRARIES})
 endif()
 
 if((SFIZZ_LV2 AND SFIZZ_LV2_UI) OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
