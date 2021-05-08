@@ -5,33 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "NativeHelpers.h"
+#include "plugin/NativeHelpers.h"
 
 #if defined(_WIN32)
 #include "ghc/fs_std.hpp"
 #include <windows.h>
 #include <cstring>
-
-static WCHAR *stringToWideChar(const char *str, int strCch = -1)
-{
-    unsigned strSize = MultiByteToWideChar(CP_UTF8, 0, str, strCch, nullptr, 0);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<WCHAR[]> strW(new WCHAR[strSize]);
-    if (MultiByteToWideChar(CP_UTF8, 0, str, strCch, strW.get(), strSize) == 0)
-        return {};
-    return strW.release();
-}
-
-static char* stringToUTF8(const wchar_t *strW, int strWCch = -1)
-{
-    unsigned strSize = WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, nullptr, 0, nullptr, nullptr);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<char[]> str(new char[strSize]);
-    if (WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, str.get(), strSize, nullptr, nullptr) == 0)
-        return {};
-    return str.release();
-}
 
 bool openFileInExternalEditor(const char *filename)
 {
