@@ -37,28 +37,6 @@ static HKEY openRegistryKey()
     return key;
 }
 
-static WCHAR* stringToWideChar(const char *str, int strCch = -1)
-{
-    unsigned strSize = MultiByteToWideChar(CP_UTF8, 0, str, strCch, nullptr, 0);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<WCHAR[]> strW(new WCHAR[strSize]);
-    if (MultiByteToWideChar(CP_UTF8, 0, str, strCch, strW.get(), strSize) == 0)
-        return {};
-    return strW.release();
-}
-
-static char* stringToUTF8(const wchar_t *strW, int strWCch = -1)
-{
-    unsigned strSize = WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, nullptr, 0, nullptr, nullptr);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<char[]> str(new char[strSize]);
-    if (WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, str.get(), strSize, nullptr, nullptr) == 0)
-        return {};
-    return str.release();
-}
-
 absl::optional<std::string> SfizzSettings::load(const char* name)
 {
     std::unique_ptr<WCHAR[]> nameW { stringToWideChar(name) };

@@ -25,6 +25,28 @@ const fs::path& getUserDocumentsDirectory()
     }();
     return directory;
 }
+
+wchar_t *stringToWideChar(const char *str, int strCch)
+{
+    unsigned strSize = MultiByteToWideChar(CP_UTF8, 0, str, strCch, nullptr, 0);
+    if (strSize == 0)
+        return {};
+    std::unique_ptr<wchar_t[]> strW(new wchar_t[strSize]);
+    if (MultiByteToWideChar(CP_UTF8, 0, str, strCch, strW.get(), strSize) == 0)
+        return {};
+    return strW.release();
+}
+
+char* stringToUTF8(const wchar_t *strW, int strWCch)
+{
+    unsigned strSize = WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, nullptr, 0, nullptr, nullptr);
+    if (strSize == 0)
+        return {};
+    std::unique_ptr<char[]> str(new char[strSize]);
+    if (WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, str.get(), strSize, nullptr, nullptr) == 0)
+        return {};
+    return str.release();
+}
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
