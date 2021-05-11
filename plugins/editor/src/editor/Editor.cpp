@@ -1998,4 +1998,5 @@ void Editor::Impl::onThemeChanged()
         if (function)
             function();
     }
+    frame_->invalid();
 }
