@@ -1,0 +1,601 @@
+LIBRARY pd
+EXPORTS
+    ABORT
+    array_free
+    array_getcoordinate
+    array_getfields
+    array_new
+    array_redraw
+    array_resize
+    array_resize_and_redraw
+    atom_gensym
+    atom_getfloat
+    atom_getfloatarg
+    atom_getint
+    atom_getintarg
+    atom_getsymbol
+    atom_getsymbolarg
+    atom_string
+    audio_isopen
+    audio_shouldkeepopen
+    binbuf_add
+    binbuf_addbinbuf
+    binbuf_addsemi
+    binbuf_addv
+    binbuf_clear
+    binbuf_duplicate
+    binbuf_eval
+    binbuf_evalfile
+    binbuf_free
+    binbuf_getnatom
+    binbuf_gettext
+    binbuf_getvec
+    binbuf_new
+    binbuf_print
+    binbuf_read
+    binbuf_read_via_canvas
+    binbuf_read_via_path
+    binbuf_realizedollsym
+    binbuf_resize
+    binbuf_restore
+    binbuf_text
+    binbuf_write
+    bug
+    canvas_addinlet
+    canvas_addoutlet
+    canvas_class DATA
+    canvas_closebang
+    canvas_connect
+    canvas_create_editor
+    canvas_dataproperties
+    canvas_deletelinesfor
+    canvas_deletelinesforio
+    canvas_destroy_editor
+    canvas_dirty
+    canvas_disconnect
+    canvas_dspstate DATA
+    canvas_editmode
+    canvas_fixlinesfor
+    canvas_free
+    canvas_getargs
+    canvas_getcurrent
+    canvas_getcurrentdir
+    canvas_getdir
+    canvas_getdollarzero
+    canvas_getenv
+    canvas_getindex
+    canvas_getrootfor
+    canvas_hitbox
+    canvas_initbang
+    canvas_isabstraction
+    canvas_isconnected
+    canvas_istable
+    canvas_loadbang
+    canvas_makebindsym
+    canvas_makefilename
+    canvas_new
+    canvas_noundo
+    canvas_open
+    canvas_path_iterate
+    canvas_readscalar
+    canvas_realizedollar
+    canvas_redraw
+    canvas_redrawallfortemplate
+    canvas_redrawallfortemplatecanvas
+    canvas_rename
+    canvas_resortinlets
+    canvas_resortoutlets
+    canvas_restoreconnections
+    canvas_resume_dsp
+    canvas_rminlet
+    canvas_rmoutlet
+    canvas_selectinrect
+    canvas_setargs
+    canvas_setcurrent
+    canvas_setcursor
+    canvas_setdeleting
+    canvas_setundo
+    canvas_showtext
+    canvas_stowconnections
+    canvas_suspend_dsp
+    canvas_unsetcurrent
+    canvas_update_dsp
+    canvas_updatewindowlist
+    canvas_vis
+    canvas_whichfind DATA
+    canvas_writescalar
+    class_addanything
+    class_addbang
+    class_addcreator
+    class_addlist
+    class_addmethod
+    class_addpointer
+    class_addsymbol
+    class_doaddfloat
+    class_domainsignalin
+    class_gethelpdir
+    class_gethelpname
+    class_getname
+    class_getpropertiesfn
+    class_getsavefn
+    class_isdrawcommand
+    class_new
+    class_new64
+    class_set_extern_dir
+    class_setdrawcommand
+    class_sethelpsymbol
+    class_setparentwidget
+    class_setpropertiesfn
+    class_setsavefn
+    class_setwidget
+    clock_delay
+    clock_free
+    clock_getlogicaltime
+    clock_getsystime
+    clock_getsystimeafter
+    clock_gettimesince
+    clock_gettimesincewithunits
+    clock_new
+    clock_set
+    clock_setunit
+    clock_unset
+    clone_class DATA
+    copy_perform
+    copybytes
+    cos_table DATA
+    dbtopow
+    dbtorms
+    dsp_add
+    dsp_add_copy
+    dsp_add_plus
+    dsp_add_scalarcopy
+    dsp_add_zero
+    dsp_addv
+    endpost
+    error
+    ex_Avg
+    ex_Sum
+    ex_avg
+    ex_funcs DATA
+    ex_getsym
+    ex_mkvector
+    ex_size
+    ex_store
+    ex_sum
+    ex_symname
+    fielddesc_cvtfromcoord
+    fielddesc_cvttocoord
+    fielddesc_getcoord
+    fielddesc_setcoord
+    floatinlet_new
+    freebytes
+    ftom
+    g_editor_freepdinstance
+    g_editor_newpdinstance
+    g_template_freepdinstance
+    g_template_newpdinstance
+    garray_class DATA
+    garray_getarray
+    garray_getfloatarray
+    garray_getfloatwords
+    garray_getglist
+    garray_npoints
+    garray_redraw
+    garray_resize
+    garray_resize_long
+    garray_setsaveit
+    garray_template
+    garray_usedindsp
+    garray_vec
+    gensym
+    get_sys_dacsr
+    get_sys_main_advance
+    get_sys_schedadvance
+    get_sys_schedblocksize
+    get_sys_sleepgrain
+    get_sys_soundin
+    get_sys_soundout
+    get_sys_time
+    get_sys_time_per_dsp_tick
+    getbytes
+    getfn
+    getzbytes
+    gfxstub_deleteforkey
+    gfxstub_new
+    glist_add
+    glist_addglist
+    glist_arraydialog
+    glist_clear
+    glist_delete
+    glist_deselect
+    glist_dpixtodx
+    glist_dpixtody
+    glist_drawiofor
+    glist_eraseiofor
+    glist_findgraph
+    glist_findrtext
+    glist_fontheight
+    glist_fontwidth
+    glist_getcanvas
+    glist_getfont
+    glist_getnextxy
+    glist_getzoom
+    glist_glist
+    glist_grab
+    glist_init
+    glist_isgraph
+    glist_isselected
+    glist_istoplevel
+    glist_isvisible
+    glist_mergefile
+    glist_noselect
+    glist_pixelstox
+    glist_pixelstoy
+    glist_read
+    glist_redraw
+    glist_retext
+    glist_select
+    glist_selectall
+    glist_sort
+    glist_valid DATA
+    glist_writetobinbuf
+    glist_xtopixels
+    glist_ytopixels
+    glob_evalfile
+    glob_initfromgui
+    glob_pdobject DATA
+    glob_quit
+    glob_setfilename
+    gobj_activate
+    gobj_click
+    gobj_delete
+    gobj_displace
+    gobj_getrect
+    gobj_save
+    gobj_select
+    gobj_shouldvis
+    gobj_vis
+    gpointer_check
+    gpointer_copy
+    gpointer_init
+    gpointer_setarray
+    gpointer_setglist
+    gpointer_unset
+    graph_array
+    gstub_cutoff
+    gstub_new
+    gtemplate_get
+    guiconnect_new
+    guiconnect_notarget
+    iem_fstyletoint
+    iem_inttofstyle
+    iem_inttosymargs
+    iem_symargstoint
+    iemgui_all_dollar2raute
+    iemgui_all_dollararg2sym
+    iemgui_all_loadcolors
+    iemgui_all_raute2dollar
+    iemgui_all_sym2dollararg
+    iemgui_clip_font
+    iemgui_clip_size
+    iemgui_color
+    iemgui_color_hex DATA
+    iemgui_delete
+    iemgui_delta
+    iemgui_dialog
+    iemgui_displace
+    iemgui_dollar2raute
+    iemgui_label
+    iemgui_label_font
+    iemgui_label_pos
+    iemgui_new_dogetname
+    iemgui_new_getnames
+    iemgui_newzoom
+    iemgui_pos
+    iemgui_properties
+    iemgui_raute2dollar
+    iemgui_receive
+    iemgui_save
+    iemgui_select
+    iemgui_send
+    iemgui_size
+    iemgui_verify_snd_ne_rcv
+    iemgui_vis
+    iemgui_vu_col DATA
+    iemgui_vu_db2i DATA
+    iemgui_vu_scale_str DATA
+    iemgui_zoom
+    ilog2
+    inlet_free
+    inlet_new
+    inmidi_aftertouch
+    inmidi_byte
+    inmidi_controlchange
+    inmidi_noteon
+    inmidi_pitchbend
+    inmidi_polyaftertouch
+    inmidi_programchange
+    inmidi_realtimein
+    inmidi_sysex
+    linetraverser_next
+    linetraverser_skipobject
+    linetraverser_start
+    logpost
+    max_ex_tab
+    max_ex_tab_store
+    max_ex_var
+    max_ex_var_store
+    mayer_fft
+    mayer_fht
+    mayer_ifft
+    mayer_realfft
+    mayer_realifft
+    midi_getdevs
+    mmio_close_audio
+    mmio_getdevs
+    mmio_open_audio
+    mmio_reportidle
+    mmio_send_dacs
+    mtof
+    namelist_append
+    namelist_append_files
+    namelist_free
+    namelist_get
+    nullfn
+    obj_connect
+    obj_disconnect
+    obj_issignalinlet
+    obj_issignaloutlet
+    obj_list
+    obj_nexttraverseoutlet
+    obj_ninlets
+    obj_noutlets
+    obj_nsiginlets
+    obj_nsigoutlets
+    obj_saveformat
+    obj_siginletindex
+    obj_sigoutletindex
+    obj_starttraverseoutlet
+    open_via_helppath
+    open_via_path
+    outlet_anything
+    outlet_bang
+    outlet_float
+    outlet_free
+    outlet_getsymbol
+    outlet_list
+    outlet_new
+    outlet_pointer
+    outlet_setstacklim
+    outlet_symbol
+    pa_close_audio
+    pa_getdevs
+    pa_open_audio
+    pa_send_dacs
+    pd_bang
+    pd_bind
+    pd_canvasmaker DATA
+    pd_checkglist
+    pd_checkobject
+    pd_compatibilitylevel DATA
+    pd_emptylist
+    pd_error
+    pd_fft
+    pd_findbyclass
+    pd_float
+    pd_forwardmess
+    pd_free
+    pd_getcanvaslist
+    pd_getdspstate
+    pd_getparentwidget
+    pd_globallock
+    pd_globalunlock
+    pd_list
+    pd_maininstance DATA
+    pd_new
+    pd_newest
+    pd_objectmaker DATA
+    pd_pointer
+    pd_popsym
+    pd_pushsym
+    pd_symbol
+    pd_typedmess
+    pd_unbind
+    pd_vmess
+    plus_perform
+    pointerinlet_new
+    post
+    postatom
+    postfloat
+    poststring
+    powtodb
+    q8_rsqrt
+    q8_sqrt
+    qrsqrt
+    qsqrt
+    resample_dsp
+    resample_free
+    resample_init
+    resamplefrom_dsp
+    resampleto_dsp
+    resizebytes
+    rmstodb
+    rtext_activate
+    rtext_displace
+    rtext_draw
+    rtext_erase
+    rtext_free
+    rtext_getseltext
+    rtext_gettag
+    rtext_gettext
+    rtext_height
+    rtext_key
+    rtext_mouse
+    rtext_new
+    rtext_retext
+    rtext_select
+    rtext_width
+    s_ DATA
+    s__N DATA
+    s__X DATA
+    s_anything DATA
+    s_bang DATA
+    s_float DATA
+    s_list DATA
+    s_pointer DATA
+    s_signal DATA
+    s_symbol DATA
+    s_x DATA
+    s_y DATA
+    scalar_class DATA
+    scalar_getbasexy
+    scalar_new
+    scalar_redraw
+    sched_geteventno
+    sched_set_using_audio
+    sched_tick
+    signalinlet_new
+    socketreceiver_new
+    socketreceiver_read
+    startpost
+    symbolinlet_new
+    sys_addhist
+    sys_addpollfn
+    sys_advance_samples DATA
+    sys_audioapi DATA
+    sys_audiodevnametonumber
+    sys_audiodevnumbertoname
+    sys_bail
+    sys_bashfilename
+    sys_clearhist
+    sys_close
+    sys_close_audio
+    sys_close_midi
+    sys_closesocket
+    sys_debuglevel DATA
+    sys_decodedialog
+    sys_defaultfont DATA
+    sys_defeatrt DATA
+    sys_do_open_midi
+    sys_externalschedlib DATA
+    sys_fclose
+    sys_flags DATA
+    sys_font DATA
+    sys_fontheight
+    sys_fontweight DATA
+    sys_fontwidth
+    sys_fopen
+    sys_get_audio_apis
+    sys_get_audio_devs
+    sys_get_audio_params
+    sys_get_inchannels
+    sys_get_midi_apis
+    sys_get_midi_devs
+    sys_get_midi_params
+    sys_get_outchannels
+    sys_getblksize
+    sys_getmeters
+    sys_getrealtime
+    sys_getsr
+    sys_getversion
+    sys_gui
+    sys_guicmd DATA
+    sys_havegui
+    sys_hipriority DATA
+    sys_hostfontsize
+    sys_idlehook DATA
+    sys_init_fdpoll
+    sys_initmidiqueue
+    sys_isabsolutepath
+    sys_libdir DATA
+    sys_listdevs
+    sys_listmididevs
+    sys_load_lib
+    sys_loadpreferences
+    sys_lock
+    sys_log_error
+    sys_logerror
+    sys_microsleep
+    sys_midiapi DATA
+    sys_midibytein
+    sys_mididevnametonumber
+    sys_mididevnumbertoname
+    sys_midiindevlist DATA
+    sys_midioutdevlist DATA
+    sys_nearestfontsize
+    sys_nmidiin DATA
+    sys_nmidiout DATA
+    sys_noloadbang DATA
+    sys_open
+    sys_open_absolute
+    sys_open_midi
+    sys_ouch
+    sys_poll_midi
+    sys_pollgui
+    sys_pollmidiqueue
+    sys_pretendguibytes
+    sys_printhook DATA
+    sys_printtostderr DATA
+    sys_putmidibyte
+    sys_putmidimess
+    sys_queuegui
+    sys_register_loader
+    sys_reopen_audio
+    sys_reopen_midi
+    sys_reportidle
+    sys_rmpollfn
+    sys_save_audio_params
+    sys_savepreferences
+    sys_schedadvance DATA
+    sys_send_dacs
+    sys_set_audio_api
+    sys_set_audio_settings
+    sys_set_audio_settings_reopen
+    sys_set_audio_state
+    sys_set_midi_api
+    sys_setchsr
+    sys_setextrapath
+    sys_setmiditimediff
+    sys_sleepgrain DATA
+    sys_sockerror
+    sys_trylock
+    sys_trytoopenone
+    sys_unbashfilename
+    sys_unixerror
+    sys_unlock
+    sys_unqueuegui
+    sys_usestdpath DATA
+    sys_verbose DATA
+    sys_vgui
+    sys_zoom_open DATA
+    sys_zoomfontheight
+    sys_zoomfontwidth
+    template_find_field
+    template_findbyname
+    template_findcanvas
+    template_free
+    template_getfloat
+    template_getsymbol
+    template_match
+    template_new
+    template_notify
+    template_setfloat
+    template_setsymbol
+    text_drawborder
+    text_eraseborder
+    text_setto
+    text_widgetbehavior DATA
+    text_xpix
+    text_ypix
+    value_get
+    value_getfloat
+    value_release
+    value_setfloat
+    verbose
+    vinlet_class DATA
+    voutlet_class DATA
+    word_free
+    word_init
+    word_restore
+    zero_perform
+    zgetfn

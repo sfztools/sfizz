@@ -5,33 +5,12 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "NativeHelpers.h"
+#include "plugin/NativeHelpers.h"
 
 #if defined(_WIN32)
 #include "ghc/fs_std.hpp"
 #include <windows.h>
 #include <cstring>
-
-static WCHAR *stringToWideChar(const char *str, int strCch = -1)
-{
-    unsigned strSize = MultiByteToWideChar(CP_UTF8, 0, str, strCch, nullptr, 0);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<WCHAR[]> strW(new WCHAR[strSize]);
-    if (MultiByteToWideChar(CP_UTF8, 0, str, strCch, strW.get(), strSize) == 0)
-        return {};
-    return strW.release();
-}
-
-static char* stringToUTF8(const wchar_t *strW, int strWCch = -1)
-{
-    unsigned strSize = WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, nullptr, 0, nullptr, nullptr);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<char[]> str(new char[strSize]);
-    if (WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, str.get(), strSize, nullptr, nullptr) == 0)
-        return {};
-    return str.release();
-}
 
 bool openFileInExternalEditor(const char *filename)
 {
@@ -163,8 +142,9 @@ std::string getCurrentProcessName()
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <absl/strings/strip.h>
+#include <absl/strings/string_view.h>
 #include <vector>
-#include <regex>
 #include <fstream>
 #include <cstring>
 #include <cerrno>
@@ -305,14 +285,22 @@ std::string getProcessorName()
     std::string name;
     std::string line;
     std::ifstream in("/proc/cpuinfo", std::ios::binary);
-    std::regex re("^model name\\s*:\\s*(.*)");
 
     line.reserve(256);
 
     while (name.empty() && std::getline(in, line) && !line.empty()) {
-        std::smatch match;
-        if (std::regex_match(line, match, re))
-            name = match[1];
+        size_t pos = line.find(':');
+        if (pos == line.npos)
+            continue;
+
+        absl::string_view left = absl::string_view(line).substr(0, pos);
+        absl::string_view right = absl::string_view(line).substr(pos + 1);
+
+        left = absl::StripAsciiWhitespace(left);
+        right = absl::StripAsciiWhitespace(right);
+
+        if (left == "model name")
+            name = std::string(right);
     }
 
     if (name.empty())

@@ -7,6 +7,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
       -DSFIZZ_VST=ON \
       -DSFIZZ_AU=ON \
+      -DSFIZZ_PUREDATA=ON \
       -DSFIZZ_RENDER=OFF \
       -DSFIZZ_SHARED=OFF \
       -DSFIZZ_TESTS=ON \
@@ -14,4 +15,5 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DLV2PLUGIN_INSTALL_DIR=/ \
       -DVSTPLUGIN_INSTALL_DIR=/ \
       -DAUPLUGIN_INSTALL_DIR=/ \
+      -DPDPLUGIN_INSTALL_DIR=/Puredata \
       ..

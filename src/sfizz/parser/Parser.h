@@ -16,6 +16,7 @@
 namespace sfz {
 
 class Reader;
+class ParserListener;
 struct SourceLocation;
 struct SourceRange;
 
@@ -50,19 +51,7 @@ public:
     size_t getErrorCount() const noexcept { return _errorCount; }
     size_t getWarningCount() const noexcept { return _warningCount; }
 
-    class Listener {
-    public:
-        // low-level parsing
-        virtual void onParseBegin() {}
-        virtual void onParseEnd() {}
-        virtual void onParseHeader(const SourceRange& /*range*/, const std::string& /*header*/) {}
-        virtual void onParseOpcode(const SourceRange& /*rangeOpcode*/, const SourceRange& /*rangeValue*/, const std::string& /*name*/, const std::string& /*value*/) {}
-        virtual void onParseError(const SourceRange& /*range*/, const std::string& /*message*/) {}
-        virtual void onParseWarning(const SourceRange& /*range*/, const std::string& /*message*/) {}
-
-        // high-level parsing
-        virtual void onParseFullBlock(const std::string& /*header*/, const std::vector<Opcode>& /*opcodes*/) {}
-    };
+    using Listener = ParserListener;
 
     void setListener(Listener* listener) noexcept { _listener = listener; }
 

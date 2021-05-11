@@ -153,6 +153,9 @@ struct Editor::Impl : EditorController::Receiver,
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
 
+    SLevelMeter* leftMeter_ = nullptr;
+    SLevelMeter* rightMeter_ = nullptr;
+
     SAboutDialog* aboutDialog_ = nullptr;
 
     SharedPointer<CBitmap> backgroundBitmap_;
@@ -504,6 +507,20 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateBackgroundImage(value.c_str());
         }
         break;
+    case EditId::LeftLevel:
+        {
+            const float value = v.to_float();
+            if (SLevelMeter* meter = leftMeter_)
+                meter->setValue(value);
+        }
+        break;
+    case EditId::RightLevel:
+        {
+            const float value = v.to_float();
+            if (SLevelMeter* meter = rightMeter_)
+                meter->setValue(value);
+        }
+        break;
     default:
         if (editIdIsKey(id)) {
             const int key = keyForEditId(id);
@@ -703,11 +720,15 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
-        auto createVMeter = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            // TODO the volume meter...
-            CViewContainer* container = new CViewContainer(bounds);
-            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
-            return container;
+        auto createVMeter = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            SLevelMeter* meter = new SLevelMeter(bounds);
+            meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
+            meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
+            OnThemeChanged.push_back([meter, palette]() {
+                meter->setBackColor(palette->knobInactiveTrack);
+            });
+            return meter;
         };
 #if 0
         auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {

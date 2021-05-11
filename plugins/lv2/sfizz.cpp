@@ -121,9 +121,9 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
-    self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->sfizz_audio_level_uri = map->map(map->handle, SFIZZ__AudioLevel);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
     self->time_bar_uri = map->map(map->handle, LV2_TIME__bar);
     self->time_bar_beat_uri = map->map(map->handle, LV2_TIME__barBeat);
@@ -478,7 +478,7 @@ instantiate(const LV2_Descriptor *descriptor,
     else
     {
         lv2_log_warning(&self->logger,
-                        "No option array was given upon instantiation; will use default values\n.");
+                        "No option array was given upon instantiation; will use default values.\n");
     }
 
     // We need _some_ information on the block size
@@ -532,6 +532,9 @@ activate(LV2_Handle instance)
     sfizz_set_samples_per_block(self->synth, self->max_block_size);
     sfizz_set_sample_rate(self->synth, self->sample_rate);
     self->must_update_midnam.store(1);
+#if defined(SFIZZ_LV2_UI)
+    self->rms_follower.init(self->sample_rate);
+#endif
 }
 
 static void
@@ -576,6 +579,30 @@ sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_Atom_Forge* forge, unsigned 
         lv2_atom_forge_pop(forge, &frame);
 }
 
+#if defined(SFIZZ_LV2_UI)
+static void
+sfizz_lv2_send_levels(sfizz_plugin_t *self, LV2_Atom_Forge* forge, float left, float right)
+{
+    const float levels[] = {left, right};
+    uint32_t num_levels = sizeof(levels) / sizeof(levels[0]);
+
+    bool write_ok = lv2_atom_forge_frame_time(forge, 0);
+
+    LV2_Atom_Vector *vector = nullptr;
+    if (write_ok) {
+        LV2_Atom_Forge_Ref ref = lv2_atom_forge_vector(forge, sizeof(float), self->atom_float_uri, num_levels, levels);
+        write_ok = ref;
+        if (write_ok)
+            vector = (LV2_Atom_Vector *)lv2_atom_forge_deref(forge, ref);
+    }
+
+    if (write_ok)
+        vector->atom.type = self->sfizz_audio_level_uri;
+
+    (void)write_ok;
+}
+#endif
+
 static void
 sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Object *obj)
 {
@@ -618,7 +645,7 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
     if (cc != -1) {
         if (atom->type == self->atom_float_uri && atom->size == sizeof(float)) {
             float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
-            sfizz_send_hdcc(self->synth, delay, cc, value);
+            sfizz_automate_hdcc(self->synth, delay, cc, value);
             self->cc_current[cc] = value;
             self->ccauto[cc] = absl::nullopt;
         }
@@ -684,13 +711,28 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
         {
             unsigned cc = msg[1];
             float value = float(msg[2]) * (1.0f / 127.0f);
-            sfizz_send_hdcc(self->synth,
-                            (int)ev->time.frames,
-                            (int)cc,
-                            value);
-            self->cc_current[cc] = value;
-            self->ccauto[cc] = value;
-            self->have_ccauto = true;
+
+            switch (cc)
+            {
+            default:
+                {
+                    sfizz_automate_hdcc(self->synth,
+                                        (int)ev->time.frames,
+                                        (int)cc,
+                                        value);
+                    self->cc_current[cc] = value;
+                    self->ccauto[cc] = value;
+                    self->have_ccauto = true;
+                }
+                break;
+            case LV2_MIDI_CTL_ALL_NOTES_OFF:
+                // TODO implemented as all-sound-off
+                sfizz_all_sound_off(self->synth);
+                break;
+            case LV2_MIDI_CTL_ALL_SOUNDS_OFF:
+                sfizz_all_sound_off(self->synth);
+                break;
+            }
         }
         break;
 #endif
@@ -1046,6 +1088,20 @@ run(LV2_Handle instance, uint32_t sample_count)
 
     spin_mutex_unlock(self->synth_mutex);
 
+#if defined(SFIZZ_LV2_UI)
+    if (self->ui_active)
+    {
+        self->rms_follower.process(self->output_buffers[0], self->output_buffers[1], sample_count);
+        const simde__m128 rms = self->rms_follower.getRMS();
+        const float *levels = (const float *)&rms;
+        sfizz_lv2_send_levels(self, &self->forge_notify, levels[0], levels[1]);
+    }
+    else
+    {
+        self->rms_follower.clear();
+    }
+#endif
+
     lv2_atom_forge_pop(&self->forge_notify, &notify_frame);
     lv2_atom_forge_pop(&self->forge_automate, &automate_frame);
 }
@@ -1375,7 +1431,7 @@ restore(LV2_Handle instance,
         absl::optional<float> value = cc_values[cc];
         if (value) {
             // Set CC in the synth
-            sfizz_send_hdcc(self->synth, 0, int(cc), *value);
+            sfizz_automate_hdcc(self->synth, 0, int(cc), *value);
             // Mark CCs for automation with state values
             self->ccauto[cc] = *value;
             self->have_ccauto = true;

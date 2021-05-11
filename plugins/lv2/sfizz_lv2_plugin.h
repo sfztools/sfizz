@@ -7,6 +7,9 @@
 #pragma once
 
 #include "sfizz_lv2.h"
+#if defined(SFIZZ_LV2_UI)
+#include "plugin/RMSFollower.h"
+#endif
 #include <spin_mutex.h>
 #include <sfizz.h>
 #include <stdbool.h>
@@ -89,6 +92,7 @@ struct sfizz_plugin_t
     LV2_URID sfizz_check_modification_uri {};
     LV2_URID sfizz_active_voices_uri {};
     LV2_URID sfizz_osc_blob_uri {};
+    LV2_URID sfizz_audio_level_uri {};
     LV2_URID time_position_uri {};
     LV2_URID time_bar_uri {};
     LV2_URID time_bar_beat_uri {};
@@ -145,4 +149,10 @@ struct sfizz_plugin_t
 
     // OSC
     uint8_t osc_temp[OSC_TEMP_SIZE] {};
+
+#if defined(SFIZZ_LV2_UI)
+    // UI
+    volatile bool ui_active = false;
+    RMSFollower rms_follower;
+#endif
 };

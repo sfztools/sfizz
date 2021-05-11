@@ -161,6 +161,7 @@ set(SFIZZ_SOURCES
     sfizz/WindowedSinc.cpp
     sfizz/Interpolators.cpp
     sfizz/Layer.cpp
+    sfizz/Resources.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
@@ -201,6 +202,7 @@ set(SFIZZ_PARSER_HEADERS
     sfizz/Range.h
     sfizz/Opcode.h
     sfizz/parser/Parser.h
+    sfizz/parser/ParserListener.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
     sfizz/SfzHelpers.h)
@@ -294,9 +296,6 @@ if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
     target_link_libraries(sfizz_internal PUBLIC st_audiofile)
 endif()
-if(WIN32)
-    target_compile_definitions(sfizz_internal PRIVATE _USE_MATH_DEFINES)
-endif()
 if(SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
 endif()
@@ -351,6 +350,19 @@ endif()
 
 # Generic library alias
 add_library(sfizz::sfizz ALIAS sfizz_static)
+
+# Git build identifier
+add_custom_target(sfizz-generate-git-build-id
+    COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+            "-DOUTPUT_FILE=${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c"
+            "-P" "${PROJECT_SOURCE_DIR}/cmake/GitBuildID.cmake"
+    BYPRODUCTS "${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c")
+add_library(sfizz-git-build-id STATIC EXCLUDE_FROM_ALL
+    "sfizz/git-build-id/GitBuildId.h"
+    "${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c")
+target_include_directories(sfizz-git-build-id PUBLIC "sfizz/git-build-id")
+add_dependencies(sfizz-git-build-id sfizz-generate-git-build-id)
 
 # Preserve generated files (Faust)
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)

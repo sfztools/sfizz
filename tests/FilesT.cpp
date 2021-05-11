@@ -8,6 +8,7 @@
 #include "sfizz/Synth.h"
 #include "sfizz/Voice.h"
 #include "sfizz/SfzHelpers.h"
+#include "sfizz/parser/Parser.h"
 #include "sfizz/modulations/ModId.h"
 #include "sfizz/modulations/ModKey.h"
 #include "catch2/catch.hpp"
@@ -245,7 +246,8 @@ TEST_CASE("[Files] Pizz basic")
         REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(12, 22));
         almostEqualRanges(synth.getRegionView(i)->velocityRange, { 97_norm, 127_norm });
         REQUIRE(synth.getRegionView(i)->pitchKeycenter == 21);
-        almostEqualRanges(synth.getRegionView(i)->ccConditions.getWithDefault(107), { 0_norm, 13_norm });
+        almostEqualRanges(synth.getRegionView(i)->ccConditions.getWithDefault(107),
+            { 0_norm, std::nextafter(14_norm, 0.0f) }); // Fill in the gap from 13_norm to "almost 14_norm"
     }
     almostEqualRanges(synth.getRegionView(0)->randRange, { 0, 0.25 });
     almostEqualRanges(synth.getRegionView(1)->randRange, { 0.25, 0.5 });
@@ -421,7 +423,7 @@ TEST_CASE("[Files] Default path is ignored for generators")
 TEST_CASE("[Files] Set CC applies properly")
 {
     Synth synth;
-    const auto& midiState = synth.getResources().midiState;
+    const MidiState& midiState = synth.getResources().getMidiState();
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_cc.sfz");
     REQUIRE(midiState.getCCValue(142) == 63_norm);
     REQUIRE(midiState.getCCValue(61) == 122_norm);
@@ -430,7 +432,7 @@ TEST_CASE("[Files] Set CC applies properly")
 TEST_CASE("[Files] Set HDCC applies properly")
 {
     sfz::Synth synth;
-    const auto& midiState = synth.getResources().midiState;
+    const MidiState& midiState = synth.getResources().getMidiState();
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_hdcc.sfz");
     REQUIRE(midiState.getCCValue(142) == Approx(0.5678));
     REQUIRE(midiState.getCCValue(61) == Approx(0.1234));
@@ -439,7 +441,7 @@ TEST_CASE("[Files] Set HDCC applies properly")
 TEST_CASE("[Files] Set RealCC applies properly")
 {
     sfz::Synth synth;
-    const auto& midiState = synth.getResources().midiState;
+    const MidiState& midiState = synth.getResources().getMidiState();
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/set_realcc.sfz");
     REQUIRE(midiState.getCCValue(142) == Approx(0.5678));
     REQUIRE(midiState.getCCValue(61) == Approx(0.1234));

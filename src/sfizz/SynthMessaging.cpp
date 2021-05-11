@@ -5,6 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SynthPrivate.h"
+#include "FilePool.h"
+#include "Curve.h"
+#include "MidiState.h"
 #include "utility/StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
@@ -67,11 +70,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         } break;
 
         MATCH("/num_curves", "") {
-            client.receive<'i'>(delay, path, int(impl.resources_.curves.getNumCurves()));
+            client.receive<'i'>(delay, path, int(impl.resources_.getCurves().getNumCurves()));
         } break;
 
         MATCH("/num_samples", "") {
-            client.receive<'i'>(delay, path, int(impl.resources_.filePool.getNumPreloadedSamples()));
+            client.receive<'i'>(delay, path, int(impl.resources_.getFilePool().getNumPreloadedSamples()));
         } break;
 
         //----------------------------------------------------------------------
@@ -139,13 +142,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             if (indices[0] >= config::numCCs)
                 break;
             // Note: result value is not frame-exact
-            client.receive<'f'>(delay, path, impl.resources_.midiState.getCCValue(indices[0]));
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getCCValue(indices[0]));
         } break;
 
         MATCH("/cc&/value", "f") {
             if (indices[0] >= config::numCCs)
                 break;
-            impl.resources_.midiState.ccEvent(delay, indices[0], args[0].f);
+            impl.resources_.getMidiState().ccEvent(delay, indices[0], args[0].f);
         } break;
 
         MATCH("/cc&/label", "") {
@@ -1452,6 +1455,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 break;
             }
 
+        } break;
+
+        MATCH("/voice&/remaining_delay", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getRemainingDelay());
+        } break;
+
+        MATCH("/voice&/source_position", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getSourcePosition());
         } break;
 
         #undef MATCH

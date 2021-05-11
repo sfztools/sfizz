@@ -26,6 +26,11 @@
 #include "SfzHelpers.h"
 #include "SIMDHelpers.h"
 #include "Smoothers.h"
+#include "FilePool.h"
+#include "Wavetables.h"
+#include "Tuning.h"
+#include "BufferPool.h"
+#include "SynthConfig.h"
 #include "utility/Macros.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
@@ -304,8 +309,6 @@ struct Voice::Impl
     PowerFollower powerFollower_;
 
     ExtendedCCValues extendedCCValues_;
-    fast_real_distribution<float> unipolarDist { 0.0f, 1.0f };
-    fast_real_distribution<float> bipolarDist { -1.0f, 1.0f };
 };
 
 Voice::Voice(int voiceNumber, Resources& resources)
@@ -389,10 +392,11 @@ const ExtendedCCValues& Voice::getExtendedCCValues() const noexcept
 
 void Voice::Impl::updateExtendedCCValues() noexcept
 {
-    extendedCCValues_.unipolar = unipolarDist(Random::randomGenerator);
-    extendedCCValues_.bipolar = bipolarDist(Random::randomGenerator);
-    extendedCCValues_.alternate = resources_.midiState.getAlternateState();
-    extendedCCValues_.noteGate = resources_.midiState.getActiveNotes() > 0 ? 1.0f : 0.0f;
+    MidiState& midiState = resources_.getMidiState();
+    extendedCCValues_.unipolar = midiState.getCCValue(ExtendedCCs::unipolarRandom);
+    extendedCCValues_.bipolar = midiState.getCCValue(ExtendedCCs::bipolarRandom);
+    extendedCCValues_.alternate = midiState.getCCValue(ExtendedCCs::alternate);
+    extendedCCValues_.noteGate = midiState.getCCValue(ExtendedCCs::keyboardNoteGate);
 }
 
 bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
@@ -401,6 +405,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     ASSERT(event.value >= 0.0f && event.value <= 1.0f);
 
     Resources& resources = impl.resources_;
+    MidiState& midiState = resources.getMidiState();
 
     const Region& region = layer->getRegion();
     impl.region_ = &region;
@@ -410,7 +415,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         impl.triggerEvent_.number = region.pitchKeycenter;
 
     if (region.velocityOverride == VelocityOverride::previous)
-        impl.triggerEvent_.value = resources.midiState.getLastVelocity();
+        impl.triggerEvent_.value = midiState.getVelocityOverride();
 
     if (region.disabled()) {
         impl.switchState(State::cleanMeUp);
@@ -426,26 +431,27 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         delay = 0;
 
     if (region.isOscillator()) {
+        WavetablePool& wavePool = resources.getWavePool();
         const WavetableMulti* wave = nullptr;
         if (!region.isGenerator())
-            wave = resources.wavePool.getFileWave(region.sampleId->filename());
+            wave = wavePool.getFileWave(region.sampleId->filename());
         else {
             switch (hash(region.sampleId->filename())) {
             default:
             case hash("*silence"):
                 break;
             case hash("*sine"):
-                wave = resources.wavePool.getWaveSin();
+                wave = wavePool.getWaveSin();
                 break;
             case hash("*triangle"): // fallthrough
             case hash("*tri"):
-                wave = resources.wavePool.getWaveTriangle();
+                wave = wavePool.getWaveTriangle();
                 break;
             case hash("*square"):
-                wave = resources.wavePool.getWaveSquare();
+                wave = wavePool.getWaveSquare();
                 break;
             case hash("*saw"):
-                wave = resources.wavePool.getWaveSaw();
+                wave = wavePool.getWaveSaw();
                 break;
             }
         }
@@ -459,27 +465,29 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         }
         impl.setupOscillatorUnison();
     } else {
-        impl.currentPromise_ = resources.filePool.getFilePromise(region.sampleId);
+        FilePool& filePool = resources.getFilePool();
+        impl.currentPromise_ = filePool.getFilePromise(region.sampleId);
         if (!impl.currentPromise_) {
             impl.switchState(State::cleanMeUp);
             return false;
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
-        impl.sourcePosition_ = region.getOffset(resources.midiState);
+        impl.sourcePosition_ = region.getOffset(midiState);
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
-    const float numberRetuned = resources.tuning.getKeyFractional12TET(impl.triggerEvent_.number);
+    Tuning& tuning = resources.getTuning();
+    const float numberRetuned = tuning.getKeyFractional12TET(impl.triggerEvent_.number);
 
     impl.pitchRatio_ = region.getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
 
     // apply stretch tuning if set
-    if (resources.stretch)
-        impl.pitchRatio_ *= resources.stretch->getRatioForFractionalKey(numberRetuned);
+    if (absl::optional<StretchTuning>& stretch = resources.getStretch())
+        impl.pitchRatio_ *= stretch->getRatioForFractionalKey(numberRetuned);
 
     impl.pitchKeycenter_ = region.pitchKeycenter;
-    impl.baseVolumedB_ = region.getBaseVolumedB(resources.midiState, impl.triggerEvent_.number);
+    impl.baseVolumedB_ = region.getBaseVolumedB(midiState, impl.triggerEvent_.number);
     impl.baseGain_ = region.getBaseGain();
     if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
         impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
@@ -496,26 +504,27 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(region.getDelay(resources.midiState) * impl.sampleRate_);
-    impl.baseFrequency_ = resources.tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleEnd_ = int(region.getSampleEnd(resources.midiState));
+    impl.initialDelay_ = delay + static_cast<int>(region.getDelay(midiState) * impl.sampleRate_);
+    impl.baseFrequency_ = tuning.getFrequencyOfKey(impl.triggerEvent_.number);
+    impl.sampleEnd_ = int(region.getSampleEnd(midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
-    impl.bendSmoother_.reset(region.getBendInCents(resources.midiState.getPitchBend()));
+    impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend()));
 
-    resources.modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
+    ModMatrix& modMatrix = resources.getModMatrix();
+    modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
     impl.saveModulationTargets(&region);
 
     if (region.checkSustain) {
         const bool sustainPressed =
-            resources.midiState.getCCValue(region.sustainCC) >= region.sustainThreshold;
+            midiState.getCCValue(region.sustainCC) >= region.sustainThreshold;
         impl.sustainState_ =
             sustainPressed ? Impl::SustainState::Sustaining : Impl::SustainState::Up;
     }
 
     if (region.checkSostenuto) {
         const bool sostenutoPressed =
-            resources.midiState.getCCValue(region.sostenutoCC) >= region.sostenutoThreshold;
+            midiState.getCCValue(region.sostenutoCC) >= region.sostenutoThreshold;
         impl.sostenutoState_ =
             sostenutoPressed ? Impl::SostenutoState::PreviouslyDown : Impl::SostenutoState::Up;
     }
@@ -526,7 +535,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
 int Voice::Impl::getCurrentSampleQuality() const noexcept
 {
     return (region_ && region_->sampleQuality) ?
-        *region_->sampleQuality : resources_.synthConfig.currentSampleQuality();
+        *region_->sampleQuality : resources_.getSynthConfig().currentSampleQuality();
 }
 
 int Voice::getCurrentSampleQuality() const noexcept
@@ -538,7 +547,7 @@ int Voice::getCurrentSampleQuality() const noexcept
 int Voice::Impl::getCurrentOscillatorQuality() const noexcept
 {
     return (region_ && region_->oscillatorQuality) ?
-        *region_->oscillatorQuality : resources_.synthConfig.currentOscillatorQuality();
+        *region_->oscillatorQuality : resources_.getSynthConfig().currentOscillatorQuality();
 }
 
 int Voice::getCurrentOscillatorQuality() const noexcept
@@ -573,7 +582,8 @@ void Voice::Impl::release(int delay) noexcept
             switchState(State::cleanMeUp);
     }
 
-    resources_.modMatrix.releaseVoice(id_, region_->getId(), delay);
+    ModMatrix& modMatrix = resources_.getModMatrix();
+    modMatrix.releaseVoice(id_, region_->getId(), delay);
 }
 
 void Voice::off(int delay, bool fast) noexcept
@@ -829,13 +839,15 @@ void Voice::Impl::resetCrossfades() noexcept
     float xfadeValue { 1.0f };
     const auto xfCurve = region_->crossfadeCCCurve;
 
+    MidiState& midiState = resources_.getMidiState();
+
     for (const auto& mod : region_->crossfadeCCInRange) {
-        const auto value = resources_.midiState.getCCValue(mod.cc);
+        const auto value = midiState.getCCValue(mod.cc);
         xfadeValue *= crossfadeIn(mod.data, value, xfCurve);
     }
 
     for (const auto& mod : region_->crossfadeCCOutRange) {
-        const auto value = resources_.midiState.getCCValue(mod.cc);
+        const auto value = midiState.getCCValue(mod.cc);
         xfadeValue *= crossfadeOut(mod.data, value, xfCurve);
     }
 
@@ -847,8 +859,11 @@ void Voice::Impl::applyCrossfades(absl::Span<float> modulationSpan) noexcept
     const auto numSamples = modulationSpan.size();
     const auto xfCurve = region_->crossfadeCCCurve;
 
-    auto tempSpan = resources_.bufferPool.getBuffer(numSamples);
-    auto xfadeSpan = resources_.bufferPool.getBuffer(numSamples);
+    MidiState& midiState = resources_.getMidiState();
+    BufferPool& bufferPool = resources_.getBufferPool();
+
+    auto tempSpan = bufferPool.getBuffer(numSamples);
+    auto xfadeSpan = bufferPool.getBuffer(numSamples);
 
     if (!tempSpan || !xfadeSpan)
         return;
@@ -857,7 +872,7 @@ void Voice::Impl::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 
     bool canShortcut = true;
     for (const auto& mod : region_->crossfadeCCInRange) {
-        const auto& events = resources_.midiState.getCCEvents(mod.cc);
+        const auto& events = midiState.getCCEvents(mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeIn(mod.data, x, xfCurve);
@@ -866,7 +881,7 @@ void Voice::Impl::applyCrossfades(absl::Span<float> modulationSpan) noexcept
     }
 
     for (const auto& mod : region_->crossfadeCCOutRange) {
-        const auto& events = resources_.midiState.getCCEvents(mod.cc);
+        const auto& events = midiState.getCCEvents(mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeOut(mod.data, x, xfCurve);
@@ -883,7 +898,7 @@ void Voice::Impl::amplitudeEnvelope(absl::Span<float> modulationSpan) noexcept
 {
     const auto numSamples = modulationSpan.size();
 
-    ModMatrix& mm = resources_.modMatrix;
+    ModMatrix& mm = resources_.getModMatrix();
 
     // Amplitude EG
     absl::Span<const float> ampegOut(mm.getModulation(masterAmplitudeTarget_), numSamples);
@@ -915,7 +930,9 @@ void Voice::Impl::ampStageMono(AudioSpan<float> buffer) noexcept
     const auto numSamples = buffer.getNumFrames();
     const auto leftBuffer = buffer.getSpan(0);
 
-    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
+    BufferPool& bufferPool = resources_.getBufferPool();
+
+    auto modulationSpan = bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
@@ -928,8 +945,10 @@ void Voice::Impl::ampStageStereo(AudioSpan<float> buffer) noexcept
 {
     ScopedTiming logger { amplitudeDuration_ };
 
+    BufferPool& bufferPool = resources_.getBufferPool();
+
     const auto numSamples = buffer.getNumFrames();
-    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
+    auto modulationSpan = bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
@@ -946,11 +965,13 @@ void Voice::Impl::panStageMono(AudioSpan<float> buffer) noexcept
     const auto leftBuffer = buffer.getSpan(0);
     const auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
+    BufferPool& bufferPool = resources_.getBufferPool();
+
+    auto modulationSpan = bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
-    ModMatrix& mm = resources_.modMatrix;
+    ModMatrix& mm = resources_.getModMatrix();
 
     // Prepare for stereo output
     copy<float>(leftBuffer, rightBuffer);
@@ -971,11 +992,13 @@ void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
     const auto leftBuffer = buffer.getSpan(0);
     const auto rightBuffer = buffer.getSpan(1);
 
-    auto modulationSpan = resources_.bufferPool.getBuffer(numSamples);
+    BufferPool& bufferPool = resources_.getBufferPool();
+
+    auto modulationSpan = bufferPool.getBuffer(numSamples);
     if (!modulationSpan)
         return;
 
-    ModMatrix& mm = resources_.modMatrix;
+    ModMatrix& mm = resources_.getModMatrix();
 
     // Apply panning
     fill(*modulationSpan, region_->pan);
@@ -1053,15 +1076,18 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
 
     auto source = currentPromise_->getData();
 
+    BufferPool& bufferPool = resources_.getBufferPool();
+    const CurveSet& curves = resources_.getCurves();
+
     // calculate interpolation data
     //   indices: integral position in the source audio
     //   coeffs: fractional position normalized 0-1
-    auto coeffs = resources_.bufferPool.getBuffer(numSamples);
-    auto indices = resources_.bufferPool.getIndexBuffer(numSamples);
+    auto coeffs = bufferPool.getBuffer(numSamples);
+    auto indices = bufferPool.getIndexBuffer(numSamples);
     if (!indices || !coeffs)
         return;
     {
-        auto jumps = resources_.bufferPool.getBuffer(numSamples);
+        auto jumps = bufferPool.getBuffer(numSamples);
         if (!jumps)
             return;
 
@@ -1115,7 +1141,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     SpanHolder<absl::Span<int>> partitionBuffers[2];
     if (shouldLoop) {
         for (auto& buf : partitionBuffers) {
-            buf = resources_.bufferPool.getIndexBuffer(numSamples);
+            buf = bufferPool.getIndexBuffer(numSamples);
             if (!buf)
                 return;
         }
@@ -1226,9 +1252,9 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality, mod);
 
         if (ptType == kPartitionLoopXfade) {
-            auto xfTemp1 = resources_.bufferPool.getBuffer(numSamples);
-            auto xfTemp2 = resources_.bufferPool.getBuffer(numSamples);
-            auto xfIndicesTemp = resources_.bufferPool.getIndexBuffer(numSamples);
+            auto xfTemp1 = bufferPool.getBuffer(numSamples);
+            auto xfTemp2 = bufferPool.getBuffer(numSamples);
+            auto xfIndicesTemp = bufferPool.getIndexBuffer(numSamples);
             if (!xfTemp1 || !xfTemp2 || !xfIndicesTemp)
                 return;
 
@@ -1252,7 +1278,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                         xfCurve[i] = xfIn.evalNormalized(1.0f - xfCurvePos[i]);
                 }
                 else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
-                    const Curve& xfOut = resources_.curves.getCurve(6);
+                    const Curve& xfOut = curves.getCurve(6);
                     for (unsigned i = 0; i < ptSize; ++i)
                         xfCurve[i] = xfOut.evalNormalized(xfCurvePos[i]);
                 }
@@ -1302,7 +1328,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                         xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
                 else IF_CONSTEXPR (config::loopXfadeCurve == 1) {
-                    const Curve& xfIn = resources_.curves.getCurve(5);
+                    const Curve& xfIn = curves.getCurve(5);
                     for (unsigned i = 0; i < applySize; ++i)
                         xfCurve[i] = xfIn.evalNormalized(xfInCurvePos[i]);
                 }
@@ -1490,7 +1516,10 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
     } else {
         const size_t numFrames = buffer.getNumFrames();
 
-        auto frequencies = resources_.bufferPool.getBuffer(numFrames);
+        BufferPool& bufferPool = resources_.getBufferPool();
+        ModMatrix& modMatrix = resources_.getModMatrix();
+
+        auto frequencies = bufferPool.getBuffer(numFrames);
         if (!frequencies)
             return;
 
@@ -1503,7 +1532,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         for (size_t i = 0; i < numFrames; ++i)
             (*frequencies)[i] = baseRatio * centsFactor(pitch[i]);
 
-        auto detuneSpan = resources_.bufferPool.getBuffer(numFrames);
+        auto detuneSpan = bufferPool.getBuffer(numFrames);
         if (!detuneSpan)
             return;
 
@@ -1513,7 +1542,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 
         if (oscillatorMode <= 0 && oscillatorMulti < 2) {
             // single oscillator
-            auto tempSpan = resources_.bufferPool.getBuffer(numFrames);
+            auto tempSpan = bufferPool.getBuffer(numFrames);
             if (!tempSpan)
                 return;
 
@@ -1526,13 +1555,13 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         }
         else if (oscillatorMode <= 0 && oscillatorMulti >= 3) {
             // unison oscillator
-            auto tempSpan = resources_.bufferPool.getBuffer(numFrames);
-            auto tempLeftSpan = resources_.bufferPool.getBuffer(numFrames);
-            auto tempRightSpan = resources_.bufferPool.getBuffer(numFrames);
+            auto tempSpan = bufferPool.getBuffer(numFrames);
+            auto tempLeftSpan = bufferPool.getBuffer(numFrames);
+            auto tempRightSpan = bufferPool.getBuffer(numFrames);
             if (!tempSpan || !tempLeftSpan || !tempRightSpan)
                 return;
 
-            const float* detuneMod = resources_.modMatrix.getModulation(oscillatorDetuneTarget_);
+            const float* detuneMod = modMatrix.getModulation(oscillatorDetuneTarget_);
             for (unsigned u = 0, uSize = waveUnisonSize_; u < uSize; ++u) {
                 WavetableOscillator& osc = waveOscillators_[u];
                 osc.setQuality(quality);
@@ -1559,7 +1588,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         }
         else {
             // modulated oscillator
-            auto tempSpan = resources_.bufferPool.getBuffer(numFrames);
+            auto tempSpan = bufferPool.getBuffer(numFrames);
             if (!tempSpan)
                 return;
 
@@ -1569,11 +1598,11 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
             oscMod.setQuality(quality);
 
             // compute the modulator
-            auto modulatorSpan = resources_.bufferPool.getBuffer(numFrames);
+            auto modulatorSpan = bufferPool.getBuffer(numFrames);
             if (!modulatorSpan)
                 return;
 
-            const float* detuneMod = resources_.modMatrix.getModulation(oscillatorDetuneTarget_);
+            const float* detuneMod = modMatrix.getModulation(oscillatorDetuneTarget_);
             if (!detuneMod)
                 fill(*detuneSpan, waveDetuneRatio_[1]);
             else {
@@ -1588,7 +1617,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
             const float oscillatorModDepth = region_->oscillatorModDepth;
             if (oscillatorModDepth != 1.0f)
                 applyGain1(oscillatorModDepth, *modulatorSpan);
-            const float* modDepthMod = resources_.modMatrix.getModulation(oscillatorModDepthTarget_);
+            const float* modDepthMod = modMatrix.getModulation(oscillatorModDepthTarget_);
             if (modDepthMod)
                 applyGain(absl::MakeConstSpan(modDepthMod, numFrames), *modulatorSpan);
 
@@ -1701,12 +1730,12 @@ void Voice::Impl::updateLoopInformation() noexcept
     if (!region_->shouldLoop())
         return;
 
-    Resources& resources = resources_;
+    MidiState& midiState = resources_.getMidiState();
     const FileInformation& info = currentPromise_->information;
     const double rate = info.sampleRate;
 
-    loop_.start = static_cast<int>(region_->loopStart(resources.midiState));
-    loop_.end = max(static_cast<int>(region_->loopEnd(resources.midiState)), loop_.start);
+    loop_.start = static_cast<int>(region_->loopStart(midiState));
+    loop_.end = max(static_cast<int>(region_->loopEnd(midiState)), loop_.start);
     loop_.size = loop_.end + 1 - loop_.start;
     loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
     // Clamp the crossfade to the part available before the loop starts
@@ -1935,7 +1964,8 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
 {
     const size_t numFrames = pitchSpan.size();
 
-    const EventVector& events = resources_.midiState.getPitchEvents();
+    const MidiState& midiState = resources_.getMidiState();
+    const EventVector& events = midiState.getPitchEvents();
     const auto bendLambda = [this](float bend) {
         return region_->getBendInCents(bend);
     };
@@ -1946,7 +1976,7 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
         linearEnvelope(events, pitchSpan, bendLambda);
     bendSmoother_.process(pitchSpan, pitchSpan);
 
-    ModMatrix& mm = resources_.modMatrix;
+    ModMatrix& mm = resources_.getModMatrix();
 
     if (float* mod = mm.getModulation(pitchTarget_))
         add<float>(absl::MakeSpan(mod, numFrames), pitchSpan);
@@ -1960,7 +1990,7 @@ void Voice::Impl::resetSmoothers() noexcept
 
 void Voice::Impl::saveModulationTargets(const Region* region) noexcept
 {
-    ModMatrix& mm = resources_.modMatrix;
+    ModMatrix& mm = resources_.getModMatrix();
     masterAmplitudeTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::MasterAmplitude, region->getId()));
     amplitudeTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Amplitude, region->getId()));
     volumeTarget_ = mm.findTarget(ModKey::createNXYZ(ModId::Volume, region->getId()));
@@ -2025,6 +2055,18 @@ const Region* Voice::getRegion() const noexcept
 {
     Impl& impl = *impl_;
     return impl.region_;
+}
+
+int Voice::getRemainingDelay() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.initialDelay_;
+}
+
+int Voice::getSourcePosition() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.sourcePosition_;
 }
 
 LFO* Voice::getLFO(size_t index)

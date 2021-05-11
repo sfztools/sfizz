@@ -8,25 +8,37 @@
 #include "SfizzVstEditor.h"
 #include "SfizzVstParameters.h"
 #include "SfizzVstIDs.h"
+#include "plugin/InstrumentDescription.h"
 #include "base/source/fstreamer.h"
 #include "base/source/updatehandler.h"
+#include <absl/strings/match.h>
+#include <ghc/fs_std.hpp>
+#include <atomic>
+#include <cassert>
+
+enum { kProgramListID = 0 };
 
 tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
 {
-    tresult result = EditController::initialize(context);
+    tresult result = EditControllerEx1::initialize(context);
     if (result != kResultTrue)
         return result;
 
     // initialize the update handler
     Steinberg::UpdateHandler::instance();
 
+    // initialize the thread checker
+    threadChecker_ = Vst::ThreadChecker::create();
+
     // create update objects
-    oscUpdate_ = Steinberg::owned(new OSCUpdate);
-    noteUpdate_ = Steinberg::owned(new NoteUpdate);
+    queuedUpdates_ = Steinberg::owned(new QueuedUpdates);
     sfzUpdate_ = Steinberg::owned(new SfzUpdate);
     sfzDescriptionUpdate_ = Steinberg::owned(new SfzDescriptionUpdate);
     scalaUpdate_ = Steinberg::owned(new ScalaUpdate);
     playStateUpdate_ = Steinberg::owned(new PlayStateUpdate);
+
+    // Unit
+    addUnit(new Vst::Unit(Steinberg::String("Root"), Vst::kRootUnitId, Vst::kNoParentUnitId, kProgramListID));
 
     // Parameters
     Vst::ParamID pid = 0;
@@ -92,6 +104,22 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
                 Vst::kRootUnitId, shortTitle));
     }
 
+    // Volume levels
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidLeftLevel).createParameter(
+            Steinberg::String("Left level"), pid++, nullptr,
+            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidRightLevel).createParameter(
+            Steinberg::String("Right level"), pid++, nullptr,
+            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+
+    // Editor status
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidEditorOpen).createParameter(
+            Steinberg::String("Editor open"), pid++, nullptr,
+            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+
     // Initial MIDI mapping
     for (int32 i = 0; i < Vst::kCountCtrlNumber; ++i) {
         Vst::ParamID id = Vst::kNoParamId;
@@ -110,12 +138,19 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         midiMapping_[i] = id;
     }
 
+    // Program list
+    IPtr<Vst::ProgramListWithPitchNames> list = Steinberg::owned(
+        new Vst::ProgramListWithPitchNames(Steinberg::String("Programs"), kProgramListID, Vst::kRootUnitId));
+    list->addProgram(Steinberg::String("Default"));
+    addProgramList(list);
+    list->addRef();
+
     return kResultTrue;
 }
 
 tresult PLUGIN_API SfizzVstControllerNoUi::terminate()
 {
-    return EditController::terminate();
+    return EditControllerEx1::terminate();
 }
 
 tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id)
@@ -129,6 +164,30 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getMidiControllerAssignment(int32 bus
     if (id == Vst::kNoParamId)
         return kResultFalse;
 
+    return kResultTrue;
+}
+
+int32 PLUGIN_API SfizzVstControllerNoUi::getKeyswitchCount(int32 busIndex, int16 channel)
+{
+    (void)channel;
+
+    if (busIndex != 0)
+        return 0;
+
+    return keyswitches_.size();
+}
+
+tresult PLUGIN_API SfizzVstControllerNoUi::getKeyswitchInfo(int32 busIndex, int16 channel, int32 keySwitchIndex, Vst::KeyswitchInfo& info)
+{
+    (void)channel;
+
+    if (busIndex != 0)
+        return kResultFalse;
+
+    if (keySwitchIndex < 0 || keySwitchIndex >= keyswitches_.size())
+        return kResultFalse;
+
+    info = keyswitches_[keySwitchIndex];
     return kResultTrue;
 }
 
@@ -146,7 +205,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID ta
         }
     }
 
-    return EditController::getParamStringByValue(tag, valueNormalized, string);
+    return EditControllerEx1::getParamStringByValue(tag, valueNormalized, string);
 }
 
 tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized)
@@ -164,7 +223,7 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getParamValueByString(Vst::ParamID ta
         }
     }
 
-    return EditController::getParamValueByString(tag, string, valueNormalized);
+    return EditControllerEx1::getParamValueByString(tag, string, valueNormalized);
 }
 
 tresult SfizzVstControllerNoUi::setParam(Vst::ParamID tag, float value)
@@ -207,109 +266,158 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
 
 tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
 {
-    // Note: may be called from any thread (Reaper)
+    // Note: is expected to be called from the controller thread only
 
-    tresult result = EditController::notify(message);
+    tresult result = EditControllerEx1::notify(message);
     if (result != kResultFalse)
         return result;
 
+    if (!threadChecker_->test()) {
+        static std::atomic_bool warn_once_flag { false };
+        if (!warn_once_flag.exchange(true))
+            fprintf(stderr, "[sfizz] controller notification arrives from the wrong thread\n");
+    }
+
     const char* id = message->getMessageID();
-    Vst::IAttributeList* attr = message->getAttributes();
 
     ///
-    auto stringFromBinaryAttribute = [attr](const char* id, absl::string_view& string) -> tresult {
-        const void* data = nullptr;
-        uint32 size = 0;
-        tresult result = attr->getBinary(id, data, size);
-        if (result == kResultTrue)
-            string = absl::string_view(reinterpret_cast<const char*>(data), size);
-        return result;
-    };
+    if (!strcmp(id, SfzUpdate::getFClassID())) {
+        if (!sfzUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
 
-    ///
-    if (!strcmp(id, "LoadedSfz")) {
-        absl::string_view sfzFile;
-        absl::string_view sfzDescriptionBlob;
+        // update the program name and notify
+        std::string name = fs::u8path(sfzUpdate_->getPath()).filename().u8string();
+        if (absl::EndsWithIgnoreCase(name, ".sfz"))
+            name.resize(name.size() - 4);
+        setProgramName(kProgramListID, 0, Steinberg::String(name.c_str()));
 
-        result = stringFromBinaryAttribute("File", sfzFile);
-        if (result != kResultTrue)
-            return result;
+        FUnknownPtr<Vst::IUnitHandler> unitHandler(getComponentHandler());
+        if (unitHandler)
+            unitHandler->notifyProgramListChange(kProgramListID, 0);
 
-        result = stringFromBinaryAttribute("Description", sfzDescriptionBlob);
-        if (result != kResultTrue)
-            return result;
-
-        sfzUpdate_->setPath(std::string(sfzFile));
+        //
         sfzUpdate_->deferUpdate();
-        sfzDescriptionUpdate_->setDescription(std::string(sfzDescriptionBlob));
+    }
+    else if (!strcmp(id, SfzDescriptionUpdate::getFClassID())) {
+        if (!sfzDescriptionUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
+
+        // parse the description blob
+        const InstrumentDescription desc = parseDescriptionBlob(
+            sfzDescriptionUpdate_->getDescription());
+
+        // update pitch names and notify
+        Vst::ProgramListWithPitchNames* list =
+            static_cast<Vst::ProgramListWithPitchNames*>(getProgramList(kProgramListID));
+        for (int16 pitch = 0; pitch < 128; ++pitch) {
+            Steinberg::String pitchName;
+            if (desc.keyUsed.test(pitch) && !desc.keyLabel[pitch].empty())
+                pitchName = Steinberg::String(desc.keyLabel[pitch].c_str());
+            else if (desc.keyswitchUsed.test(pitch) && !desc.keyswitchLabel[pitch].empty())
+                pitchName = Steinberg::String(desc.keyswitchLabel[pitch].c_str());
+
+            list->setPitchName(0, pitch, pitchName);
+        }
+
+        FUnknownPtr<Vst::IUnitHandler> unitHandler(getComponentHandler());
+        if (unitHandler)
+            unitHandler->notifyProgramListChange(kProgramListID, 0);
+
+        // update the key switches and notify
+        size_t idKeyswitch = 0;
+        for (int16 pitch = 0; pitch < 128; ++pitch)
+            idKeyswitch += desc.keyswitchUsed.test(pitch);
+        keyswitches_.resize(idKeyswitch);
+
+        idKeyswitch = 0;
+        for (int16 pitch = 0; pitch < 128; ++pitch) {
+            if (!desc.keyswitchUsed.test(pitch))
+                continue;
+            Vst::KeyswitchInfo info {};
+            info.typeId = Vst::kNoteOnKeyswitchTypeID;
+            Steinberg::String(desc.keyswitchLabel[pitch].c_str()).copyTo(info.title);
+            Steinberg::String(desc.keyswitchLabel[pitch].c_str()).copyTo(info.shortTitle);
+            info.keyswitchMin = pitch; // TODO reexamine this when supporting keyswitch groups
+            info.keyswitchMax = pitch; // TODO reexamine this when supporting keyswitch groups
+            info.keyRemapped = pitch;
+            info.unitId = Vst::kRootUnitId;
+            info.flags = 0;
+            keyswitches_[idKeyswitch++] = info;
+        }
+
+        if (Vst::IComponentHandler* componentHandler = getComponentHandler())
+            // NOTE(jpc) I think that's the right one, but it needs confirmation
+            componentHandler->restartComponent(Vst::kNoteExpressionChanged);
+
+        // update the parameter titles and notify
+        for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
+            Vst::ParamID pid = kPidCC0 + cc;
+            Vst::Parameter* param = getParameterObject(pid);
+            Vst::ParameterInfo& info = param->getInfo();
+            Steinberg::String title;
+            Steinberg::String shortTitle;
+            if (!desc.ccLabel[cc].empty()) {
+                title = desc.ccLabel[cc].c_str();
+                shortTitle = title;
+            }
+            else {
+                title.printf("Controller %u", cc);
+                shortTitle.printf("CC%u", cc);
+            }
+            title.copyTo(info.title);
+            shortTitle.copyTo(info.shortTitle);
+        }
+
+        if (Vst::IComponentHandler* componentHandler = getComponentHandler())
+            componentHandler->restartComponent(Vst::kParamTitlesChanged);
+
+        //
         sfzDescriptionUpdate_->deferUpdate();
     }
-    else if (!strcmp(id, "LoadedScala")) {
-        absl::string_view scalaFile;
-
-        result = stringFromBinaryAttribute("File", scalaFile);
-        if (result != kResultTrue)
-            return result;
-
-        scalaUpdate_->setPath(std::string(scalaFile));
+    else if (!strcmp(id, ScalaUpdate::getFClassID())) {
+        if (!scalaUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
         scalaUpdate_->deferUpdate();
     }
-    else if (!strcmp(id, "NotifiedPlayState")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("PlayState", data, size);
-
-        if (result != kResultTrue)
-            return result;
-
-        playStateUpdate_->setState(*static_cast<const SfizzPlayState*>(data));
+    else if (!strcmp(id, PlayStateUpdate::getFClassID())) {
+        if (!playStateUpdate_->convertFromMessage(*message)) {
+            assert(false);
+            return kResultFalse;
+        }
         playStateUpdate_->deferUpdate();
     }
-    else if (!strcmp(id, "ReceivedMessage")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("Message", data, size);
-
-        if (result != kResultTrue)
-            return result;
-
-        // this is a synchronous send, because the update object gets reused
-        oscUpdate_->setMessage(data, size, false);
-        oscUpdate_->changed();
-        oscUpdate_->clear();
-    }
-    else if (!strcmp(id, "NoteEvents")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("Events", data, size);
-
-        const auto* events = reinterpret_cast<
-            const std::pair<uint32_t, float>*>(data);
-        uint32 numEvents = size / sizeof(events[0]);
-
-        // this is a synchronous send, because the update object gets reused
-        noteUpdate_->setEvents(events, numEvents, false);
-        noteUpdate_->changed();
-        noteUpdate_->clear();
-    }
-    else if (!strcmp(id, "Automate")) {
-        const void* data = nullptr;
-        uint32 size = 0;
-        result = attr->getBinary("Data", data, size);
-
-        if (result != kResultTrue)
-            return result;
-
-        const uint8* pos = reinterpret_cast<const uint8*>(data);
-        const uint8* end = pos + size;
-
-        while (static_cast<size_t>(end - pos) >= sizeof(uint32) + sizeof(float)) {
-            Vst::ParamID pid = *reinterpret_cast<const uint32*>(pos);
-            pos += sizeof(uint32);
-            float value = *reinterpret_cast<const float*>(pos);
-            pos += sizeof(float);
-            setParam(pid, value);
+    else if (!strcmp(id, OSCUpdate::getFClassID())) {
+        IPtr<OSCUpdate> update = OSCUpdate::createFromMessage(*message);
+        if (!update) {
+            assert(false);
+            return kResultFalse;
         }
+        queuedUpdates_->enqueue(update);
+        queuedUpdates_->deferUpdate();
+    }
+    else if (!strcmp(id, NoteUpdate::getFClassID())) {
+        IPtr<NoteUpdate> update = NoteUpdate::createFromMessage(*message);
+        if (!update) {
+            assert(false);
+            return kResultFalse;
+        }
+        queuedUpdates_->enqueue(update);
+        queuedUpdates_->deferUpdate();
+    }
+    else if (!strcmp(id, AutomationUpdate::getFClassID())) {
+        IPtr<AutomationUpdate> update = AutomationUpdate::createFromMessage(*message);
+        if (!update) {
+            assert(false);
+            return kResultFalse;
+        }
+        for (AutomationUpdate::Item item : update->getItems())
+            setParam(item.first, item.second);
     }
 
     return result;
@@ -326,20 +434,17 @@ IPlugView* PLUGIN_API SfizzVstController::createView(FIDString _name)
     if (name != Vst::ViewType::kEditor)
         return nullptr;
 
-    std::vector<FObject*> continuousUpdates;
-    continuousUpdates.push_back(sfzUpdate_);
-    continuousUpdates.push_back(sfzDescriptionUpdate_);
-    continuousUpdates.push_back(scalaUpdate_);
-    continuousUpdates.push_back(playStateUpdate_);
+    std::vector<FObject*> updates;
+    updates.push_back(queuedUpdates_);
+    updates.push_back(sfzUpdate_);
+    updates.push_back(sfzDescriptionUpdate_);
+    updates.push_back(scalaUpdate_);
+    updates.push_back(playStateUpdate_);
     for (uint32 i = 0, n = parameters.getParameterCount(); i < n; ++i)
-        continuousUpdates.push_back(parameters.getParameterByIndex(i));
-
-    std::vector<FObject*> triggerUpdates;
-    triggerUpdates.push_back(oscUpdate_);
-    triggerUpdates.push_back(noteUpdate_);
+        updates.push_back(parameters.getParameterByIndex(i));
 
     IPtr<SfizzVstEditor> editor = Steinberg::owned(
-        new SfizzVstEditor(this, absl::MakeSpan(continuousUpdates), absl::MakeSpan(triggerUpdates)));
+        new SfizzVstEditor(this, absl::MakeSpan(updates)));
 
     editor->remember();
     return editor;

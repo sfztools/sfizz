@@ -35,6 +35,8 @@ if(WIN32)
     target_sources(vst3sdk PRIVATE
         "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp")
 elseif(APPLE)
+    target_sources(vst3sdk PRIVATE
+        "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_mac.mm")
 else()
     target_sources(vst3sdk PRIVATE
         "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_linux.cpp")

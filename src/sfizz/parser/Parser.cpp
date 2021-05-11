@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Parser.h"
+#include "ParserListener.h"
 #include "ParserPrivate.h"
 #include "absl/memory/memory.h"
 #include <cassert>

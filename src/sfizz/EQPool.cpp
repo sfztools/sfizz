@@ -1,4 +1,7 @@
 #include "EQPool.h"
+#include "Region.h"
+#include "Resources.h"
+#include "BufferPool.h"
 #include "SIMDHelpers.h"
 #include "utility/SwapAndPop.h"
 #include <absl/algorithm/container.h>
@@ -31,9 +34,10 @@ void sfz::EQHolder::setup(const Region& region, unsigned eqId, float velocity)
     baseBandwidth = description->bandwidth;
     baseGain = description->gain + velocity * description->vel2gain;
 
-    gainTarget = resources.modMatrix.findTarget(ModKey::createNXYZ(ModId::EqGain, region.id, eqId));
-    bandwidthTarget = resources.modMatrix.findTarget(ModKey::createNXYZ(ModId::EqBandwidth, region.id, eqId));
-    frequencyTarget = resources.modMatrix.findTarget(ModKey::createNXYZ(ModId::EqFrequency, region.id, eqId));
+    const ModMatrix& mm = resources.getModMatrix();
+    gainTarget = mm.findTarget(ModKey::createNXYZ(ModId::EqGain, region.id, eqId));
+    bandwidthTarget = mm.findTarget(ModKey::createNXYZ(ModId::EqBandwidth, region.id, eqId));
+    frequencyTarget = mm.findTarget(ModKey::createNXYZ(ModId::EqFrequency, region.id, eqId));
 
     // Disables smoothing of the parameters on the first call
     prepared = false;
@@ -47,10 +51,11 @@ void sfz::EQHolder::process(const float** inputs, float** outputs, unsigned numF
         return;
     }
 
-    ModMatrix& mm = resources.modMatrix;
-    auto frequencySpan = resources.bufferPool.getBuffer(numFrames);
-    auto bandwidthSpan = resources.bufferPool.getBuffer(numFrames);
-    auto gainSpan = resources.bufferPool.getBuffer(numFrames);
+    ModMatrix& mm = resources.getModMatrix();
+    BufferPool& bufferPool = resources.getBufferPool();
+    auto frequencySpan = bufferPool.getBuffer(numFrames);
+    auto bandwidthSpan = bufferPool.getBuffer(numFrames);
+    auto gainSpan = bufferPool.getBuffer(numFrames);
 
     if (!frequencySpan || !bandwidthSpan || !gainSpan)
         return;

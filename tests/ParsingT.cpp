@@ -6,6 +6,7 @@
 
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/parser/Parser.h"
+#include "sfizz/parser/ParserListener.h"
 #include <iostream>
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"

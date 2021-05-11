@@ -653,9 +653,9 @@ TEST_CASE("[Values] CC condition range")
         synth.dispatchMessage(client, 0, "/region3/cc_range1", "", nullptr);
         std::vector<std::string> expected {
             "/region0/cc_range1,ff : { 0, 1 }",
-            "/region1/cc_range1,ff : { 0, 0.425197 }",
-            "/region2/cc_range1,ff : { 0, 0.425197 }",
-            "/region2/cc_range2,ff : { 0.015748, 0.0787402 }",
+            "/region1/cc_range1,ff : { 0, 0.433071 }",
+            "/region2/cc_range1,ff : { 0, 0.433071 }",
+            "/region2/cc_range2,ff : { 0.015748, 0.0866142 }",
             "/region3/cc_range1,ff : { 0.0787402, -0.00787402 }",
         };
         REQUIRE(messageList == expected);
@@ -1123,8 +1123,8 @@ TEST_CASE("[Values] Start on cc range")
         "/region0/start_cc_range1,N : {  }",
         "/region0/start_cc_range2,N : {  }",
         "/region1/start_cc_range1,ff : { 0.11811, 1 }",
-        "/region2/start_cc_range1,ff : { 0, 0.661417 }",
-        "/region3/start_cc_range1,ff : { 0.11811, 0.661417 }",
+        "/region2/start_cc_range1,ff : { 0, 0.669291 }",
+        "/region3/start_cc_range1,ff : { 0.11811, 0.669291 }",
         "/region4/start_cc_range2,ff : { 0.1, 1 }",
         "/region5/start_cc_range2,ff : { 0, 0.4 }",
         "/region6/start_cc_range2,ff : { 0.1, 0.4 }",

@@ -1,4 +1,5 @@
 include(CMakeDependentOption)
+include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(GNUWarnings)
 
@@ -22,6 +23,18 @@ elseif((SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2) AND CMAKE_CXX_STAND
     set(CMAKE_CXX_STANDARD 14)
 endif()
 
+# Set build profiling options
+if(SFIZZ_PROFILE_BUILD)
+    check_c_compiler_flag("-ftime-trace" SFIZZ_HAVE_CFLAG_FTIME_TRACE)
+    check_cxx_compiler_flag("-ftime-trace" SFIZZ_HAVE_CXXFLAG_FTIME_TRACE)
+    if(SFIZZ_HAVE_CFLAG_FTIME_TRACE)
+        add_compile_options("$<$<COMPILE_LANGUAGE:C>:-ftime-trace>")
+    endif()
+    if(SFIZZ_HAVE_CXXFLAG_FTIME_TRACE)
+        add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-ftime-trace>")
+    endif()
+endif()
+
 # Process sources as UTF-8
 if(MSVC)
     add_compile_options("/utf-8")
@@ -30,6 +43,11 @@ endif()
 # Set Windows compatibility level to 7
 if(WIN32)
     add_compile_definitions(_WIN32_WINNT=0x601)
+endif()
+
+# Define the math constants everywhere
+if(WIN32)
+    add_compile_definitions(_USE_MATH_DEFINES)
 endif()
 
 # Set macOS compatibility level

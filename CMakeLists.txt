@@ -28,6 +28,7 @@ option_ex (SFIZZ_LV2_UI            "Enable LV2 plug-in user interface" ON)
 option_ex (SFIZZ_VST               "Enable VST plug-in build" ON)
 option_ex (SFIZZ_AU                "Enable AU plug-in build" APPLE)
 option_ex (SFIZZ_VST2              "Enable VST2 plug-in build (unsupported)" OFF)
+option_ex (SFIZZ_PUREDATA          "Enable Puredata plug-in build" OFF)
 option_ex (SFIZZ_BENCHMARKS        "Enable benchmarks build" OFF)
 option_ex (SFIZZ_TESTS             "Enable tests build" OFF)
 option_ex (SFIZZ_DEMOS             "Enable feature demos build" OFF)
@@ -39,6 +40,7 @@ option_ex (SFIZZ_USE_SYSTEM_ABSEIL "Use Abseil libraries preinstalled on system"
 option_ex (SFIZZ_USE_SYSTEM_SIMDE  "Use SIMDe libraries preinstalled on system" OFF)
 option_ex (SFIZZ_STATIC_DEPENDENCIES "Link dependencies statically" OFF)
 option_ex (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds" OFF)
+option_ex (SFIZZ_PROFILE_BUILD     "Profile the build time" OFF)
 
 # The fixed number of controller parameters
 set(SFIZZ_NUM_CCS 512)

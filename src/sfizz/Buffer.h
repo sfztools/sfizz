@@ -230,7 +230,7 @@ public:
      *
      * @param other
      */
-    Buffer(const Buffer<Type>& other)
+    Buffer(const Buffer<Type, Alignment>& other)
     {
         resize(other.size());
         std::memcpy(this->data(), other.data(), other.size() * sizeof(value_type));
@@ -241,7 +241,7 @@ public:
      *
      * @param other
      */
-    Buffer(Buffer<Type>&& other) noexcept
+    Buffer(Buffer<Type, Alignment>&& other) noexcept
         : largerSize(other.largerSize),
           alignedSize(other.alignedSize),
           normalData(other.normalData),
@@ -252,7 +252,7 @@ public:
         other._clear();
     }
 
-    Buffer<Type>& operator=(const Buffer<Type>& other)
+    Buffer<Type, Alignment>& operator=(const Buffer<Type, Alignment>& other)
     {
         if (this != &other) {
             resize(other.size());
@@ -261,7 +261,7 @@ public:
         return *this;
     }
 
-    Buffer<Type>& operator=(Buffer<Type>&& other) noexcept
+    Buffer<Type, Alignment>& operator=(Buffer<Type, Alignment>&& other) noexcept
     {
         if (this != &other) {
             if (largerSize > 0)

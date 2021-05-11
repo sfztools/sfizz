@@ -10,6 +10,7 @@
 #include "Region.h"
 #include "Resources.h"
 #include "AudioSpan.h"
+#include "Logger.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
 #include <memory>
@@ -416,6 +417,19 @@ public:
      * @return const ExtendedCCValues&
      */
     const ExtendedCCValues& getExtendedCCValues() const noexcept;
+
+    /**
+     * @brief Get the remaining delay before the sample starts, in samples
+     *
+     * @return int
+     */
+    int getRemainingDelay() const noexcept;
+    /**
+     * @brief Get the current position in the source sample
+     *
+     * @return int
+     */
+    int getSourcePosition() const noexcept;
 
 public:
     /**

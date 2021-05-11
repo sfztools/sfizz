@@ -116,6 +116,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_osc_blob_uri;
+    LV2_URID sfizz_audio_level_uri;
     std::unique_ptr<sfizz_lv2_ccmap, sfizz_lv2_ccmap_delete> ccmap;
 
     uint8_t osc_temp[OSC_TEMP_SIZE];
@@ -217,6 +218,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->sfizz_audio_level_uri = map->map(map->handle, SFIZZ__AudioLevel);
     self->ccmap.reset(sfizz_lv2_ccmap_create(map));
 
     // set up the resource path
@@ -287,6 +289,7 @@ static void
 cleanup(LV2UI_Handle ui)
 {
     sfizz_ui_t *self = (sfizz_ui_t *)ui;
+    sfizz_lv2_set_ui_active(self->plugin, false);
     delete self;
 }
 
@@ -391,6 +394,27 @@ port_event(LV2UI_Handle ui,
             if (sfizz_extract_message(LV2_ATOM_BODY_CONST(atom), atom->size, buffer, sizeof(buffer), &path, &sig, &args) > 0)
                 self->uiReceiveMessage(path, sig, args);
         }
+        else if (atom->type == self->sfizz_audio_level_uri) {
+            const LV2_Atom_Vector *vector = reinterpret_cast<const LV2_Atom_Vector *>(atom);
+
+            if (vector->body.child_type == self->atom_float_uri &&
+                vector->body.child_size == sizeof(float))
+            {
+                const uint8_t *vec_body = reinterpret_cast<const uint8_t*>(
+                    LV2_ATOM_CONTENTS_CONST(LV2_Atom_Vector, vector));
+                const uint8_t *vec_end = reinterpret_cast<const uint8_t*>(
+                    LV2_ATOM_BODY_CONST(&vector->atom)) + vector->atom.size;
+
+                const float *levels = reinterpret_cast<const float *>(vec_body);
+                uint32_t count = static_cast<uint32_t>((vec_end - vec_body) / sizeof(float));
+
+                float left = (count > 0) ? levels[0] : 0.0f;
+                float right = (count > 1) ? levels[1] : 0.0f;
+
+                self->uiReceiveValue(EditId::LeftLevel, left);
+                self->uiReceiveValue(EditId::RightLevel, right);
+            }
+        }
     }
 
     (void)buffer_size;
@@ -465,6 +489,8 @@ idle(LV2UI_Handle ui)
 #else
    (void)self;
 #endif
+
+    sfizz_lv2_set_ui_active(self->plugin, self->uiFrame->isVisible());
 
     return 0;
 }

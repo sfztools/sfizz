@@ -8,6 +8,7 @@
 #include "sfizz/Synth.h"
 #include "sfizz/AudioBuffer.h"
 #include "sfizz/FlexEnvelope.h"
+#include "sfizz/modulations/ModMatrix.h"
 #include "catch2/catch.hpp"
 #include "TestHelpers.h"
 #include <array>
@@ -42,7 +43,7 @@ TEST_CASE("[FlexEG] Values")
     REQUIRE( egDescription.points[4].time == .4_a );
     REQUIRE( egDescription.points[4].level == 1.0_a );
     REQUIRE( egDescription.sustain == 3 );
-    REQUIRE(synth.getResources().modMatrix.toDotGraph() == createDefaultGraph({
+    REQUIRE(synth.getResources().getModMatrix().toDotGraph() == createDefaultGraph({
         R"("EG 1 {0}" -> "Amplitude {0}")",
     }));
 }
@@ -68,7 +69,7 @@ TEST_CASE("[FlexEG] Default values")
     REQUIRE( egDescription.points[1].level == 0.0_a );
     REQUIRE( egDescription.points[2].time == .1_a );
     REQUIRE( egDescription.points[2].level == .25_a );
-    REQUIRE( synth.getResources().modMatrix.toDotGraph() == createDefaultGraph({}) );
+    REQUIRE( synth.getResources().getModMatrix().toDotGraph() == createDefaultGraph({}) );
 }
 
 TEST_CASE("[FlexEG] Connections")
@@ -86,7 +87,7 @@ TEST_CASE("[FlexEG] Connections")
     REQUIRE(synth.getNumRegions() == 6);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     REQUIRE( synth.getRegionView(0)->flexEGs[0].points.size() == 2 );
-    REQUIRE( synth.getResources().modMatrix.toDotGraph() == createDefaultGraph({
+    REQUIRE( synth.getResources().getModMatrix().toDotGraph() == createDefaultGraph({
         R"("EG 1 {0}" -> "Amplitude {0}")",
         R"("EG 1 {1}" -> "Pan {1}")",
         R"("EG 1 {2}" -> "Width {2}")",

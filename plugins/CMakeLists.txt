@@ -1,4 +1,5 @@
 add_library(plugins-common STATIC EXCLUDE_FROM_ALL
+    "common/plugin/RMSFollower.h"
     "common/plugin/MessageUtils.h"
     "common/plugin/MessageUtils.cpp"
     "common/plugin/InstrumentDescription.h"
@@ -28,7 +29,7 @@ endif()
 target_include_directories(plugins-common PUBLIC "common")
 target_link_libraries(plugins-common
     PUBLIC sfizz::spin_mutex
-    PUBLIC sfizz::filesystem absl::strings
+    PUBLIC sfizz::simde sfizz::filesystem absl::strings
     PRIVATE sfizz::pugixml
     PRIVATE sfizz::internal sfizz::sfizz)
 add_library(sfizz::plugins-common ALIAS plugins-common)
@@ -40,10 +41,6 @@ elseif(APPLE)
     target_link_libraries(plugins-common PRIVATE
         "${APPLE_FOUNDATION_LIBRARY}")
 else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GLIB REQUIRED glib-2.0)
-    target_include_directories(plugins-common PRIVATE ${GLIB_INCLUDE_DIRS})
-    target_link_libraries(plugins-common PRIVATE ${GLIB_LIBRARIES})
 endif()
 
 if((SFIZZ_LV2 AND SFIZZ_LV2_UI) OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
@@ -56,4 +53,8 @@ endif()
 
 if(SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
     add_subdirectory(vst)
+endif()
+
+if(SFIZZ_PUREDATA)
+    add_subdirectory(puredata)
 endif()

@@ -335,12 +335,12 @@ void sfizz_all_sound_off(sfizz_synth_t* synth)
 
 void sfizz_add_external_definitions(sfizz_synth_t* synth, const char* id, const char* value)
 {
-    synth->synth.getParser().addExternalDefinition(id, value);
+    synth->synth.addExternalDefinition(id, value);
 }
 
 void sfizz_clear_external_definitions(sfizz_synth_t* synth)
 {
-    synth->synth.getParser().clearExternalDefinitions();
+    synth->synth.clearExternalDefinitions();
 }
 
 unsigned int sfizz_get_num_key_labels(sfizz_synth_t* synth)

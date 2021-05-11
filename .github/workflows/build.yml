@@ -44,6 +44,7 @@ jobs:
       run: |
         sudo apt-get update && \
         sudo apt-get install \
+          ninja-build \
           libjack-jackd2-dev \
           libsndfile1-dev \
           libcairo2-dev \
@@ -64,10 +65,12 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake "$GITHUB_WORKSPACE" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+        cmake "$GITHUB_WORKSPACE" -G Ninja \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DSFIZZ_JACK=ON \
           -DSFIZZ_VST=ON \
           -DSFIZZ_LV2_UI=ON \
+          -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_TESTS=ON \
           -DSFIZZ_SHARED=OFF \
           -DSFIZZ_STATIC_DEPENDENCIES=OFF \
@@ -155,7 +158,7 @@ jobs:
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
       run: |
-       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
+       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON -DSFIZZ_PUREDATA=ON
     - name: Build tests
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
@@ -190,7 +193,7 @@ jobs:
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
       run: |
-       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
+       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON -DSFIZZ_PUREDATA=ON
     - name: Build tests
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
@@ -239,7 +242,7 @@ jobs:
       shell: bash
       run: |
         pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm base-devel git wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
+        pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -263,11 +266,12 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        i686-w64-mingw32-cmake "$GITHUB_WORKSPACE" \
+        i686-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DENABLE_LTO=OFF \
           -DSFIZZ_JACK=OFF \
           -DSFIZZ_VST=ON \
+          -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_STATIC_DEPENDENCIES=ON \
           -DCMAKE_CXX_STANDARD=17
     - name: Build
@@ -308,7 +312,7 @@ jobs:
       shell: bash
       run: |
         pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm base-devel git wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
+        pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -332,11 +336,12 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        x86_64-w64-mingw32-cmake "$GITHUB_WORKSPACE" \
+        x86_64-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DENABLE_LTO=OFF \
           -DSFIZZ_JACK=OFF \
           -DSFIZZ_VST=ON \
+          -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_STATIC_DEPENDENCIES=ON \
           -DCMAKE_CXX_STANDARD=17
     - name: Build
