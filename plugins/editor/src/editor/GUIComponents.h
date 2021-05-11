@@ -402,6 +402,8 @@ private:
     CColor dangerFillColor_;
     CColor backColor_;
     CCoord radius_ = 5.0;
+    SharedPointer<CVSTGUITimer> timer_;
+    bool timerArmed_ = false;
 };
 
 ///

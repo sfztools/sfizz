@@ -991,7 +991,23 @@ void SLevelMeter::setValue(float value)
         return;
 
     value_ = value;
-    invalid();
+
+    // instantiate the timer lazily
+    if (!timer_) {
+        const uint32_t interval = 10;
+        timer_ = makeOwned<CVSTGUITimer>(
+            [this](CVSTGUITimer* timer) {
+                timer->stop();
+                timerArmed_ = false;
+                invalid();
+            }, interval, false);
+    }
+
+    // defer the update, but do not rearm the timer
+    if (!timerArmed_) {
+        timerArmed_ = true;
+        timer_->start();
+    }
 }
 
 void SLevelMeter::draw(CDrawContext* dc)
