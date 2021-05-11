@@ -16,11 +16,19 @@
 #include "Region.h"
 #include "RegionSet.h"
 #include "Resources.h"
+#include "BufferPool.h"
+#include "FilePool.h"
+#include "Wavetables.h"
+#include "Tuning.h"
+#include "BeatClock.h"
+#include "Metronome.h"
+#include "SynthConfig.h"
 #include "ScopedFTZ.h"
 #include "utility/StringViewHelpers.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
 #include "Interpolators.h"
+#include "parser/Parser.h"
 #include <absl/algorithm/container.h>
 #include <absl/memory/memory.h>
 #include <absl/strings/str_replace.h>
@@ -59,18 +67,19 @@ Synth::Impl::Impl()
     resetVoices(config::numVoices);
 
     // modulation sources
+    MidiState& midiState = resources_.getMidiState();
     genController_.reset(new ControllerSource(resources_, voiceManager_));
     genLFO_.reset(new LFOSource(voiceManager_));
     genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
-    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, resources_.midiState));
-    genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, resources_.midiState));
-    genPolyAftertouch_.reset(new PolyAftertouchSource(voiceManager_, resources_.midiState));
+    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, midiState));
+    genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, midiState));
+    genPolyAftertouch_.reset(new PolyAftertouchSource(voiceManager_, midiState));
 }
 
 Synth::Impl::~Impl()
 {
     voiceManager_.reset();
-    resources_.filePool.emptyFileLoadingQueues();
+    resources_.getFilePool().emptyFileLoadingQueues();
 }
 
 void Synth::Impl::onParseFullBlock(const std::string& header, const std::vector<Opcode>& members)
@@ -113,7 +122,7 @@ void Synth::Impl::onParseFullBlock(const std::string& header, const std::vector<
         buildRegion(members);
         break;
     case hash("curve"):
-        resources_.curves.addCurveFromHeader(members);
+        resources_.getCurves().addCurveFromHeader(members);
         break;
     case hash("effect"):
         handleEffectOpcodes(members);
@@ -138,7 +147,8 @@ void Synth::Impl::onParseWarning(const SourceRange& range, const std::string& me
 void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 {
     int regionNumber = static_cast<int>(layers_.size());
-    Layer* lastLayer = new Layer(regionNumber, defaultPath_, resources_.midiState);
+    MidiState& midiState = resources_.getMidiState();
+    Layer* lastLayer = new Layer(regionNumber, defaultPath_, midiState);
     layers_.emplace_back(lastLayer);
     Region* lastRegion = &lastLayer->getRegion();
 
@@ -221,8 +231,11 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
 
 void Synth::Impl::clear()
 {
+    FilePool& filePool = resources_.getFilePool();
+    MidiState& midiState = resources_.getMidiState();
+
     // Clear the background queues before removing everyone
-    resources_.filePool.waitForBackgroundLoading();
+    filePool.waitForBackgroundLoading();
 
     voiceManager_.reset();
     for (auto& list : lastKeyswitchLists_)
@@ -253,9 +266,9 @@ void Synth::Impl::clear()
     currentSwitch_ = absl::nullopt;
     defaultPath_ = "";
     image_ = "";
-    resources_.midiState.reset();
-    resources_.filePool.clear();
-    resources_.filePool.setRamLoading(config::loadInRam);
+    midiState.reset();
+    filePool.clear();
+    filePool.setRamLoading(config::loadInRam);
     clearCCLabels();
     currentUsedCCs_.clear();
     changedCCsThisCycle_.clear();
@@ -361,7 +374,6 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
 
 void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 {
-    bool overSampled = false;
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
 
@@ -400,13 +412,16 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             octaveOffset_ = member.read(Default::octaveOffset);
             break;
         case hash("hint_ram_based"):
+        {
+            FilePool& filePool = resources_.getFilePool();
             if (member.value == "1")
-                resources_.filePool.setRamLoading(true);
+                filePool.setRamLoading(true);
             else if (member.value == "0")
-                resources_.filePool.setRamLoading(false);
+                filePool.setRamLoading(false);
             else
                 DBG("Unsupported value for hint_ram_based: " << member.value);
             break;
+        }
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
@@ -570,7 +585,8 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 void Synth::Impl::finalizeSfzLoad()
 {
     const fs::path& rootDirectory = parser_.originalDirectory();
-    resources_.filePool.setRootDirectory(rootDirectory);
+    FilePool& filePool = resources_.getFilePool();
+    filePool.setRootDirectory(rootDirectory);
 
     // a string representation used for OSC purposes
     rootPath_ = rootDirectory.u8string();
@@ -603,13 +619,16 @@ void Synth::Impl::finalizeSfzLoad()
 
         absl::optional<FileInformation> fileInformation;
 
+        FilePool& filePool = resources_.getFilePool();
+        WavetablePool& wavePool = resources_.getWavePool();
+
         if (!region.isGenerator()) {
-            if (!resources_.filePool.checkSampleId(*region.sampleId)) {
+            if (!filePool.checkSampleId(*region.sampleId)) {
                 removeCurrentRegion();
                 continue;
             }
 
-            fileInformation = resources_.filePool.getFileInformation(*region.sampleId);
+            fileInformation = filePool.getFileInformation(*region.sampleId);
             if (!fileInformation) {
                 removeCurrentRegion();
                 continue;
@@ -618,7 +637,7 @@ void Synth::Impl::finalizeSfzLoad()
             region.hasWavetableSample = fileInformation->wavetable.has_value();
 
             if (fileInformation->end < config::wavetableMaxFrames) {
-                auto sample = resources_.filePool.loadFile(*region.sampleId);
+                auto sample = filePool.loadFile(*region.sampleId);
                 bool allZeros = true;
                 int numChannels = sample->information.numChannels;
                 for (int i = 0; i < numChannels; ++i) {
@@ -673,13 +692,13 @@ void Synth::Impl::finalizeSfzLoad()
                 return Default::offsetMod.bounds.clamp(sumOffsetCC);
             }();
 
-            if (!resources_.filePool.preloadFile(*region.sampleId, maxOffset)) {
+            if (!filePool.preloadFile(*region.sampleId, maxOffset)) {
                 removeCurrentRegion();
                 continue;
             }
         }
         else if (!region.isGenerator()) {
-            if (!resources_.wavePool.createFileWave(resources_.filePool, std::string(region.sampleId->filename()))) {
+            if (!wavePool.createFileWave(filePool, std::string(region.sampleId->filename()))) {
                 removeCurrentRegion();
                 continue;
             }
@@ -718,8 +737,9 @@ void Synth::Impl::finalizeSfzLoad()
         }
 
         // Defaults
+        MidiState& midiState = resources_.getMidiState();
         for (int cc = 0; cc < config::numCCs; cc++) {
-            layer.registerCC(cc, resources_.midiState.getCCValue(cc));
+            layer.registerCC(cc, midiState.getCCValue(cc));
         }
 
 
@@ -839,37 +859,37 @@ void Synth::Impl::finalizeSfzLoad()
 bool Synth::loadScalaFile(const fs::path& path)
 {
     Impl& impl = *impl_;
-    return impl.resources_.tuning.loadScalaFile(path);
+    return impl.resources_.getTuning().loadScalaFile(path);
 }
 
 bool Synth::loadScalaString(const std::string& text)
 {
     Impl& impl = *impl_;
-    return impl.resources_.tuning.loadScalaString(text);
+    return impl.resources_.getTuning().loadScalaString(text);
 }
 
 void Synth::setScalaRootKey(int rootKey)
 {
     Impl& impl = *impl_;
-    impl.resources_.tuning.setScalaRootKey(rootKey);
+    impl.resources_.getTuning().setScalaRootKey(rootKey);
 }
 
 int Synth::getScalaRootKey() const
 {
     Impl& impl = *impl_;
-    return impl.resources_.tuning.getScalaRootKey();
+    return impl.resources_.getTuning().getScalaRootKey();
 }
 
 void Synth::setTuningFrequency(float frequency)
 {
     Impl& impl = *impl_;
-    impl.resources_.tuning.setTuningFrequency(frequency);
+    impl.resources_.getTuning().setTuningFrequency(frequency);
 }
 
 float Synth::getTuningFrequency() const
 {
     Impl& impl = *impl_;
-    return impl.resources_.tuning.getTuningFrequency();
+    return impl.resources_.getTuning().getTuningFrequency();
 }
 
 void Synth::loadStretchTuningByRatio(float ratio)
@@ -878,10 +898,11 @@ void Synth::loadStretchTuningByRatio(float ratio)
     SFIZZ_CHECK(ratio >= 0.0f && ratio <= 1.0f);
     ratio = clamp(ratio, 0.0f, 1.0f);
 
+    absl::optional<StretchTuning>& stretch = impl.resources_.getStretch();
     if (ratio > 0.0f)
-        impl.resources_.stretch = StretchTuning::createRailsbackFromRatio(ratio);
+        stretch = StretchTuning::createRailsbackFromRatio(ratio);
     else
-        impl.resources_.stretch.reset();
+        stretch.reset();
 }
 
 int Synth::getNumActiveVoices() const noexcept
@@ -952,8 +973,12 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
         return;
     }
 
-    if (impl.resources_.synthConfig.freeWheeling)
-        impl.resources_.filePool.waitForBackgroundLoading();
+    const SynthConfig& synthConfig = impl.resources_.getSynthConfig();
+    FilePool& filePool = impl.resources_.getFilePool();
+    BufferPool& bufferPool = impl.resources_.getBufferPool();
+
+    if (synthConfig.freeWheeling)
+        filePool.waitForBackgroundLoading();
 
     const auto now = std::chrono::high_resolution_clock::now();
     const auto timeSinceLastCollection =
@@ -961,25 +986,27 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     if (timeSinceLastCollection.count() > config::fileClearingPeriod) {
         impl.lastGarbageCollection_ = now;
-        impl.resources_.filePool.triggerGarbageCollection();
+        filePool.triggerGarbageCollection();
     }
 
-    auto tempSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
-    auto tempMixSpan = impl.resources_.bufferPool.getStereoBuffer(numFrames);
-    auto rampSpan = impl.resources_.bufferPool.getBuffer(numFrames);
+    auto tempSpan = bufferPool.getStereoBuffer(numFrames);
+    auto tempMixSpan = bufferPool.getStereoBuffer(numFrames);
+    auto rampSpan = bufferPool.getBuffer(numFrames);
     if (!tempSpan || !tempMixSpan || !rampSpan) {
         DBG("[sfizz] Could not get a temporary buffer; exiting callback... ");
         return;
     }
 
-    ModMatrix& mm = impl.resources_.modMatrix;
-    mm.beginCycle(numFrames * impl.resources_.synthConfig.OSFactor);
+    ModMatrix& mm = impl.resources_.getModMatrix();
+    mm.beginCycle(numFrames);
 
-    BeatClock& bc = impl.resources_.beatClock;
+    BeatClock& bc = impl.resources_.getBeatClock();
     bc.beginCycle(numFrames);
 
-    if (impl.playheadMoved_ && impl.resources_.beatClock.isPlaying()) {
-        impl.resources_.midiState.flushEvents();
+    MidiState& midiState = impl.resources_.getMidiState();
+
+    if (impl.playheadMoved_ && bc.isPlaying()) {
+        midiState.flushEvents();
         impl.genController_->resetSmoothers();
         impl.playheadMoved_ = false;
     }
@@ -1049,7 +1076,8 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     // Process the metronome (debugging tool for host time info)
     constexpr bool metronomeEnabled = false;
     if (metronomeEnabled) {
-        impl.resources_.metronome.processAdding(
+        Metronome& metro = impl.resources_.getMetronome();
+        metro.processAdding(
             bc.getRunningBeatNumber().data(), bc.getRunningBeatsPerBar().data(),
             buffer.getChannel(0), buffer.getChannel(1), numFrames);
     }
@@ -1066,11 +1094,12 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Clear events and advance midi time
         ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-        impl.resources_.midiState.advanceTime(buffer.getNumFrames());
+        midiState.advanceTime(buffer.getNumFrames());
     }
 
     callbackBreakdown.dispatch = impl.dispatchDuration_;
-    impl.resources_.logger.logCallbackTime(
+    Logger& logger = impl.resources_.getLogger();
+    logger.logCallbackTime(
         callbackBreakdown, impl.voiceManager_.getNumActiveVoices(), numFrames);
 
     // Reset the dispatch counter
@@ -1094,8 +1123,8 @@ void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexce
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+    impl.resources_.getMidiState().noteOnEvent(delay, noteNumber, normalizedVelocity);
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
-    impl.resources_.midiState.noteOnEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
@@ -1108,20 +1137,20 @@ void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexc
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
-    UNUSED(normalizedVelocity);
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? getNoteVelocity(noteNumber) : velocity);
-    const auto replacedVelocity = impl.resources_.midiState.getNoteVelocity(noteNumber);
+    MidiState& midiState = impl.resources_.getMidiState();
+    midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
+    const auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : impl.voiceManager_)
         voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
     impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
-    impl.resources_.midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
 }
 
 void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
@@ -1297,6 +1326,8 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
 
     changedCCsThisCycle_.set(ccNumber);
 
+    MidiState& midiState = resources_.getMidiState();
+
     if (asMidi) {
         if (ccNumber == config::resetCC) {
             resetAllControllers(delay);
@@ -1306,7 +1337,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
         if (ccNumber == config::allNotesOffCC || ccNumber == config::allSoundOffCC) {
             for (auto& voice : voiceManager_)
                 voice.reset();
-            resources_.midiState.allNotesOff(delay);
+            midiState.allNotesOff(delay);
             return;
         }
     }
@@ -1315,7 +1346,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
         voice.registerCC(delay, ccNumber, normValue);
 
     ccDispatch(delay, ccNumber, normValue);
-    resources_.midiState.ccEvent(delay, ccNumber, normValue);
+    midiState.ccEvent(delay, ccNumber, normValue);
 }
 
 void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
@@ -1323,7 +1354,7 @@ void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
     ASSERT(ccNumber >= 0);
     ASSERT(ccNumber < config::numCCs);
     defaultCCValues_[ccNumber] = value;
-    resources_.midiState.ccEvent(0, ccNumber, value);
+    resources_.getMidiState().ccEvent(0, ccNumber, value);
 }
 
 float Synth::getHdcc(int ccNumber)
@@ -1331,7 +1362,7 @@ float Synth::getHdcc(int ccNumber)
     ASSERT(ccNumber >= 0);
     ASSERT(ccNumber < config::numCCs);
     Impl& impl = *impl_;
-    return impl.resources_.midiState.getCCValue(ccNumber);
+    return impl.resources_.getMidiState().getCCValue(ccNumber);
 }
 
 float Synth::getDefaultHdcc(int ccNumber)
@@ -1353,7 +1384,7 @@ void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
     Impl& impl = *impl_;
 
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.midiState.pitchBendEvent(delay, normalizedPitch);
+    impl.resources_.getMidiState().pitchBendEvent(delay, normalizedPitch);
 
     for (const Impl::LayerPtr& layer : impl.layers_) {
         layer->registerPitchWheel(normalizedPitch);
@@ -1377,7 +1408,7 @@ void Synth::hdChannelAftertouch(int delay, float normAftertouch) noexcept
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.midiState.channelAftertouchEvent(delay, normAftertouch);
+    impl.resources_.getMidiState().channelAftertouchEvent(delay, normAftertouch);
 
     for (const Impl::LayerPtr& layerPtr : impl.layers_) {
         layerPtr->registerAftertouch(normAftertouch);
@@ -1401,7 +1432,7 @@ void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) no
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.midiState.polyAftertouchEvent(delay, noteNumber, normAftertouch);
+    impl.resources_.getMidiState().polyAftertouchEvent(delay, noteNumber, normAftertouch);
 
     for (auto& voice : impl.voiceManager_)
         voice.registerPolyAftertouch(delay, noteNumber, normAftertouch);
@@ -1415,7 +1446,7 @@ void Synth::tempo(int delay, float secondsPerBeat) noexcept
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.beatClock.setTempo(delay, secondsPerBeat);
+    impl.resources_.getBeatClock().setTempo(delay, secondsPerBeat);
 }
 
 void Synth::bpmTempo(int delay, float beatsPerMinute) noexcept
@@ -1429,7 +1460,7 @@ void Synth::timeSignature(int delay, int beatsPerBar, int beatUnit)
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.beatClock.setTimeSignature(delay, TimeSignature(beatsPerBar, beatUnit));
+    impl.resources_.getBeatClock().setTimeSignature(delay, TimeSignature(beatsPerBar, beatUnit));
 }
 
 void Synth::timePosition(int delay, int bar, double barBeat)
@@ -1437,16 +1468,18 @@ void Synth::timePosition(int delay, int bar, double barBeat)
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
+    BeatClock& beatClock = impl.resources_.getBeatClock();
+
     const auto newPosition = BBT(bar, barBeat);
-    const auto newBeatPosition = newPosition.toBeats(impl.resources_.beatClock.getTimeSignature());
-    const auto currentBeatPosition = impl.resources_.beatClock.getLastBeatPosition();
+    const auto newBeatPosition = newPosition.toBeats(beatClock.getTimeSignature());
+    const auto currentBeatPosition = beatClock.getLastBeatPosition();
     const auto positionDifference = std::abs(newBeatPosition - currentBeatPosition);
-    const auto threshold = config::playheadMovedFrames * impl.resources_.beatClock.getBeatsPerFrame();
+    const auto threshold = config::playheadMovedFrames * beatClock.getBeatsPerFrame();
 
     if (positionDifference > threshold)
         impl.playheadMoved_ = true;
 
-    impl.resources_.beatClock.setTimePosition(delay, newPosition);
+    beatClock.setTimePosition(delay, newPosition);
 }
 
 void Synth::playbackState(int delay, int playbackState)
@@ -1454,7 +1487,7 @@ void Synth::playbackState(int delay, int playbackState)
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.beatClock.setPlaying(delay, playbackState == 1);
+    impl.resources_.getBeatClock().setPlaying(delay, playbackState == 1);
 }
 
 int Synth::getNumRegions() const noexcept
@@ -1478,7 +1511,7 @@ int Synth::getNumMasters() const noexcept
 int Synth::getNumCurves() const noexcept
 {
     Impl& impl = *impl_;
-    return static_cast<int>(impl.resources_.curves.getNumCurves());
+    return static_cast<int>(impl.resources_.getCurves().getNumCurves());
 }
 
 std::string Synth::exportMidnam(absl::string_view model) const
@@ -1660,17 +1693,18 @@ const std::vector<std::string>& Synth::getUnknownOpcodes() const noexcept
 size_t Synth::getNumPreloadedSamples() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.resources_.filePool.getNumPreloadedSamples();
+    return impl.resources_.getFilePool().getNumPreloadedSamples();
 }
 
 int Synth::getSampleQuality(ProcessMode mode)
 {
     Impl& impl = *impl_;
+    SynthConfig& synthConfig = impl.resources_.getSynthConfig();
     switch (mode) {
     case ProcessLive:
-        return impl.resources_.synthConfig.liveSampleQuality;
+        return synthConfig.liveSampleQuality;
     case ProcessFreewheeling:
-        return impl.resources_.synthConfig.freeWheelingSampleQuality;
+        return synthConfig.freeWheelingSampleQuality;
     default:
         SFIZZ_CHECK(false);
         return 0;
@@ -1682,13 +1716,14 @@ void Synth::setSampleQuality(ProcessMode mode, int quality)
     SFIZZ_CHECK(quality >= 0 && quality <= 10);
     Impl& impl = *impl_;
     quality = clamp(quality, 0, 10);
+    SynthConfig& synthConfig = impl.resources_.getSynthConfig();
 
     switch (mode) {
     case ProcessLive:
-        impl.resources_.synthConfig.liveSampleQuality = quality;
+        synthConfig.liveSampleQuality = quality;
         break;
     case ProcessFreewheeling:
-        impl.resources_.synthConfig.freeWheelingSampleQuality = quality;
+        synthConfig.freeWheelingSampleQuality = quality;
         break;
     default:
         SFIZZ_CHECK(false);
@@ -1699,11 +1734,12 @@ void Synth::setSampleQuality(ProcessMode mode, int quality)
 int Synth::getOscillatorQuality(ProcessMode mode)
 {
     Impl& impl = *impl_;
+    SynthConfig& synthConfig = impl.resources_.getSynthConfig();
     switch (mode) {
     case ProcessLive:
-        return impl.resources_.synthConfig.liveOscillatorQuality;
+        return synthConfig.liveOscillatorQuality;
     case ProcessFreewheeling:
-        return impl.resources_.synthConfig.freeWheelingOscillatorQuality;
+        return synthConfig.freeWheelingOscillatorQuality;
     default:
         SFIZZ_CHECK(false);
         return 0;
@@ -1715,13 +1751,14 @@ void Synth::setOscillatorQuality(ProcessMode mode, int quality)
     SFIZZ_CHECK(quality >= 0 && quality <= 3);
     Impl& impl = *impl_;
     quality = clamp(quality, 0, 3);
+    SynthConfig& synthConfig = impl.resources_.getSynthConfig();
 
     switch (mode) {
     case ProcessLive:
-        impl.resources_.synthConfig.liveOscillatorQuality = quality;
+        synthConfig.liveOscillatorQuality = quality;
         break;
     case ProcessFreewheeling:
-        impl.resources_.synthConfig.freeWheelingOscillatorQuality = quality;
+        synthConfig.freeWheelingOscillatorQuality = quality;
         break;
     default:
         SFIZZ_CHECK(false);
@@ -1792,7 +1829,7 @@ void Synth::Impl::applySettingsPerVoice()
 
 void Synth::Impl::setupModMatrix()
 {
-    ModMatrix& mm = resources_.modMatrix;
+    ModMatrix& mm = resources_.getModMatrix();
 
     for (const LayerPtr& layerPtr : layers_) {
         const Region& region = layerPtr->getRegion();
@@ -1873,40 +1910,43 @@ void Synth::Impl::setupModMatrix()
 void Synth::setPreloadSize(uint32_t preloadSize) noexcept
 {
     Impl& impl = *impl_;
+    FilePool& filePool = impl.resources_.getFilePool();
 
     // fast path
-    if (preloadSize == impl.resources_.filePool.getPreloadSize())
+    if (preloadSize == filePool.getPreloadSize())
         return;
 
-    impl.resources_.filePool.setPreloadSize(preloadSize);
+    filePool.setPreloadSize(preloadSize);
 }
 
 uint32_t Synth::getPreloadSize() const noexcept
 {
     Impl& impl = *impl_;
-    return impl.resources_.filePool.getPreloadSize();
+    return impl.resources_.getFilePool().getPreloadSize();
 }
 
 void Synth::enableFreeWheeling() noexcept
 {
     Impl& impl = *impl_;
-    if (!impl.resources_.synthConfig.freeWheeling) {
-        impl.resources_.synthConfig.freeWheeling = true;
+    SynthConfig& synthConfig = impl.resources_.getSynthConfig();
+    if (!synthConfig.freeWheeling) {
+        synthConfig.freeWheeling = true;
         DBG("Enabling freewheeling");
     }
 }
 void Synth::disableFreeWheeling() noexcept
 {
     Impl& impl = *impl_;
-    if (impl.resources_.synthConfig.freeWheeling) {
-        impl.resources_.synthConfig.freeWheeling = false;
+    SynthConfig& synthConfig = impl.resources_.getSynthConfig();
+    if (synthConfig.freeWheeling) {
+        synthConfig.freeWheeling = false;
         DBG("Disabling freewheeling");
     }
 }
 
 void Synth::Impl::resetAllControllers(int delay) noexcept
 {
-    resources_.midiState.resetAllControllers(delay);
+    resources_.getMidiState().resetAllControllers(delay);
 
     for (auto& voice : voiceManager_) {
         voice.registerPitchWheel(delay, 0);
@@ -1953,19 +1993,19 @@ bool Synth::shouldReloadFile()
 bool Synth::shouldReloadScala()
 {
     Impl& impl = *impl_;
-    return impl.resources_.tuning.shouldReloadScala();
+    return impl.resources_.getTuning().shouldReloadScala();
 }
 
 void Synth::enableLogging(absl::string_view prefix) noexcept
 {
     Impl& impl = *impl_;
-    impl.resources_.logger.enableLogging(prefix);
+    impl.resources_.getLogger().enableLogging(prefix);
 }
 
 void Synth::disableLogging() noexcept
 {
     Impl& impl = *impl_;
-    impl.resources_.logger.disableLogging();
+    impl.resources_.getLogger().disableLogging();
 }
 
 void Synth::allSoundOff() noexcept
@@ -1975,6 +2015,18 @@ void Synth::allSoundOff() noexcept
         voice.reset();
     for (auto& effectBus : impl.effectBuses_)
         effectBus->clear();
+}
+
+void Synth::addExternalDefinition(const std::string& id, const std::string& value)
+{
+    Impl& impl = *impl_;
+    impl.parser_.addExternalDefinition(id, value);
+}
+
+void Synth::clearExternalDefinitions()
+{
+    Impl& impl = *impl_;
+    impl.parser_.clearExternalDefinitions();
 }
 
 const BitArray<config::numCCs>& Synth::getUsedCCs() const noexcept
@@ -2060,7 +2112,7 @@ BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
     BitArray<config::numCCs> used;
     for (const LayerPtr& layerPtr : layers_)
         collectUsedCCsFromRegion(used, layerPtr->getRegion());
-    collectUsedCCsFromModulations(used, resources_.modMatrix);
+    collectUsedCCsFromModulations(used, resources_.getModMatrix());
     return used;
 }
 
