@@ -191,6 +191,20 @@ tresult PLUGIN_API SfizzVstControllerNoUi::getKeyswitchInfo(int32 busIndex, int1
     return kResultTrue;
 }
 
+tresult PLUGIN_API SfizzVstControllerNoUi::beginEditFromHost(Vst::ParamID paramID)
+{
+    // Note(jpc) implementing this interface is a workaround to make
+    //           non-automatable parameters editable in Ardour (as of 6.6)
+    (void)paramID;
+    return kResultTrue;
+}
+
+tresult PLUGIN_API SfizzVstControllerNoUi::endEditFromHost(Vst::ParamID paramID)
+{
+    (void)paramID;
+    return kResultTrue;
+}
+
 tresult PLUGIN_API SfizzVstControllerNoUi::getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string)
 {
     switch (tag) {

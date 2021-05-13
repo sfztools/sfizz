@@ -23,7 +23,8 @@ using namespace VSTGUI;
 
 class SfizzVstControllerNoUi : public Vst::EditControllerEx1,
                                public Vst::IMidiMapping,
-                               public Vst::IKeyswitchController {
+                               public Vst::IKeyswitchController,
+                               public Vst::IEditControllerHostEditing {
 public:
     virtual ~SfizzVstControllerNoUi() {}
 
@@ -34,6 +35,9 @@ public:
 
     int32 PLUGIN_API getKeyswitchCount (int32 busIndex, int16 channel) override;
     tresult PLUGIN_API getKeyswitchInfo (int32 busIndex, int16 channel, int32 keySwitchIndex, Vst::KeyswitchInfo& info) override;
+
+    tresult PLUGIN_API beginEditFromHost(Vst::ParamID paramID) override;
+    tresult PLUGIN_API endEditFromHost(Vst::ParamID paramID) override;
 
     tresult PLUGIN_API getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) override;
     tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized) override;
@@ -47,6 +51,7 @@ public:
     DEFINE_INTERFACES
     DEF_INTERFACE(Vst::IMidiMapping)
     DEF_INTERFACE(Vst::IKeyswitchController)
+    DEF_INTERFACE(Vst::IEditControllerHostEditing)
     END_DEFINE_INTERFACES(Vst::EditControllerEx1)
     REFCOUNT_METHODS(Vst::EditControllerEx1)
 
