@@ -474,16 +474,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         crossfadeKeyOutRange.setEnd(opcode.read(Default::hiKey));
         break;
     case hash("xfin_lovel"):
-        crossfadeVelInRange.setStart(opcode.read(Default::loVel));
+        crossfadeVelInRange.setStart(opcode.read(Default::xfinLo));
         break;
     case hash("xfin_hivel"):
-        crossfadeVelInRange.setEnd(opcode.read(Default::loVel)); // loVel for the proper default
+        crossfadeVelInRange.setEnd(opcode.read(Default::xfinHi));
         break;
     case hash("xfout_lovel"):
-        crossfadeVelOutRange.setStart(opcode.read(Default::hiVel)); // hiVel for the proper default
+        crossfadeVelOutRange.setStart(opcode.read(Default::xfoutLo));
         break;
     case hash("xfout_hivel"):
-        crossfadeVelOutRange.setEnd(opcode.read(Default::hiVel));
+        crossfadeVelOutRange.setEnd(opcode.read(Default::xfoutHi));
         break;
     case hash("xf_keycurve"):
         crossfadeKeyCurve = opcode.read(Default::crossfadeCurve);
@@ -495,28 +495,28 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::xfinLoCC)
+            opcode.read(Default::xfinLo)
         );
         break;
     case hash("xfin_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::xfinHiCC)
+            opcode.read(Default::xfinHi)
         );
         break;
     case hash("xfout_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::xfoutLoCC)
+            opcode.read(Default::xfoutLo)
         );
         break;
     case hash("xfout_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::xfoutHiCC)
+            opcode.read(Default::xfoutHi)
         );
         break;
     case hash("xf_cccurve"):

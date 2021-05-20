@@ -599,8 +599,8 @@ TEST_CASE("[Values] Velocity range")
     synth.dispatchMessage(client, 0, "/region3/vel_range", "", nullptr);
     std::vector<std::string> expected {
         "/region0/vel_range,ff : { 0, 1 }",
-        "/region1/vel_range,ff : { 0.267717, 0.472441 }",
-        "/region2/vel_range,ff : { -0.023622, 0.472441 }",
+        "/region1/vel_range,ff : { 0.267717, 0.480315 }",
+        "/region2/vel_range,ff : { -0.023622, 0.480315 }",
         "/region3/vel_range,ff : { 0, -0.00787402 }",
     };
     REQUIRE(messageList == expected);
@@ -914,10 +914,10 @@ TEST_CASE("[Values] Aftertouch range")
     synth.dispatchMessage(client, 0, "/region4/chanaft_range", "", nullptr);
     std::vector<std::string> expected {
         "/region0/chanaft_range,ff : { 0, 1 }",
-        "/region1/chanaft_range,ff : { 0.267717, 0.472441 }",
-        "/region2/chanaft_range,ff : { -0.023622, 0.472441 }",
+        "/region1/chanaft_range,ff : { 0.267717, 0.480315 }",
+        "/region2/chanaft_range,ff : { -0.023622, 0.480315 }",
         "/region3/chanaft_range,ff : { 0.15748, -0.00787402 }",
-        "/region4/chanaft_range,ff : { 0.15748, 0.0787402 }",
+        "/region4/chanaft_range,ff : { 0.15748, 0.0866142 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -942,10 +942,10 @@ TEST_CASE("[Values] Polyaftertouch range")
     synth.dispatchMessage(client, 0, "/region4/polyaft_range", "", nullptr);
     std::vector<std::string> expected {
         "/region0/polyaft_range,ff : { 0, 1 }",
-        "/region1/polyaft_range,ff : { 0.267717, 0.472441 }",
-        "/region2/polyaft_range,ff : { -0.023622, 0.472441 }",
+        "/region1/polyaft_range,ff : { 0.267717, 0.480315 }",
+        "/region2/polyaft_range,ff : { -0.023622, 0.480315 }",
         "/region3/polyaft_range,ff : { 0.15748, -0.00787402 }",
-        "/region4/polyaft_range,ff : { 0.15748, 0.0787402 }",
+        "/region4/polyaft_range,ff : { 0.15748, 0.0866142 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -1747,8 +1747,8 @@ TEST_CASE("[Values] Crossfade velocity range")
         synth.dispatchMessage(client, 0, "/region3/xfin_vel_range", "", nullptr);
         std::vector<std::string> expected {
             "/region0/xfin_vel_range,ff : { 0, 0 }",
-            "/region1/xfin_vel_range,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfin_vel_range,ff : { -0.0787402, 0.314961 }",
+            "/region1/xfin_vel_range,ff : { 0.0787402, 0.322835 }",
+            "/region2/xfin_vel_range,ff : { -0.0787402, 0.322835 }",
             "/region3/xfin_vel_range,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
@@ -1768,8 +1768,8 @@ TEST_CASE("[Values] Crossfade velocity range")
         synth.dispatchMessage(client, 0, "/region3/xfout_vel_range", "", nullptr);
         std::vector<std::string> expected {
             "/region0/xfout_vel_range,ff : { 1, 1 }",
-            "/region1/xfout_vel_range,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfout_vel_range,ff : { -0.0787402, 0.314961 }",
+            "/region1/xfout_vel_range,ff : { 0.0787402, 0.322835 }",
+            "/region2/xfout_vel_range,ff : { -0.0787402, 0.322835 }",
             "/region3/xfout_vel_range,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
@@ -1868,8 +1868,8 @@ TEST_CASE("[Values] Crossfade CC range")
         synth.dispatchMessage(client, 0, "/region3/xfin_cc_range4", "", nullptr);
         std::vector<std::string> expected {
             "/region0/xfin_cc_range4,N : {  }",
-            "/region1/xfin_cc_range4,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfin_cc_range4,ff : { -0.0787402, 0.314961 }",
+            "/region1/xfin_cc_range4,ff : { 0.0787402, 0.322835 }",
+            "/region2/xfin_cc_range4,ff : { -0.0787402, 0.322835 }",
             "/region3/xfin_cc_range4,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
@@ -1889,8 +1889,8 @@ TEST_CASE("[Values] Crossfade CC range")
         synth.dispatchMessage(client, 0, "/region3/xfout_cc_range4", "", nullptr);
         std::vector<std::string> expected {
             "/region0/xfout_cc_range4,N : {  }",
-            "/region1/xfout_cc_range4,ff : { 0.0787402, 0.314961 }",
-            "/region2/xfout_cc_range4,ff : { -0.0787402, 0.314961 }",
+            "/region1/xfout_cc_range4,ff : { 0.0787402, 0.322835 }",
+            "/region2/xfout_cc_range4,ff : { -0.0787402, 0.322835 }",
             "/region3/xfout_cc_range4,ff : { 0.0787402, 1.10236 }",
         };
         REQUIRE(messageList == expected);
