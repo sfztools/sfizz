@@ -164,10 +164,10 @@ namespace Default
     extern const OpcodeSpec<float> hiVel;
     extern const OpcodeSpec<float> loCC;
     extern const OpcodeSpec<float> hiCC;
-    extern const OpcodeSpec<float> xfoutLoCC;
-    extern const OpcodeSpec<float> xfoutHiCC;
-    extern const OpcodeSpec<float> xfinHiCC;
-    extern const OpcodeSpec<float> xfinLoCC;
+    extern const OpcodeSpec<float> xfoutLo;
+    extern const OpcodeSpec<float> xfoutHi;
+    extern const OpcodeSpec<float> xfinHi;
+    extern const OpcodeSpec<float> xfinLo;
     extern const OpcodeSpec<float> loBend;
     extern const OpcodeSpec<float> hiBend;
     extern const OpcodeSpec<float> loNormalized;
