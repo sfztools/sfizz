@@ -676,6 +676,12 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (impl.noteIsOff_ && region.loopMode != LoopMode::one_shot
         && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
+
+    if (region.checkSustain && (impl.sustainState_ == Impl::SustainState::Sustaining)
+        && impl.released() && (region.trigger != Trigger::release && region.trigger != Trigger::release_key) ) {
+        ModMatrix& modMatrix = impl.resources_.getModMatrix();
+        modMatrix.cancelRelease(impl.id_, impl.region_->getId(), delay);
+    }
 }
 
 void Voice::registerPitchWheel(int delay, float pitch) noexcept
