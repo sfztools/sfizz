@@ -48,6 +48,11 @@ public:
     void release(unsigned releaseDelay);
 
     /**
+       Cancel the release
+     */
+    void cancelRelease(unsigned delay);
+
+    /**
        Get the remaining delay samples
      */
     unsigned getRemainingDelay() const noexcept;
