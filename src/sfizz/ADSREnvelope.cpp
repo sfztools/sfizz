@@ -123,7 +123,7 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
             }
             while (count < size) {
                 if (currentValue > sustain)
-                    currentValue = std::max(sustain, currentValue + transitionDelta);
+                    currentValue += transitionDelta;
                 output[count++] = currentValue;
             }
             break;
