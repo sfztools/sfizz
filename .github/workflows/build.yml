@@ -429,9 +429,9 @@ jobs:
       - name: Set install name
         run: |
           echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-      - uses: actions/download-artifact@v2
-        with:
-          name: Linux tarball
+      # - uses: actions/download-artifact@v2
+      #   with:
+      #     name: Linux tarball
       - uses: actions/download-artifact@v2
         with:
           name: MOD devices tarball
