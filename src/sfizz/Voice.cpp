@@ -678,6 +678,7 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
         release(delay);
 
     if (region.checkSustain && (impl.sustainState_ == Impl::SustainState::Sustaining)
+        && impl.resources_.getSynthConfig().sustainCancelsRelease
         && impl.released() && (region.trigger != Trigger::release && region.trigger != Trigger::release_key) ) {
         ModMatrix& modMatrix = impl.resources_.getModMatrix();
         modMatrix.cancelRelease(impl.id_, impl.region_->getId(), delay);
