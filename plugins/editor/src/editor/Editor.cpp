@@ -66,6 +66,7 @@ struct Editor::Impl : EditorController::Receiver,
 
     enum {
         kPanelGeneral,
+        kPanelInfo,
         kPanelControls,
         kPanelSettings,
         kNumPanels,
@@ -816,6 +817,9 @@ void Editor::Impl::createFrameContents()
         };
         auto createHomeButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
+        };
+        auto createInfoButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue1e7", bounds, tag, fontsize);
         };
         auto createCCButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             // return createGlyphButton(u8"\ue240", bounds, tag, fontsize);

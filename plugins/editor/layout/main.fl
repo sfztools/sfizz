@@ -6,16 +6,16 @@ widget_class mainView {open
   xywh {439 94 800 475} type Double
   class LogicalGroup visible
 } {
-  Fl_Box imageContainer_ {
-    image {../resources/background.png} xywh {190 110 600 280}
+  Fl_Box imageContainer_ {selected
+    image {../resources/background.png} xywh {5 110 790 285}
     class Background
   }
   Fl_Group {} {
-    comment {palette=invertedPalette} open selected
+    comment {palette=invertedPalette} open
     xywh {0 0 800 110}
     class LogicalGroup
   } {
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {5 4 175 101} box ROUNDED_BOX align 0
       class RoundedGroup
     } {
@@ -24,23 +24,28 @@ widget_class mainView {open
         image {../resources/logo_text_shaded.png} xywh {32 9 120 60}
         class AboutButton
       }
-      Fl_Button {panelButtons_[kPanelGeneral]} {
-        comment {tag=kTagFirstChangePanel+kPanelGeneral}
-        xywh {36 73 32 32} labelsize 30
-        class HomeButton
+      Fl_Button {panelButtons_[kPanelInfo]} {
+        comment {tag=kTagFirstChangePanel+kPanelInfo}
+        xywh {56 73 32 32} labelsize 30
+        class InfoButton
       }
       Fl_Button {panelButtons_[kPanelControls]} {
         comment {tag=kTagFirstChangePanel+kPanelControls}
-        xywh {76 73 32 32} labelsize 30
+        xywh {97 73 32 32} labelsize 30
         class CCButton
       }
       Fl_Button {panelButtons_[kPanelSettings]} {
         comment {tag=kTagFirstChangePanel+kPanelSettings}
-        xywh {116 73 32 32} labelsize 30
+        xywh {137 73 32 32} labelsize 30
         class SettingsButton
       }
+      Fl_Button {panelButtons_[kPanelGeneral]} {
+        comment {tag=kTagFirstChangePanel+kPanelGeneral}
+        xywh {16 73 32 32} labelsize 30
+        class HomeButton
+      }
     }
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {185 5 418 100} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -121,7 +126,7 @@ widget_class mainView {open
         class ChevronValueDropDown
       }
     }
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {608 5 187 100} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -156,12 +161,12 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelGeneral]} {
+  Fl_Group {subPanels_[kPanelInfo]} {open
     xywh {5 110 791 285} hide
     class LogicalGroup
   } {
     Fl_Group {} {open
-      xywh {5 110 175 280} box ROUNDED_BOX
+      xywh {5 110 790 280} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Box {} {
@@ -216,7 +221,7 @@ widget_class mainView {open
       }
     }
   }
-  Fl_Group {subPanels_[kPanelControls]} {open
+  Fl_Group {subPanels_[kPanelControls]} {
     xywh {5 110 790 285} hide
     class LogicalGroup
   } {
@@ -230,7 +235,7 @@ widget_class mainView {open
       } {}
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {open
+  Fl_Group {subPanels_[kPanelSettings]} {
     xywh {5 109 790 316}
     class LogicalGroup
   } {
@@ -381,4 +386,8 @@ widget_class mainView {open
     xywh {5 400 790 70} labelsize 12
     class Piano
   }
+  Fl_Group {subPanels_[kPanelGeneral]} {open
+    xywh {25 130 791 285} hide
+    class LogicalGroup
+  } {}
 }
