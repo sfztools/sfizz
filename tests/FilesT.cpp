@@ -149,10 +149,10 @@ TEST_CASE("[Files] Group from AVL")
         REQUIRE(synth.getRegionView(i)->keyRange == Range<uint8_t>(36, 36));
     }
 
-    almostEqualRanges(synth.getRegionView(0)->velocityRange, { 1_norm, 26_norm });
-    almostEqualRanges(synth.getRegionView(1)->velocityRange, { 27_norm, 52_norm });
-    almostEqualRanges(synth.getRegionView(2)->velocityRange, { 53_norm, 77_norm });
-    almostEqualRanges(synth.getRegionView(3)->velocityRange, { 78_norm, 102_norm });
+    almostEqualRanges(synth.getRegionView(0)->velocityRange, { 1_norm, std::nextafter(27_norm, 0.0f) });
+    almostEqualRanges(synth.getRegionView(1)->velocityRange, { 27_norm, std::nextafter(53_norm, 0.0f) });
+    almostEqualRanges(synth.getRegionView(2)->velocityRange, { 53_norm, std::nextafter(78_norm, 0.0f) });
+    almostEqualRanges(synth.getRegionView(3)->velocityRange, { 78_norm, std::nextafter(103_norm, 0.0f) });
     almostEqualRanges(synth.getRegionView(4)->velocityRange, { 103_norm, 127_norm });
 }
 
