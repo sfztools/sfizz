@@ -36,8 +36,8 @@ LicenseFile="sfizz.lv2\LICENSE.md"
 OutputBaseFileName={#MyAppName}-{#MyAppVersion}-msvc-{#Arch}-setup
 OutputDir=.
 UninstallFilesDir={app}
-WizardImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernImage-IS.bmp"
-WizardSmallImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernSmallImage-IS.bmp"
+WizardImageFile=compiler:WizClassicImage-IS.bmp
+WizardSmallImageFile=compiler:WizClassicSmallImage-IS.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
