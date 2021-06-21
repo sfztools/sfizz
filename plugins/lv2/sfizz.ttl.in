@@ -102,7 +102,7 @@ midnam:update a lv2:Feature .
   lv2:port [
     a lv2:InputPort, atom:AtomPort ;
     atom:bufferType atom:Sequence ;
-    atom:supports patch:Message, midi:MidiEvent, time:Position, <@LV2PLUGIN_URI@:OSCBlob> ;
+    atom:supports patch:Message, midi:MidiEvent, time:Position ;
     lv2:designation lv2:control ;
     lv2:index 0 ;
     lv2:symbol "control" ;
