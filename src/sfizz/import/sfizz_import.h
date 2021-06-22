@@ -5,8 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-
-typedef struct sfizz_synth_t sfizz_synth_t;
+#include <sfizz.h>
 
 /**
  * @brief Loads or imports an instrument file.

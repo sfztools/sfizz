@@ -4,7 +4,6 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "sfizz.h"
 #include "sfizz_import.h"
 #include "ForeignInstrument.h"
 
