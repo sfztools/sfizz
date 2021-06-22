@@ -1,6 +1,6 @@
 if(SFIZZ_JACK)
     add_executable(sfizz_jack MidiHelpers.h jack_client.cpp)
-    target_link_libraries(sfizz_jack PRIVATE sfizz::sfizz sfizz::jack sfizz::spin_mutex absl::flags_parse)
+    target_link_libraries(sfizz_jack PRIVATE sfizz::import sfizz::sfizz sfizz::jack sfizz::spin_mutex absl::flags_parse)
     sfizz_enable_lto_if_needed(sfizz_jack)
     install(TARGETS sfizz_jack DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT "jack" OPTIONAL)
