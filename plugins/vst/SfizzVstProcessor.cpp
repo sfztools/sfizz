@@ -9,7 +9,7 @@
 #include "SfizzVstState.h"
 #include "SfizzVstParameters.h"
 #include "SfizzVstIDs.h"
-#include "sfizz/import/ForeignInstrument.h"
+#include "sfizz/import/sfizz_import.h"
 #include "plugin/SfizzFileScan.h"
 #include "plugin/InstrumentDescription.h"
 #include "base/source/fstreamer.h"
@@ -682,16 +682,7 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool i
     sfz::Sfizz& synth = *_synth;
 
     if (!filePath.empty()) {
-        const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
-        const sfz::InstrumentFormat* format = formatRegistry.getMatchingFormat(filePath);
-        if (!format)
-            synth.loadSfzFile(filePath);
-        else {
-            auto importer = format->createImporter();
-            std::string virtualPath = filePath + ".sfz";
-            std::string sfzText = importer->convertToSfz(filePath);
-            synth.loadSfzString(virtualPath, sfzText);
-        }
+        sfizz_load_or_import_file(synth.handle(), filePath.c_str(), nullptr);
     }
     else {
         synth.loadSfzString("default.sfz", defaultSfzText);

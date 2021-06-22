@@ -7,6 +7,7 @@
 #include "GitBuildId.h"
 #include <m_pd.h>
 #include <sfizz.h>
+#include <sfizz/import/sfizz_import.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +63,7 @@ static bool sfizz_tilde_do_load(t_sfizz_tilde* self)
 {
     bool loaded;
     if (self->filepath[0] != '\0')
-        loaded = sfizz_load_file(self->synth, self->filepath);
+        loaded = sfizz_load_or_import_file(self->synth, self->filepath, NULL);
     else
         loaded = sfizz_load_string(self->synth, "default.sfz", "<region>sample=*sine");
     return loaded;
