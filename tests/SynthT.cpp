@@ -1829,6 +1829,95 @@ TEST_CASE("[Synth] Short empty files are turned into *silence")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Synth] Sustain cancels release (Flex EG)")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <control> hint_sustain_cancels_release=1
+        <region> sample=*sine
+            eg01_ampeg=1 eg01_sustain=2
+            eg01_time1=0 eg01_level1=0.00
+            eg01_time2=0.06 eg01_level2=0.92
+            eg01_time3=1.00 eg01_level3=0.00 eg01_shape3=-3
+    )");
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+    synth.noteOff(0, 60, 0 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer);
+    synth.cc(0, 64, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+}
+
+TEST_CASE("[Synth] Sustain cancels release (Flex EG) is off by default")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*sine
+            eg01_ampeg=1 eg01_sustain=2
+            eg01_time1=0 eg01_level1=0.00
+            eg01_time2=0.06 eg01_level2=0.92
+            eg01_time3=1.00 eg01_level3=0.00 eg01_shape3=-3
+    )");
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+    synth.noteOff(0, 60, 0 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer);
+    synth.cc(0, 64, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+}
+
+TEST_CASE("[Synth] Sustain cancels release")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <control> hint_sustain_cancels_release=1
+        <region> sample=*sine ampeg_release=10
+    )");
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+    synth.noteOff(0, 60, 0 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer);
+    synth.cc(0, 64, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+}
+
+TEST_CASE("[Synth] Sustain cancels release is off by default")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*sine ampeg_release=10
+    )");
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+    synth.noteOff(0, 60, 0 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+    synth.renderBlock(buffer);
+    synth.renderBlock(buffer);
+    synth.cc(0, 64, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+}  
 
 TEST_CASE("[Synth] Resets all controllers to default values")
 {

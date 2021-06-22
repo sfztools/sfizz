@@ -50,6 +50,15 @@ public:
     virtual void release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) { (void)sourceKey; (void)voiceId; (void)delay; }
 
     /**
+     * @brief Cancel the release and get back into sustain
+     *
+     * @param sourceKey identifier of the source to release
+     * @param voiceId the particular voice to initialize, if per-voice
+     * @param delay the frame time when it happens
+     */
+    virtual void cancelRelease(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) { (void)sourceKey; (void)voiceId; (void)delay; }
+
+    /**
      * @brief Generate a cycle of the modulator
      *
      * @param sourceKey source key

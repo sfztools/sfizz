@@ -16,7 +16,6 @@ class ChannelAftertouchSource : public ModGenerator {
 public:
     explicit ChannelAftertouchSource(VoiceManager &manager, MidiState& state);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
-    void release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:

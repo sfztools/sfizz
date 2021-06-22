@@ -23,13 +23,6 @@ void ChannelAftertouchSource::init(const ModKey& sourceKey, NumericId<Voice> voi
     UNUSED(delay);
 }
 
-void ChannelAftertouchSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
-{
-    UNUSED(sourceKey);
-    UNUSED(voiceId);
-    UNUSED(delay);
-}
-
 void ChannelAftertouchSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     UNUSED(sourceKey);

@@ -281,6 +281,19 @@ void ModMatrix::releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionI
     }
 }
 
+void ModMatrix::cancelRelease(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay)
+{
+    Impl& impl = *impl_;
+
+    ASSERT(regionId);
+
+    const auto idNumber = static_cast<size_t>(regionId.number());
+    for (auto idx: impl.sourceIndicesForRegion_[idNumber]) {
+        const Impl::Source& source = impl.sources_[idx];
+        source.gen->cancelRelease(source.key, voiceId, delay);
+    }
+}
+
 void ModMatrix::beginCycle(unsigned numFrames)
 {
     Impl& impl = *impl_;

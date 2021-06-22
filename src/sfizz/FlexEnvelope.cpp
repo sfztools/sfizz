@@ -49,6 +49,7 @@ struct FlexEnvelope::Impl {
 
     //
     void process(absl::Span<float> out);
+    bool advanceToStage(unsigned stageNumber);
     bool advanceToNextStage();
 };
 
@@ -112,6 +113,25 @@ void FlexEnvelope::release(unsigned releaseDelay)
 {
     Impl& impl = *impl_;
     impl.currentFramesUntilRelease_ = releaseDelay;
+}
+
+void FlexEnvelope::cancelRelease(unsigned delay)
+{
+    Impl& impl = *impl_;
+    const FlexEGDescription& desc = *impl.desc_;
+
+    if (impl.currentFramesUntilRelease_) {
+        // Cancel the future release
+        impl.currentFramesUntilRelease_ = absl::nullopt;
+        return;
+    }
+
+    if (!impl.isReleased_)
+        return;
+
+    impl.isReleased_ = false;
+    impl.advanceToStage(desc.sustain);
+    impl.stageTargetLevel_ = impl.currentLevel_;
 }
 
 unsigned FlexEnvelope::getRemainingDelay() const noexcept
@@ -226,25 +246,29 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
     }
 }
 
-bool FlexEnvelope::Impl::advanceToNextStage()
+bool FlexEnvelope::Impl::advanceToStage(unsigned stageNumber)
 {
     const FlexEGDescription& desc = *desc_;
 
-    unsigned nextStageNo = currentStageNumber_ + 1;
-    currentStageNumber_ = nextStageNo;
+    currentStageNumber_ = stageNumber;
 
-    if (nextStageNo >= desc.points.size())
+    if (stageNumber >= desc.points.size())
         return false;
 
-    const FlexEGPoint& point = desc.points[nextStageNo];
+    const FlexEGPoint& point = desc.points[stageNumber];
     stageSourceLevel_ = currentLevel_;
     stageTargetLevel_ = point.level;
     stageTime_ = point.time;
-    stageSustained_ = int(nextStageNo) == desc.sustain;
+    stageSustained_ = int(stageNumber) == desc.sustain;
     stageCurve_ = &point.curve();
 
     currentTime_ = 0;
     return true;
 };
+
+bool FlexEnvelope::Impl::advanceToNextStage()
+{
+    return advanceToStage(currentStageNumber_ + 1);
+}
 
 } // namespace sfz

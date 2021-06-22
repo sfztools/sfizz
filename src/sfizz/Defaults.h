@@ -305,6 +305,7 @@ namespace Default
     extern const OpcodeSpec<SelfMask> selfMask;
     extern const OpcodeSpec<FilterType> filter;
     extern const OpcodeSpec<EqType> eq;
+    extern const OpcodeSpec<bool> sustainCancelsRelease;
 
     // Default/max count for objects
     constexpr int numEQs { 3 };
