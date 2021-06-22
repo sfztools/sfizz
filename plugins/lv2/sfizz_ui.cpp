@@ -116,6 +116,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_osc_blob_uri;
+    LV2_URID sfizz_notify_uri;
     LV2_URID sfizz_audio_level_uri;
     std::unique_ptr<sfizz_lv2_ccmap, sfizz_lv2_ccmap_delete> ccmap;
 
@@ -218,6 +219,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->sfizz_notify_uri = map->map(map->handle, SFIZZ__Notify);
     self->sfizz_audio_level_uri = map->map(map->handle, SFIZZ__AudioLevel);
     self->ccmap.reset(sfizz_lv2_ccmap_create(map));
 

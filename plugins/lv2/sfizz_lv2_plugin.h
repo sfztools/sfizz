@@ -34,7 +34,6 @@ struct sfizz_plugin_t
 
     // Ports
     const LV2_Atom_Sequence *control_port {};
-    LV2_Atom_Sequence *notify_port {};
     LV2_Atom_Sequence *automate_port {};
     float *output_buffers[2] {};
     const float *volume_port {};
@@ -55,7 +54,6 @@ struct sfizz_plugin_t
     float *num_samples_port {};
 
     // Atom forge
-    LV2_Atom_Forge forge_notify {};       ///< Forge for writing notification atoms in run thread
     LV2_Atom_Forge forge_automate {};     ///< Forge for writing automation atoms in run thread
     LV2_Atom_Forge forge_secondary {};    ///< Forge for writing into other buffers
 
@@ -92,6 +90,7 @@ struct sfizz_plugin_t
     LV2_URID sfizz_check_modification_uri {};
     LV2_URID sfizz_active_voices_uri {};
     LV2_URID sfizz_osc_blob_uri {};
+    LV2_URID sfizz_notify_uri {};
     LV2_URID sfizz_audio_level_uri {};
     LV2_URID time_position_uri {};
     LV2_URID time_bar_uri {};
