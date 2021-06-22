@@ -35,7 +35,7 @@
 #include "sfizz_lv2.h"
 #include "sfizz_lv2_plugin.h"
 
-#include "sfizz/import/ForeignInstrument.h"
+#include "sfizz/import/sfizz_import.h"
 #include "plugin/InstrumentDescription.h"
 
 #include <math.h>
@@ -123,6 +123,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
+    self->sfizz_notify_uri = map->map(map->handle, SFIZZ__Notify);
     self->sfizz_audio_level_uri = map->map(map->handle, SFIZZ__AudioLevel);
     self->time_position_uri = map->map(map->handle, LV2_TIME__Position);
     self->time_bar_uri = map->map(map->handle, LV2_TIME__bar);
@@ -199,9 +200,6 @@ connect_port(LV2_Handle instance,
     {
     case SFIZZ_CONTROL:
         self->control_port = (const LV2_Atom_Sequence *)data;
-        break;
-    case SFIZZ_NOTIFY:
-        self->notify_port = (LV2_Atom_Sequence *)data;
         break;
     case SFIZZ_AUTOMATE:
         self->automate_port = (LV2_Atom_Sequence *)data;
@@ -331,7 +329,7 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
     if (osc_size > OSC_TEMP_SIZE)
         return;
 
-    LV2_Atom_Forge* forge = &self->forge_notify;
+    LV2_Atom_Forge* forge = &self->forge_automate;
     bool write_ok =
         lv2_atom_forge_frame_time(forge, 0) &&
         lv2_atom_forge_atom(forge, osc_size, self->sfizz_osc_blob_uri) &&
@@ -439,7 +437,6 @@ instantiate(const LV2_Descriptor *descriptor,
     sfizz_lv2_map_required_uris(self);
 
     // Initialize the forge
-    lv2_atom_forge_init(&self->forge_notify, self->map);
     lv2_atom_forge_init(&self->forge_automate, self->map);
     lv2_atom_forge_init(&self->forge_secondary, self->map);
 
@@ -545,13 +542,14 @@ deactivate(LV2_Handle instance)
 }
 
 static void
-sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_Atom_Forge* forge, LV2_URID urid, const char *path)
+sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID verb_uri, LV2_URID urid, const char *path)
 {
     LV2_Atom_Forge_Frame frame;
 
+    LV2_Atom_Forge* forge = &self->forge_automate;
     bool write_ok =
         lv2_atom_forge_frame_time(forge, 0) &&
-        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_object(forge, &frame, 0, verb_uri) &&
         lv2_atom_forge_key(forge, self->patch_property_uri) &&
         lv2_atom_forge_urid(forge, urid) &&
         lv2_atom_forge_key(forge, self->patch_value_uri) &&
@@ -562,14 +560,15 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_Atom_Forge* forge, LV2_URID u
 }
 
 static void
-sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_Atom_Forge* forge, unsigned cc, float value)
+sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_URID verb_uri, unsigned cc, float value)
 {
     LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
     LV2_Atom_Forge_Frame frame;
 
+    LV2_Atom_Forge* forge = &self->forge_automate;
     bool write_ok =
         lv2_atom_forge_frame_time(forge, 0) &&
-        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_object(forge, &frame, 0, verb_uri) &&
         lv2_atom_forge_key(forge, self->patch_property_uri) &&
         lv2_atom_forge_urid(forge, urid) &&
         lv2_atom_forge_key(forge, self->patch_value_uri) &&
@@ -581,11 +580,12 @@ sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_Atom_Forge* forge, unsigned 
 
 #if defined(SFIZZ_LV2_UI)
 static void
-sfizz_lv2_send_levels(sfizz_plugin_t *self, LV2_Atom_Forge* forge, float left, float right)
+sfizz_lv2_send_levels(sfizz_plugin_t *self, float left, float right)
 {
     const float levels[] = {left, right};
     uint32_t num_levels = sizeof(levels) / sizeof(levels[0]);
 
+    LV2_Atom_Forge* forge = &self->forge_automate;
     bool write_ok = lv2_atom_forge_frame_time(forge, 0);
 
     LV2_Atom_Vector *vector = nullptr;
@@ -871,7 +871,7 @@ static void
 run(LV2_Handle instance, uint32_t sample_count)
 {
     sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
-    assert(self->control_port && self->notify_port && self->automate_port);
+    assert(self->control_port && self->automate_port);
 
     if (!spin_mutex_trylock(self->synth_mutex))
     {
@@ -881,15 +881,10 @@ run(LV2_Handle instance, uint32_t sample_count)
     }
 
     // Set up dedicated forges to write on their respective ports.
-    const size_t notify_capacity = self->notify_port->atom.size;
-    lv2_atom_forge_set_buffer(&self->forge_notify, (uint8_t *)self->notify_port, notify_capacity);
     const size_t automate_capacity = self->automate_port->atom.size;
     lv2_atom_forge_set_buffer(&self->forge_automate, (uint8_t *)self->automate_port, automate_capacity);
 
     // Start sequences in the respective output ports.
-    LV2_Atom_Forge_Frame notify_frame;
-    if (!lv2_atom_forge_sequence_head(&self->forge_notify, &notify_frame, 0))
-        assert(false);
     LV2_Atom_Forge_Frame automate_frame;
     if (!lv2_atom_forge_sequence_head(&self->forge_automate, &automate_frame, 0))
         assert(false);
@@ -913,25 +908,25 @@ run(LV2_Handle instance, uint32_t sample_count)
                 lv2_atom_object_get(obj, self->patch_property_uri, &property, 0);
                 if (!property) // Send the full state
                 {
-                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_sfz_file_uri, self->sfz_file_path);
-                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_scala_file_uri, self->scala_file_path);
+                    sfizz_lv2_send_file_path(self, self->sfizz_notify_uri, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, self->sfizz_notify_uri, self->sfizz_scala_file_uri, self->scala_file_path);
 
                     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc)
-                        sfizz_lv2_send_controller(self, &self->forge_notify, cc, self->cc_current[cc]);
+                        sfizz_lv2_send_controller(self, self->sfizz_notify_uri, cc, self->cc_current[cc]);
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_sfz_file_uri, self->sfz_file_path);
+                    sfizz_lv2_send_file_path(self, self->sfizz_notify_uri, self->sfizz_sfz_file_uri, self->sfz_file_path);
                 }
                 else if (property->body == self->sfizz_scala_file_uri)
                 {
-                    sfizz_lv2_send_file_path(self, &self->forge_notify, self->sfizz_scala_file_uri, self->scala_file_path);
+                    sfizz_lv2_send_file_path(self, self->sfizz_notify_uri, self->sfizz_scala_file_uri, self->scala_file_path);
                 }
                 else
                 {
                     int cc = sfizz_lv2_ccmap_unmap(self->ccmap, property->body);
                     if (cc != -1)
-                        sfizz_lv2_send_controller(self, &self->forge_notify, unsigned(cc), self->cc_current[cc]);
+                        sfizz_lv2_send_controller(self, self->sfizz_notify_uri, unsigned(cc), self->cc_current[cc]);
                 }
             }
             else if (obj->body.otype == self->time_position_uri)
@@ -1079,7 +1074,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
             absl::optional<float> value = self->ccauto[cc];
             if (value) {
-                sfizz_lv2_send_controller(self, &self->forge_automate, cc, *value);
+                sfizz_lv2_send_controller(self, self->patch_set_uri, cc, *value);
                 self->ccauto[cc] = absl::nullopt;
             }
         }
@@ -1094,7 +1089,7 @@ run(LV2_Handle instance, uint32_t sample_count)
         self->rms_follower.process(self->output_buffers[0], self->output_buffers[1], sample_count);
         const simde__m128 rms = self->rms_follower.getRMS();
         const float *levels = (const float *)&rms;
-        sfizz_lv2_send_levels(self, &self->forge_notify, levels[0], levels[1]);
+        sfizz_lv2_send_levels(self, levels[0], levels[1]);
     }
     else
     {
@@ -1102,7 +1097,6 @@ run(LV2_Handle instance, uint32_t sample_count)
     }
 #endif
 
-    lv2_atom_forge_pop(&self->forge_notify, &notify_frame);
     lv2_atom_forge_pop(&self->forge_automate, &automate_frame);
 }
 
@@ -1237,8 +1231,6 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
 static bool
 sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
 {
-    bool status;
-
     char buf[MAX_PATH_SIZE];
     if (file_path[0] == '\0')
     {
@@ -1247,18 +1239,7 @@ sfizz_lv2_load_file(sfizz_plugin_t *self, const char *file_path)
     }
 
     ///
-    const sfz::InstrumentFormatRegistry& formatRegistry = sfz::InstrumentFormatRegistry::getInstance();
-    const sfz::InstrumentFormat* format = formatRegistry.getMatchingFormat(file_path);
-
-    if (!format)
-        status = sfizz_load_file(self->synth, file_path);
-    else {
-        auto importer = format->createImporter();
-        std::string virtual_path = std::string(file_path) + ".sfz";
-        std::string sfz_text = importer->convertToSfz(file_path);
-        status = sfizz_load_string(self->synth, virtual_path.c_str(), sfz_text.c_str());
-    }
-
+    bool status = sfizz_load_or_import_file(self->synth, file_path, nullptr);
     sfizz_lv2_update_sfz_info(self);
     sfizz_lv2_update_file_info(self, file_path);
     return status;

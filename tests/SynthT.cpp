@@ -1917,4 +1917,29 @@ TEST_CASE("[Synth] Sustain cancels release is off by default")
     synth.cc(0, 64, 127);
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
+}  
+
+TEST_CASE("[Synth] Resets all controllers to default values")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/default_cc.sfz", R"(
+        <control> set_cc56=64
+        <region> sample=*sine
+    )");
+    REQUIRE( synth.getHdcc(56) == 64_norm );
+    REQUIRE( synth.getHdcc(78) == 0.0f );
+    synth.cc(0, 56, 10);
+    synth.cc(0, 78, 100);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getHdcc(56) == 10_norm );
+    REQUIRE( synth.getHdcc(78) == 100_norm );
+    synth.cc(0, 121, 127);
+    synth.cc(0, 121, 0);
+    synth.renderBlock(buffer);
+    REQUIRE( synth.getHdcc(56) == 64_norm );
+    REQUIRE( synth.getHdcc(78) == 0.0f );
 }

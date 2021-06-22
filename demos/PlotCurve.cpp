@@ -17,6 +17,7 @@
 
 #include "sfizz/Curve.h"
 #include "sfizz/parser/Parser.h"
+#include "sfizz/parser/ParserListener.h"
 #include "absl/strings/numbers.h"
 #include "absl/types/span.h"
 #include <iostream>

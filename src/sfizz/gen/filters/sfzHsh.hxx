@@ -153,7 +153,7 @@ class faustHsh : public sfzFilterDsp {
 		double fSlow2 = (fConst2 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
 		double fSlow3 = std::cos(fSlow2);
 		double fSlow4 = ((fSlow1 + 1.0) * fSlow3);
-		double fSlow5 = ((std::sqrt(fSlow1) * std::sin(fSlow2)) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(0.0, double(fVslider1)))))));
+		double fSlow5 = ((std::sqrt(fSlow1) * std::sin(fSlow2)) / std::max<double>(0.001, std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(-60.0, double(fVslider1)))))));
 		double fSlow6 = ((fSlow1 + -1.0) * fSlow3);
 		double fSlow7 = ((fSlow1 + fSlow5) + (1.0 - fSlow6));
 		double fSlow8 = (1.0 - fSlow0);
