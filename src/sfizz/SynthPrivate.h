@@ -327,7 +327,7 @@ struct Synth::Impl final: public Parser::Listener {
     Parser parser_;
     absl::optional<fs::file_time_type> modificationTime_ { };
 
-    std::array<float, config::numCCs> defaultCCValues_;
+    std::array<float, config::numCCs> defaultCCValues_ { };
     BitArray<config::numCCs> currentUsedCCs_;
     BitArray<config::numCCs> changedCCsThisCycle_;
     BitArray<config::numCCs> changedCCsLastCycle_;
