@@ -1926,18 +1926,21 @@ void Synth::disableFreeWheeling() noexcept
 
 void Synth::Impl::resetAllControllers(int delay) noexcept
 {
-    resources_.getMidiState().resetAllControllers(delay);
+    MidiState& midiState = resources_.getMidiState();
+    midiState.pitchBendEvent(delay, 0.0f);
+    for (int cc = 0; cc < config::numCCs; ++cc)
+        midiState.ccEvent(delay, cc, defaultCCValues_[cc]);
 
     for (auto& voice : voiceManager_) {
         voice.registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)
-            voice.registerCC(delay, cc, 0.0f);
+            voice.registerCC(delay, cc, defaultCCValues_[cc]);
     }
 
     for (const LayerPtr& layerPtr : layers_) {
         Layer& layer = *layerPtr;
         for (int cc = 0; cc < config::numCCs; ++cc)
-            layer.registerCC(cc, 0.0f);
+            layer.registerCC(cc, defaultCCValues_[cc]);
     }
 }
 

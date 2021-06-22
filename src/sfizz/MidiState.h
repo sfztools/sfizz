@@ -180,11 +180,6 @@ public:
      */
     void reset() noexcept;
 
-    /**
-     * @brief Reset all the controllers
-     */
-    void resetAllControllers(int delay) noexcept;
-
     const EventVector& getCCEvents(int ccIdx) const noexcept;
     const EventVector& getPolyAftertouchEvents(int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
