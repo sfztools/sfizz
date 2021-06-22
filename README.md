@@ -4,6 +4,10 @@
 [![AppVeyor Build Status]](https://ci.appveyor.com/project/sfztools/sfizz)
 
 [![Discord Badge Image]](https://discord.gg/3ArE9Mw)
+[![SFZv1 Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=1)
+[![SFZv2 Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=2)
+[![ARIA Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=aria)
+[![Cakewalk Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=cakewalk)
 
 SFZ parser and synth c++ library, providing AU / LV2 / VST3 plugins
 and JACK standalone client, please check [our website] for more details.
@@ -98,3 +102,8 @@ The sfizz library also uses in some subprojects:
 [AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
 [Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
 [Discord Badge Image]:   https://img.shields.io/discord/587748534321807416?label=discord&logo=discord
+
+[SFZv1 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz1.svg
+[SFZv2 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz2.svg
+[ARIA Status Image]:     https://sfz.tools/assets/img/sfizz/badge_aria.svg
+[Cakewalk Status Image]: https://sfz.tools/assets/img/sfizz/badge_cakewalk.svg
