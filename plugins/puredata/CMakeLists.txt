@@ -27,7 +27,7 @@ add_pd_external(sfizz_puredata "sfizz_puredata.c")
 target_compile_definitions(sfizz_puredata PRIVATE
     "SFIZZ_NUM_CCS=${SFIZZ_NUM_CCS}"
     "SFIZZ_VERSION=\"${CMAKE_PROJECT_VERSION}\"")
-target_link_libraries(sfizz_puredata PRIVATE sfizz::sfizz)
+target_link_libraries(sfizz_puredata PRIVATE sfizz::import sfizz::sfizz)
 
 set_target_properties(sfizz_puredata PROPERTIES
     OUTPUT_NAME "sfizz"
