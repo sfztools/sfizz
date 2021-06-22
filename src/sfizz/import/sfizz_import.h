@@ -7,6 +7,10 @@
 #pragma once
 #include <sfizz.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Loads or imports an instrument file.
  *
@@ -28,3 +32,7 @@
  * - @b OFF: the function cannot be invoked while a thread is calling @b RT functions
  */
 bool sfizz_load_or_import_file(sfizz_synth_t* synth, const char* path, const char** format);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
