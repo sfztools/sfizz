@@ -251,19 +251,6 @@ jobs:
       run: |
         cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
             /usr/i686-w64-mingw32/include/dwrite_3.h
-    - name: Fix VST sources (case)
-      shell: bash
-      # need to convert some includes to lower case (as of VST 3.7.1)
-      run: |
-        find "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK -type d -name source -exec \
-            find {} -type f -name '*.[hc]' -o -name '*.[hc]pp' -print0 \; | \
-          xargs -0 sed -i 's/<Windows.h>/<windows.h>/'
-    - name: Fix VST sources (includes)
-      shell: bash
-      # need to add include <limits> (as of VST 3.7.2)
-      run: |
-        sed -i '0,/#include </s//#include <limits>\n#include </' \
-            "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK/VST3_SDK/public.sdk/source/main/moduleinit.h
     - name: Create Build Environment
       shell: bash
       working-directory: ${{runner.workspace}}
@@ -327,19 +314,6 @@ jobs:
       run: |
         cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
             /usr/x86_64-w64-mingw32/include/dwrite_3.h
-    - name: Fix VST sources (case)
-      shell: bash
-      # need to convert some includes to lower case (as of VST 3.7.1)
-      run: |
-        find "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK -type d -name source -exec \
-            find {} -type f -name '*.[hc]' -o -name '*.[hc]pp' -print0 \; | \
-          xargs -0 sed -i 's/<Windows.h>/<windows.h>/'
-    - name: Fix VST sources (includes)
-      shell: bash
-      # need to add include <limits> (as of VST 3.7.2)
-      run: |
-        sed -i '0,/#include </s//#include <limits>\n#include </' \
-            "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK/VST3_SDK/public.sdk/source/main/moduleinit.h
     - name: Create Build Environment
       shell: bash
       working-directory: ${{runner.workspace}}
