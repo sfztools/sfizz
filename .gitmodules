@@ -13,7 +13,7 @@
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/public.sdk"]
 	path = plugins/vst/external/VST_SDK/VST3_SDK/public.sdk
-	url = https://github.com/steinbergmedia/vst3_public_sdk.git
+	url = https://github.com/sfztools/vst3_public_sdk.git
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/vstgui4"]
 	path = plugins/editor/external/vstgui4
