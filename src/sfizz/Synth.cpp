@@ -2045,6 +2045,7 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
+
     if (region.pitchEG) {
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
@@ -2054,6 +2055,7 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
     }
+
     if (region.filterEG) {
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
@@ -2063,6 +2065,7 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
     }
+
     for (const LFODescription& lfo : region.lfos) {
         collectUsedCCsFromCCMap(usedCCs, lfo.phaseCC);
         collectUsedCCsFromCCMap(usedCCs, lfo.delayCC);

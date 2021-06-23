@@ -51,6 +51,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 break;                            \
             const auto& lfo = region.lfos[idx];
 
+        #define GET_EG_OR_BREAK(idx)              \
+            if (idx >= region.flexEGs.size())     \
+                break;                            \
+            auto& eg = region.flexEGs[idx];
+
+        #define GET_EG_POINT_OR_BREAK(idx)        \
+            if (idx >= eg.points.size())          \
+                break;                            \
+            auto& point = eg.points[idx];
+
         MATCH("/hello", "") {
             client.receive(delay, "/hello", "", nullptr);
         } break;
@@ -1352,10 +1362,44 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, static_cast<int32_t>(lfo.sub[0].wave));
         } break;
 
+        MATCH("/region&/eg&/point&/time", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.time);
+        } break;
+
+        MATCH("/region&/eg&/point&/time_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.ccTime.getWithDefault(indices[3]));
+        } break;
+
+        MATCH("/region&/eg&/point&/level", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.level);
+        } break;
+
+        MATCH("/region&/eg&/point&/level_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.ccLevel.getWithDefault(indices[3]));
+        } break;
+
         #undef GET_REGION_OR_BREAK
         #undef GET_FILTER_OR_BREAK
         #undef GET_EQ_OR_BREAK
         #undef GET_LFO_OR_BREAK
+        #undef GET_EG_OR_BREAK
+        #undef GET_EG_POINT_OR_BREAK
 
         //----------------------------------------------------------------------
         // Setting values
