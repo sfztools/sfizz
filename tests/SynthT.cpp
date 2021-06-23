@@ -1693,6 +1693,23 @@ TEST_CASE("[Synth] Off by a CC event")
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" });
 }
 
+TEST_CASE("[Synth] CC triggered off by a CC event")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=2 sample=*saw hikey=-1 on_locc64=126 on_hicc64=127
+        <region> group=2 sample=*triangle hikey=-1 on_locc64=0 on_hicc64=1
+    )");
+    synth.cc(0, 64, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*saw" });
+    synth.cc(0, 64, 0);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*triangle" });
+}
+
 TEST_CASE("[Synth] Off by a note-off event")
 {
     sfz::Synth synth;
