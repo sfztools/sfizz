@@ -14,9 +14,10 @@
 
 namespace sfz {
 
-FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager)
-    : voiceManager_(manager)
+FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager, MidiState& midiState)
+    : voiceManager_(manager), midiState_(midiState)
 {
+
 }
 
 void FlexEnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)

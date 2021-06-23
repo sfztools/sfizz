@@ -57,6 +57,7 @@ struct FlexEnvelope::Impl {
     void process(absl::Span<float> out);
     bool advanceToStage(unsigned stageNumber);
     bool advanceToNextStage();
+    void updateCurrentTimeAndLevel();
 };
 
 FlexEnvelope::FlexEnvelope(Resources &resources)
@@ -97,18 +98,8 @@ void FlexEnvelope::start(unsigned triggerDelay)
     const FlexEGDescription& desc = *impl.desc_;
 
     impl.delayFramesLeft_ = triggerDelay;
-
-    FlexEGPoint point;
-    if (!desc.points.empty())
-        point = desc.points[0];
-
-    //
-    impl.stageSourceLevel_ = 0.0;
-    impl.stageTargetLevel_ = point.level;
-    impl.stageTime_ = point.time;
-    impl.stageSustained_ = desc.sustain == 0;
-    impl.stageCurve_ = &point.curve();
     impl.currentFramesUntilRelease_ = absl::nullopt;
+    impl.advanceToStage(0);
 }
 
 void FlexEnvelope::setFreeRunning(bool freeRunning)
@@ -172,6 +163,10 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
     const FlexEGDescription& desc = *desc_;
     size_t numFrames = out.size();
     const float samplePeriod = samplePeriod_;
+
+    if (desc.dynamic)
+        updateCurrentTimeAndLevel();
+
     // Skip the initial delay, for frame-accurate trigger
     size_t skipFrames = std::min(numFrames, delayFramesLeft_);
     if (skipFrames > 0) {
@@ -266,18 +261,29 @@ bool FlexEnvelope::Impl::advanceToStage(unsigned stageNumber)
 
     const FlexEGPoint& point = desc.points[stageNumber];
     stageSourceLevel_ = currentLevel_;
-    stageTargetLevel_ = point.getLevel(midiState);
-    stageTime_ = point.getTime(midiState);
+    currentTime_ = 0.0f;
+    updateCurrentTimeAndLevel();
     stageSustained_ = int(stageNumber) == desc.sustain;
     stageCurve_ = &point.curve();
 
-    currentTime_ = 0;
     return true;
 };
 
 bool FlexEnvelope::Impl::advanceToNextStage()
 {
     return advanceToStage(currentStageNumber_ + 1);
+}
+
+void FlexEnvelope::Impl::updateCurrentTimeAndLevel()
+{
+    const FlexEGDescription& desc = *desc_;
+    if (currentStageNumber_ >= desc.points.size())
+        return;
+
+    const FlexEGPoint& point = desc.points[currentStageNumber_];
+    const MidiState& midiState = resources_->getMidiState();
+    stageTargetLevel_ = point.getLevel(midiState);
+    stageTime_ = point.getTime(midiState);
 }
 
 } // namespace sfz

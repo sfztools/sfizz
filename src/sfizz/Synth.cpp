@@ -70,7 +70,7 @@ Synth::Impl::Impl()
     MidiState& midiState = resources_.getMidiState();
     genController_.reset(new ControllerSource(resources_, voiceManager_));
     genLFO_.reset(new LFOSource(voiceManager_));
-    genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
+    genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_, midiState));
     genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, midiState));
     genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, midiState));
     genPolyAftertouch_.reset(new PolyAftertouchSource(voiceManager_, midiState));
