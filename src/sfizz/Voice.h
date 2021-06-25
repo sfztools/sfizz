@@ -206,12 +206,19 @@ public:
      */
     bool isFree() const noexcept;
     /**
-     * @brief Can the voice be reused (i.e. is it releasing or free)
+     * @brief Is the voice released?
      *
      * @return true
      * @return false
      */
-    bool releasedOrFree() const noexcept;
+    bool released() const noexcept;
+    /**
+     * @brief Can the voice be reused (i.e. is it releasing after being killed or free)
+     *
+     * @return true
+     * @return false
+     */
+    bool offedOrFree() const noexcept;
     /**
      * @brief Get the event that triggered the voice
      *

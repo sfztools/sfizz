@@ -221,6 +221,7 @@ struct Voice::Impl
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
+    bool offed_ { false };
     enum class SustainState { Up, Sustaining };
     SustainState sustainState_ { SustainState::Up };
     enum class SostenutoState { Up, Sustaining, PreviouslyDown };
@@ -605,6 +606,7 @@ void Voice::Impl::off(int delay, bool fast) noexcept
         // TODO(jpc): Flex AmpEG
     }
 
+    offed_ = true;
     release(delay);
 }
 
@@ -1637,8 +1639,18 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #endif
 }
 
+bool Voice::released() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.released();
+}
+
 bool Voice::Impl::released() const noexcept
 {
+    if (!region_ || state_ != State::playing)
+        return true;
+
+
     if (!region_->flexAmpEG)
         return egAmplitude_.isReleased();
     else
@@ -1678,6 +1690,7 @@ void Voice::reset() noexcept
     impl.floatPositionOffset_ = 0.0f;
     impl.noteIsOff_ = false;
     impl.sostenutoState_ = Impl::SostenutoState::Up;
+    impl.offed_ = false;
 
     impl.resetLoopInformation();
 
@@ -1756,13 +1769,13 @@ float Voice::getAveragePower() const noexcept
         return 0.0f;
 }
 
-bool Voice::releasedOrFree() const noexcept
+bool Voice::offedOrFree() const noexcept
 {
     Impl& impl = *impl_;
     if (impl.state_ != State::playing)
         return true;
 
-    return impl.released();
+    return impl.offed_;
 }
 
 void Voice::setMaxFiltersPerVoice(size_t numFilters)
