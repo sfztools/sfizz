@@ -205,7 +205,7 @@ TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at t
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(0)->offedOrFree());
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -232,7 +232,7 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(0)->released());
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -259,7 +259,7 @@ TEST_CASE("[Synth] loopmode=one_shot and an envelope properly kills the voice at
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
+    REQUIRE(synth.getVoiceView(0)->released());
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -1934,7 +1934,7 @@ TEST_CASE("[Synth] Sustain cancels release is off by default")
     synth.cc(0, 64, 127);
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-}  
+}
 
 TEST_CASE("[Synth] Resets all controllers to default values")
 {

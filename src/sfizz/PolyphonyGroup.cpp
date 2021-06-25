@@ -30,6 +30,6 @@ void sfz::PolyphonyGroup::removeAllVoices() noexcept
 unsigned sfz::PolyphonyGroup::numPlayingVoices() const noexcept
 {
     return absl::c_count_if(voices, [](const Voice* v) {
-        return !v->releasedOrFree();
+        return !v->offedOrFree();
     });
 }

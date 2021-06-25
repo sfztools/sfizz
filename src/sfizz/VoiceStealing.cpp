@@ -42,7 +42,7 @@ Voice* genericPolyphonyCheck(absl::Span<Voice*> candidates, unsigned polyphony, 
  */
 constexpr bool ignoreVoice(const Voice* voice)
 {
-    return (voice == nullptr || voice->releasedOrFree());
+    return (voice == nullptr || voice->offedOrFree());
 }
 
 Voice* FirstStealer::checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates)

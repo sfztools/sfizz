@@ -44,7 +44,7 @@ Int32Spec oscillatorQuality { 1, {0, 3}, 0 };
 UInt32Spec group { 0, {0, uint32_t_max}, 0 };
 FloatSpec offTime { 6e-3f, {0.0f, 100.0f}, kPermissiveBounds };
 UInt32Spec polyphony { config::maxVoices, {0, config::maxVoices}, kEnforceBounds };
-UInt32Spec notePolyphony { config::maxVoices, {0, config::maxVoices}, kEnforceBounds };
+UInt32Spec notePolyphony { config::maxVoices, {1, config::maxVoices}, kEnforceBounds };
 UInt8Spec key { 60, {0, 127}, kCanBeNote };
 UInt8Spec loKey { 0, {0, 127}, kCanBeNote };
 UInt8Spec hiKey { 127, {0, 127}, kCanBeNote };
