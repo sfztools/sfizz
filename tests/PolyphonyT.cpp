@@ -528,3 +528,45 @@ TEST_CASE("[Polyphony] Bi-directional choking (with note_polyphony)")
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
 }
+
+TEST_CASE("[Polyphony] Choke long release tails")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*saw ampeg_attack=0.1 ampeg_release=10 polyphony=1
+    )");
+    int attackBlocks = static_cast<int>(0.1f / synth.getSamplesPerBlock() * 48000.0f) + 1;
+    synth.noteOn(0, 60, 63 );
+    for (int i = 0; i < attackBlocks; ++i)
+        synth.renderBlock(buffer);
+    synth.noteOff(10, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 0 ); // Released
+    REQUIRE( numActiveVoices(synth) == 1 );
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 ); // Not released, attack phase
+    REQUIRE( numActiveVoices(synth) == 1 );
+}
+
+TEST_CASE("[Polyphony] Choke long release tails with note_polyphony")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*saw ampeg_attack=0.1 ampeg_release=10 note_polyphony=1
+    )");
+    int attackBlocks = static_cast<int>(0.1f / synth.getSamplesPerBlock() * 48000.0f) + 1;
+    synth.noteOn(0, 60, 63 );
+    for (int i = 0; i < attackBlocks; ++i)
+        synth.renderBlock(buffer);
+    synth.noteOff(10, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 0 ); // Released
+    REQUIRE( numActiveVoices(synth) == 1 );
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 ); // Not released, attack phase
+    REQUIRE( numActiveVoices(synth) == 1 );
+}

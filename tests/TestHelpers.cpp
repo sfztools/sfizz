@@ -82,6 +82,13 @@ unsigned numPlayingVoices(const sfz::Synth& synth)
     });
 }
 
+unsigned numActiveVoices(const sfz::Synth& synth)
+{
+    return absl::c_count_if(getActiveVoices(synth), [](const sfz::Voice* v) {
+        return !v->offedOrFree();
+    });
+}
+
 const std::vector<std::string> playingSamples(const sfz::Synth& synth)
 {
     std::vector<std::string> samples;
