@@ -1452,9 +1452,29 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
         else
             return false;
         break;
+    case hash("eg&_time&_oncc&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint()) {
+            auto ccNumber = opcode.parameters.back();
+            if (ccNumber >= config::numCCs)
+                return false;
+            point->ccTime[ccNumber] = opcode.read(Default::flexEGPointTimeMod);
+        }
+        else
+            return false;
+        break;
     case hash("eg&_level&"):
         if (FlexEGPoint* point = getOrCreateEGPoint())
             point->level = opcode.read(Default::flexEGPointLevel);
+        else
+            return false;
+        break;
+    case hash("eg&_level&_oncc&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint()) {
+            auto ccNumber = opcode.parameters.back();
+            if (ccNumber >= config::numCCs)
+                return false;
+            point->ccLevel[ccNumber] = opcode.read(Default::flexEGPointLevelMod);
+        }
         else
             return false;
         break;

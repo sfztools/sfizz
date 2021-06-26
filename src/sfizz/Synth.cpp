@@ -2068,6 +2068,12 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, lfo.delayCC);
         collectUsedCCsFromCCMap(usedCCs, lfo.fadeCC);
     }
+    for (const FlexEGDescription& flexEG : region.flexEGs) {
+        for (const FlexEGPoint& point : flexEG.points) {
+            collectUsedCCsFromCCMap(usedCCs, point.ccTime);
+            collectUsedCCsFromCCMap(usedCCs, point.ccLevel);
+        }
+    }
     collectUsedCCsFromCCMap(usedCCs, region.ccConditions);
     collectUsedCCsFromCCMap(usedCCs, region.ccTriggers);
     collectUsedCCsFromCCMap(usedCCs, region.crossfadeCCInRange);
