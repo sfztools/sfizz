@@ -266,12 +266,8 @@ bool FlexEnvelope::Impl::advanceToStage(unsigned stageNumber)
 
     const FlexEGPoint& point = desc.points[stageNumber];
     stageSourceLevel_ = currentLevel_;
-    stageTargetLevel_ = point.level;
-    for (const CCData<float>& mod : point.ccLevel)
-        stageTargetLevel_ += midiState.getCCValue(mod.cc) * mod.data;
-    stageTime_ = point.time;
-    for (const CCData<float>& mod : point.ccTime)
-        stageTime_ += midiState.getCCValue(mod.cc) * mod.data;
+    stageTargetLevel_ = point.getLevel(midiState);
+    stageTime_ = point.getTime(midiState);
     stageSustained_ = int(stageNumber) == desc.sustain;
     stageCurve_ = &point.curve();
 
