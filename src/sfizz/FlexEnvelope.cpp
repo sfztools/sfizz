@@ -9,8 +9,11 @@
 
 - [ ] egN_points (purpose unknown)
 - [x] egN_timeX
+- [x] egN_timeX_onccY
 - [x] egN_levelX
+- [x] egN_levelX_onccY
 - [x] egN_shapeX
+- [ ] egN_shapeX_onccY
 - [x] egN_sustain
 - [ ] egN_dynamic
 - [ ] egN_loop
@@ -21,6 +24,8 @@
 #include "FlexEnvelope.h"
 #include "FlexEGDescription.h"
 #include "Curve.h"
+#include "MidiState.h"
+#include "Resources.h"
 #include "Config.h"
 #include "SIMDHelpers.h"
 #include <absl/types/optional.h>
@@ -28,6 +33,7 @@
 namespace sfz {
 
 struct FlexEnvelope::Impl {
+    const Resources* resources_ { nullptr };
     const FlexEGDescription* desc_ { nullptr };
     float samplePeriod_ { 1.0 / config::defaultSampleRate };
     size_t delayFramesLeft_ { 0 };
@@ -53,9 +59,11 @@ struct FlexEnvelope::Impl {
     bool advanceToNextStage();
 };
 
-FlexEnvelope::FlexEnvelope()
+FlexEnvelope::FlexEnvelope(Resources &resources)
     : impl_(new Impl)
 {
+    Impl& impl = *impl_;
+    impl.resources_ = &resources;
 }
 
 FlexEnvelope::~FlexEnvelope()
@@ -249,6 +257,7 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
 bool FlexEnvelope::Impl::advanceToStage(unsigned stageNumber)
 {
     const FlexEGDescription& desc = *desc_;
+    const MidiState& midiState = resources_->getMidiState();
 
     currentStageNumber_ = stageNumber;
 
@@ -258,7 +267,11 @@ bool FlexEnvelope::Impl::advanceToStage(unsigned stageNumber)
     const FlexEGPoint& point = desc.points[stageNumber];
     stageSourceLevel_ = currentLevel_;
     stageTargetLevel_ = point.level;
+    for (const CCData<float>& mod : point.ccLevel)
+        stageTargetLevel_ += midiState.getCCValue(mod.cc) * mod.data;
     stageTime_ = point.time;
+    for (const CCData<float>& mod : point.ccTime)
+        stageTime_ += midiState.getCCValue(mod.cc) * mod.data;
     stageSustained_ = int(stageNumber) == desc.sustain;
     stageCurve_ = &point.curve();
 

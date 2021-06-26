@@ -1817,10 +1817,12 @@ void Voice::setMaxLFOsPerVoice(size_t numLFOs)
 void Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
 {
     Impl& impl = *impl_;
+    Resources& resources = impl.resources_;
+
     impl.flexEGs_.resize(numFlexEGs);
 
     for (size_t i = 0; i < numFlexEGs; ++i) {
-        auto eg = absl::make_unique<FlexEnvelope>();
+        auto eg = absl::make_unique<FlexEnvelope>(resources);
         eg->setSampleRate(impl.sampleRate_);
         impl.flexEGs_[i] = std::move(eg);
     }

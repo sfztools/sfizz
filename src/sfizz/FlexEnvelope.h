@@ -10,13 +10,14 @@
 
 namespace sfz {
 struct FlexEGDescription;
+class Resources;
 
 /**
    Flex envelope generator (according to ARIA)
  */
 class FlexEnvelope {
 public:
-    FlexEnvelope();
+    explicit FlexEnvelope(Resources &resources);
     ~FlexEnvelope();
 
     /**

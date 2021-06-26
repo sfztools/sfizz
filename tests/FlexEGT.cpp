@@ -107,7 +107,7 @@ TEST_CASE("[FlexEG] Coarse numerical envelope test (No release)")
         eg1_time2=0.5  eg1_level2=1
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -132,7 +132,7 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test")
         eg1_time2=0.5  eg1_level2=1
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -155,7 +155,7 @@ TEST_CASE("[FlexEG] Coarse numerical envelope test (with release)")
         eg1_time2=0.5  eg1_level2=1
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -184,7 +184,7 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test (with release and release r
         eg1_time3=0.5  eg1_level3=0
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -216,7 +216,7 @@ TEST_CASE("[FlexEG] Coarse numerical envelope test (with shapes)")
         eg1_sustain=2
         eg1_time3=0.5  eg1_level3=0 eg1_shape3=4
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -244,7 +244,7 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test (with shapes)")
         eg1_time3=0.5  eg1_level3=0 eg1_shape3=4
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -276,7 +276,7 @@ TEST_CASE("[FlexEG] Zero delay transitions")
         eg1_time3=1  eg1_level3=.5 eg1_sustain=3
         eg1_time4=1  eg1_level4=1
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->flexEGs.size() == 1);
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -303,7 +303,7 @@ TEST_CASE("[FlexEG] Early release")
         eg1_time2=1.0  eg1_level2=1.0 eg1_sustain=2
         eg1_time3=1.0  eg1_level3=0.0
     )");
-        sfz::FlexEnvelope envelope;
+        sfz::FlexEnvelope envelope(synth.getResources());
         REQUIRE(synth.getNumRegions() == 1);
         REQUIRE(synth.getRegionView(0)->flexEGs.size() == 1);
         envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
