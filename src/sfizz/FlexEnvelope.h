@@ -5,7 +5,6 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
-#include "MidiState.h"
 #include <absl/types/span.h>
 #include <memory>
 

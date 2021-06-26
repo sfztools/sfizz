@@ -14,8 +14,8 @@
 
 namespace sfz {
 
-FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager, MidiState& midiState)
-    : voiceManager_(manager), midiState_(midiState)
+FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
 
 }
