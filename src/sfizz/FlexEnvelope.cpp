@@ -164,9 +164,6 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
     size_t numFrames = out.size();
     const float samplePeriod = samplePeriod_;
 
-    if (desc.dynamic)
-        updateCurrentTimeAndLevel();
-
     // Skip the initial delay, for frame-accurate trigger
     size_t skipFrames = std::min(numFrames, delayFramesLeft_);
     if (skipFrames > 0) {
