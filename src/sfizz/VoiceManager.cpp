@@ -19,7 +19,7 @@ void VoiceManager::onVoiceStateChanging(NumericId<Voice> id, Voice::State state)
         const uint32_t group = region->group;
         RegionSet::removeVoiceFromHierarchy(region, voice);
         swapAndPopFirst(activeVoices_, [voice](const Voice* v) { return v == voice; });
-        ASSERT(group < polyphonyGroups_.size());
+        ASSERT(polyphonyGroups_.contains(group));
         polyphonyGroups_[group].removeVoice(voice);
     } else if (state == Voice::State::playing) {
         Voice* voice = getVoiceById(id);
@@ -27,7 +27,7 @@ void VoiceManager::onVoiceStateChanging(NumericId<Voice> id, Voice::State state)
         const uint32_t group = region->group;
         activeVoices_.push_back(voice);
         RegionSet::registerVoiceInHierarchy(region, voice);
-        ASSERT(group < polyphonyGroups_.size());
+        ASSERT(polyphonyGroups_.contains(group));
         polyphonyGroups_[group].registerVoice(voice);
     }
 }
@@ -61,8 +61,7 @@ void VoiceManager::reset()
         voice.reset();
 
     polyphonyGroups_.clear();
-    polyphonyGroups_.emplace_back();
-    polyphonyGroups_.back().setPolyphonyLimit(config::maxVoices);
+    polyphonyGroups_.emplace(0, PolyphonyGroup{});
     setStealingAlgorithm(StealingAlgorithm::Oldest);
 }
 
@@ -84,29 +83,31 @@ bool VoiceManager::playingAttackVoice(const Region* releaseRegion) noexcept
         return true;
 }
 
-void VoiceManager::ensureNumPolyphonyGroups(unsigned groupIdx) noexcept
+void VoiceManager::ensureNumPolyphonyGroups(int groupIdx) noexcept
 {
-    size_t neededSize = static_cast<size_t>(groupIdx) + 1;
-    if (polyphonyGroups_.size() < neededSize)
-        polyphonyGroups_.resize(neededSize);
+    if (!polyphonyGroups_.contains(groupIdx))
+        polyphonyGroups_.emplace(groupIdx, PolyphonyGroup{});
 }
 
-void VoiceManager::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
+void VoiceManager::setGroupPolyphony(int groupIdx, unsigned polyphony) noexcept
 {
     ensureNumPolyphonyGroups(groupIdx);
     polyphonyGroups_[groupIdx].setPolyphonyLimit(polyphony);
 }
 
 
-const PolyphonyGroup* VoiceManager::getPolyphonyGroupView(int idx) const noexcept
+const PolyphonyGroup* VoiceManager::getPolyphonyGroupView(int idx) noexcept
 {
-    return (size_t)idx < polyphonyGroups_.size() ? &polyphonyGroups_[idx] : nullptr;
+    if (!polyphonyGroups_.contains(idx))
+        return {};
+
+    return &polyphonyGroups_[idx];
 }
 
 void VoiceManager::clear()
 {
-    for (PolyphonyGroup& pg : polyphonyGroups_)
-        pg.removeAllVoices();
+    for (auto& pg : polyphonyGroups_)
+        pg.second.removeAllVoices();
     list_.clear();
     activeVoices_.clear();
 }
