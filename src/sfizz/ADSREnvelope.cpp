@@ -43,6 +43,7 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
     this->sampleRate = sampleRate;
     desc_ = &desc;
     triggerVelocity_ = velocity;
+    currentState = State::Delay; // Has to be before the update
     updateValues(delay);
     releaseDelay = 0;
     shouldRelease = false;
@@ -51,12 +52,13 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
         || (region.loopMode == LoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
-    currentState = State::Delay;
 }
 
 void ADSREnvelope::updateValues(int delay) noexcept
 {
-    this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, triggerVelocity_, delay));
+    if (currentState == State::Delay)
+        this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, triggerVelocity_, delay));
+
     this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, triggerVelocity_, delay));
     this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, triggerVelocity_, delay));
     this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, triggerVelocity_, delay));
