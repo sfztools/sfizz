@@ -3301,3 +3301,31 @@ TEST_CASE("[Values] Flex EGs CC")
     };
     REQUIRE(messageList == expected);
 }
+
+TEST_CASE("[Values] Dynamic EGs")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav ampeg_dynamic=1 pitcheg_dynamic=1 fileg_dynamic=1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/ampeg_dynamic", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/pitcheg_dynamic", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/fileg_dynamic", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/ampeg_dynamic", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/pitcheg_dynamic", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/fileg_dynamic", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/ampeg_dynamic,F : {  }",
+        "/region0/pitcheg_dynamic,F : {  }",
+        "/region0/fileg_dynamic,F : {  }",
+        "/region1/ampeg_dynamic,T : {  }",
+        "/region1/pitcheg_dynamic,T : {  }",
+        "/region1/fileg_dynamic,T : {  }",
+    };
+    REQUIRE(messageList == expected);
+}

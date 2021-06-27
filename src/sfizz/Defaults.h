@@ -260,6 +260,7 @@ namespace Default
     extern const OpcodeSpec<float> egPercentMod;
     extern const OpcodeSpec<float> egDepth;
     extern const OpcodeSpec<float> egVel2Depth;
+    extern const OpcodeSpec<bool> egDynamic;
     extern const OpcodeSpec<bool> flexEGAmpeg;
     extern const OpcodeSpec<bool> flexEGDynamic;
     extern const OpcodeSpec<int32_t> flexEGSustain;

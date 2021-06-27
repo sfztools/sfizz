@@ -148,6 +148,7 @@ FloatSpec egPercent { 0.0f, {0.0f, 100.0f}, kNormalizePercent|kPermissiveBounds 
 FloatSpec egPercentMod { 0.0f, {-100.0f, 100.0f}, kNormalizePercent|kPermissiveBounds };
 FloatSpec egDepth { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
 FloatSpec egVel2Depth { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
+BoolSpec egDynamic { 0, {0, 1}, kEnforceBounds };
 BoolSpec flexEGAmpeg { false, {0, 1}, kEnforceBounds };
 BoolSpec flexEGDynamic { 0, {0, 1}, kEnforceBounds };
 Int32Spec flexEGSustain { 0, {0, 100}, kEnforceLowerBound|kPermissiveUpperBound };
