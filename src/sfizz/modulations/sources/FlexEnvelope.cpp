@@ -17,6 +17,7 @@ namespace sfz {
 FlexEnvelopeSource::FlexEnvelopeSource(VoiceManager& manager)
     : voiceManager_(manager)
 {
+
 }
 
 void FlexEnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
