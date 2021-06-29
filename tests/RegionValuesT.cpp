@@ -1629,20 +1629,47 @@ TEST_CASE("[Values] Amp Veltrack")
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-        <region> sample=kick.wav
-        <region> sample=kick.wav amp_veltrack=10.1
-        <region> sample=kick.wav amp_veltrack=-132
-    )");
-    synth.dispatchMessage(client, 0, "/region0/amp_veltrack", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region1/amp_veltrack", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region2/amp_veltrack", "", nullptr);
-    std::vector<std::string> expected {
-        "/region0/amp_veltrack,f : { 100 }",
-        "/region1/amp_veltrack,f : { 10.1 }",
-        "/region2/amp_veltrack,f : { -132 }",
-    };
-    REQUIRE(messageList == expected);
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav amp_veltrack=10.1
+            <region> sample=kick.wav amp_veltrack=-132
+        )");
+        synth.dispatchMessage(client, 0, "/region0/amp_veltrack", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/amp_veltrack", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/amp_veltrack", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/amp_veltrack,f : { 100 }",
+            "/region1/amp_veltrack,f : { 10.1 }",
+            "/region2/amp_veltrack,f : { -132 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("CC")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav amp_veltrack_cc1=10.1 amp_veltrack_curvecc1=3
+            <region> sample=kick.wav amp_veltrack_oncc2=-40 amp_veltrack_curvecc3=4
+        )");
+        synth.dispatchMessage(client, 0, "/region0/amp_veltrack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/amp_veltrack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/amp_veltrack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/amp_veltrack_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/amp_veltrack_curvecc3", "", nullptr);
+        // TODO: activate for the new region parser ; accept oob
+        // synth.dispatchMessage(client, 0, "/region2/amp_veltrack", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/amp_veltrack_cc1,N : {  }",
+            "/region1/amp_veltrack_cc1,f : { 10.1 }",
+            "/region1/amp_veltrack_curvecc1,i : { 3 }",
+            "/region2/amp_veltrack_cc2,f : { -40 }",
+            "/region2/amp_veltrack_curvecc3,i : { 4 }",
+        };
+        REQUIRE(messageList == expected);
+    }
 }
 
 TEST_CASE("[Values] Amp Random")
@@ -1987,20 +2014,47 @@ TEST_CASE("[Values] Pitch Veltrack")
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
-        <region> sample=kick.wav
-        <region> sample=kick.wav pitch_veltrack=10
-        <region> sample=kick.wav pitch_veltrack=-132
-    )");
-    synth.dispatchMessage(client, 0, "/region0/pitch_veltrack", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region1/pitch_veltrack", "", nullptr);
-    synth.dispatchMessage(client, 0, "/region2/pitch_veltrack", "", nullptr);
-    std::vector<std::string> expected {
-        "/region0/pitch_veltrack,i : { 0 }",
-        "/region1/pitch_veltrack,i : { 10 }",
-        "/region2/pitch_veltrack,i : { -132 }",
-    };
-    REQUIRE(messageList == expected);
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav pitch_veltrack=10
+            <region> sample=kick.wav pitch_veltrack=-132
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitch_veltrack", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/pitch_veltrack", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/pitch_veltrack", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/pitch_veltrack,i : { 0 }",
+            "/region1/pitch_veltrack,i : { 10 }",
+            "/region2/pitch_veltrack,i : { -132 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("CC")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav pitch_veltrack_cc1=10.1 pitch_veltrack_curvecc1=3
+            <region> sample=kick.wav pitch_veltrack_oncc2=-40 pitch_veltrack_curvecc3=4
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitch_veltrack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/pitch_veltrack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/pitch_veltrack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/pitch_veltrack_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/pitch_veltrack_curvecc3", "", nullptr);
+        // TODO: activate for the new region parser ; accept oob
+        // synth.dispatchMessage(client, 0, "/region2/pitch_veltrack", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/pitch_veltrack_cc1,N : {  }",
+            "/region1/pitch_veltrack_cc1,f : { 10.1 }",
+            "/region1/pitch_veltrack_curvecc1,i : { 3 }",
+            "/region2/pitch_veltrack_cc2,f : { -40 }",
+            "/region2/pitch_veltrack_curvecc3,i : { 4 }",
+        };
+        REQUIRE(messageList == expected);
+    }
 }
 
 TEST_CASE("[Values] Pitch Random")
@@ -2992,6 +3046,7 @@ TEST_CASE("[Values] Filter dispatching")
         <region> sample=kick.wav
             cutoff3=50 resonance2=3 fil2_gain=-5 fil3_keytrack=100
             fil_gain=5 fil1_gain=-5 fil2_veltrack=-100
+            fil4_veltrack_cc7=-100 fil5_veltrack_curvecc2=2
     )");
 
     synth.dispatchMessage(client, 0, "/region0/filter2/cutoff", "", nullptr);
@@ -3000,6 +3055,8 @@ TEST_CASE("[Values] Filter dispatching")
     synth.dispatchMessage(client, 0, "/region0/filter2/keytrack", "", nullptr);
     synth.dispatchMessage(client, 0, "/region0/filter0/gain", "", nullptr);
     synth.dispatchMessage(client, 0, "/region0/filter1/veltrack", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter3/veltrack_cc7", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter4/veltrack_curvecc2", "", nullptr);
     std::vector<std::string> expected {
         "/region0/filter2/cutoff,f : { 50 }",
         "/region0/filter1/resonance,f : { 3 }",
@@ -3007,6 +3064,8 @@ TEST_CASE("[Values] Filter dispatching")
         "/region0/filter2/keytrack,i : { 100 }",
         "/region0/filter0/gain,f : { -5 }",
         "/region0/filter1/veltrack,i : { -100 }",
+        "/region0/filter3/veltrack_cc7,f : { -100 }",
+        "/region0/filter4/veltrack_curvecc2,i : { 2 }",
     };
     REQUIRE(messageList == expected);
 }

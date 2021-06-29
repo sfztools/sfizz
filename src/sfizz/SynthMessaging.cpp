@@ -782,6 +782,26 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, region.ampVeltrack * 100.0f);
         } break;
 
+        MATCH("/region&/amp_veltrack_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.ampVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.ampVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/amp_veltrack_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.ampVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.ampVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'i'>(delay, path, cc.curve );
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
         MATCH("/region&/amp_random", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.ampRandom);
@@ -919,6 +939,26 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/pitch_veltrack", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'i'>(delay, path, region.pitchVeltrack);
+        } break;
+
+        MATCH("/region&/pitch_veltrack_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.pitchVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/pitch_veltrack_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.pitchVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'i'>(delay, path, cc.curve );
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
         } break;
 
         MATCH("/region&/pitch_random", "") {
@@ -1275,6 +1315,28 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             GET_REGION_OR_BREAK(indices[0])
             GET_FILTER_OR_BREAK(indices[1])
             client.receive<'i'>(delay, path, filter.veltrack);
+        } break;
+
+        MATCH("/region&/filter&/veltrack_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_FILTER_OR_BREAK(indices[1])
+            if (filter.veltrackCC.contains(indices[2])) {
+                const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
+                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/filter&/veltrack_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_FILTER_OR_BREAK(indices[1])
+            if (filter.veltrackCC.contains(indices[2])) {
+                const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
+                client.receive<'i'>(delay, path, cc.curve );
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
         } break;
 
         MATCH("/region&/filter&/type", "") {

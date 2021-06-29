@@ -449,6 +449,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("amp_veltrack"):
         ampVeltrack = opcode.read(Default::ampVeltrack);
         break;
+    case hash("amp_veltrack_oncc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        ampVeltrackCC[opcode.parameters.back()].modifier = opcode.read(Default::ampVeltrackMod);
+        break;
+    case hash("amp_veltrack_curvecc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        ampVeltrackCC[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
+        break;
     case hash("amp_random"):
         ampRandom = opcode.read(Default::ampRandom);
         break;
@@ -625,6 +637,32 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             filters[filterIndex].veltrack = opcode.read(Default::filterVeltrack);
         }
         break;
+    case hash("fil&_veltrack_oncc&"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const auto cc = opcode.parameters.back();
+            if (cc >= config::numCCs)
+                return false;
+
+            filters[filterIndex].veltrackCC[cc].modifier = opcode.read(Default::ampVeltrackMod);
+        }
+        break;
+    case hash("fil&_veltrack_curvecc&"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const auto cc = opcode.parameters.back();
+            if (cc >= config::numCCs)
+                return false;
+
+            filters[filterIndex].veltrackCC[cc].curve = opcode.read(Default::curveCC);
+        }
+        break;
     case hash("fil&_random"): // also fil_random, cutoff_random, cutoff&_random
         {
             const auto filterIndex = opcode.parameters.front() - 1;
@@ -754,6 +792,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         break;
     case hash("pitch_veltrack"):
         pitchVeltrack = opcode.read(Default::pitchVeltrack);
+        break;
+    case hash("pitch_veltrack_oncc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        pitchVeltrackCC[opcode.parameters.back()].modifier = opcode.read(Default::pitchVeltrackMod);
+        break;
+    case hash("pitch_veltrack_curvecc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        pitchVeltrackCC[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
         break;
     case hash("pitch_random"):
         pitchRandom = opcode.read(Default::pitchRandom);

@@ -384,6 +384,7 @@ struct Region {
     uint8_t ampKeycenter { Default::key }; // amp_keycenter
     float ampKeytrack { Default::ampKeytrack }; // amp_keytrack
     float ampVeltrack { Default::ampVeltrack }; // amp_veltrack
+    CCMap<ModifierCurvePair<float>> ampVeltrackCC { ModifierCurvePair<float>{ Default::ampVeltrackMod, Default::curveCC } };
     std::vector<std::pair<uint8_t, float>> velocityPoints; // amp_velcurve_N
     absl::optional<Curve> velCurve {};
     float ampRandom { Default::ampRandom }; // amp_random
@@ -415,6 +416,7 @@ struct Region {
     float pitchKeytrack { Default::pitchKeytrack }; // pitch_keytrack
     float pitchRandom { Default::pitchRandom }; // pitch_random
     float pitchVeltrack { Default::pitchVeltrack }; // pitch_veltrack
+    CCMap<ModifierCurvePair<float>> pitchVeltrackCC { ModifierCurvePair<float>{ Default::pitchVeltrackMod, Default::curveCC } };
     float transpose { Default::transpose }; // transpose
     float pitch { Default::pitch }; // tune
     float bendUp { Default::bendUp };
