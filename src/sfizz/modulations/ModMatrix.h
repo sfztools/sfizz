@@ -117,6 +117,11 @@ public:
     void releaseVoice(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay);
 
     /**
+     * @brief Cancel release for a given voice.
+     */
+    void cancelRelease(NumericId<Voice> voiceId, NumericId<Region> regionId, unsigned delay);
+
+    /**
      * @brief Start modulation processing for the entire cycle.
      * This clears all the buffers.
      *

@@ -1,5 +1,6 @@
 #include "ui_DemoParser.h"
 #include "parser/Parser.h"
+#include "parser/ParserListener.h"
 #include <QApplication>
 #include <QTimer>
 #include <QFileInfo>

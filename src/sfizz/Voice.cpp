@@ -221,6 +221,7 @@ struct Voice::Impl
 
     State state_ { State::idle };
     bool noteIsOff_ { false };
+    bool offed_ { false };
     enum class SustainState { Up, Sustaining };
     SustainState sustainState_ { SustainState::Up };
     enum class SostenutoState { Up, Sustaining, PreviouslyDown };
@@ -605,6 +606,7 @@ void Voice::Impl::off(int delay, bool fast) noexcept
         // TODO(jpc): Flex AmpEG
     }
 
+    offed_ = true;
     release(delay);
 }
 
@@ -676,6 +678,13 @@ void Voice::registerCC(int delay, int ccNumber, float ccValue) noexcept
     if (impl.noteIsOff_ && region.loopMode != LoopMode::one_shot
         && sostenutoPedalReleaseCondition && sustainPedalReleaseCondition)
         release(delay);
+
+    if (region.checkSustain && (impl.sustainState_ == Impl::SustainState::Sustaining)
+        && impl.resources_.getSynthConfig().sustainCancelsRelease
+        && impl.released() && (region.trigger != Trigger::release && region.trigger != Trigger::release_key) ) {
+        ModMatrix& modMatrix = impl.resources_.getModMatrix();
+        modMatrix.cancelRelease(impl.id_, impl.region_->getId(), delay);
+    }
 }
 
 void Voice::registerPitchWheel(int delay, float pitch) noexcept
@@ -1656,8 +1665,18 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
 #endif
 }
 
+bool Voice::released() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.released();
+}
+
 bool Voice::Impl::released() const noexcept
 {
+    if (!region_ || state_ != State::playing)
+        return true;
+
+
     if (!region_->flexAmpEG)
         return egAmplitude_.isReleased();
     else
@@ -1674,7 +1693,8 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if (impl.released())
         return false;
 
-    if (impl.triggerEvent_.type == TriggerEventType::NoteOn
+    if ((impl.triggerEvent_.type == TriggerEventType::NoteOn
+            ||  impl.triggerEvent_.type == TriggerEventType::CC)
         && region->offBy && *region->offBy == other->group
         && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
@@ -1696,6 +1716,7 @@ void Voice::reset() noexcept
     impl.floatPositionOffset_ = 0.0f;
     impl.noteIsOff_ = false;
     impl.sostenutoState_ = Impl::SostenutoState::Up;
+    impl.offed_ = false;
 
     impl.resetLoopInformation();
 
@@ -1775,13 +1796,13 @@ float Voice::getAveragePower() const noexcept
         return 0.0f;
 }
 
-bool Voice::releasedOrFree() const noexcept
+bool Voice::offedOrFree() const noexcept
 {
     Impl& impl = *impl_;
     if (impl.state_ != State::playing)
         return true;
 
-    return impl.released();
+    return impl.offed_;
 }
 
 void Voice::setMaxFiltersPerVoice(size_t numFilters)
@@ -1823,10 +1844,12 @@ void Voice::setMaxLFOsPerVoice(size_t numLFOs)
 void Voice::setMaxFlexEGsPerVoice(size_t numFlexEGs)
 {
     Impl& impl = *impl_;
+    Resources& resources = impl.resources_;
+
     impl.flexEGs_.resize(numFlexEGs);
 
     for (size_t i = 0; i < numFlexEGs; ++i) {
-        auto eg = absl::make_unique<FlexEnvelope>();
+        auto eg = absl::make_unique<FlexEnvelope>(resources);
         eg->setSampleRate(impl.sampleRate_);
         impl.flexEGs_[i] = std::move(eg);
     }

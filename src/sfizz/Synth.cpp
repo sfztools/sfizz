@@ -374,7 +374,6 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
 
 void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 {
-    bool overSampled = false;
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
 
@@ -438,29 +437,16 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
                 DBG("Unsupported value for hint_stealing: " << member.value);
             }
             break;
-        case hash("hint_min_samplerate"):
-	    {
-		if (float(stoi(member.value)) / sampleRate_ > 1.0f)
-			overSampled = true;
-		resources_.getSynthConfig().OSFactor = int(std::min(128.0f, std::max(1.0f, float(stoi(member.value)) / sampleRate_)));
-    		for (auto& voice : voiceManager_) {
-        		voice.setSampleRate(sampleRate_);
-        		voice.setSamplesPerBlock(samplesPerBlock_);
-    		}
-	    }
+        case hash("hint_sustain_cancels_release"):
+        {
+            SynthConfig& config = resources_.getSynthConfig();
+            config.sustainCancelsRelease = member.read(Default::sustainCancelsRelease);
+        }
             break;
         default:
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.name);
         }
-    }
-    if (overSampled == false)
-    {
-		resources_.getSynthConfig().OSFactor = 1;
-    		for (auto& voice : voiceManager_) {
-        		voice.setSampleRate(sampleRate_);
-        		voice.setSamplesPerBlock(samplesPerBlock_);
-    		}
     }
 }
 
@@ -920,7 +906,6 @@ int Synth::getNumActiveVoices() const noexcept
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
-    samplesPerBlock *= 128;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
 
     impl.samplesPerBlock_ = samplesPerBlock;
@@ -1947,18 +1932,21 @@ void Synth::disableFreeWheeling() noexcept
 
 void Synth::Impl::resetAllControllers(int delay) noexcept
 {
-    resources_.getMidiState().resetAllControllers(delay);
+    MidiState& midiState = resources_.getMidiState();
+    midiState.pitchBendEvent(delay, 0.0f);
+    for (int cc = 0; cc < config::numCCs; ++cc)
+        midiState.ccEvent(delay, cc, defaultCCValues_[cc]);
 
     for (auto& voice : voiceManager_) {
         voice.registerPitchWheel(delay, 0);
         for (int cc = 0; cc < config::numCCs; ++cc)
-            voice.registerCC(delay, cc, 0.0f);
+            voice.registerCC(delay, cc, defaultCCValues_[cc]);
     }
 
     for (const LayerPtr& layerPtr : layers_) {
         Layer& layer = *layerPtr;
         for (int cc = 0; cc < config::numCCs; ++cc)
-            layer.registerCC(cc, 0.0f);
+            layer.registerCC(cc, defaultCCValues_[cc]);
     }
 }
 
@@ -2057,6 +2045,7 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
+
     if (region.pitchEG) {
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
@@ -2066,6 +2055,7 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
     }
+
     if (region.filterEG) {
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
@@ -2075,10 +2065,17 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
     }
+
     for (const LFODescription& lfo : region.lfos) {
         collectUsedCCsFromCCMap(usedCCs, lfo.phaseCC);
         collectUsedCCsFromCCMap(usedCCs, lfo.delayCC);
         collectUsedCCsFromCCMap(usedCCs, lfo.fadeCC);
+    }
+    for (const FlexEGDescription& flexEG : region.flexEGs) {
+        for (const FlexEGPoint& point : flexEG.points) {
+            collectUsedCCsFromCCMap(usedCCs, point.ccTime);
+            collectUsedCCsFromCCMap(usedCCs, point.ccLevel);
+        }
     }
     collectUsedCCsFromCCMap(usedCCs, region.ccConditions);
     collectUsedCCsFromCCMap(usedCCs, region.ccTriggers);

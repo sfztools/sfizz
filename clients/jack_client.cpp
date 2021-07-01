@@ -22,6 +22,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "sfizz.hpp"
+#include "sfizz/import/sfizz_import.h"
 #include "MidiHelpers.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
@@ -188,7 +189,13 @@ int main(int argc, char** argv)
     sfz::Sfizz synth;
     synth.setOversamplingFactor(factor);
     synth.setPreloadSize(preload_size);
-    synth.loadSfzFile(filesToParse[0]);
+
+    const char *importFormat = nullptr;
+    if (!sfizz_load_or_import_file(synth.handle(), filesToParse[0], &importFormat)) {
+        std::cout << "Could not load the instrument file: " << filesToParse[0] << '\n';
+        return 1;
+    }
+
     std::cout << "==========" << '\n';
     std::cout << "Total:" << '\n';
     std::cout << "\tMasters: " << synth.getNumMasters() << '\n';
@@ -211,6 +218,10 @@ int main(int argc, char** argv)
     for (auto& opcode : synth.getUnknownOpcodes())
         std::cout << opcode << ',';
     std::cout << '\n';
+    if (importFormat) {
+        std::cout << "==========" << '\n';
+        std::cout << "Import format: " << importFormat << '\n';
+    }
     // std::cout << std::flush;
 
     jack_status_t status;

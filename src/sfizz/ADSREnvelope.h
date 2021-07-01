@@ -50,6 +50,12 @@ public:
      */
     void startRelease(int releaseDelay) noexcept;
     /**
+     * @brief Cancel a release and get back into sustain.
+     *
+     * @param delay
+     */
+    void cancelRelease(int delay) noexcept;
+    /**
      * @brief Is the envelope smoothing?
      *
      * @return true

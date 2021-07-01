@@ -136,6 +136,7 @@ private:
     int getNumEffectiveVoices() const noexcept { return config::calculateActualVoices(numRequiredVoices_); }
     std::vector<Voice> list_;
     std::vector<Voice*> activeVoices_;
+    std::vector<Voice*> temp_;
     // These are the `group=` groups where you can off voices
     std::vector<PolyphonyGroup> polyphonyGroups_;
     std::unique_ptr<VoiceStealer> stealer_ { absl::make_unique<OldestStealer>() };

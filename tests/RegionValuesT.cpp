@@ -3251,3 +3251,53 @@ TEST_CASE("[Values] EQ value bounds")
         REQUIRE(messageList == expected);
     }
 }
+
+TEST_CASE("[Values] Flex EGs")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav eg1_time1=0.1 eg1_level1=0.5 eg1_time2=0.4 eg1_level2=2 eg2_time1=4 eg2_level1=0.1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/eg0/point0/time", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg0/point0/level", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg0/point1/time", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg0/point1/level", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg1/point0/time", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg1/point0/level", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/eg0/point0/time,f : { 0.1 }",
+        "/region0/eg0/point0/level,f : { 0.5 }",
+        "/region0/eg0/point1/time,f : { 0.4 }",
+        "/region0/eg0/point1/level,f : { 2 }",
+        "/region0/eg1/point0/time,f : { 4 }",
+        "/region0/eg1/point0/level,f : { 0.1 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Values] Flex EGs CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav eg1_time1_cc2=0.1 eg1_level1_oncc3=0.5
+    )");
+    synth.dispatchMessage(client, 0, "/region0/eg0/point0/time_cc2", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg0/point0/time_cc4", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg0/point0/level_cc3", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/eg0/point0/level_cc12", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/eg0/point0/time_cc2,f : { 0.1 }",
+        "/region0/eg0/point0/time_cc4,f : { 0 }",
+        "/region0/eg0/point0/level_cc3,f : { 0.5 }",
+        "/region0/eg0/point0/level_cc12,f : { 0 }",
+    };
+    REQUIRE(messageList == expected);
+}

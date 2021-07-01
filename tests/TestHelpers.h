@@ -79,6 +79,14 @@ const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth);
 unsigned numPlayingVoices(const sfz::Synth& synth);
 
 /**
+ * @brief Count the number of active (not free or offed) voices from the synth
+ *
+ * @param synth
+ * @return unsigned
+ */
+unsigned numActiveVoices(const sfz::Synth& synth);
+
+/**
  * @brief Get the playing samples
  *
  * @param synth

@@ -230,14 +230,6 @@ void sfz::MidiState::reset() noexcept
     absl::c_fill(noteOffTimes, 0);
 }
 
-void sfz::MidiState::resetAllControllers(int delay) noexcept
-{
-    for (int ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
-        ccEvent(delay, ccIdx, 0.0f);
-
-    pitchBendEvent(delay, 0.0f);
-}
-
 const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept
 {
     if (ccIdx < 0 || ccIdx >= config::numCCs)

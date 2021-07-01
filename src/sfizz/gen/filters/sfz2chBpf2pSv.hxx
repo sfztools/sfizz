@@ -139,7 +139,7 @@ class faust2chBpf2pSv : public sfzFilterDsp {
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
 		double fSlow1 = (1.0 - fSlow0);
 		double fSlow2 = (std::tan((fConst2 * std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0))))) * fSlow1);
-		double fSlow3 = (1.0 / std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(0.0, double(fVslider0))))));
+		double fSlow3 = (1.0 / std::pow(10.0, (0.050000000000000003 * std::min<double>(60.0, std::max<double>(-60.0, double(fVslider0))))));
 		for (int i = 0; (i < count); i = (i + 1)) {
 			double fTemp0 = double(input0[i]);
 			double fTemp1 = double(input1[i]);

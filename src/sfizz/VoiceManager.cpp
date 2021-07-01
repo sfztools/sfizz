@@ -164,6 +164,7 @@ void VoiceManager::requireNumVoices(int numVoices, Resources& resources)
 
     clear();
     list_.reserve(numEffectiveVoices);
+    temp_.reserve(numEffectiveVoices);
     activeVoices_.reserve(numEffectiveVoices);
 
     for (int i = 0; i < numEffectiveVoices; ++i) {
@@ -185,33 +186,42 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
         return;
 
     unsigned notePolyphonyCounter { 0 };
-    Voice* selfMaskCandidate { nullptr };
+    temp_.clear();
 
     for (Voice* voice : activeVoices_) {
         const TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        if (!voice->releasedOrFree()
+        if (!voice->offedOrFree()
             && voice->getRegion()->group == region->group
             && voiceTriggerEvent.number == triggerEvent.number) {
             notePolyphonyCounter += 1;
-            switch (region->selfMask) {
-            case SelfMask::mask:
-                if (voiceTriggerEvent.value <= triggerEvent.value) {
-                    if (!selfMaskCandidate
-                        || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
-                        selfMaskCandidate = voice;
-                    }
-                }
-                break;
-            case SelfMask::dontMask:
-                if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
-                    selfMaskCandidate = voice;
-                break;
-            }
+            if (region->selfMask == SelfMask::dontMask || voiceTriggerEvent.value <= triggerEvent.value)
+                temp_.push_back(voice);
         }
     }
 
-    if (notePolyphonyCounter >= *region->notePolyphony) {
-        SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
+    if (region->selfMask == SelfMask::mask) {
+        absl::c_sort(temp_, [](const Voice* lhs, const Voice* rhs) {
+            const auto lhsTrigger = lhs->getTriggerEvent();
+            const auto rhsTrigger = rhs->getTriggerEvent();
+            return lhsTrigger.value < rhsTrigger.value;
+        });
+    } else if (region->selfMask == SelfMask::dontMask) {
+        absl::c_sort(temp_, [](const Voice* lhs, const Voice* rhs) {
+            return lhs->getAge() > rhs->getAge();
+        });
+    } else {
+        ASSERTFALSE;
+    }
+
+    auto it = temp_.begin();
+    unsigned targetPolyphony { *region->notePolyphony - 1 };
+    while (notePolyphonyCounter > targetPolyphony && it < temp_.end()) {
+        Voice* voice = *it;
+        if (!voice->offedOrFree())
+            SisterVoiceRing::offAllSisters(voice, delay);
+
+        notePolyphonyCounter--;
+        it++;
     }
 }
 

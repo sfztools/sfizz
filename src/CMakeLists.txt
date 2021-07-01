@@ -251,11 +251,13 @@ endif()
 
 # Import library
 set(SFIZZ_IMPORT_HEADERS
+    sfizz/import/sfizz_import.h
     sfizz/import/ForeignInstrument.h
     sfizz/import/foreign_instruments/AudioFile.h
     sfizz/import/foreign_instruments/DecentSampler.h)
 
 set(SFIZZ_IMPORT_SOURCES
+    sfizz/import/sfizz_import.cpp
     sfizz/import/ForeignInstrument.cpp
     sfizz/import/foreign_instruments/AudioFile.cpp
     sfizz/import/foreign_instruments/DecentSampler.cpp)

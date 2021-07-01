@@ -122,7 +122,8 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
                 break;
             }
             while (count < size) {
-                currentValue = std::max(sustain, currentValue + transitionDelta);
+                if (currentValue > sustain)
+                    currentValue += transitionDelta;
                 output[count++] = currentValue;
             }
             break;
@@ -171,6 +172,14 @@ void ADSREnvelope::startRelease(int releaseDelay) noexcept
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
+}
+
+void ADSREnvelope::cancelRelease(int delay) noexcept
+{
+    (void)delay;
+    currentState = State::Sustain;
+    shouldRelease = false;
+    this->releaseDelay = -1;
 }
 
 void ADSREnvelope::setReleaseTime(Float timeInSeconds) noexcept
