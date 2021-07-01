@@ -438,7 +438,6 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
                 DBG("Unsupported value for hint_stealing: " << member.value);
             }
             break;
-<<<<<<< HEAD
         case hash("hint_min_samplerate"):
 	    {
 		if (float(stoi(member.value)) / sampleRate_ > 1.0f)
@@ -449,13 +448,11 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         		voice.setSamplesPerBlock(samplesPerBlock_);
     		}
 	    }
-=======
         case hash("hint_sustain_cancels_release"):
         {
             SynthConfig& config = resources_.getSynthConfig();
             config.sustainCancelsRelease = member.read(Default::sustainCancelsRelease);
         }
->>>>>>> upstream/develop
             break;
         default:
             // Unsupported control opcode
