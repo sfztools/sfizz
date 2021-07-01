@@ -29,6 +29,10 @@ struct SynthConfig
         return freeWheeling ? freeWheelingOscillatorQuality : liveOscillatorQuality;
     }
 
+<<<<<<< HEAD
+    int OSFactor { 1 };
+=======
     bool sustainCancelsRelease { Default::sustainCancelsRelease };
+>>>>>>> upstream/develop
 };
 }
