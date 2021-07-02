@@ -1595,6 +1595,29 @@ TEST_CASE("[Synth] Off by standard")
     REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
 }
 
+TEST_CASE("[Synth] Off by negative groups")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=-1 off_by=-2 sample=*saw transpose=12 key=60
+        <region> group=-2 off_by=-1 sample=*triangle key=62
+    )");
+    synth.noteOn(0, 60, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOn(10, 62, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    auto playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(62) );
+    synth.noteOn(10, 60, 85);
+    synth.renderBlock(buffer);
+    playingVoices = getPlayingVoices(synth);
+    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
+}
+
 TEST_CASE("[Synth] Off by same group")
 {
     sfz::Synth synth;

@@ -57,7 +57,7 @@ TEST_CASE("[Polyphony] Polyphony groups")
         <group> group=4
         <region> key=62 sample=*sine
     )");
-    REQUIRE( synth.getNumPolyphonyGroups() == 5 );
+    REQUIRE( synth.getNumPolyphonyGroups() == 4 );
     REQUIRE( synth.getNumRegions() == 5 );
     REQUIRE( synth.getRegionView(0)->group == 0 );
     REQUIRE( synth.getRegionView(1)->group == 1 );
@@ -67,7 +67,7 @@ TEST_CASE("[Polyphony] Polyphony groups")
     REQUIRE( synth.getRegionView(4)->group == 4 );
     REQUIRE( synth.getPolyphonyGroupView(1)->getPolyphonyLimit() == 3 );
     REQUIRE( synth.getPolyphonyGroupView(2)->getPolyphonyLimit() == 4 );
-    REQUIRE( synth.getPolyphonyGroupView(3)->getPolyphonyLimit() == sfz::config::maxVoices );
+    REQUIRE( !synth.getPolyphonyGroupView(3) );
     REQUIRE( synth.getPolyphonyGroupView(4)->getPolyphonyLimit() == 5 );
 }
 

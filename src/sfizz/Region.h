@@ -327,8 +327,8 @@ struct Region {
     absl::optional<int> oscillatorQuality;
 
     // Instrument settings: voice lifecycle
-    uint32_t group { Default::group }; // group
-    absl::optional<uint32_t> offBy {}; // off_by
+    int64_t group { Default::group }; // group
+    absl::optional<int64_t> offBy {}; // off_by
     OffMode offMode { Default::offMode }; // off_mode
     float offTime { Default::offTime }; // off_mode
     absl::optional<uint32_t> notePolyphony {}; // note_polyphony

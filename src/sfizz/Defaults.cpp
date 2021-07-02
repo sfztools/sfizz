@@ -41,7 +41,7 @@ FloatSpec oscillatorDetuneMod { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds }
 FloatSpec oscillatorModDepth { 0.0f, {0.0f, 10000.0f}, kNormalizePercent|kPermissiveBounds };
 FloatSpec oscillatorModDepthMod { 0.0f, {0.0f, 10000.0f}, kNormalizePercent|kPermissiveBounds };
 Int32Spec oscillatorQuality { 1, {0, 3}, 0 };
-UInt32Spec group { 0, {0, uint32_t_max}, 0 };
+Int64Spec group { 0, {-int32_t_max, uint32_t_max}, 0 };
 FloatSpec offTime { 6e-3f, {0.0f, 100.0f}, kPermissiveBounds };
 UInt32Spec polyphony { config::maxVoices, {0, config::maxVoices}, kEnforceBounds };
 UInt32Spec notePolyphony { config::maxVoices, {1, config::maxVoices}, kEnforceBounds };
