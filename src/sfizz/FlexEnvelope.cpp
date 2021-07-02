@@ -95,8 +95,6 @@ void FlexEnvelope::configure(const FlexEGDescription* desc)
 void FlexEnvelope::start(unsigned triggerDelay)
 {
     Impl& impl = *impl_;
-    const FlexEGDescription& desc = *impl.desc_;
-
     impl.delayFramesLeft_ = triggerDelay;
     impl.currentFramesUntilRelease_ = absl::nullopt;
     impl.advanceToStage(0);
@@ -116,6 +114,7 @@ void FlexEnvelope::release(unsigned releaseDelay)
 
 void FlexEnvelope::cancelRelease(unsigned delay)
 {
+    UNUSED(delay);
     Impl& impl = *impl_;
     const FlexEGDescription& desc = *impl.desc_;
 
@@ -249,8 +248,6 @@ void FlexEnvelope::Impl::process(absl::Span<float> out)
 bool FlexEnvelope::Impl::advanceToStage(unsigned stageNumber)
 {
     const FlexEGDescription& desc = *desc_;
-    const MidiState& midiState = resources_->getMidiState();
-
     currentStageNumber_ = stageNumber;
 
     if (stageNumber >= desc.points.size())

@@ -426,7 +426,7 @@ TEST_CASE("[Values] Group")
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
         <region> sample=kick.wav
         <region> sample=kick.wav group=5
-        <region> sample=kick.wav group=-1
+        <region> sample=kick.wav group=-2
     )");
     synth.dispatchMessage(client, 0, "/region0/group", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/group", "", nullptr);
@@ -434,7 +434,7 @@ TEST_CASE("[Values] Group")
     std::vector<std::string> expected {
         "/region0/group,h : { 0 }",
         "/region1/group,h : { 5 }",
-        "/region2/group,h : { 0 }",
+        "/region2/group,h : { -2 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -448,7 +448,7 @@ TEST_CASE("[Values] Off by")
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
         <region> sample=kick.wav
         <region> sample=kick.wav off_by=5
-        <region> sample=kick.wav off_by=-1
+        <region> sample=kick.wav off_by=-2
     )");
     synth.dispatchMessage(client, 0, "/region0/off_by", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/off_by", "", nullptr);
@@ -456,7 +456,7 @@ TEST_CASE("[Values] Off by")
     std::vector<std::string> expected {
         "/region0/off_by,N : {  }",
         "/region1/off_by,h : { 5 }",
-        "/region2/off_by,N : {  }",
+        "/region2/off_by,h : { -2 }",
     };
     REQUIRE(messageList == expected);
 }
