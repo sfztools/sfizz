@@ -96,6 +96,7 @@ set(SFIZZ_HEADERS
     sfizz/railsback/4-1.h
     sfizz/railsback/4-2.h
     sfizz/Region.h
+    sfizz/RegionStateful.h
     sfizz/RegionSet.h
     sfizz/Resources.h
     sfizz/RTSemaphore.h
@@ -131,6 +132,7 @@ set(SFIZZ_SOURCES
     sfizz/AudioReader.cpp
     sfizz/FilterPool.cpp
     sfizz/EQPool.cpp
+    sfizz/RegionStateful.cpp
     sfizz/Region.cpp
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp
