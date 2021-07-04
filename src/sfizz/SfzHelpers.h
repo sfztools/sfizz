@@ -25,6 +25,8 @@ using NoteNamePair = std::pair<uint8_t, std::string>;
 template<class T>
 struct ModifierCurvePair
 {
+    ModifierCurvePair(const T& modifier, uint8_t curve)
+    : modifier(modifier), curve(curve) {}
     T modifier {};
     uint8_t curve {};
 };
