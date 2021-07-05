@@ -94,4 +94,17 @@ uint32_t loopStart(const Region& region, MidiState& midiState) noexcept;
  */
 uint32_t loopEnd(const Region& region, MidiState& midiState) noexcept;
 
+/**
+ * @brief Get the base pitch of the region depending on which note has been
+ * pressed and at which velocity.
+ *
+ * @param region
+ * @param noteNumber
+ * @param velocity
+ * @param midiState
+ * @param curveSet
+ * @return float
+ */
+float basePitchVariation(const Region& region, float noteNumber, float velocity, const MidiState& midiState, const CurveSet& curveSet) noexcept;
+
 }

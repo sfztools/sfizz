@@ -360,14 +360,16 @@ TEST_CASE("[Region] Offsets with CCs")
 TEST_CASE("[Region] Pitch variation with veltrack")
 {
     Region region { 0 };
+    MidiState midiState;
+    CurveSet curveSet { CurveSet::createPredefined() };
 
-    REQUIRE(region.getBasePitchVariation(60.0, 0_norm) == 1.0);
-    REQUIRE(region.getBasePitchVariation(60.0, 64_norm) == 1.0);
-    REQUIRE(region.getBasePitchVariation(60.0, 127_norm) == 1.0);
+    REQUIRE(basePitchVariation(region, 60.0, 0_norm, midiState, curveSet) == 1.0);
+    REQUIRE(basePitchVariation(region, 60.0, 64_norm, midiState, curveSet) == 1.0);
+    REQUIRE(basePitchVariation(region, 60.0, 127_norm, midiState, curveSet) == 1.0);
     region.parseOpcode({ "pitch_veltrack", "1200" });
-    REQUIRE(region.getBasePitchVariation(60.0, 0_norm) == 1.0);
-    REQUIRE(region.getBasePitchVariation(60.0, 64_norm) == Approx(centsFactor(600.0)).margin(0.01f));
-    REQUIRE(region.getBasePitchVariation(60.0, 127_norm) == Approx(centsFactor(1200.0)).margin(0.01f));
+    REQUIRE(basePitchVariation(region, 60.0, 0_norm, midiState, curveSet) == 1.0);
+    REQUIRE(basePitchVariation(region, 60.0, 64_norm, midiState, curveSet) == Approx(centsFactor(600.0)).margin(0.01f));
+    REQUIRE(basePitchVariation(region, 60.0, 127_norm, midiState, curveSet) == Approx(centsFactor(1200.0)).margin(0.01f));
 }
 
 TEST_CASE("[Synth] velcurve")

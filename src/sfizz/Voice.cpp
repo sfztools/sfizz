@@ -483,7 +483,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     Tuning& tuning = resources.getTuning();
     const float numberRetuned = tuning.getKeyFractional12TET(impl.triggerEvent_.number);
 
-    impl.pitchRatio_ = region.getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
+    impl.pitchRatio_ = basePitchVariation(region, numberRetuned, impl.triggerEvent_.value, midiState, curveSet);
 
     // apply stretch tuning if set
     if (absl::optional<StretchTuning>& stretch = resources.getStretch())

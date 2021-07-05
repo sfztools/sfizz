@@ -125,10 +125,40 @@ float velocityCurve(const Region& region, float velocity, const MidiState& midiS
     else
         gain = velocity * velocity;
 
-    gain = std::fabs(region.ampVeltrack) * (1.0f - gain);
-    gain = (region.ampVeltrack < 0) ? gain : (1.0f - gain);
+    float veltrack = region.ampVeltrack;
+
+    for (const auto& mod : region.ampVeltrackCC) {
+        const auto& curve = curveSet.getCurve(mod.data.curve);
+        const float value = midiState.getCCValue(mod.cc);
+        veltrack += curve.evalNormalized(value) * mod.data.modifier;
+    }
+
+    gain = std::fabs(veltrack) * (1.0f - gain);
+    gain = (veltrack < 0) ? gain : (1.0f - gain);
 
     return gain;
+}
+
+float basePitchVariation(const Region& region, float noteNumber, float velocity, const MidiState& midiState, const CurveSet& curveSet) noexcept
+{
+    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
+
+    fast_real_distribution<float> pitchDistribution { 0.0f, region.pitchRandom };
+    float pitchVariationInCents = region.pitchKeytrack * (noteNumber - float(region.pitchKeycenter)); // note difference with pitch center
+    pitchVariationInCents += region.pitch; // sample tuning
+    pitchVariationInCents += config::centPerSemitone * region.transpose; // sample transpose
+
+    float veltrack = region.pitchVeltrack;
+
+    for (const auto& mod : region.pitchVeltrackCC) {
+        const auto& curve = curveSet.getCurve(mod.data.curve);
+        const float value = midiState.getCCValue(mod.cc);
+        veltrack += curve.evalNormalized(value) * mod.data.modifier;
+    }
+
+    pitchVariationInCents += velocity * veltrack; // track velocity
+    pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
+    return centsFactor(pitchVariationInCents);
 }
 
 }

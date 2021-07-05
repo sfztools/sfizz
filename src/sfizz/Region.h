@@ -100,15 +100,6 @@ struct Region {
     bool shouldLoop() const noexcept { return (loopMode == LoopMode::loop_continuous || loopMode == LoopMode::loop_sustain); }
 
     /**
-     * @brief Get the base pitch of the region depending on which note has been
-     * pressed and at which velocity.
-     *
-     * @param noteNumber
-     * @param velocity
-     * @return float
-     */
-    float getBasePitchVariation(float noteNumber, float velocity) const noexcept;
-    /**
      * @brief Get the base gain of the region.
      *
      * @return float

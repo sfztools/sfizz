@@ -1724,19 +1724,6 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
     return true;
 }
 
-float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    fast_real_distribution<float> pitchDistribution { 0.0f, pitchRandom };
-    float pitchVariationInCents = pitchKeytrack * (noteNumber - float(pitchKeycenter)); // note difference with pitch center
-    pitchVariationInCents += pitch; // sample tuning
-    pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += velocity * pitchVeltrack; // track velocity
-    pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
-    return centsFactor(pitchVariationInCents);
-}
-
 float sfz::Region::getBaseGain() const noexcept
 {
     float baseGain = amplitude;
