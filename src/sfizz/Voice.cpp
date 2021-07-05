@@ -476,7 +476,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
-        impl.sourcePosition_ = getOffset(region, midiState);
+        impl.sourcePosition_ = sampleOffset(region, midiState);
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
@@ -490,10 +490,10 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         impl.pitchRatio_ *= stretch->getRatioForFractionalKey(numberRetuned);
 
     impl.pitchKeycenter_ = region.pitchKeycenter;
-    impl.baseVolumedB_ = getBaseVolumedB(region, midiState, impl.triggerEvent_.number);
+    impl.baseVolumedB_ = baseVolumedB(region, midiState, impl.triggerEvent_.number);
     impl.baseGain_ = region.getBaseGain();
     if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
-        impl.baseGain_ *= getNoteGain(region, impl.triggerEvent_.number, impl.triggerEvent_.value, midiState, curveSet);
+        impl.baseGain_ *= noteGain(region, impl.triggerEvent_.number, impl.triggerEvent_.value, midiState, curveSet);
 
     impl.gainSmoother_.reset();
     impl.resetCrossfades();
@@ -507,9 +507,9 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(getDelay(region, midiState) * impl.sampleRate_);
+    impl.initialDelay_ = delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_);
     impl.baseFrequency_ = tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleEnd_ = int(getSampleEnd(region, midiState));
+    impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend()));

@@ -25,9 +25,9 @@ TEST_CASE("[Region] Crossfade in on key")
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
     region.parseOpcode({ "xfin_hikey", "3" });
-    REQUIRE(getNoteGain(region, 2, 127_norm, midiState, curveSet) == 0.70711_a);
-    REQUIRE(getNoteGain(region, 1, 127_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 3, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 2, 127_norm, midiState, curveSet) == 0.70711_a);
+    REQUIRE(noteGain(region, 1, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 3, 127_norm, midiState, curveSet) == 1.0_a);
 }
 
 TEST_CASE("[Region] Crossfade in on key - 2")
@@ -38,12 +38,12 @@ TEST_CASE("[Region] Crossfade in on key - 2")
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfin_lokey", "1" });
     region.parseOpcode({ "xfin_hikey", "5" });
-    REQUIRE(getNoteGain(region, 1, 127_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 2, 127_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 3, 127_norm, midiState, curveSet) == 0.70711_a);
-    REQUIRE(getNoteGain(region, 4, 127_norm, midiState, curveSet) == 0.86603_a);
-    REQUIRE(getNoteGain(region, 5, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 6, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 1, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 2, 127_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 3, 127_norm, midiState, curveSet) == 0.70711_a);
+    REQUIRE(noteGain(region, 4, 127_norm, midiState, curveSet) == 0.86603_a);
+    REQUIRE(noteGain(region, 5, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 6, 127_norm, midiState, curveSet) == 1.0_a);
 }
 
 TEST_CASE("[Region] Crossfade in on key - gain")
@@ -55,11 +55,11 @@ TEST_CASE("[Region] Crossfade in on key - gain")
     region.parseOpcode({ "xfin_lokey", "1" });
     region.parseOpcode({ "xfin_hikey", "5" });
     region.parseOpcode({ "xf_keycurve", "gain" });
-    REQUIRE(getNoteGain(region, 1, 127_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 2, 127_norm, midiState, curveSet) == 0.25_a);
-    REQUIRE(getNoteGain(region, 3, 127_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 4, 127_norm, midiState, curveSet) == 0.75_a);
-    REQUIRE(getNoteGain(region, 5, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 1, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 2, 127_norm, midiState, curveSet) == 0.25_a);
+    REQUIRE(noteGain(region, 3, 127_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 4, 127_norm, midiState, curveSet) == 0.75_a);
+    REQUIRE(noteGain(region, 5, 127_norm, midiState, curveSet) == 1.0_a);
 }
 
 TEST_CASE("[Region] Crossfade out on key")
@@ -70,13 +70,13 @@ TEST_CASE("[Region] Crossfade out on key")
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "xfout_lokey", "51" });
     region.parseOpcode({ "xfout_hikey", "55" });
-    REQUIRE(getNoteGain(region, 50, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 51, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 52, 127_norm, midiState, curveSet) == 0.86603_a);
-    REQUIRE(getNoteGain(region, 53, 127_norm, midiState, curveSet) == 0.70711_a);
-    REQUIRE(getNoteGain(region, 54, 127_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 55, 127_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 56, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 50, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 51, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 52, 127_norm, midiState, curveSet) == 0.86603_a);
+    REQUIRE(noteGain(region, 53, 127_norm, midiState, curveSet) == 0.70711_a);
+    REQUIRE(noteGain(region, 54, 127_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 55, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 56, 127_norm, midiState, curveSet) == 0.0_a);
 }
 
 TEST_CASE("[Region] Crossfade out on key - gain")
@@ -88,13 +88,13 @@ TEST_CASE("[Region] Crossfade out on key - gain")
     region.parseOpcode({ "xfout_lokey", "51" });
     region.parseOpcode({ "xfout_hikey", "55" });
     region.parseOpcode({ "xf_keycurve", "gain" });
-    REQUIRE(getNoteGain(region, 50, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 51, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 52, 127_norm, midiState, curveSet) == 0.75_a);
-    REQUIRE(getNoteGain(region, 53, 127_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 54, 127_norm, midiState, curveSet) == 0.25_a);
-    REQUIRE(getNoteGain(region, 55, 127_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 56, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 50, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 51, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 52, 127_norm, midiState, curveSet) == 0.75_a);
+    REQUIRE(noteGain(region, 53, 127_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 54, 127_norm, midiState, curveSet) == 0.25_a);
+    REQUIRE(noteGain(region, 55, 127_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 56, 127_norm, midiState, curveSet) == 0.0_a);
 }
 
 TEST_CASE("[Region] Crossfade in on velocity")
@@ -106,13 +106,13 @@ TEST_CASE("[Region] Crossfade in on velocity")
     region.parseOpcode({ "xfin_lovel", "20" });
     region.parseOpcode({ "xfin_hivel", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
-    REQUIRE(getNoteGain(region, 1, 19_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 1, 20_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 2, 21_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 3, 22_norm, midiState, curveSet) == 0.70711_a);
-    REQUIRE(getNoteGain(region, 4, 23_norm, midiState, curveSet) == 0.86603_a);
-    REQUIRE(getNoteGain(region, 5, 24_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 6, 25_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 1, 19_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 1, 20_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 2, 21_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 3, 22_norm, midiState, curveSet) == 0.70711_a);
+    REQUIRE(noteGain(region, 4, 23_norm, midiState, curveSet) == 0.86603_a);
+    REQUIRE(noteGain(region, 5, 24_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 6, 25_norm, midiState, curveSet) == 1.0_a);
 }
 
 TEST_CASE("[Region] Crossfade in on vel - gain")
@@ -125,13 +125,13 @@ TEST_CASE("[Region] Crossfade in on vel - gain")
     region.parseOpcode({ "xfin_hivel", "24" });
     region.parseOpcode({ "xf_velcurve", "gain" });
     region.parseOpcode({ "amp_veltrack", "0" });
-    REQUIRE(getNoteGain(region, 1, 19_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 1, 20_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 2, 21_norm, midiState, curveSet) == 0.25_a);
-    REQUIRE(getNoteGain(region, 3, 22_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 4, 23_norm, midiState, curveSet) == 0.75_a);
-    REQUIRE(getNoteGain(region, 5, 24_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 5, 25_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 1, 19_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 1, 20_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 2, 21_norm, midiState, curveSet) == 0.25_a);
+    REQUIRE(noteGain(region, 3, 22_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 4, 23_norm, midiState, curveSet) == 0.75_a);
+    REQUIRE(noteGain(region, 5, 24_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 5, 25_norm, midiState, curveSet) == 1.0_a);
 }
 
 TEST_CASE("[Region] Crossfade out on vel")
@@ -143,13 +143,13 @@ TEST_CASE("[Region] Crossfade out on vel")
     region.parseOpcode({ "xfout_lovel", "51" });
     region.parseOpcode({ "xfout_hivel", "55" });
     region.parseOpcode({ "amp_veltrack", "0" });
-    REQUIRE(getNoteGain(region, 5, 50_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 5, 51_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 5, 52_norm, midiState, curveSet) == 0.86603_a);
-    REQUIRE(getNoteGain(region, 5, 53_norm, midiState, curveSet) == 0.70711_a);
-    REQUIRE(getNoteGain(region, 5, 54_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 5, 55_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 5, 56_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 5, 50_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 5, 51_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 5, 52_norm, midiState, curveSet) == 0.86603_a);
+    REQUIRE(noteGain(region, 5, 53_norm, midiState, curveSet) == 0.70711_a);
+    REQUIRE(noteGain(region, 5, 54_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 5, 55_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 5, 56_norm, midiState, curveSet) == 0.0_a);
 }
 
 TEST_CASE("[Region] Crossfade out on vel - gain")
@@ -162,13 +162,13 @@ TEST_CASE("[Region] Crossfade out on vel - gain")
     region.parseOpcode({ "xfout_hivel", "55" });
     region.parseOpcode({ "xf_velcurve", "gain" });
     region.parseOpcode({ "amp_veltrack", "0" });
-    REQUIRE(getNoteGain(region, 56, 50_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 56, 51_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 56, 52_norm, midiState, curveSet) == 0.75_a);
-    REQUIRE(getNoteGain(region, 56, 53_norm, midiState, curveSet) == 0.5_a);
-    REQUIRE(getNoteGain(region, 56, 54_norm, midiState, curveSet) == 0.25_a);
-    REQUIRE(getNoteGain(region, 56, 55_norm, midiState, curveSet) == 0.0_a);
-    REQUIRE(getNoteGain(region, 56, 56_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 56, 50_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 56, 51_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 56, 52_norm, midiState, curveSet) == 0.75_a);
+    REQUIRE(noteGain(region, 56, 53_norm, midiState, curveSet) == 0.5_a);
+    REQUIRE(noteGain(region, 56, 54_norm, midiState, curveSet) == 0.25_a);
+    REQUIRE(noteGain(region, 56, 55_norm, midiState, curveSet) == 0.0_a);
+    REQUIRE(noteGain(region, 56, 56_norm, midiState, curveSet) == 0.0_a);
 }
 
 TEST_CASE("[Region] Crossfade in on CC")
@@ -180,19 +180,19 @@ TEST_CASE("[Region] Crossfade in on CC")
     region.parseOpcode({ "xfin_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
     midiState.ccEvent(0, 24, 19_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
     midiState.ccEvent(0, 24, 20_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
     midiState.ccEvent(0, 24, 21_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.5_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.5_a);
     midiState.ccEvent(0, 24, 22_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.70711_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.70711_a);
     midiState.ccEvent(0, 24, 23_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.86603_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.86603_a);
     midiState.ccEvent(0, 24, 24_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
     midiState.ccEvent(0, 24, 25_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
 }
 
 TEST_CASE("[Region] Crossfade in on CC - gain")
@@ -205,19 +205,19 @@ TEST_CASE("[Region] Crossfade in on CC - gain")
     region.parseOpcode({ "amp_veltrack", "0" });
     region.parseOpcode({ "xf_cccurve", "gain" });
     midiState.ccEvent(0, 24, 19_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
     midiState.ccEvent(0, 24, 20_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
     midiState.ccEvent(0, 24, 21_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.25_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.25_a);
     midiState.ccEvent(0, 24, 22_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.5_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.5_a);
     midiState.ccEvent(0, 24, 23_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.75_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.75_a);
     midiState.ccEvent(0, 24, 24_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
     midiState.ccEvent(0, 24, 25_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
 }
 TEST_CASE("[Region] Crossfade out on CC")
 {
@@ -228,19 +228,19 @@ TEST_CASE("[Region] Crossfade out on CC")
     region.parseOpcode({ "xfout_hicc24", "24" });
     region.parseOpcode({ "amp_veltrack", "0" });
     midiState.ccEvent(0, 24, 19_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
     midiState.ccEvent(0, 24, 20_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
     midiState.ccEvent(0, 24, 21_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.86603_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.86603_a);
     midiState.ccEvent(0, 24, 22_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.70711_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.70711_a);
     midiState.ccEvent(0, 24, 23_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.5_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.5_a);
     midiState.ccEvent(0, 24, 24_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
     midiState.ccEvent(0, 24, 25_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
 }
 
 TEST_CASE("[Region] Crossfade out on CC - gain")
@@ -253,19 +253,19 @@ TEST_CASE("[Region] Crossfade out on CC - gain")
     region.parseOpcode({ "amp_veltrack", "0" });
     region.parseOpcode({ "xf_cccurve", "gain" });
     midiState.ccEvent(0, 24, 19_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
     midiState.ccEvent(0, 24, 20_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 1.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 1.0_a);
     midiState.ccEvent(0, 24, 21_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.75_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.75_a);
     midiState.ccEvent(0, 24, 22_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.5_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.5_a);
     midiState.ccEvent(0, 24, 23_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.25_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.25_a);
     midiState.ccEvent(0, 24, 24_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
     midiState.ccEvent(0, 24, 25_norm);
-    REQUIRE(getCrossfadeGain(region, midiState) == 0.0_a);
+    REQUIRE(crossfadeGain(region, midiState) == 0.0_a);
 }
 
 TEST_CASE("[Region] Velocity bug for extreme values - veltrack at 0")
@@ -275,8 +275,8 @@ TEST_CASE("[Region] Velocity bug for extreme values - veltrack at 0")
     CurveSet curveSet { CurveSet::createPredefined() };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "amp_veltrack", "0" });
-    REQUIRE(getNoteGain(region, 64, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 64, 0_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 64, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 64, 0_norm, midiState, curveSet) == 1.0_a);
 }
 
 
@@ -287,8 +287,8 @@ TEST_CASE("[Region] Velocity bug for extreme values - positive veltrack")
     CurveSet curveSet { CurveSet::createPredefined() };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "amp_veltrack", "100" });
-    REQUIRE(getNoteGain(region, 64, 127_norm, midiState, curveSet) == 1.0_a);
-    REQUIRE(getNoteGain(region, 64, 0_norm, midiState, curveSet) == Approx(0.0).margin(0.0001));
+    REQUIRE(noteGain(region, 64, 127_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 64, 0_norm, midiState, curveSet) == Approx(0.0).margin(0.0001));
 }
 
 TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
@@ -298,8 +298,8 @@ TEST_CASE("[Region] Velocity bug for extreme values - negative veltrack")
     CurveSet curveSet { CurveSet::createPredefined() };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "amp_veltrack", "-100" });
-    REQUIRE(getNoteGain(region, 64, 127_norm, midiState, curveSet) == Approx(0.0).margin(0.0001));
-    REQUIRE(getNoteGain(region, 64, 0_norm, midiState, curveSet) == 1.0_a);
+    REQUIRE(noteGain(region, 64, 127_norm, midiState, curveSet) == Approx(0.0).margin(0.0001));
+    REQUIRE(noteGain(region, 64, 0_norm, midiState, curveSet) == 1.0_a);
 }
 
 TEST_CASE("[Region] rt_decay")
@@ -312,15 +312,15 @@ TEST_CASE("[Region] rt_decay")
     region.parseOpcode({ "rt_decay", "10" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( getBaseVolumedB(region, midiState, 64) == Approx(Default::volume - 1.0f).margin(0.1) );
+    REQUIRE( baseVolumedB(region, midiState, 64) == Approx(Default::volume - 1.0f).margin(0.1) );
     region.parseOpcode({ "rt_decay", "20" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( getBaseVolumedB(region, midiState, 64) == Approx(Default::volume - 2.0f).margin(0.1) );
+    REQUIRE( baseVolumedB(region, midiState, 64) == Approx(Default::volume - 2.0f).margin(0.1) );
     region.parseOpcode({ "trigger", "attack" });
     midiState.noteOnEvent(0, 64, 64_norm);
     midiState.advanceTime(100);
-    REQUIRE( getBaseVolumedB(region, midiState, 64) == Approx(Default::volume).margin(0.1) );
+    REQUIRE( baseVolumedB(region, midiState, 64) == Approx(Default::volume).margin(0.1) );
 }
 
 TEST_CASE("[Region] Base delay")
@@ -329,12 +329,12 @@ TEST_CASE("[Region] Base delay")
     Region region { 0 };
     region.parseOpcode({ "sample", "*sine" });
     region.parseOpcode({ "delay", "10" });
-    REQUIRE( getDelay(region, midiState) == 10.0f );
+    REQUIRE( regionDelay(region, midiState) == 10.0f );
     region.parseOpcode({ "delay_random", "10" });
     Random::randomGenerator.seed(42);
     for (int i = 0; i < numRandomTests; ++i)
     {
-        auto delay = getDelay(region, midiState);
+        auto delay = regionDelay(region, midiState);
         REQUIRE( (delay >= 10.0 && delay <= 20.0) );
     }
 }
@@ -346,15 +346,15 @@ TEST_CASE("[Region] Offsets with CCs")
 
     region.parseOpcode({ "offset_cc4", "255" });
     region.parseOpcode({ "offset", "10" });
-    REQUIRE( getOffset(region, midiState) == 10 );
+    REQUIRE( sampleOffset(region, midiState) == 10 );
     midiState.ccEvent(0, 4, 127_norm);
-    REQUIRE( getOffset(region, midiState) == 265 );
+    REQUIRE( sampleOffset(region, midiState) == 265 );
     midiState.ccEvent(0, 4, 100_norm);
-    REQUIRE( getOffset(region, midiState) == 210 );
+    REQUIRE( sampleOffset(region, midiState) == 210 );
     midiState.ccEvent(0, 4, 10_norm);
-    REQUIRE( getOffset(region, midiState) == 30 );
+    REQUIRE( sampleOffset(region, midiState) == 30 );
     midiState.ccEvent(0, 4, 0);
-    REQUIRE( getOffset(region, midiState) == 10 );
+    REQUIRE( sampleOffset(region, midiState) == 10 );
 }
 
 TEST_CASE("[Region] Pitch variation with veltrack")

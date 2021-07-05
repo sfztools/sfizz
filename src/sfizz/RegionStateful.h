@@ -20,7 +20,7 @@ namespace sfz {
  * @param curveSet
  * @return float
  */
-float getNoteGain(const Region& region, int noteNumber, float velocity, const MidiState& midiState, const CurveSet& curveSet) noexcept;
+float noteGain(const Region& region, int noteNumber, float velocity, const MidiState& midiState, const CurveSet& curveSet) noexcept;
 
 /**
  * @brief Get the additional crossfade gain of the region depending on the
@@ -30,7 +30,7 @@ float getNoteGain(const Region& region, int noteNumber, float velocity, const Mi
  * @param midiState
  * @return float
  */
-float getCrossfadeGain(const Region& region, const MidiState& midiState) noexcept;
+float crossfadeGain(const Region& region, const MidiState& midiState) noexcept;
 
 /**
  * @brief Get the base volume of the region depending on which note has been
@@ -41,7 +41,7 @@ float getCrossfadeGain(const Region& region, const MidiState& midiState) noexcep
  * @param noteNumber
  * @return float
  */
-float getBaseVolumedB(const Region& region, const MidiState& midiState, int noteNumber) noexcept;
+float baseVolumedB(const Region& region, const MidiState& midiState, int noteNumber) noexcept;
 
 /**
  * @brief Get the region offset in samples
@@ -50,7 +50,7 @@ float getBaseVolumedB(const Region& region, const MidiState& midiState, int note
  * @param midiState
  * @return uint32_t
  */
-uint64_t getOffset(const Region& region, const MidiState& midiState) noexcept;
+uint64_t sampleOffset(const Region& region, const MidiState& midiState) noexcept;
 /**
  * @brief Get the region delay in seconds
  *
@@ -58,7 +58,7 @@ uint64_t getOffset(const Region& region, const MidiState& midiState) noexcept;
  * @param midiState
  * @return float
  */
-float getDelay(const Region& region, const MidiState& midiState) noexcept;
+float regionDelay(const Region& region, const MidiState& midiState) noexcept;
 /**
  * @brief Get the index of the sample end, either natural end or forced
  * loop.
@@ -67,7 +67,7 @@ float getDelay(const Region& region, const MidiState& midiState) noexcept;
  * @param midiState
  * @return uint32_t
  */
-uint32_t getSampleEnd(const Region& region, MidiState& midiState) noexcept;
+uint32_t sampleEnd(const Region& region, MidiState& midiState) noexcept;
 
 /**
  * @brief Computes the gain value related to the velocity of the note

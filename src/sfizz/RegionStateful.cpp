@@ -9,7 +9,7 @@
 
 namespace sfz {
 
-float getBaseVolumedB(const Region& region, const MidiState& midiState, int noteNumber) noexcept
+float baseVolumedB(const Region& region, const MidiState& midiState, int noteNumber) noexcept
 {
     fast_real_distribution<float> volumeDistribution { 0.0f, region.ampRandom };
     auto baseVolumedB = region.volume + volumeDistribution(Random::randomGenerator);
@@ -22,7 +22,7 @@ float getBaseVolumedB(const Region& region, const MidiState& midiState, int note
 }
 
 
-uint64_t getOffset(const Region& region, const MidiState& midiState) noexcept
+uint64_t sampleOffset(const Region& region, const MidiState& midiState) noexcept
 {
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, region.offsetRandom };
     uint64_t finalOffset = region.offset + offsetDistribution(Random::randomGenerator);
@@ -31,7 +31,7 @@ uint64_t getOffset(const Region& region, const MidiState& midiState) noexcept
     return Default::offset.bounds.clamp(finalOffset);
 }
 
-float getDelay(const Region& region, const MidiState& midiState) noexcept
+float regionDelay(const Region& region, const MidiState& midiState) noexcept
 {
     fast_real_distribution<float> delayDistribution { 0, region.delayRandom };
     float finalDelay { region.delay };
@@ -42,7 +42,7 @@ float getDelay(const Region& region, const MidiState& midiState) noexcept
     return Default::delay.bounds.clamp(finalDelay);
 }
 
-uint32_t getSampleEnd(const Region& region, MidiState& midiState) noexcept
+uint32_t sampleEnd(const Region& region, MidiState& midiState) noexcept
 {
     int64_t end = region.sampleEnd;
     for (const auto& mod: region.endCC)
@@ -72,7 +72,7 @@ uint32_t loopEnd(const Region& region, MidiState& midiState) noexcept
     return static_cast<uint32_t>(end);
 }
 
-float getNoteGain(const Region& region, int noteNumber, float velocity, const MidiState& midiState, const CurveSet& curveSet) noexcept
+float noteGain(const Region& region, int noteNumber, float velocity, const MidiState& midiState, const CurveSet& curveSet) noexcept
 {
     ASSERT(velocity >= 0.0f && velocity <= 1.0f);
 
@@ -95,7 +95,7 @@ float getNoteGain(const Region& region, int noteNumber, float velocity, const Mi
     return baseGain;
 }
 
-float getCrossfadeGain(const Region& region, const MidiState& midiState) noexcept
+float crossfadeGain(const Region& region, const MidiState& midiState) noexcept
 {
     float gain { 1.0f };
 
