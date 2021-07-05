@@ -566,17 +566,20 @@ TEST_CASE("[Values] Triggers on note")
         <region> sample=kick.wav hikey=-1
         <region> sample=kick.wav key=-1
         <region> sample=kick.wav hikey=-1 lokey=12
+        <region> sample=kick.wav hikey=-1 lokey=-1
     )");
     synth.dispatchMessage(client, 0, "/region0/trigger_on_note", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/trigger_on_note", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/trigger_on_note", "", nullptr);
     // TODO: Double check with Sforzando/rgc
     synth.dispatchMessage(client, 0, "/region3/trigger_on_note", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region4/trigger_on_note", "", nullptr);
     std::vector<std::string> expected {
         "/region0/trigger_on_note,T : {  }",
         "/region1/trigger_on_note,F : {  }",
         "/region2/trigger_on_note,F : {  }",
         "/region3/trigger_on_note,T : {  }",
+        "/region4/trigger_on_note,F : {  }",
     };
     REQUIRE(messageList == expected);
 }
