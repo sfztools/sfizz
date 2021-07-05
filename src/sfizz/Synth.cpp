@@ -726,7 +726,7 @@ void Synth::Impl::finalizeSfzLoad()
         // Defaults
         MidiState& midiState = resources_.getMidiState();
         for (int cc = 0; cc < config::numCCs; cc++) {
-            layer.registerCC(cc, midiState.getCCValue(cc));
+            layer.registerCC(cc, midiState.getCCValue(cc), true);
         }
 
 
@@ -1951,7 +1951,7 @@ void Synth::Impl::resetAllControllers(int delay) noexcept
     for (const LayerPtr& layerPtr : layers_) {
         Layer& layer = *layerPtr;
         for (int cc = 0; cc < config::numCCs; ++cc)
-            layer.registerCC(cc, defaultCCValues_[cc]);
+            layer.registerCC(cc, defaultCCValues_[cc], true);
     }
 }
 

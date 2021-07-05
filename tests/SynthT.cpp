@@ -1960,3 +1960,29 @@ TEST_CASE("[Synth] Resets all controllers to default values")
     REQUIRE( synth.getHdcc(56) == 64_norm );
     REQUIRE( synth.getHdcc(78) == 0.0f );
 }
+
+TEST_CASE("[Synth] Sequences also work on cc triggers")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sequence_cc_triggers.sfz", R"(
+        <global> seq_length=3
+        <region> sample=*sine hikey=-1 start_locc61=0 start_hicc61=64 seq_position=1
+        <region> sample=*saw hikey=-1 start_locc61=0 start_hicc61=64 seq_position=2
+    )");
+    synth.cc(0, 61, 10);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+    synth.cc(0, 61, 20);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw" } );
+    synth.cc(0, 61, 20);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw" } );
+    synth.cc(0, 61, 20);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw", "*sine" } );
+}

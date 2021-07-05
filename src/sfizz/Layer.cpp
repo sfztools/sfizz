@@ -129,7 +129,7 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
     return false;
 }
 
-bool Layer::registerCC(int ccNumber, float ccValue) noexcept
+bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
 {
     const Region& region = region_;
 
@@ -152,14 +152,16 @@ bool Layer::registerCC(int ccNumber, float ccValue) noexcept
     else
         ccSwitched_.set(ccNumber, false);
 
-    if (!isSwitchedOn())
-        return false;
-
-    if (!region.triggerOnCC)
+    if (dontTrigger || !region.triggerOnCC)
         return false;
 
     if (auto triggerRange = region.ccTriggers.get(ccNumber)) {
-        if (triggerRange->containsWithEnd(ccValue))
+        if (!triggerRange->containsWithEnd(ccValue))
+            return false;
+
+        sequenceSwitched_ =
+            ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
+        if (isSwitchedOn())
             return true;
     }
 
