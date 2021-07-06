@@ -13,6 +13,7 @@
  */
 
 #include "parser/Parser.h"
+#include "parser/ParserListener.h"
 #include <pugixml.hpp>
 #include <cxxopts.hpp>
 #include <absl/strings/string_view.h>
