@@ -14,6 +14,7 @@
 #include "vstgui/lib/controls/cslider.h"
 #include "vstgui/lib/controls/cknob.h"
 #include "vstgui/lib/controls/ctextlabel.h"
+#include "vstgui/lib/controls/ctextedit.h"
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/coptionmenu.h"
 #include "vstgui/lib/controls/cscrollbar.h"
@@ -230,9 +231,6 @@ public:
     void setFontColor(CColor fontColor);
     CColor getFontColor() const { return fontColor_; }
 
-    using ValueToStringFunction = std::function<bool(float value, std::string& result)>;
-    void setValueToStringFunction(ValueToStringFunction func);
-
     CLASS_METHODS(SStyledKnob, CKnobBase)
 protected:
     void draw(CDrawContext* dc) override;
@@ -244,16 +242,37 @@ private:
 
     SharedPointer<CFontDesc> font_ = kNormalFont;
     CColor fontColor_ { 0x00, 0x00, 0x00 };
+};
 
-    ValueToStringFunction valueToStringFunction_;
+class CFilledRect : public CView
+{
+public:
+    explicit CFilledRect(const CRect& size)
+    : CView(size) {}
+
+    void setRadius(CCoord radius) { radius_ = radius; invalid(); }
+    CCoord getRadius() const { return radius_; }
+
+    void setColor(CColor color){ color_ = color; invalid(); }
+    CColor getColor() { return color_; }
+protected:
+    void draw(CDrawContext* dc) override;
+private:
+    CCoord radius_  { 5.0 };
+    CColor color_  { 0, 0, 0, 70 };
 };
 
 ///
-class SKnobCCBox : public CViewContainer {
+class SKnobCCBox : public CViewContainer, ViewListenerAdapter {
 public:
     SKnobCCBox(const CRect& size, IControlListener* listener, int32_t tag);
+    ~SKnobCCBox();
     void setHue(float hue);
-    SStyledKnob* getControl() const { return knob_; }
+
+    float getValue() const { return knob_->getValue(); }
+    float getDefaultValue() const { return knob_->getDefaultValue(); }
+    void setValue(float value);
+    void setDefaultValue(float value);
 
     void setNameLabelText(const UTF8String& name) { label_->setText(name); label_->invalid(); }
     void setCCLabelText(const UTF8String& name) { ccLabel_->setText(name); ccLabel_->invalid(); }
@@ -263,6 +282,18 @@ public:
 
     void setNameLabelFontColor(CColor color) { label_->setFontColor(color); label_->invalid(); }
     CColor getNameLabelFontColor() const { return label_->getFontColor(); }
+
+    void setValueEditFont(CFontRef font);
+    CFontRef getValueEditFont() const { return label_->getFont(); }
+
+    void setValueEditFontColor(CColor color) { valueEdit_->setFontColor(color); valueEdit_->invalid(); }
+    CColor getValueEditFontColor() const { return valueEdit_->getFontColor(); }
+
+    void setValueEditBackColor(CColor color) { valueEdit_->setBackColor(color); valueEdit_->invalid(); }
+    CColor getValueEditBackColor() const { return valueEdit_->getBackColor(); }
+
+    void setShadingRectangleColor(CColor color) { shadingRectangle_->setColor(color); shadingRectangle_->invalid(); }
+    CColor getShadingRectangleColor() const { return shadingRectangle_->getColor(); }
 
     void setCCLabelFont(CFontRef font);
     CFontRef getCCLabelFont() const { return ccLabel_->getFont(); }
@@ -288,21 +319,43 @@ public:
     void setKnobFontColor(CColor color) { knob_->setFontColor(color); knob_->invalid(); }
     CColor getKnobFontColor() const { return knob_->getFontColor(); }
 
-    using ValueToStringFunction = SStyledKnob::ValueToStringFunction;
-    void setValueToStringFunction(ValueToStringFunction f) { knob_->setValueToStringFunction(std::move(f)); knob_->invalid(); }
+	void viewLostFocus (CView* view) override;
+	void viewTookFocus (CView* view) override;
+
+    bool isHD() const noexcept { return hdMode_; }
+    void setHDMode(bool mode);
+
+protected:
+    CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
 
 private:
     void updateViewSizes();
     void updateViewColors();
-
-private:
     SharedPointer<CTextLabel> label_;
+    SharedPointer<CTextEdit> valueEdit_;
     SharedPointer<SStyledKnob> knob_;
     SharedPointer<CTextLabel> ccLabel_;
+    SharedPointer<CFilledRect> shadingRectangle_;
+    SharedPointer<CMenuItem> menuEntry_;
     CRect nameLabelSize_;
     CRect knobSize_;
     CRect ccLabelSize_;
+    CRect valueEditSize_;
+    CRect rectangleSize_;
     float hue_ = 0.35;
+
+    class MenuListener : public IControlListener, public NonAtomicReferenceCounted {
+    public:
+        explicit MenuListener(SKnobCCBox& box) : box_(box) {}
+        void valueChanged(CControl*) override
+        {
+            box_.setHDMode(!box_.isHD());
+        }
+    private:
+        SKnobCCBox& box_;
+    };
+    SharedPointer<MenuListener> menuListener_;
+    bool hdMode_ { false };
 };
 
 ///
@@ -320,6 +373,9 @@ public:
     void setCCLabelFont(CFontRef font);
     void setCCLabelBackColor(CColor color);
     void setCCLabelFontColor(CColor color);
+    void setValueEditBackColor(CColor color);
+    void setValueEditFontColor(CColor color);
+    void setShadingRectangleColor(CColor color);
     void setKnobActiveTrackColor(CColor color);
     void setKnobInactiveTrackColor(CColor color);
     void setKnobLineIndicatorColor(CColor color);
