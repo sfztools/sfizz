@@ -116,7 +116,7 @@ FloatSpec pitchRandom { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
 FloatSpec pitchVeltrack { 0, {-12000, 12000}, kPermissiveBounds };
 FloatSpec transpose { 0, {-127, 127}, kPermissiveBounds };
 FloatSpec pitch { 0.0f, {-2400.0f, 2400.0f}, kPermissiveBounds };
-FloatSpec pitchMod { 0.0f, {-2400.0f, 2400.0f}, kPermissiveBounds };
+FloatSpec pitchMod { 0.0f, {-9600.0f, 9600.0f}, kPermissiveBounds };
 FloatSpec bendUp { 200.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
 FloatSpec bendDown { -200.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
 FloatSpec bendStep { 1.0f, {1.0f, 1200.0f}, kEnforceLowerBound|kPermissiveBounds };

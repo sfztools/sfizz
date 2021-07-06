@@ -69,7 +69,7 @@ struct Voice::Impl
     static void fillInterpolated(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs,
-        absl::Span<const float> addingGains);
+        absl::Span<const float> addingGains, float mod);
 
     /**
      * @brief Fill a destination with an interpolated source, selecting
@@ -85,7 +85,7 @@ struct Voice::Impl
     static void fillInterpolatedWithQuality(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs,
-        absl::Span<const float> addingGains, int quality);
+        absl::Span<const float> addingGains, int quality, float mod);
 
     /**
      * @brief Get a S-shaped curve that is applicable to loop crossfading.
@@ -728,32 +728,36 @@ void Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void Voice::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
-    impl.sampleRate_ = sampleRate;
-    impl.gainSmoother_.setSmoothing(config::gainSmoothing, sampleRate);
-    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, sampleRate);
+    impl.sampleRate_ = sampleRate * float(impl.resources_.getSynthConfig().OSFactor);
+    impl.gainSmoother_.setSmoothing(config::gainSmoothing, impl.sampleRate_);
+    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, impl.sampleRate_);
 
     for (WavetableOscillator& osc : impl.waveOscillators_)
-        osc.init(sampleRate);
+        osc.init(impl.sampleRate_);
 
     for (auto& eg : impl.flexEGs_)
         eg->setSampleRate(sampleRate);
 
     for (auto& lfo : impl.lfos_)
-        lfo->setSampleRate(sampleRate);
+        lfo->setSampleRate(impl.sampleRate_);
     if (auto* lfo = impl.lfoAmplitude_.get())
-        lfo->setSampleRate(sampleRate);
+        lfo->setSampleRate(impl.sampleRate_);
     if (auto* lfo = impl.lfoPitch_.get())
-        lfo->setSampleRate(sampleRate);
+        lfo->setSampleRate(impl.sampleRate_);
     if (auto* lfo = impl.lfoFilter_.get())
-        lfo->setSampleRate(sampleRate);
+        lfo->setSampleRate(impl.sampleRate_);
 
     for (auto& filter : impl.filters_)
-        filter.setSampleRate(sampleRate);
+        filter.setSampleRate(impl.sampleRate_);
 
     for (auto& eq : impl.equalizers_)
-        eq.setSampleRate(sampleRate);
+        eq.setSampleRate(impl.sampleRate_);
 
-    impl.powerFollower_.setSampleRate(sampleRate);
+    impl.powerFollower_.setSampleRate(impl.sampleRate_);
+    downsampleFilter.setType(FilterType::kFilterLpf6p);
+    downsampleFilter.setChannels(2);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -772,9 +776,12 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     const Region* region = impl.region_;
     if (region == nullptr || region->disabled())
         return;
+    AudioBuffer<float> interBuffer(buffer.getNumChannels(), buffer.getNumFrames() * impl.resources_.getSynthConfig().OSFactor);
+    AudioSpan<float> downsampled_buffer(interBuffer);
+    downsampled_buffer.fill(0.0f);
 
-    const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
-    auto delayed_buffer = buffer.subspan(delay);
+    const auto delay = min(static_cast<size_t>(impl.initialDelay_), downsampled_buffer.getNumFrames());
+    auto delayed_buffer = downsampled_buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
     { // Fill buffer with raw data
@@ -786,14 +793,29 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     if (region->isStereo()) {
-        impl.ampStageStereo(buffer);
-        impl.panStageStereo(buffer);
-        impl.filterStageStereo(buffer);
+        impl.ampStageStereo(downsampled_buffer);
+        impl.panStageStereo(downsampled_buffer);
+        impl.filterStageStereo(downsampled_buffer);
     } else {
-        impl.ampStageMono(buffer);
-        impl.filterStageMono(buffer);
-        impl.panStageMono(buffer);
+        impl.ampStageMono(downsampled_buffer);
+        impl.filterStageMono(downsampled_buffer);
+        impl.panStageMono(downsampled_buffer);
     }
+
+    if (impl.resources_.getSynthConfig().OSFactor > 1)
+	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.getSynthConfig().OSFactor) / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0, downsampled_buffer.getNumFrames());
+
+    for (size_t i = 0; i < buffer.getNumChannels(); ++i)
+{
+    for (size_t j = 0; j < buffer.getNumFrames(); ++j)
+{
+    buffer[i][j] = downsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor];
+    if (impl.resources_.getSynthConfig().OSFactor > 1)
+    for (int k = 1; k < impl.resources_.getSynthConfig().OSFactor; ++k)
+         buffer[i][j] += downsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor + k];
+    buffer[i][j] /= float(impl.resources_.getSynthConfig().OSFactor);
+}
+}
 
     if (!region->flexAmpEG) {
         if (!impl.egAmplitude_.isSmoothing())
@@ -1229,10 +1251,14 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         // partition spans
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
-        absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+        absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+	float mod = 1.0;
+
+        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5f / float(resources_.getSynthConfig().OSFactor))
+            mod = 0.5f / (pitchRatio_ * speedRatio_);
 
         fillInterpolatedWithQuality<false>(
-            source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
+            source, ptBuffer, ptIndices, ptCoeffs, {}, quality, mod);
 
         if (ptType == kPartitionLoopXfade) {
             auto xfTemp1 = bufferPool.getBuffer(numSamples);
@@ -1322,7 +1348,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                 }
                 // apply in curve
                 fillInterpolatedWithQuality<true>(
-                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality);
+                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality, mod);
             }
         }
     }
@@ -1342,7 +1368,7 @@ template <InterpolatorModel M, bool Adding>
 void Voice::Impl::fillInterpolated(
     const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
-    absl::Span<const float> addingGains)
+    absl::Span<const float> addingGains, float mod)
 {
     auto* ind = indices.data();
     auto* coeff = coeffs.data();
@@ -1351,7 +1377,7 @@ void Voice::Impl::fillInterpolated(
     auto left = dest.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            auto output = interpolate<M>(&leftSource[*ind], *coeff);
+            auto output = interpolate<M>(&leftSource[*ind], *coeff, mod);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * output;
@@ -1364,8 +1390,8 @@ void Voice::Impl::fillInterpolated(
         auto right = dest.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
-            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff);
-            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff);
+            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff, mod);
+            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff, mod);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * leftOutput;
@@ -1384,19 +1410,19 @@ template <bool Adding>
 void Voice::Impl::fillInterpolatedWithQuality(
     const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
-    absl::Span<const float> addingGains, int quality)
+    absl::Span<const float> addingGains, int quality, float mod)
 {
     switch (clamp(quality, 0, 10)) {
     case 0:
         {
-            constexpr auto itp = kInterpolatorNearest;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            constexpr auto itp = kInterpolatorLoFi;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 1:
         {
             constexpr auto itp = kInterpolatorLinear;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 2:
@@ -1408,55 +1434,55 @@ void Voice::Impl::fillInterpolatedWithQuality(
             // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 3:
         {
             constexpr auto itp = kInterpolatorSinc8;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 4:
         {
             constexpr auto itp = kInterpolatorSinc12;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 5:
         {
             constexpr auto itp = kInterpolatorSinc16;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 6:
         {
             constexpr auto itp = kInterpolatorSinc24;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 7:
         {
             constexpr auto itp = kInterpolatorSinc36;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 8:
         {
             constexpr auto itp = kInterpolatorSinc48;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 9:
         {
             constexpr auto itp = kInterpolatorSinc60;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 10:
         {
             constexpr auto itp = kInterpolatorSinc72;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     }
@@ -1701,6 +1727,7 @@ void Voice::reset() noexcept
 
     for (auto& eq : impl.equalizers_)
         eq.reset();
+    downsampleFilter.clear();
 
     removeVoiceFromRing();
 }

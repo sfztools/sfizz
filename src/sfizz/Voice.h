@@ -416,6 +416,7 @@ public:
      * @brief Get the trigger event
      */
     const TriggerEvent& getTriggerEvent();
+    sfz::Filter downsampleFilter;
 
     /**
      * @brief Get the extended CC values

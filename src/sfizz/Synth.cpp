@@ -374,6 +374,7 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
 
 void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
 {
+    bool overSampled = false;
     for (auto& rawMember : members) {
         const Opcode member = rawMember.cleanUp(kOpcodeScopeControl);
 
@@ -437,6 +438,16 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
                 DBG("Unsupported value for hint_stealing: " << member.value);
             }
             break;
+        case hash("hint_min_samplerate"):
+	    {
+		if (float(stoi(member.value)) / sampleRate_ > 1.0f)
+			overSampled = true;
+		resources_.getSynthConfig().OSFactor = int(std::min(128.0f, std::max(1.0f, float(stoi(member.value)) / sampleRate_)));
+    		for (auto& voice : voiceManager_) {
+        		voice.setSampleRate(sampleRate_);
+        		voice.setSamplesPerBlock(samplesPerBlock_);
+    		}
+	    }
         case hash("hint_sustain_cancels_release"):
         {
             SynthConfig& config = resources_.getSynthConfig();
@@ -447,6 +458,14 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             // Unsupported control opcode
             DBG("Unsupported control opcode: " << member.name);
         }
+    }
+    if (overSampled == false)
+    {
+		resources_.getSynthConfig().OSFactor = 1;
+    		for (auto& voice : voiceManager_) {
+        		voice.setSampleRate(sampleRate_);
+        		voice.setSamplesPerBlock(samplesPerBlock_);
+    		}
     }
 }
 
@@ -911,6 +930,7 @@ int Synth::getNumActiveVoices() const noexcept
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
+    samplesPerBlock *= 128;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
 
     impl.samplesPerBlock_ = samplesPerBlock;

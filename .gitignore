@@ -31,3 +31,4 @@ clients/sfzprint
 *.code-*
 .kak.tags.namecache
 .clangd
+vst/external/CoreAudioUtilityClasses/
