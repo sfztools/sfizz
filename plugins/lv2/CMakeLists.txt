@@ -89,9 +89,6 @@ if(SFIZZ_LV2_UI)
     configure_file(${PROJECT_NAME}_ui.ttl.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_ui.ttl)
 endif()
 configure_file(LICENSE.md.in ${PROJECT_BINARY_DIR}/LICENSE.md)
-if(SFIZZ_USE_VCPKG OR SFIZZ_STATIC_DEPENDENCIES OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    file(COPY "lgpl-3.0.txt" DESTINATION ${PROJECT_BINARY_DIR})
-endif()
 
 # Generate controllers.ttl
 sfizz_lv2_generate_controllers_ttl("${PROJECT_BINARY_DIR}/controllers.ttl")
