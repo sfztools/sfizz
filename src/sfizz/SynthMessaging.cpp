@@ -945,7 +945,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             GET_REGION_OR_BREAK(indices[0])
             if (region.pitchVeltrackCC.contains(indices[1])) {
                 const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
-                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
+                client.receive<'f'>(delay, path, cc.modifier);
             } else {
                 client.receive<'N'>(delay, path, {});
             }
@@ -1322,7 +1322,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             GET_FILTER_OR_BREAK(indices[1])
             if (filter.veltrackCC.contains(indices[2])) {
                 const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
-                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
+                client.receive<'f'>(delay, path, cc.modifier);
             } else {
                 client.receive<'N'>(delay, path, {});
             }

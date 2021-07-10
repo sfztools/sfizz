@@ -645,7 +645,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             if (cc >= config::numCCs)
                 return false;
 
-            filters[filterIndex].veltrackCC[cc].modifier = opcode.read(Default::ampVeltrackMod);
+            filters[filterIndex].veltrackCC[cc].modifier = opcode.read(Default::filterVeltrackMod);
         }
         break;
     case hash("fil&_veltrack_curvecc&"):
