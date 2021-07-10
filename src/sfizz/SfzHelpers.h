@@ -22,6 +22,15 @@ namespace sfz {
 using CCNamePair = std::pair<uint16_t, std::string>;
 using NoteNamePair = std::pair<uint8_t, std::string>;
 
+template<class T>
+struct ModifierCurvePair
+{
+    ModifierCurvePair(const T& modifier, uint8_t curve)
+    : modifier(modifier), curve(curve) {}
+    T modifier {};
+    uint8_t curve {};
+};
+
 template <class T>
 using MidiNoteArray = std::array<T, 128>;
 template <class ValueType>

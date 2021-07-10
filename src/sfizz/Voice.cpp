@@ -16,6 +16,7 @@
 #include "LFO.h"
 #include "MathHelpers.h"
 #include "ModifierHelpers.h"
+#include "RegionStateful.h"
 #include "TriggerEvent.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
@@ -407,6 +408,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
 
     Resources& resources = impl.resources_;
     MidiState& midiState = resources.getMidiState();
+    CurveSet& curveSet = resources.getCurves();
 
     const Region& region = layer->getRegion();
     impl.region_ = &region;
@@ -474,24 +476,24 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         }
         impl.updateLoopInformation();
         impl.speedRatio_ = static_cast<float>(impl.currentPromise_->information.sampleRate / impl.sampleRate_);
-        impl.sourcePosition_ = region.getOffset(midiState);
+        impl.sourcePosition_ = sampleOffset(region, midiState);
     }
 
     // do Scala retuning and reconvert the frequency into a 12TET key number
     Tuning& tuning = resources.getTuning();
     const float numberRetuned = tuning.getKeyFractional12TET(impl.triggerEvent_.number);
 
-    impl.pitchRatio_ = region.getBasePitchVariation(numberRetuned, impl.triggerEvent_.value);
+    impl.pitchRatio_ = basePitchVariation(region, numberRetuned, impl.triggerEvent_.value, midiState, curveSet);
 
     // apply stretch tuning if set
     if (absl::optional<StretchTuning>& stretch = resources.getStretch())
         impl.pitchRatio_ *= stretch->getRatioForFractionalKey(numberRetuned);
 
     impl.pitchKeycenter_ = region.pitchKeycenter;
-    impl.baseVolumedB_ = region.getBaseVolumedB(midiState, impl.triggerEvent_.number);
+    impl.baseVolumedB_ = baseVolumedB(region, midiState, impl.triggerEvent_.number);
     impl.baseGain_ = region.getBaseGain();
     if (impl.triggerEvent_.type != TriggerEventType::CC || region.velocityOverride == VelocityOverride::previous)
-        impl.baseGain_ *= region.getNoteGain(impl.triggerEvent_.number, impl.triggerEvent_.value);
+        impl.baseGain_ *= noteGain(region, impl.triggerEvent_.number, impl.triggerEvent_.value, midiState, curveSet);
 
     impl.gainSmoother_.reset();
     impl.resetCrossfades();
@@ -505,9 +507,9 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(region.getDelay(midiState) * impl.sampleRate_);
+    impl.initialDelay_ = delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_);
     impl.baseFrequency_ = tuning.getFrequencyOfKey(impl.triggerEvent_.number);
-    impl.sampleEnd_ = int(region.getSampleEnd(midiState));
+    impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
     impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend()));
@@ -1724,14 +1726,15 @@ void Voice::Impl::updateLoopInformation() noexcept
     if (!region_->shouldLoop())
         return;
 
+    const Region& region = *region_;
     MidiState& midiState = resources_.getMidiState();
     const FileInformation& info = currentPromise_->information;
     const double rate = info.sampleRate;
 
-    loop_.start = static_cast<int>(region_->loopStart(midiState));
-    loop_.end = max(static_cast<int>(region_->loopEnd(midiState)), loop_.start);
+    loop_.start = static_cast<int>(loopStart(region, midiState));
+    loop_.end = max(static_cast<int>(loopEnd(region, midiState)), loop_.start);
     loop_.size = loop_.end + 1 - loop_.start;
-    loop_.xfSize = static_cast<int>(lroundPositive(region_->loopCrossfade * rate));
+    loop_.xfSize = static_cast<int>(lroundPositive(region.loopCrossfade * rate));
     // Clamp the crossfade to the part available before the loop starts
     loop_.xfSize = min(loop_.start, loop_.xfSize);
     loop_.xfOutStart = loop_.end + 1 - loop_.xfSize;
