@@ -164,7 +164,6 @@ void SPiano::draw(CDrawContext* dc)
     const Dimensions dim = getDimensions(false);
     const unsigned octs = impl.octs_;
     const unsigned keyCount = octs * 12;
-    const bool allKeysUsed = impl.keyUsed_.all();
 
     dc->setDrawMode(kAntiAliasing);
 
@@ -184,8 +183,6 @@ void SPiano::draw(CDrawContext* dc)
 
             switch (getKeyRole(key)) {
             case KeyRole::Note:
-                if (allKeysUsed)
-                    goto whiteKeyDefault;
                 hcy.h = impl.keyUsedHue_;
                 break;
             case KeyRole::Switch:
@@ -224,8 +221,6 @@ void SPiano::draw(CDrawContext* dc)
 
             switch (getKeyRole(key)) {
             case KeyRole::Note:
-                if (allKeysUsed)
-                    goto blackKeyDefault;
                 hcy.h = impl.keyUsedHue_;
                 break;
             case KeyRole::Switch:
