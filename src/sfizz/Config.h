@@ -70,7 +70,8 @@ namespace config {
     constexpr float powerFollowerReleaseTime { 200e-3f };
     constexpr uint16_t numCCs { 512 };
     constexpr int maxCurves { 256 };
-    constexpr int chunkSize { 1024 };
+    constexpr int fileChunkSize { 1024 };
+    constexpr int processChunkSize { 16 };
     constexpr unsigned int defaultAlignment { 16 };
     constexpr int filtersInPool { maxVoices * 2 };
     constexpr int excessFileFrames { 64 };

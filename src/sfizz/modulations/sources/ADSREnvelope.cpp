@@ -13,8 +13,8 @@
 
 namespace sfz {
 
-ADSREnvelopeSource::ADSREnvelopeSource(VoiceManager& manager, MidiState& state)
-    : voiceManager_(manager), midiState_(state)
+ADSREnvelopeSource::ADSREnvelopeSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
 }
 
@@ -79,7 +79,7 @@ void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
 
     const TriggerEvent& triggerEvent = voice->getTriggerEvent();
     const float sampleRate = voice->getSampleRate();
-    eg->reset(*desc, *region, midiState_, delay, triggerEvent.value, sampleRate);
+    eg->reset(*desc, *region, delay, triggerEvent.value, sampleRate);
 }
 
 void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)

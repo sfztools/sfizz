@@ -167,12 +167,21 @@ public:
     bool isNotePressed(int noteNumber) const noexcept { return noteStates[noteNumber]; }
 
     /**
-     * @brief Get the CC value for CC number
+     * @brief Get the last CC value for CC number
      *
      * @param ccNumber
      * @return float
      */
     float getCCValue(int ccNumber) const noexcept;
+
+    /**
+     * @brief Get the CC value for CC number
+     *
+     * @param ccNumber
+     * @param delay
+     * @return float
+     */
+    float getCCValueAt(int ccNumber, int delay) const noexcept;
 
     /**
      * @brief Reset the midi state (does not impact the last note on time)

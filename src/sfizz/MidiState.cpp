@@ -202,6 +202,17 @@ float sfz::MidiState::getCCValue(int ccNumber) const noexcept
     return ccEvents[ccNumber].back().value;
 }
 
+float sfz::MidiState::getCCValueAt(int ccNumber, int delay) const noexcept
+{
+    ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
+    const auto ccEvent = absl::c_lower_bound(
+        ccEvents[ccNumber], delay, MidiEventDelayComparator {});
+    if (ccEvent != ccEvents[ccNumber].end())
+        return ccEvent->value;
+    else
+        return ccEvents[ccNumber].back().value;
+}
+
 void sfz::MidiState::reset() noexcept
 {
     for (auto& velocity: lastNoteVelocities)

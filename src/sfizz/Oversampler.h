@@ -39,7 +39,7 @@ public:
      * @param factor
      * @param chunkSize
      */
-    Oversampler(Oversampling factor = Oversampling::x1, size_t chunkSize = config::chunkSize);
+    Oversampler(Oversampling factor = Oversampling::x1, size_t chunkSize = config::fileChunkSize);
     /**
      * @brief Stream the oversampling of an input AudioBuffer into an output
      *        one, possibly signaling the caller along the way of the number of

@@ -71,7 +71,7 @@ Synth::Impl::Impl()
     genController_.reset(new ControllerSource(resources_, voiceManager_));
     genLFO_.reset(new LFOSource(voiceManager_));
     genFlexEnvelope_.reset(new FlexEnvelopeSource(voiceManager_));
-    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_, midiState));
+    genADSREnvelope_.reset(new ADSREnvelopeSource(voiceManager_));
     genChannelAftertouch_.reset(new ChannelAftertouchSource(voiceManager_, midiState));
     genPolyAftertouch_.reset(new PolyAftertouchSource(voiceManager_, midiState));
 }

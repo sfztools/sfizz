@@ -42,22 +42,6 @@ namespace sfz {
  *
  */
 
-/**
- * @brief If a cc switch exists for the value, returns the value with the CC modifier, otherwise returns the value alone.
- *
- * @param ccValues
- * @param ccSwitch
- * @param value
- * @return float
- */
-inline float ccSwitchedValue(const MidiState& state, const absl::optional<CCData<float>>& ccSwitch, float value) noexcept
-{
-    if (ccSwitch)
-        return value + ccSwitch->data * state.getCCValue(ccSwitch->cc);
-    else
-        return value;
-}
-
 struct EGDescription {
     EGDescription() = default;
     EGDescription(const EGDescription&) = default;
@@ -89,6 +73,7 @@ struct EGDescription {
     CCMap<float> ccRelease;
     CCMap<float> ccStart;
     CCMap<float> ccSustain;
+    bool dynamic { false };
 
     /**
      * @brief Get the attack with possibly a CC modifier and a velocity modifier
@@ -97,12 +82,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getAttack(const MidiState& state, float velocity) const noexcept
+    float getAttack(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { attack + velocity * vel2attack };
         for (auto& mod: ccAttack) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }
@@ -113,12 +98,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getDecay(const MidiState& state, float velocity) const noexcept
+    float getDecay(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { decay + velocity * vel2decay };
         for (auto& mod: ccDecay) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }
@@ -129,12 +114,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getDelay(const MidiState& state, float velocity) const noexcept
+    float getDelay(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-        float returnedValue { delay + velocity * vel2delay };
+        float returnedValue { this->delay + velocity * vel2delay };
         for (auto& mod: ccDelay) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }
@@ -145,12 +130,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getHold(const MidiState& state, float velocity) const noexcept
+    float getHold(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { hold + velocity * vel2hold };
         for (auto& mod: ccHold) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }
@@ -161,12 +146,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getRelease(const MidiState& state, float velocity) const noexcept
+    float getRelease(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { release + velocity * vel2release };
         for (auto& mod: ccRelease) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }
@@ -177,12 +162,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getStart(const MidiState& state, float velocity) const noexcept
+    float getStart(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         UNUSED(velocity);
         float returnedValue { start };
         for (auto& mod: ccStart) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }
@@ -193,12 +178,12 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getSustain(const MidiState& state, float velocity) const noexcept
+    float getSustain(const MidiState& state, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { sustain + velocity * vel2sustain };
         for (auto& mod: ccSustain) {
-            returnedValue += state.getCCValue(mod.cc) * mod.data;
+            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
         }
         return returnedValue;
     }

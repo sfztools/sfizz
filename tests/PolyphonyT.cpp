@@ -222,8 +222,8 @@ TEST_CASE("[Polyphony] Self-masking")
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
         <region> sample=*sine key=64 note_polyphony=2
     )");
-    synth.noteOn(0, 64, 63 );
-    synth.noteOn(1, 64, 62 );
+    synth.noteOn(0, 64, 63);
+    synth.noteOn(1, 64, 62);
     synth.noteOn(2, 64, 64);
     synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
