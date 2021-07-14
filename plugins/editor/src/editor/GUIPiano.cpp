@@ -188,7 +188,7 @@ void SPiano::draw(CDrawContext* dc)
             case KeyRole::Switch:
                 hcy.h = impl.keySwitchHue_;
                 break;
-            default: whiteKeyDefault:
+            default:
                 hcy.y = 1.0;
                 if (impl.keyval_[key])
                     hcy.c = 0.0;
@@ -226,7 +226,7 @@ void SPiano::draw(CDrawContext* dc)
             case KeyRole::Switch:
                 hcy.h = impl.keySwitchHue_;
                 break;
-            default: blackKeyDefault:
+            default:
                 hcy.c = 0.0;
                 break;
             }
