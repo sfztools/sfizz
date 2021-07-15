@@ -337,7 +337,7 @@ void Synth::Impl::handleGlobalOpcodes(const std::vector<Opcode>& members)
 
 void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
 {
-    absl::optional<unsigned> groupIdx;
+    absl::optional<int> groupIdx;
     absl::optional<unsigned> maxPolyphony;
 
     const auto parseOpcode = [&](const Opcode& rawMember) {
