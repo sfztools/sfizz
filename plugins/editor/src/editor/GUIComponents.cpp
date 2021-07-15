@@ -518,6 +518,12 @@ void SStyledKnob::setFontColor(CColor fontColor)
     invalid();
 }
 
+void SStyledKnob::setValueToStringFunction(ValueToStringFunction func)
+{
+    valueToStringFunction_ = std::move(func);
+    invalid();
+}
+
 void SStyledKnob::draw(CDrawContext* dc)
 {
     const CCoord lineWidth = 4.0;
@@ -576,6 +582,15 @@ void SStyledKnob::draw(CDrawContext* dc)
         dc->setLineStyle(kLineSolid);
         dc->drawLine(p1, p2);
     }
+
+    if (valueToStringFunction_ && fontColor_.alpha > 0 && !hideValue_) {
+        std::string text;
+        if (valueToStringFunction_(getValue(), text)) {
+            dc->setFont(font_);
+            dc->setFontColor(fontColor_);
+            dc->drawString(text.c_str(), bounds);
+        }
+    }
 }
 
 void CFilledRect::draw(CDrawContext* dc)
@@ -622,7 +637,7 @@ SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t ta
     valueEdit_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
     valueEdit_->registerViewListener(this);
     setHDMode(false);
-    valueEdit_->setVisible(true);
+    valueEdit_->setVisible(false);
 
     shadingRectangle_->setVisible(false);
 
@@ -648,11 +663,16 @@ SKnobCCBox::~SKnobCCBox()
 void SKnobCCBox::setHDMode(bool mode)
 {
     if (mode) {
-        valueEdit_->setValueToStringFunction2([](float value, std::string& text, VSTGUI::CParamDisplay*) -> bool {
+        auto valueToString = [](float value, std::string& text, VSTGUI::CParamDisplay*) -> bool {
             std::string s = std::to_string(value + 0.005f);
             text = s.substr(0, 4);
             return true;
+        };
+        knob_->setValueToStringFunction([valueToString](float value, std::string& text) {
+            return valueToString(value, text, nullptr);
         });
+        valueEdit_->setValueToStringFunction2(valueToString);
+
         valueEdit_->setStringToValueFunction([](UTF8StringPtr txt, float& result, CTextEdit*) -> bool {
             float value;
             if (absl::SimpleAtof(txt, &value)) {
@@ -664,10 +684,15 @@ void SKnobCCBox::setHDMode(bool mode)
         });
         menuEntry_->setTitle("Use low-res. CC");
     } else {
-        valueEdit_->setValueToStringFunction2([](float value, std::string& text, VSTGUI::CParamDisplay*) -> bool {
+        auto valueToString = [](float value, std::string& text, VSTGUI::CParamDisplay*) -> bool {
             text = std::to_string(std::lround(value * 127));
             return true;
+        };
+        knob_->setValueToStringFunction([valueToString](float value, std::string& text) {
+            return valueToString(value, text, nullptr);
         });
+        valueEdit_->setValueToStringFunction2(valueToString);
+
         valueEdit_->setStringToValueFunction([](UTF8StringPtr txt, float& result, CTextEdit*) -> bool {
             float value;
             if (absl::SimpleAtof(txt, &value)) {
@@ -708,6 +733,12 @@ CMouseEventResult SKnobCCBox::onMouseDown(CPoint& where, const CButtonState& but
             }
         });
         return kMouseEventHandled;
+    } else if (buttons.isDoubleClick() && !valueEdit_->isVisible()) {
+        valueEdit_->setVisible(true);
+        shadingRectangle_->setVisible(true);
+        knob_->setHideValue(true);
+        valueEdit_->takeFocus();
+        invalid();
     }
 
     return CViewContainer::onMouseDown(where, buttons);
@@ -717,14 +748,8 @@ void SKnobCCBox::viewLostFocus (CView* view)
 {
     if (view == valueEdit_.get()) {
         shadingRectangle_->setVisible(false);
-        invalid();
-    }
-}
-
-void SKnobCCBox::viewTookFocus (CView* view)
-{
-    if (view == valueEdit_.get()) {
-        shadingRectangle_->setVisible(true);
+        valueEdit_->setVisible(false);
+        knob_->setHideValue(false);
         invalid();
     }
 }

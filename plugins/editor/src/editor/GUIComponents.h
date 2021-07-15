@@ -231,6 +231,12 @@ public:
     void setFontColor(CColor fontColor);
     CColor getFontColor() const { return fontColor_; }
 
+    using ValueToStringFunction = std::function<bool(float value, std::string& result)>;
+    void setValueToStringFunction(ValueToStringFunction func);
+
+    void setHideValue(bool hide) { hideValue_ = hide; invalid(); }
+    bool getHideValue() const { return hideValue_; }
+
     CLASS_METHODS(SStyledKnob, CKnobBase)
 protected:
     void draw(CDrawContext* dc) override;
@@ -239,9 +245,12 @@ private:
     CColor activeTrackColor_;
     CColor inactiveTrackColor_;
     CColor lineIndicatorColor_;
+    bool hideValue_ { false };
 
     SharedPointer<CFontDesc> font_ = kNormalFont;
     CColor fontColor_ { 0x00, 0x00, 0x00 };
+
+    ValueToStringFunction valueToStringFunction_;
 };
 
 class CFilledRect : public CView
@@ -319,8 +328,8 @@ public:
     void setKnobFontColor(CColor color) { knob_->setFontColor(color); knob_->invalid(); }
     CColor getKnobFontColor() const { return knob_->getFontColor(); }
 
+    // Edit box listener
 	void viewLostFocus (CView* view) override;
-	void viewTookFocus (CView* view) override;
 
     bool isHD() const noexcept { return hdMode_; }
     void setHDMode(bool mode);
