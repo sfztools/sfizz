@@ -101,7 +101,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
 
     /// VSTGUIEditorInterface
     CFrame* getFrame() const override { return uiFrame.get(); }
-
+    int32_t getKnobMode () const override { return kLinearMode; }
     LV2_Atom_Forge atom_forge;
     LV2_URID atom_event_transfer_uri;
     LV2_URID atom_object_uri;
