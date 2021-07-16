@@ -51,7 +51,7 @@ if(SFIZZ_LV2)
     add_subdirectory(lv2)
 endif()
 
-if(SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2)
+if((SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2) AND NOT (SFIZZ_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc).*"))
     add_subdirectory(vst)
 endif()
 

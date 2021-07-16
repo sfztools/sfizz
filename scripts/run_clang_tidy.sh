@@ -14,6 +14,7 @@ clang-tidy \
   src/sfizz/Panning.cpp \
   src/sfizz/sfizz.cpp \
   src/sfizz/Region.cpp \
+  src/sfizz/RegionStateful.cpp \
   src/sfizz/SIMDHelpers.cpp \
   src/sfizz/simd/HelpersSSE.cpp \
   src/sfizz/simd/HelpersAVX.cpp \

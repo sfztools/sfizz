@@ -88,7 +88,7 @@ public:
      * @return true if the region should trigger on this event
      * @return false
      */
-    bool registerCC(int ccNumber, float ccValue) noexcept;
+    bool registerCC(int ccNumber, float ccValue, bool dontTrigger = false) noexcept;
     /**
      * @brief Register a new pitch wheel event.
      *

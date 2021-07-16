@@ -337,7 +337,7 @@ void Synth::Impl::handleGlobalOpcodes(const std::vector<Opcode>& members)
 
 void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const std::vector<Opcode>& masterMembers)
 {
-    absl::optional<unsigned> groupIdx;
+    absl::optional<int> groupIdx;
     absl::optional<unsigned> maxPolyphony;
 
     const auto parseOpcode = [&](const Opcode& rawMember) {
@@ -600,6 +600,8 @@ void Synth::Impl::finalizeSfzLoad()
     size_t currentRegionIndex = 0;
     size_t currentRegionCount = layers_.size();
 
+    absl::flat_hash_map<sfz::FileId, int64_t> filesToLoad;
+
     auto removeCurrentRegion = [this, &currentRegionIndex, &currentRegionCount]() {
         const Region& region = layers_[currentRegionIndex]->getRegion();
         DBG("Removing the region with sample " << *region.sampleId);
@@ -698,10 +700,8 @@ void Synth::Impl::finalizeSfzLoad()
                 return Default::offsetMod.bounds.clamp(sumOffsetCC);
             }();
 
-            if (!filePool.preloadFile(*region.sampleId, maxOffset)) {
-                removeCurrentRegion();
-                continue;
-            }
+            auto& toLoad = filesToLoad[*region.sampleId];
+            toLoad = max(toLoad, maxOffset);
         }
         else if (!region.isGenerator()) {
             if (!wavePool.createFileWave(filePool, std::string(region.sampleId->filename()))) {
@@ -745,7 +745,7 @@ void Synth::Impl::finalizeSfzLoad()
         // Defaults
         MidiState& midiState = resources_.getMidiState();
         for (int cc = 0; cc < config::numCCs; cc++) {
-            layer.registerCC(cc, midiState.getCCValue(cc));
+            layer.registerCC(cc, midiState.getCCValue(cc), true);
         }
 
 
@@ -782,6 +782,11 @@ void Synth::Impl::finalizeSfzLoad()
 
         ++currentRegionIndex;
     }
+
+    for (const auto& toLoad: filesToLoad) {
+        filePool.preloadFile(toLoad.first, toLoad.second);
+    }
+
     if (currentRegionCount < layers_.size()) {
         DBG("Removing " << (layers_.size() - currentRegionCount)
             << " out of " << layers_.size() << " regions");
@@ -1966,7 +1971,7 @@ void Synth::Impl::resetAllControllers(int delay) noexcept
     for (const LayerPtr& layerPtr : layers_) {
         Layer& layer = *layerPtr;
         for (int cc = 0; cc < config::numCCs; ++cc)
-            layer.registerCC(cc, defaultCCValues_[cc]);
+            layer.registerCC(cc, defaultCCValues_[cc], true);
     }
 }
 

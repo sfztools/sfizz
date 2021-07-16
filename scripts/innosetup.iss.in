@@ -55,7 +55,6 @@ Source: "sfizz.lv2\Contents\Resources\*"; Components: lv2; DestDir: "{commoncf}\
 Source: "sfizz.lv2\manifest.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\sfizz.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\sfizz_ui.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
-Source: "sfizz.lv2\lgpl-3.0.txt"; Components: main; DestDir: "{app}"
 Source: "sfizz.lv2\LICENSE.md"; Components: main; DestDir: "{app}"
 Source: "sfizz.vst3\desktop.ini"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
 Source: "sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win\sfizz.vst3"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win"; Flags: ignoreversion

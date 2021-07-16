@@ -202,6 +202,7 @@ namespace Default
     extern const OpcodeSpec<float> widthMod;
     extern const OpcodeSpec<float> ampKeytrack;
     extern const OpcodeSpec<float> ampVeltrack;
+    extern const OpcodeSpec<float> ampVeltrackMod;
     extern const OpcodeSpec<float> ampVelcurve;
     extern const OpcodeSpec<float> ampRandom;
     extern const OpcodeSpec<bool> rtDead;
@@ -215,6 +216,7 @@ namespace Default
     extern const OpcodeSpec<float> filterRandom;
     extern const OpcodeSpec<float> filterKeytrack;
     extern const OpcodeSpec<float> filterVeltrack;
+    extern const OpcodeSpec<float> filterVeltrackMod;
     extern const OpcodeSpec<float> eqBandwidth;
     extern const OpcodeSpec<float> eqBandwidthMod;
     extern const OpcodeSpec<float> eqFrequency;
@@ -226,6 +228,7 @@ namespace Default
     extern const OpcodeSpec<float> pitchKeytrack;
     extern const OpcodeSpec<float> pitchRandom;
     extern const OpcodeSpec<float> pitchVeltrack;
+    extern const OpcodeSpec<float> pitchVeltrackMod;
     extern const OpcodeSpec<float> transpose;
     extern const OpcodeSpec<float> pitch;
     extern const OpcodeSpec<float> pitchMod;
