@@ -739,6 +739,7 @@ CMouseEventResult SKnobCCBox::onMouseDown(CPoint& where, const CButtonState& but
         knob_->setHideValue(true);
         valueEdit_->takeFocus();
         invalid();
+        return kMouseEventHandled;
     }
 
     return CViewContainer::onMouseDown(where, buttons);
