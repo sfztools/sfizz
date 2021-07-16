@@ -5,139 +5,331 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "NativeHelpers.h"
-#include <absl/strings/match.h>
-#include <absl/strings/strip.h>
-#include <absl/strings/string_view.h>
-#include <stdexcept>
-#include <cstdlib>
+#include "plugin/NativeHelpers.h"
 
 #if defined(_WIN32)
+#include "ghc/fs_std.hpp"
 #include <windows.h>
-#include <shlobj.h>
+#include <cstring>
 
-const fs::path& getUserDocumentsDirectory()
+bool openFileInExternalEditor(const char *filename)
 {
-    static const fs::path directory = []() -> fs::path {
-        std::unique_ptr<WCHAR[]> path(new WCHAR[32768]);
-        if (SHGetFolderPathW(nullptr, CSIDL_PERSONAL|CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, path.get()) != S_OK)
-            throw std::runtime_error("Cannot get the document directory.");
-        return fs::path(path.get());
-    }();
-    return directory;
+    std::wstring path = stringToWideChar(filename);
+
+    SHELLEXECUTEINFOW info;
+    memset(&info, 0, sizeof(info));
+
+    info.cbSize = sizeof(info);
+    info.fMask = SEE_MASK_CLASSNAME;
+    info.lpVerb = L"open";
+    info.lpFile = path.c_str();
+    info.lpClass = L"txtfile";
+    info.nShow = SW_SHOW;
+
+    return ShellExecuteExW(&info);
 }
 
-wchar_t *stringToWideChar(const char *str, int strCch)
+bool openDirectoryInExplorer(const char *filename)
 {
-    unsigned strSize = MultiByteToWideChar(CP_UTF8, 0, str, strCch, nullptr, 0);
-    if (strSize == 0)
-        return {};
-    std::unique_ptr<wchar_t[]> strW(new wchar_t[strSize]);
-    if (MultiByteToWideChar(CP_UTF8, 0, str, strCch, strW.get(), strSize) == 0)
-        return {};
-    return strW.release();
+    std::wstring path = stringToWideChar(filename);
+
+    SHELLEXECUTEINFOW info;
+    memset(&info, 0, sizeof(info));
+
+    info.cbSize = sizeof(info);
+    info.lpVerb = L"explore";
+    info.lpFile = path.c_str();
+    info.nShow = SW_SHOW;
+
+    return ShellExecuteExW(&info);
 }
 
-char* stringToUTF8(const wchar_t *strW, int strWCch)
+bool openURLWithExternalProgram(const char *url)
 {
-    unsigned strSize = WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, nullptr, 0, nullptr, nullptr);
-    if (strSize == 0)
+    std::wstring path = stringToWideChar(url);
+
+    SHELLEXECUTEINFOW info;
+    memset(&info, 0, sizeof(info));
+
+    info.cbSize = sizeof(info);
+    info.lpVerb = L"open";
+    info.lpFile = path.c_str();
+    info.nShow = SW_SHOW;
+
+    return ShellExecuteExW(&info);
+}
+
+bool askQuestion(const char *text)
+{
+    int ret = MessageBoxW(nullptr, stringToWideChar(text), L"Question", MB_YESNO);
+    return ret == IDYES;
+}
+
+std::string getOperatingSystemName()
+{
+    LSTATUS status;
+    HKEY key = nullptr;
+    const WCHAR keyPath[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion";
+    const WCHAR valueName[] = L"ProductName";
+    const char fallbackName[] = "Windows (unknown)";
+
+    status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, KEY_QUERY_VALUE, &key);
+    if (status != ERROR_SUCCESS)
+        return fallbackName;
+
+    DWORD valueSize = 32768 * sizeof(WCHAR);
+    std::unique_ptr<WCHAR[]> valueW(new WCHAR[(valueSize / sizeof(WCHAR)) + 1]());
+    DWORD valueType;
+    status = RegQueryValueExW(
+        key, valueName, nullptr,
+        &valueType, reinterpret_cast<LPBYTE>(valueW.get()), &valueSize);
+    RegCloseKey(key);
+    if (status != ERROR_SUCCESS || (valueType != REG_SZ && valueType != REG_EXPAND_SZ))
+        return fallbackName;
+
+    std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
+    return valueUTF8.get();
+}
+
+std::string getProcessorName()
+{
+    LSTATUS status;
+    HKEY key = nullptr;
+    const WCHAR keyPath[] = L"Hardware\\Description\\System\\CentralProcessor\\0";
+    const WCHAR valueName[] = L"ProcessorNameString";
+    const char fallbackName[] = "Unknown";
+
+    status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, KEY_QUERY_VALUE, &key);
+    if (status != ERROR_SUCCESS)
+        return fallbackName;
+
+    DWORD valueSize = 32768 * sizeof(WCHAR);
+    std::unique_ptr<WCHAR[]> valueW(new WCHAR[(valueSize / sizeof(WCHAR)) + 1]());
+    DWORD valueType;
+    status = RegQueryValueExW(
+        key, valueName, nullptr,
+        &valueType, reinterpret_cast<LPBYTE>(valueW.get()), &valueSize);
+    RegCloseKey(key);
+    if (status != ERROR_SUCCESS || (valueType != REG_SZ && valueType != REG_EXPAND_SZ))
+        return fallbackName;
+
+    std::unique_ptr<char[]> valueUTF8(stringToUTF8(valueW.get()));
+    return valueUTF8.get();
+}
+
+std::string getCurrentProcessName()
+{
+    DWORD size = 32768;
+    std::unique_ptr<WCHAR[]> buffer(new WCHAR[size]());
+
+    if (!GetModuleFileNameW(nullptr, buffer.get(), size))
         return {};
-    std::unique_ptr<char[]> str(new char[strSize]);
-    if (WideCharToMultiByte(CP_UTF8, 0, strW, strWCch, str.get(), strSize, nullptr, nullptr) == 0)
-        return {};
-    return str.release();
+
+    buffer[size - 1] = L'\0';
+    const WCHAR* name = buffer.get();
+
+    if (const WCHAR* pos = wcsrchr(name, L'\\'))
+        name = pos + 1;
+
+    std::unique_ptr<char[]> nameUTF8(stringToUTF8(name));
+    return nameUTF8.get();
 }
 #elif defined(__APPLE__)
     // implemented in NativeHelpers.mm
 #else
-const fs::path& getUserDocumentsDirectory()
+#include <gio/gio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/utsname.h>
+#include <unistd.h>
+#include <absl/strings/strip.h>
+#include <absl/strings/string_view.h>
+#include <vector>
+#include <fstream>
+#include <cstring>
+#include <cerrno>
+extern "C" { extern char **environ; }
+extern "C" { extern char *__progname; }
+
+static bool openFileByMimeType(const char *filename, const char *mimetype)
 {
-    static const fs::path directory = []() -> fs::path {
-        for (const XdgUserDirsEntry& ent :
-                 parseXdgUserDirs(getXdgConfigHome() / "user-dirs.dirs")) {
-            if (ent.name == "XDG_DOCUMENTS_DIR")
-                return ent.value;
-        }
-        return getUserHomeDirectory() / "Documents";
-    }();
-    return directory;
+    GAppInfo* appinfo = g_app_info_get_default_for_type(mimetype, FALSE);
+    if (!appinfo)
+        return 1;
+
+    GList* files = nullptr;
+    GFile* file = g_file_new_for_path(filename);
+    files = g_list_append(files, file);
+    gboolean success = g_app_info_launch(appinfo, files, nullptr, nullptr);
+    g_object_unref(file);
+    g_list_free(files);
+    g_object_unref(appinfo);
+    return success == TRUE;
 }
 
-const fs::path& getUserHomeDirectory()
+bool openFileInExternalEditor(const char *filename)
 {
-    static const fs::path directory = []() -> fs::path {
-        const char* home = getenv("HOME");
-        if (home && home[0] == '/')
-            return fs::u8path(home);
-        else
-            throw std::runtime_error("Cannot get the home directory.");
-    }();
-    return directory;
+    return openFileByMimeType(filename, "text/plain");
 }
 
-const fs::path& getXdgConfigHome()
+bool openDirectoryInExplorer(const char *filename)
 {
-    static const fs::path directory = []() -> fs::path {
-        const char* config = getenv("XDG_CONFIG_HOME");
-        if (config && config[0] == '/')
-            return fs::u8path(config);
-        else
-            return getUserHomeDirectory() / ".config";
-
-    }();
-    return directory;
+    return openFileByMimeType(filename, "inode/directory");
 }
 
-std::vector<XdgUserDirsEntry> parseXdgUserDirs(const fs::path& userDirsPath)
+bool openURLWithExternalProgram(const char *url)
 {
-    // from user-dirs.dirs(5)
-    //   This file contains lines of the form `XDG_NAME_DIR=VALUE`
-    //   VALUE must be of the form "$HOME/Path" or "/Path".
-    //   Lines beginning with a # character are ignored.
+    gboolean success = g_app_info_launch_default_for_uri(url, nullptr, nullptr);
+    return success == TRUE;
+}
 
-    std::vector<XdgUserDirsEntry> ents;
-    const fs::path& home = getUserHomeDirectory();
-
-    fs::ifstream in(userDirsPath);
-    std::string lineBuf;
-
-    lineBuf.reserve(256);
-    while (std::getline(in, lineBuf)) {
-        absl::string_view line(lineBuf);
-
-        line = absl::StripLeadingAsciiWhitespace(line);
-        if (line.empty() || line.front() == '#')
+static std::vector<char *> createForkEnviron()
+{
+    std::vector<char *> newEnv;
+    newEnv.reserve(256);
+    for (char **envp = environ; *envp; ++envp) {
+        // ensure the process will link with system libraries,
+        // and not these from the Ardour bundle.
+        if (strncmp(*envp, "LD_LIBRARY_PATH=", 16) == 0)
             continue;
+        newEnv.push_back(*envp);
+    }
+    newEnv.push_back(nullptr);
+    return newEnv;
+}
 
-        size_t pos = line.find('=');
+const char* zenityPath()
+{
+    static const char* zenityPath = g_find_program_in_path("zenity");
+    return zenityPath;
+}
+
+bool askQuestion(const char *text)
+{
+    char *argv[] = {
+        const_cast<char *>(zenityPath()),
+        const_cast<char *>("--question"),
+        const_cast<char *>("--text"),
+        const_cast<char *>(text),
+        nullptr,
+    };
+
+    std::vector<char *> newEnv = createForkEnviron();
+    char **envp = newEnv.data();
+
+    pid_t forkPid = vfork();
+    if (forkPid == -1)
+        return false;
+
+    if (forkPid == 0) {
+        execve(argv[0], argv, envp);
+        _exit(1);
+    }
+
+    int wret;
+    int wstatus;
+    do {
+        wret = waitpid(forkPid, &wstatus, 0);
+    } while (wret == -1 && errno == EINTR);
+
+    if (wret == -1 || !WIFEXITED(wstatus))
+        return false;
+
+    return WEXITSTATUS(wstatus) == 0;
+}
+
+bool isZenityAvailable()
+{
+    return access(zenityPath(), X_OK) == 0;
+}
+
+std::string getOperatingSystemName()
+{
+    std::string name;
+
+    std::ifstream in("/etc/os-release", std::ios::binary);
+    if (!in)
+        in = std::ifstream("/usr/lib/os-release", std::ios::binary);
+    if (in) {
+        std::string line;
+        line.reserve(256);
+        for (bool found = false; !found && std::getline(in, line); ) {
+            const char prefix[] = "PRETTY_NAME=";
+            size_t length = sizeof(prefix) - 1;
+            found = line.size() >= length && !memcmp(line.data(), prefix, length);
+            if (found) {
+                if (char* value = g_shell_unquote(line.c_str() + length, nullptr)) {
+                    name.assign(value);
+                    g_free(value);
+                }
+            }
+        }
+        in.close();
+    }
+
+    if (name.empty()) {
+        utsname un {};
+        int ret = uname(&un);
+        if (ret != -1 && un.sysname[0] != '\0')
+            name.append(un.sysname);
+        else {
+            name.append("Unknown");
+        }
+        if (ret != -1 && un.release[0] != '\0') {
+            name.push_back(' ');
+            name.append(un.release);
+        }
+    }
+
+    return name;
+}
+
+std::string getProcessorName()
+{
+    std::string name;
+    std::string line;
+    std::ifstream in("/proc/cpuinfo", std::ios::binary);
+
+    line.reserve(256);
+
+    while (name.empty() && std::getline(in, line) && !line.empty()) {
+        size_t pos = line.find(':');
         if (pos == line.npos)
             continue;
 
-        XdgUserDirsEntry ent;
-        ent.name = std::string(line.substr(0, pos));
+        absl::string_view left = absl::string_view(line).substr(0, pos);
+        absl::string_view right = absl::string_view(line).substr(pos + 1);
 
-        absl::string_view rawValue = line.substr(pos + 1);
+        left = absl::StripAsciiWhitespace(left);
+        right = absl::StripAsciiWhitespace(right);
 
-        rawValue = absl::StripTrailingAsciiWhitespace(rawValue);
-
-        if (rawValue.size() < 2 || rawValue.front() != '"' || rawValue.back() != '"')
-            continue;
-
-        rawValue.remove_prefix(1);
-        rawValue.remove_suffix(1);
-
-        if (!rawValue.empty() && rawValue.front() == '/')
-            ent.value = fs::u8path(rawValue.begin(), rawValue.end());
-        else if (absl::StartsWith(rawValue, "$HOME")) {
-            absl::string_view part = rawValue.substr(5);
-            ent.value = home / fs::u8path(part.begin(), part.end()).relative_path();
-        }
-        else
-            continue;
-
-        ents.push_back(std::move(ent));
+        if (left == "model name")
+            name = std::string(right);
     }
 
-    return ents;
+    if (name.empty())
+        name = "Unknown";
+
+    return name;
+}
+
+std::string getCurrentProcessName()
+{
+    std::string name;
+
+    const std::string commPath = "/proc/" + std::to_string(getpid()) + "/comm";
+
+    if (std::ifstream in { commPath, std::ios::binary }) {
+        name.reserve(256);
+        for (int c; (c = in.get()) != std::char_traits<char>::eof() && c != '\n'; )
+            name.push_back(static_cast<unsigned char>(c));
+    }
+
+    if (name.empty()) {
+        if (const char* progname = __progname)
+            name.assign(progname);
+    }
+
+    return name;
 }
 #endif
