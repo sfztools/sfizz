@@ -10,6 +10,7 @@
 #include <absl/strings/string_view.h>
 #include <stdexcept>
 #include <cstdlib>
+#include <fstream>
 
 #if defined(_WIN32)
 #include <windows.h>
