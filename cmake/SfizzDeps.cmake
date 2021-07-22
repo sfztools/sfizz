@@ -1,3 +1,5 @@
+include(CheckCXXSourceCompiles)
+
 # Find system threads
 find_package(Threads REQUIRED)
 
@@ -105,10 +107,25 @@ add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 add_library(sfizz_simde INTERFACE)
 add_library(sfizz::simde ALIAS sfizz_simde)
 if(SFIZZ_USE_SYSTEM_SIMDE)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SIMDE "simde" REQUIRED)
-    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIRS}")
-    if(NOT SIMDE_VERSION OR SIMDE_VERSION VERSION_LESS_EQUAL "0.7.2")
+    find_path(SIMDE_INCLUDE_DIR "simde/simde-features.h")
+    if(NOT SIMDE_INCLUDE_DIR)
+        message(FATAL_ERROR "Cannot find simde")
+    endif()
+    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIR}")
+
+    function(sfizz_ensure_simde_version result major minor micro)
+        set(CMAKE_REQUIRED_INCLUDES "${SIMDE_INCLUDE_DIR}")
+        check_cxx_source_compiles(
+            "#include <simde/simde-common.h>
+#if SIMDE_VERSION < HEDLEY_VERSION_ENCODE(${major}, ${minor}, ${micro})
+#   error Version check failed
+#endif
+int main() { return 0; }"
+            "${result}")
+    endfunction()
+
+    sfizz_ensure_simde_version(SFIZZ_SIMDE_AT_LEAST_0_7_3 0 7 3)
+    if(NOT SFIZZ_SIMDE_AT_LEAST_0_7_3)
         message(WARNING "The version of SIMDe on this system has known issues. \
 It is recommended to either update if a newer version is available, or use the \
 version bundled with this package. Refer to following issues: \
