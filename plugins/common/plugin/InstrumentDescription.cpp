@@ -103,6 +103,7 @@ std::string getDescriptionBlob(sfizz_synth_t* handle)
     synth.sendMessage(*client, 0, "/key/slots", "", nullptr);
     synth.sendMessage(*client, 0, "/sw/last/slots", "", nullptr);
     synth.sendMessage(*client, 0, "/cc/slots", "", nullptr);
+    synth.sendMessage(*client, 0, "/sustain_or_sostenuto/slots", "", nullptr);
 
     blob.shrink_to_fit();
     return blob;
@@ -152,6 +153,8 @@ InstrumentDescription parseDescriptionBlob(absl::string_view blob)
             copyArgToBitSpan(args[0], desc.keyswitchUsed.span());
         else if (Messages::matchOSC("/cc/slots", path, indices) && !strcmp(sig, "b"))
             copyArgToBitSpan(args[0], desc.ccUsed.span());
+        else if (Messages::matchOSC("/sustain_or_sostenuto/slots", path, indices) && !strcmp(sig, "b"))
+            copyArgToBitSpan(args[0], desc.sustainOrSostenuto.span());
         else if (Messages::matchOSC("/key&/label", path, indices) && !strcmp(sig, "s"))
             desc.keyLabel[indices[0]] = args[0].s;
         else if (Messages::matchOSC("/sw/last/&/label", path, indices) && !strcmp(sig, "s"))

@@ -246,7 +246,7 @@ bool SfizzVstEditor::processUpdate(FUnknown* changedUnknown, int32 message)
         }
 
         for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-            bool ccUsed = desc.ccUsed.test(cc);
+            bool ccUsed = desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc);
             uiReceiveValue(editIdForCCUsed(int(cc)), float(ccUsed));
             if (ccUsed) {
                 uiReceiveValue(editIdForCCDefault(int(cc)), desc.ccDefault[cc]);

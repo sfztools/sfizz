@@ -180,6 +180,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'b'>(delay, path, &blob);
         } break;
 
+        MATCH("/sustain_or_sostenuto/slots", "") {
+            const BitArray<128>& sustainOrSostenuto = impl.sustainOrSostenuto_;
+            sfizz_blob_t blob { sustainOrSostenuto.data(),
+                static_cast<uint32_t>(sustainOrSostenuto.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/mem/buffers", "") {
