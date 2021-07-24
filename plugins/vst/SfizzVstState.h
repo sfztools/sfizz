@@ -27,9 +27,10 @@ public:
     float stretchedTuning = 0.0;
     int32 sampleQuality = 2;
     int32 oscillatorQuality = 1;
+    int32 lastKeyswitch = -1;
     std::vector<absl::optional<float>> controllers;
 
-    static constexpr uint64 currentStateVersion = 3;
+    static constexpr uint64 currentStateVersion = 4;
 
     tresult load(IBStream* state);
     tresult store(IBStream* state) const;

@@ -120,6 +120,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->sfizz_num_voices_uri = map->map(map->handle, SFIZZ__numVoices);
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
+    self->sfizz_last_keyswitch_uri = map->map(map->handle, SFIZZ__lastKeyswitch);
     self->sfizz_log_status_uri = map->map(map->handle, SFIZZ__logStatus);
     self->sfizz_check_modification_uri = map->map(map->handle, SFIZZ__checkModification);
     self->sfizz_osc_blob_uri = map->map(map->handle, SFIZZ__OSCBlob);
@@ -322,6 +323,14 @@ sfizz_lv2_receive_message(void* data, int delay, const char* path, const char* s
     (void)delay;
 
     sfizz_plugin_t *self = (sfizz_plugin_t *)data;
+
+    if (!strcmp(path, "/sw/last/current") && sig)
+    {
+        if (sig[0] == 'i')
+            self->last_keyswitch = args[0].i;
+        else if (sig[0] == 'N')
+            self->last_keyswitch = -1;
+    }
 
     // transmit to UI as OSC blob
     uint8_t *osc_temp = self->osc_temp;
@@ -1301,6 +1310,7 @@ restore(LV2_Handle instance,
     }
 
     // Set default values
+    self->last_keyswitch = -1;
     sfizz_lv2_get_default_sfz_path(self, self->sfz_file_path, MAX_PATH_SIZE);
     sfizz_lv2_get_default_scala_path(self, self->scala_file_path, MAX_PATH_SIZE);
 
@@ -1349,6 +1359,13 @@ restore(LV2_Handle instance,
             if (map_path)
                 free_path->free_path(free_path->handle, (char *)path);
         }
+    }
+
+    value = retrieve(handle, self->sfizz_last_keyswitch_uri, &size, &type, &val_flags);
+    if (value)
+    {
+        int last_keyswitch = *(const int*)value;
+        self->last_keyswitch = last_keyswitch;
     }
 
     // Collect all CC values present in the state
@@ -1403,6 +1420,11 @@ restore(LV2_Handle instance,
             // Update the current CCs
             self->cc_current[cc] = *value;
         }
+    }
+
+    if (self->last_keyswitch >= 0 && self->last_keyswitch <= 127) {
+        sfizz_send_hd_note_on(self->synth, 0, self->last_keyswitch, 1.0f);
+        sfizz_send_hd_note_off(self->synth, 1, self->last_keyswitch, 0.0f);
     }
 
     spin_mutex_unlock(self->synth_mutex);
@@ -1473,6 +1495,15 @@ save(LV2_Handle instance,
     const InstrumentDescription desc = parseDescriptionBlob(
         absl::string_view((const char*)self->sfz_blob_data, self->sfz_blob_size));
     self->sfz_blob_mutex->unlock();
+
+    if (self->last_keyswitch >= 0 && self->last_keyswitch <= 127) {
+        store(handle,
+            self->sfizz_last_keyswitch_uri,
+            &self->last_keyswitch,
+            sizeof(int),
+            self->atom_int_uri,
+            LV2_STATE_IS_POD);
+    }
 
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {

@@ -73,6 +73,14 @@ tresult SfizzVstState::load(IBStream* state)
         oscillatorQuality = defaults.oscillatorQuality;
     }
 
+    if (version >= 4) {
+        if (!s.readInt32(lastKeyswitch))
+            return kResultFalse;
+    }
+    else {
+        lastKeyswitch = -1;
+    }
+
     controllers.clear();
     if (version >= 2) {
         uint32 count;
@@ -133,6 +141,9 @@ tresult SfizzVstState::store(IBStream* state) const
         return kResultFalse;
 
     if (!s.writeInt32(oscillatorQuality))
+        return kResultFalse;
+
+    if (!s.writeInt32(lastKeyswitch))
         return kResultFalse;
 
     {

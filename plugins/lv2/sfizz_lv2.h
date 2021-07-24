@@ -39,6 +39,7 @@
 #define SFIZZ__numVoices SFIZZ_URI ":" "numvoices"
 #define SFIZZ__preloadSize SFIZZ_URI ":" "preload_size"
 #define SFIZZ__oversampling SFIZZ_URI ":" "oversampling"
+#define SFIZZ__lastKeyswitch SFIZZ_URI ":" "last_keyswitch"
 // These ones are just for the worker
 #define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
 #define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
