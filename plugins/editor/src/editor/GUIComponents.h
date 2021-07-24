@@ -348,6 +348,7 @@ private:
     SharedPointer<CMenuItem> menuEntry_;
     CRect nameLabelSize_;
     CRect knobSize_;
+    CRect shadingRectangleSize_;
     CRect ccLabelSize_;
     CRect valueEditSize_;
     CRect rectangleSize_;

@@ -816,13 +816,15 @@ void SKnobCCBox::updateViewSizes()
     // remove knob side areas
     CCoord side = std::max(0.0, knobSize_.getWidth() - knobSize_.getHeight());
     knobSize_.extend(-0.5 * side, 0.0);
+    shadingRectangleSize_ = knobSize_;
+    shadingRectangleSize_.bottom -= ypad;
 
     //
     label_->setViewSize(nameLabelSize_);
     knob_->setViewSize(knobSize_);
     ccLabel_->setViewSize(ccLabelSize_);
     valueEdit_->setViewSize(valueEditSize_);
-    shadingRectangle_->setViewSize(knobSize_);
+    shadingRectangle_->setViewSize(shadingRectangleSize_);
 
     invalid();
 }
