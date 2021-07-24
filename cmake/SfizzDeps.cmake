@@ -165,13 +165,31 @@ add_library(sfizz::hiir_polyphase_iir2designer ALIAS sfizz_hiir_polyphase_iir2de
 target_link_libraries(sfizz_hiir_polyphase_iir2designer PUBLIC sfizz::hiir)
 
 # The kissfft library
-add_library(sfizz_kissfft STATIC
-    "src/external/kiss_fft/kiss_fft.c"
-    "src/external/kiss_fft/tools/kiss_fftr.c")
+if (SFIZZ_USE_SYSTEM_KISS_FFT)
+    find_path(KISSFFT_INCLUDE_DIR "kiss_fft.h" PATH_SUFFIXES "kissfft")
+    find_path(KISSFFTR_INCLUDE_DIR "kiss_fftr.h" PATH_SUFFIXES "kissfft")
+    find_library(KISSFFT_FFTR_LIBRARY "kiss_fftr_float" KISSFFTR_INCLUDE_DIR)
+    find_library(KISSFFT_FFT_LIBRARY "kiss_fft_float" KISSFFT_INCLUDE_DIR)
+    add_library(sfizz_kissfft INTERFACE)
+    if(NOT KISSFFT_FFT_LIBRARY)
+        message(FATAL_ERROR "Cannot find kiss fft")
+    endif()
+    if(NOT KISSFFT_FFTR_LIBRARY)
+        message(FATAL_ERROR "Cannot find kiss fftr")
+    endif()
+    target_include_directories(sfizz_kissfft INTERFACE "${KISSFFTR_INCLUDE_DIR}")
+    target_include_directories(sfizz_kissfft INTERFACE "${KISSFFT_INCLUDE_DIR}")
+    target_link_libraries(sfizz_kissfft INTERFACE "${KISSFFT_FFTR_LIBRARY}")
+    target_link_libraries(sfizz_kissfft INTERFACE "${KISSFFT_FFT_LIBRARY}")
+else()
+    add_library(sfizz_kissfft STATIC
+        "src/external/kiss_fft/kiss_fft.c"
+        "src/external/kiss_fft/tools/kiss_fftr.c")
+    target_include_directories(sfizz_kissfft
+        PUBLIC "src/external/kiss_fft"
+        PUBLIC "src/external/kiss_fft/tools")
+endif()
 add_library(sfizz::kissfft ALIAS sfizz_kissfft)
-target_include_directories(sfizz_kissfft
-    PUBLIC "src/external/kiss_fft"
-    PUBLIC "src/external/kiss_fft/tools")
 
 # The cephes library
 add_library(sfizz_cephes STATIC
