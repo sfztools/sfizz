@@ -67,9 +67,19 @@ add_library(sfizz::jsl ALIAS sfizz_jsl)
 target_include_directories(sfizz_jsl INTERFACE "external/jsl/include")
 
 # The cxxopts library
-add_library(sfizz_cxxopts INTERFACE)
+if(SFIZZ_USE_SYSTEM_CXXOPTS)
+    find_path(CXXOPTS_INCLUDE_DIR "cxxopts.hpp")
+    if(NOT CXXOPTS_INCLUDE_DIR)
+        message(FATAL_ERROR "Cannot find cxxopts")
+    endif()
+    add_library(sfizz_cxxopts INTERFACE)
+    target_include_directories(sfizz_cxxopts INTERFACE "${CXXOPTS_INCLUDE_DIR}")
+else()
+    add_library(sfizz_cxxopts INTERFACE)
+    add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
+    target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
+endif()
 add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
-target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
 
 # The sndfile library
 if(SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_DEVTOOLS OR SFIZZ_BENCHMARKS)
