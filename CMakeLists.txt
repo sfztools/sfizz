@@ -40,6 +40,7 @@ option_ex (SFIZZ_USE_SYSTEM_ABSEIL "Use Abseil libraries preinstalled on system"
 option_ex (SFIZZ_USE_SYSTEM_SIMDE  "Use SIMDe libraries preinstalled on system" OFF)
 option_ex (SFIZZ_USE_SYSTEM_KISS_FFT "Use KISS FFT libraries preinstalled on system" OFF)
 option_ex (SFIZZ_USE_SYSTEM_PUGIXML "Use pugixml libraries preinstalled on system" OFF)
+option_ex (SFIZZ_USE_SYSTEM_CXXOPTS "Use CXXOPTS libraries preinstalled on system" OFF)
 option_ex (SFIZZ_STATIC_DEPENDENCIES "Link dependencies statically" OFF)
 option_ex (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds" OFF)
 option_ex (SFIZZ_PROFILE_BUILD     "Profile the build time" OFF)
