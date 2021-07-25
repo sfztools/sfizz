@@ -356,6 +356,9 @@ TEST_CASE("[Values] Loop range")
             <region> sample=kick.wav
             <region> sample=kick.wav loop_start_cc12=10 loop_end_cc14=-100
             <region> sample=kick.wav loop_start_oncc12=-10 loop_end_oncc14=100
+            <region> sample=kick.wav loop_startcc12=-10 loop_lengthcc14=100
+            <region> sample=kick.wav loop_length_oncc14=100
+            <region> sample=kick.wav loop_length_cc14=100
         )");
         synth.dispatchMessage(client, 0, "/region0/loop_start_cc12", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/loop_end_cc14", "", nullptr);
@@ -363,6 +366,10 @@ TEST_CASE("[Values] Loop range")
         synth.dispatchMessage(client, 0, "/region1/loop_end_cc14", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/loop_start_cc12", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/loop_end_cc14", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/loop_start_cc12", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region3/loop_end_cc14", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region4/loop_end_cc14", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region5/loop_end_cc14", "", nullptr);
         std::vector<std::string> expected {
             "/region0/loop_start_cc12,h : { 0 }",
             "/region0/loop_end_cc14,h : { 0 }",
@@ -370,6 +377,10 @@ TEST_CASE("[Values] Loop range")
             "/region1/loop_end_cc14,h : { -100 }",
             "/region2/loop_start_cc12,h : { -10 }",
             "/region2/loop_end_cc14,h : { 100 }",
+            "/region3/loop_start_cc12,h : { -10 }",
+            "/region3/loop_end_cc14,h : { 100 }",
+            "/region4/loop_end_cc14,h : { 100 }",
+            "/region5/loop_end_cc14,h : { 100 }",
         };
         REQUIRE(messageList == expected);
     }

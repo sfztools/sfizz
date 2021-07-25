@@ -128,13 +128,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("loop_start"): // also loopstart
         loopRange.setStart(opcode.read(Default::loopStart));
         break;
-    case hash("loop_start_oncc&"): // also loop_start_cc&
+    case hash("loop_start_oncc&"): // also loop_start_cc&, loop_startcc&
         if (opcode.parameters.back() > config::numCCs)
             return false;
 
         loopStartCC[opcode.parameters.back()] = opcode.read(Default::loopMod);
         break;
-    case hash("loop_end_oncc&"): // also loop_end_cc&
+    case hash("loop_end_oncc&"): // also loop_end_cc&, loop_lengthcc&, loop_length_oncc&, loop_length_cc&
         if (opcode.parameters.back() > config::numCCs)
             return false;
 
