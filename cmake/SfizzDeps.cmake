@@ -139,9 +139,18 @@ if(TARGET sfizz::openmp)
 endif()
 
 # The pugixml library
-add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+if(SFIZZ_USE_SYSTEM_PUGIXML)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PUGIXML "pugixml" REQUIRED)
+    add_library(sfizz_pugixml INTERFACE)
+    target_include_directories(sfizz_pugixml INTERFACE ${PUGIXML_INCLUDE_DIRS})
+    target_link_libraries(sfizz_pugixml INTERFACE ${PUGIXML_LIBRARIES})
+    link_directories(${PUGIXML_LIBRARY_DIRS})
+else()
+    add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+    target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
+endif()
 add_library(sfizz::pugixml ALIAS sfizz_pugixml)
-target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
 
 # The spline library
 add_library(sfizz_spline STATIC "src/external/spline/spline/spline.cpp")
