@@ -117,7 +117,8 @@ endif()
 # Installation
 if(NOT MSVC)
     install(DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR}
-        COMPONENT "lv2")
+        COMPONENT "lv2"
+        USE_SOURCE_PERMISSIONS)
     bundle_dylibs(lv2
         "${LV2PLUGIN_INSTALL_DIR}/${PROJECT_NAME}.lv2/Contents/Binary/sfizz.so"
         COMPONENT "lv2")
