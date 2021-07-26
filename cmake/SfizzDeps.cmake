@@ -67,9 +67,19 @@ add_library(sfizz::jsl ALIAS sfizz_jsl)
 target_include_directories(sfizz_jsl INTERFACE "external/jsl/include")
 
 # The cxxopts library
-add_library(sfizz_cxxopts INTERFACE)
+if(SFIZZ_USE_SYSTEM_CXXOPTS)
+    find_path(CXXOPTS_INCLUDE_DIR "cxxopts.hpp")
+    if(NOT CXXOPTS_INCLUDE_DIR)
+        message(FATAL_ERROR "Cannot find cxxopts")
+    endif()
+    add_library(sfizz_cxxopts INTERFACE)
+    target_include_directories(sfizz_cxxopts INTERFACE "${CXXOPTS_INCLUDE_DIR}")
+else()
+    add_library(sfizz_cxxopts INTERFACE)
+    add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
+    target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
+endif()
 add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
-target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
 
 # The sndfile library
 if(SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_DEVTOOLS OR SFIZZ_BENCHMARKS)
@@ -139,9 +149,18 @@ if(TARGET sfizz::openmp)
 endif()
 
 # The pugixml library
-add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+if(SFIZZ_USE_SYSTEM_PUGIXML)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PUGIXML "pugixml" REQUIRED)
+    add_library(sfizz_pugixml INTERFACE)
+    target_include_directories(sfizz_pugixml INTERFACE ${PUGIXML_INCLUDE_DIRS})
+    target_link_libraries(sfizz_pugixml INTERFACE ${PUGIXML_LIBRARIES})
+    link_directories(${PUGIXML_LIBRARY_DIRS})
+else()
+    add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+    target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
+endif()
 add_library(sfizz::pugixml ALIAS sfizz_pugixml)
-target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
 
 # The spline library
 add_library(sfizz_spline STATIC "src/external/spline/spline/spline.cpp")
@@ -165,13 +184,31 @@ add_library(sfizz::hiir_polyphase_iir2designer ALIAS sfizz_hiir_polyphase_iir2de
 target_link_libraries(sfizz_hiir_polyphase_iir2designer PUBLIC sfizz::hiir)
 
 # The kissfft library
-add_library(sfizz_kissfft STATIC
-    "src/external/kiss_fft/kiss_fft.c"
-    "src/external/kiss_fft/tools/kiss_fftr.c")
+if (SFIZZ_USE_SYSTEM_KISS_FFT)
+    find_path(KISSFFT_INCLUDE_DIR "kiss_fft.h" PATH_SUFFIXES "kissfft")
+    find_path(KISSFFTR_INCLUDE_DIR "kiss_fftr.h" PATH_SUFFIXES "kissfft")
+    find_library(KISSFFT_FFTR_LIBRARY "kiss_fftr_float" KISSFFTR_INCLUDE_DIR)
+    find_library(KISSFFT_FFT_LIBRARY "kiss_fft_float" KISSFFT_INCLUDE_DIR)
+    add_library(sfizz_kissfft INTERFACE)
+    if(NOT KISSFFT_FFT_LIBRARY)
+        message(FATAL_ERROR "Cannot find kiss fft")
+    endif()
+    if(NOT KISSFFT_FFTR_LIBRARY)
+        message(FATAL_ERROR "Cannot find kiss fftr")
+    endif()
+    target_include_directories(sfizz_kissfft INTERFACE "${KISSFFTR_INCLUDE_DIR}")
+    target_include_directories(sfizz_kissfft INTERFACE "${KISSFFT_INCLUDE_DIR}")
+    target_link_libraries(sfizz_kissfft INTERFACE "${KISSFFT_FFTR_LIBRARY}")
+    target_link_libraries(sfizz_kissfft INTERFACE "${KISSFFT_FFT_LIBRARY}")
+else()
+    add_library(sfizz_kissfft STATIC
+        "src/external/kiss_fft/kiss_fft.c"
+        "src/external/kiss_fft/tools/kiss_fftr.c")
+    target_include_directories(sfizz_kissfft
+        PUBLIC "src/external/kiss_fft"
+        PUBLIC "src/external/kiss_fft/tools")
+endif()
 add_library(sfizz::kissfft ALIAS sfizz_kissfft)
-target_include_directories(sfizz_kissfft
-    PUBLIC "src/external/kiss_fft"
-    PUBLIC "src/external/kiss_fft/tools")
 
 # The cephes library
 add_library(sfizz_cephes STATIC
