@@ -410,6 +410,8 @@ jobs:
       - build_for_mod
       - build_for_mingw32
       - build_for_mingw64
+      - build_for_win32
+      - build_for_win64
       - archive_source_code
     steps:
       - name: Set install name
