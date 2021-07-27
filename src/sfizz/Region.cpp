@@ -1143,6 +1143,10 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
 
         break;
 
+    case_any_eg("dynamic"):
+        eg.dynamic = opcode.read(Default::egDynamic);
+        break;
+
     case hash("pitcheg_depth"):
         getOrCreateConnection(
             ModKey::createNXYZ(ModId::PitchEG, id),
