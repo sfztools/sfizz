@@ -136,7 +136,8 @@ if(SFIZZ_VST)
     if(NOT MSVC)
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${VSTPLUGIN_BUNDLE_NAME}"
             DESTINATION "${VSTPLUGIN_INSTALL_DIR}"
-            COMPONENT "vst")
+            COMPONENT "vst"
+            USE_SOURCE_PERMISSIONS)
         bundle_dylibs(vst
             "${VSTPLUGIN_INSTALL_DIR}/${VSTPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
             COMPONENT "vst")
@@ -284,7 +285,8 @@ elseif(SFIZZ_AU)
     if(AUPLUGIN_INSTALL_DIR)
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${AUPLUGIN_BUNDLE_NAME}"
             DESTINATION "${AUPLUGIN_INSTALL_DIR}"
-            COMPONENT "au")
+            COMPONENT "au"
+            USE_SOURCE_PERMISSIONS)
         bundle_dylibs(au
             "${AUPLUGIN_INSTALL_DIR}/${AUPLUGIN_BUNDLE_NAME}/Contents/MacOS/sfizz"
             COMPONENT "au")
@@ -355,7 +357,8 @@ if(SFIZZ_VST2)
     if(VST2PLUGIN_INSTALL_DIR)
         install(DIRECTORY "${PROJECT_BINARY_DIR}/${VST2PLUGIN_BUNDLE_NAME}"
             DESTINATION "${VST2PLUGIN_INSTALL_DIR}"
-            COMPONENT "vst2")
+            COMPONENT "vst2"
+            USE_SOURCE_PERMISSIONS)
         if(APPLE)
             bundle_dylibs(vst2
                 "${VST2PLUGIN_INSTALL_DIR}/${VST2PLUGIN_BUNDLE_NAME}/Contents/Binary/sfizz.${CMAKE_SHARED_MODULE_SUFFIX}"
