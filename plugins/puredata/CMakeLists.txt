@@ -49,7 +49,8 @@ copy_puredata_resources(sfizz_puredata
 # Installation
 if(NOT MSVC)
     install(DIRECTORY "${PUREDATA_BINARY_DIR}" DESTINATION "${PDPLUGIN_INSTALL_DIR}"
-        COMPONENT "puredata")
+        COMPONENT "puredata"
+        USE_SOURCE_PERMISSIONS)
     bundle_dylibs(puredata
         "${PDPLUGIN_INSTALL_DIR}/sfizz/sfizz${PUREDATA_SUFFIX}"
         COMPONENT "puredata")
