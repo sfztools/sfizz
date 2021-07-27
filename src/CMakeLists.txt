@@ -332,7 +332,7 @@ if(SFIZZ_SHARED)
     target_include_directories(sfizz_shared PUBLIC .)
     target_link_libraries(sfizz_shared PRIVATE sfizz::internal)
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties(sfizz_shared PROPERTIES SOVERSION "${PROJECT_VERSION_MAJOR}" OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+    set_target_properties(sfizz_shared PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION "${PROJECT_VERSION_MAJOR}" OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
     sfizz_enable_lto_if_needed(sfizz_shared)
 
     if(NOT MSVC)
