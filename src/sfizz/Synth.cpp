@@ -637,8 +637,6 @@ void Synth::Impl::finalizeSfzLoad()
                 if (allZeros) {
                     region.sampleId.reset(new FileId("*silence"));
                     region.hasWavetableSample = false;
-                } else {
-                    region.hasWavetableSample |= true;
                 }
             }
         }
