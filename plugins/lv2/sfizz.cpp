@@ -1285,9 +1285,6 @@ restore(LV2_Handle instance,
     // Set default values
     sfizz_lv2_get_default_sfz_path(self, self->sfz_file_path, MAX_PATH_SIZE);
     sfizz_lv2_get_default_scala_path(self, self->scala_file_path, MAX_PATH_SIZE);
-    self->num_voices = DEFAULT_VOICES;
-    self->preload_size = DEFAULT_PRELOAD;
-    self->oversampling = DEFAULT_OVERSAMPLING;
 
     // Fetch back the saved file path, if any
     size_t size;
@@ -1336,28 +1333,6 @@ restore(LV2_Handle instance,
         }
     }
 
-    value = retrieve(handle, self->sfizz_num_voices_uri, &size, &type, &val_flags);
-    if (value)
-    {
-        int num_voices = *(const int *)value;
-        if (num_voices > 0 && num_voices <= MAX_VOICES)
-            self->num_voices = num_voices;
-    }
-
-    value = retrieve(handle, self->sfizz_preload_size_uri, &size, &type, &val_flags);
-    if (value)
-    {
-        unsigned int preload_size = *(const unsigned int *)value;
-        self->preload_size = preload_size;
-    }
-
-    value = retrieve(handle, self->sfizz_oversampling_uri, &size, &type, &val_flags);
-    if (value)
-    {
-        sfizz_oversampling_factor_t oversampling = *(const sfizz_oversampling_factor_t *)value;
-        self->oversampling = oversampling;
-    }
-
     // Collect all CC values present in the state
     std::unique_ptr<absl::optional<float>[]> cc_values(
         new absl::optional<float>[sfz::config::numCCs]);
@@ -1397,15 +1372,6 @@ restore(LV2_Handle instance,
         lv2_log_error(&self->logger,
             "[sfizz] Error while restoring the scale %s\n", self->scala_file_path);
     }
-
-    lv2_log_note(&self->logger, "[sfizz] Restoring the number of voices to %d\n", self->num_voices);
-    sfizz_set_num_voices(self->synth, self->num_voices);
-
-    lv2_log_note(&self->logger, "[sfizz] Restoring the preload size to %d\n", self->preload_size);
-    sfizz_set_preload_size(self->synth, self->preload_size);
-
-    lv2_log_note(&self->logger, "[sfizz] Restoring the oversampling to %d\n", self->oversampling);
-    sfizz_set_oversampling_factor(self->synth, self->oversampling);
 
     // Override default automation values with these from the state file
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
@@ -1483,30 +1449,6 @@ save(LV2_Handle instance,
           LV2_STATE_IS_POD);
     if (map_path)
         free_path->free_path(free_path->handle, (char *)path);
-
-    // Save the number of voices
-    store(handle,
-          self->sfizz_num_voices_uri,
-          &self->num_voices,
-          sizeof(int),
-          self->atom_int_uri,
-          LV2_STATE_IS_POD);
-
-    // Save the preload size
-    store(handle,
-          self->sfizz_preload_size_uri,
-          &self->preload_size,
-          sizeof(unsigned int),
-          self->atom_int_uri,
-          LV2_STATE_IS_POD);
-
-    // Save the preload size
-    store(handle,
-          self->sfizz_oversampling_uri,
-          &self->oversampling,
-          sizeof(int),
-          self->atom_int_uri,
-          LV2_STATE_IS_POD);
 
     // Save the CCs (used only)
     self->sfz_blob_mutex->lock();

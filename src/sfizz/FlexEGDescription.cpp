@@ -86,19 +86,19 @@ void FlexEGs::clearUnusedCurves()
 }
 
 ///
-float FlexEGPoint::getTime(const MidiState& state) const noexcept
+float FlexEGPoint::getTime(const MidiState& state, int delay) const noexcept
 {
     float returnedValue { time };
     for (const CCData<float>& mod : ccTime)
-        returnedValue += state.getCCValue(mod.cc) * mod.data;
+        returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
     return returnedValue;
 }
 
-float FlexEGPoint::getLevel(const MidiState& state) const noexcept
+float FlexEGPoint::getLevel(const MidiState& state, int delay) const noexcept
 {
     float returnedValue { level };
     for (const CCData<float>& mod : ccLevel)
-        returnedValue += state.getCCValue(mod.cc) * mod.data;
+        returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
     return returnedValue;
 }
 

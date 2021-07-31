@@ -57,7 +57,7 @@ struct FlexEnvelope::Impl {
     void process(absl::Span<float> out);
     bool advanceToStage(unsigned stageNumber);
     bool advanceToNextStage();
-    void updateCurrentTimeAndLevel();
+    void updateCurrentTimeAndLevel(int delay = 0);
 };
 
 FlexEnvelope::FlexEnvelope(Resources &resources)
@@ -154,7 +154,19 @@ bool FlexEnvelope::isFinished() const noexcept
 void FlexEnvelope::process(absl::Span<float> out)
 {
     Impl& impl = *impl_;
-    impl.process(out);
+    if (impl.desc_->dynamic) {
+        int processed = 0;
+        int remaining = static_cast<int>(out.size());
+        while(remaining > 0) {
+            impl.updateCurrentTimeAndLevel(processed);
+            int chunkSize = min(config::processChunkSize, remaining);
+            impl.process(out.subspan(processed, chunkSize));
+            processed += chunkSize;
+            remaining -= chunkSize;
+        }
+    } else {
+        impl.process(out);
+    }
 }
 
 void FlexEnvelope::Impl::process(absl::Span<float> out)
@@ -268,7 +280,7 @@ bool FlexEnvelope::Impl::advanceToNextStage()
     return advanceToStage(currentStageNumber_ + 1);
 }
 
-void FlexEnvelope::Impl::updateCurrentTimeAndLevel()
+void FlexEnvelope::Impl::updateCurrentTimeAndLevel(int delay)
 {
     const FlexEGDescription& desc = *desc_;
     if (currentStageNumber_ >= desc.points.size())
@@ -276,8 +288,8 @@ void FlexEnvelope::Impl::updateCurrentTimeAndLevel()
 
     const FlexEGPoint& point = desc.points[currentStageNumber_];
     const MidiState& midiState = resources_->getMidiState();
-    stageTargetLevel_ = point.getLevel(midiState);
-    stageTime_ = point.getTime(midiState);
+    stageTargetLevel_ = point.getLevel(midiState, delay);
+    stageTime_ = point.getTime(midiState, delay);
 }
 
 } // namespace sfz

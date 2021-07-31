@@ -327,6 +327,9 @@ absl::optional<bool> readBoolean(absl::string_view value)
 template <>
 absl::optional<OscillatorEnabled> Opcode::readOptional(OpcodeSpec<OscillatorEnabled>, absl::string_view value)
 {
+    if (value == "auto")
+        return OscillatorEnabled::Auto;
+
     auto v = readBoolean(value);
     if (!v)
         return absl::nullopt;

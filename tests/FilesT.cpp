@@ -274,7 +274,7 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
 {
     Synth synth;
     synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels_multi.sfz");
-    REQUIRE(synth.getNumRegions() == 10);
+    REQUIRE(synth.getNumRegions() == 12);
 
     int regionNumber = 0;
     const Region* region = nullptr;
@@ -327,12 +327,25 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isOscillator());
     REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Off);
 
-    // implicit wavetable (sound file < 3000 frames)
+    // implicit wavetable (sound file < 3000 frames and wavetable tags)
     region = synth.getRegionView(regionNumber++);
-    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
-    REQUIRE(!region->isStereo());
+    REQUIRE(region->sampleId->filename() == "wavetables/surge.wav");
     REQUIRE(!region->isGenerator());
     REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
+
+    // Parse oscillator=auto and same as above
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "wavetables/surge.wav");
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
+
+    // implicit non wavetable (sound file < 3000 frames but no wavetable tags)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "short_non_wavetable.wav");
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
     REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 
     // implicit non-wavetable (sound file >= 3000 frames)

@@ -1125,6 +1125,33 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, region.amplitudeEG.vel2depth);
         } break;
 
+        MATCH("/region&/ampeg_dynamic", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.amplitudeEG.dynamic) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/fileg_dynamic", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.filterEG && region.filterEG->dynamic) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/pitcheg_dynamic", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.pitchEG && region.pitchEG->dynamic) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
         MATCH("/region&/note_polyphony", "") {
             GET_REGION_OR_BREAK(indices[0])
             if (region.notePolyphony) {

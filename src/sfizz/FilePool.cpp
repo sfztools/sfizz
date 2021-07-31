@@ -101,7 +101,7 @@ void streamFromFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, std:
 {
     const auto numFrames = static_cast<size_t>(reader.frames());
     const auto numChannels = reader.channels();
-    const auto chunkSize = static_cast<size_t>(sfz::config::chunkSize);
+    const auto chunkSize = static_cast<size_t>(sfz::config::fileChunkSize);
 
     output.reset();
     output.addChannels(reader.channels());
