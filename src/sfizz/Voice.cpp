@@ -1666,7 +1666,7 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if (region == nullptr || other == nullptr)
         return false;
 
-    if (impl.released())
+    if (impl.released() && region->offMode == OffMode::normal)
         return false;
 
     if ((impl.triggerEvent_.type == TriggerEventType::NoteOn
