@@ -151,7 +151,8 @@ static void done(int sig)
 
 ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
-ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded size");
+ABSL_FLAG(uint32_t, num_voices, 32, "Num of voices");
 ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
 int main(int argc, char** argv)
@@ -167,12 +168,15 @@ int main(int argc, char** argv)
     const std::string clientName = absl::GetFlag(FLAGS_client_name);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+    const uint32_t num_voices = absl::GetFlag(FLAGS_num_voices);
     const bool verboseState = absl::GetFlag(FLAGS_state);
 
     std::cout << "Flags" << '\n';
     std::cout << "- Client name: " << clientName << '\n';
     std::cout << "- Oversampling: " << oversampling << '\n';
-    std::cout << "- Preloaded Size: " << preload_size << '\n';
+    std::cout << "- Preloaded size: " << preload_size << '\n';
+    std::cout << "- Num of voices: " << num_voices << '\n';
+
     const auto factor = [&]() {
         if (oversampling == "x1") return 1;
         if (oversampling == "x2") return 2;
@@ -189,6 +193,7 @@ int main(int argc, char** argv)
     sfz::Sfizz synth;
     synth.setOversamplingFactor(factor);
     synth.setPreloadSize(preload_size);
+    synth.setNumVoices(num_voices);
 
     const char *importFormat = nullptr;
     if (!sfizz_load_or_import_file(synth.handle(), filesToParse[0], &importFormat)) {
