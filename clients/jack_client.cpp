@@ -42,6 +42,7 @@
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <vector>
 
 
 sfz::Sfizz synth;
@@ -193,6 +194,30 @@ bool load_instrument(const char *fpath) {
 }
 
 
+std::vector<std::string> string_tokenize(std::string str) {
+    std::vector<std::string> tokens;
+    std::string part = "";
+    for (size_t i=0; i<str.length(); i++) {
+        char c = str[i];
+        if (c==' ' && part!="") {
+            tokens.push_back(part);
+            part= "";
+        } else if (c== '\"'){
+            i++;
+            while (str[i]!='\"') { part += str[i]; i++; }
+            tokens.push_back(part);
+            part= "";
+        } else {
+            part += c;
+        }
+    }
+    if (part!="") {
+        tokens.push_back(part);
+    }
+    return tokens;
+}
+
+
 void cli_thread_proc() {
     while (!shouldClose) {
         std::cout << "\n> ";
@@ -202,9 +227,11 @@ void cli_thread_proc() {
         std::size_t pos = command.find(" ");
         std::string kw = command.substr(0, pos);
         std::string args = command.substr(pos+1);
+        std::vector<std::string> tokens = string_tokenize(args);
 
         if (kw=="load_instrument") {
-            load_instrument(args.c_str());
+            //args.erase(std::remove(str.begin(), str.end(), '\"'), str.end());
+            load_instrument(tokens[0].c_str());
         }
         else if (kw=="set_oversampling") {
             try {
