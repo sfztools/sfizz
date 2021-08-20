@@ -206,6 +206,13 @@ void cli_thread_proc() {
         if (kw=="load_instrument") {
             load_instrument(args.c_str());
         }
+        else if (kw=="set_oversampling") {
+            try {
+                synth.setOversamplingFactor(stoi(args));
+            } catch (...) {
+                std::cout << "ERROR: Can't set oversampling!\n";
+            }
+        }
         else if (kw=="set_preload_size") {
             try {
                 synth.setPreloadSize(stoi(args));
