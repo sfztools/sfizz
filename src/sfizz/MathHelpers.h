@@ -26,7 +26,7 @@
 #include <simde/x86/sse.h>
 #endif
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L && defined(__cpp_lib_math_special_functions)
 static double i0(double x) { return std::cyl_bessel_i(0.0, x); }
 #else
 // external Bessel function from cephes
