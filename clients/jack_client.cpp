@@ -194,7 +194,7 @@ bool load_instrument(const char *fpath) {
 }
 
 
-std::vector<std::string> string_tokenize(std::string str) {
+std::vector<std::string> string_tokenize(const std::string str) {
     std::vector<std::string> tokens;
     std::string part = "";
     for (size_t i=0; i<str.length(); i++) {
@@ -230,11 +230,16 @@ void cli_thread_proc() {
         std::vector<std::string> tokens = string_tokenize(args);
 
         if (kw=="load_instrument") {
-            //args.erase(std::remove(str.begin(), str.end(), '\"'), str.end());
-            load_instrument(tokens[0].c_str());
+            try {
+                std::lock_guard<SpinMutex> lock { processMutex };
+                load_instrument(tokens[0].c_str());
+            } catch (...) {
+                std::cout << "ERROR: Can't load instrument!\n";
+            }
         }
         else if (kw=="set_oversampling") {
             try {
+                std::lock_guard<SpinMutex> lock { processMutex };
                 synth.setOversamplingFactor(stoi(args));
             } catch (...) {
                 std::cout << "ERROR: Can't set oversampling!\n";
@@ -242,6 +247,7 @@ void cli_thread_proc() {
         }
         else if (kw=="set_preload_size") {
             try {
+                std::lock_guard<SpinMutex> lock { processMutex };
                 synth.setPreloadSize(stoi(args));
             } catch (...) {
                 std::cout << "ERROR: Can't set preload size!\n";
@@ -249,6 +255,7 @@ void cli_thread_proc() {
         }
         else if (kw=="set_voices") {
             try {
+                std::lock_guard<SpinMutex> lock { processMutex };
                 synth.setNumVoices(stoi(args));
             } catch (...) {
                 std::cout << "ERROR: Can't set num of voices!\n";
