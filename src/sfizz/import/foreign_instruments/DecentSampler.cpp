@@ -202,7 +202,7 @@ void DecentSamplerInstrumentImporter::emitRegionalOpcodes(std::ostream& os, pugi
             break;
         case hash("loopEnabled"):
             os << "loop_mode="
-               << ((xmlOpcode.value == "true") ? "loop_continuous" : "one_shot") << "\n";
+               << ((xmlOpcode.value == "true") ? "loop_continuous" : "no_loop") << "\n";
             break;
         case hash("attack"):
             convertToReal("ampeg_attack");
