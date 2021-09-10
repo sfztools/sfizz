@@ -194,7 +194,7 @@ bool load_instrument(const char *fpath) {
 }
 
 
-std::vector<std::string> string_tokenize(const std::string str) {
+std::vector<std::string> string_tokenize(const std::string& str) {
     std::vector<std::string> tokens;
     std::string part = "";
     for (size_t i=0; i<str.length(); i++) {
