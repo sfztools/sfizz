@@ -447,7 +447,7 @@ sfizz_ui_update_description(sfizz_ui_t *self, const InstrumentDescription& desc)
     }
 
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-        bool ccUsed = desc.ccUsed.test(cc);
+        bool ccUsed = desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc);
         self->uiReceiveValue(editIdForCCUsed(cc), float(ccUsed));
         if (ccUsed) {
             self->uiReceiveValue(editIdForCCDefault(cc), desc.ccDefault[cc]);

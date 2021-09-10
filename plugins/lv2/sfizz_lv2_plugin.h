@@ -127,6 +127,9 @@ struct sfizz_plugin_t
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
 
+    // Sostenuto or sustain
+    char sustain_or_sostenuto[16] {};
+
     // Current CC values in the synth (synchronized by `synth_mutex`)
     // updated by hdcc or file load
     float *cc_current {};

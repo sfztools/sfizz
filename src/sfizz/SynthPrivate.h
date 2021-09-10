@@ -248,6 +248,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::map<int, size_t> keyLabelsMap_;
     BitArray<128> keySlots_;
     BitArray<128> swLastSlots_;
+    BitArray<128> sustainOrSostenuto_;
     std::vector<NoteNamePair> keyswitchLabels_;
     std::map<int, size_t> keyswitchLabelsMap_;
 

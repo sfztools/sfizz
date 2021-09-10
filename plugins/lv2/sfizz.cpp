@@ -683,6 +683,12 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
     }
 }
 
+static bool
+sfizz_is_sustain_or_sostenuto(sfizz_plugin_t* self, unsigned cc)
+{
+    return (self->sustain_or_sostenuto[cc / 8] & (1 << (cc % 8)));
+}
+
 static void
 sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
 {
@@ -704,14 +710,23 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                             (int)msg[1],
                             msg[2]);
         break;
-    // Note(jpc) CC must be mapped by host, not handled here.
-    //           See LV2 midi:binding.
-#if defined(SFIZZ_LV2_PSA)
     case LV2_MIDI_MSG_CONTROLLER:
         {
             unsigned cc = msg[1];
             float value = float(msg[2]) * (1.0f / 127.0f);
 
+            // Send
+            if (sfizz_is_sustain_or_sostenuto(self, cc)) {
+                sfizz_automate_hdcc(self->synth,
+                                    (int)ev->time.frames,
+                                    (int)cc,
+                                    value);
+                break;
+            }
+
+// Note(jpc) CC must be mapped by host, not handled here.
+//           See LV2 midi:binding.
+#if defined(SFIZZ_LV2_PSA)
             switch (cc)
             {
             default:
@@ -733,9 +748,9 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                 sfizz_all_sound_off(self->synth);
                 break;
             }
+#endif
         }
         break;
-#endif
     case LV2_MIDI_MSG_CHANNEL_PRESSURE:
         sfizz_send_channel_aftertouch(self->synth,
                       (int)ev->time.frames,
@@ -1218,7 +1233,7 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
     //
     const InstrumentDescription desc = parseDescriptionBlob(blob);
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-        if (desc.ccUsed.test(cc)) {
+        if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             // Mark all the used CCs for automation with default values
             self->ccauto[cc] = desc.ccDefault[cc];
             self->have_ccauto = true;
@@ -1226,6 +1241,9 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
             self->cc_current[cc] = desc.ccDefault[cc];
         }
     }
+
+    memcpy(self->sustain_or_sostenuto, desc.sustainOrSostenuto.data(),
+        sizeof(self->sustain_or_sostenuto));
 }
 
 static bool
@@ -1457,7 +1475,7 @@ save(LV2_Handle instance,
     self->sfz_blob_mutex->unlock();
 
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-        if (desc.ccUsed.test(cc)) {
+        if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
             store(handle,
                   urid,
