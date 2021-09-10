@@ -44,7 +44,6 @@
 #include <algorithm>
 #include <vector>
 
-
 sfz::Sfizz synth;
 
 static jack_port_t* midiInputPort;
@@ -153,9 +152,9 @@ static void done(int sig)
     // exit(0);
 }
 
-
-bool load_instrument(const char *fpath) {
-    const char *importFormat = nullptr;
+bool loadInstrument(const char* fpath)
+{
+    const char* importFormat = nullptr;
     if (!sfizz_load_or_import_file(synth.handle(), fpath, &importFormat)) {
         std::cout << "Could not load the instrument file: " << fpath << '\n';
         return false;
@@ -193,32 +192,35 @@ bool load_instrument(const char *fpath) {
     return true;
 }
 
-
-std::vector<std::string> string_tokenize(const std::string& str) {
+std::vector<std::string> stringTokenize(const std::string& str)
+{
     std::vector<std::string> tokens;
     std::string part = "";
-    for (size_t i=0; i<str.length(); i++) {
+    for (size_t i = 0; i < str.length(); i++) {
         char c = str[i];
-        if (c==' ' && part!="") {
+        if (c == ' ' && part != "") {
             tokens.push_back(part);
-            part= "";
-        } else if (c== '\"'){
+            part = "";
+        } else if (c == '\"') {
             i++;
-            while (str[i]!='\"') { part += str[i]; i++; }
+            while (str[i] != '\"') {
+                part += str[i];
+                i++;
+            }
             tokens.push_back(part);
-            part= "";
+            part = "";
         } else {
             part += c;
         }
     }
-    if (part!="") {
+    if (part != "") {
         tokens.push_back(part);
     }
     return tokens;
 }
 
-
-void cli_thread_proc() {
+void cliThreadProc()
+{
     while (!shouldClose) {
         std::cout << "\n> ";
 
@@ -226,50 +228,44 @@ void cli_thread_proc() {
         std::getline(std::cin, command);
         std::size_t pos = command.find(" ");
         std::string kw = command.substr(0, pos);
-        std::string args = command.substr(pos+1);
-        std::vector<std::string> tokens = string_tokenize(args);
+        std::string args = command.substr(pos + 1);
+        std::vector<std::string> tokens = stringTokenize(args);
 
-        if (kw=="load_instrument") {
+        if (kw == "loadInstrument") {
             try {
                 std::lock_guard<SpinMutex> lock { processMutex };
-                load_instrument(tokens[0].c_str());
+                loadInstrument(tokens[0].c_str());
             } catch (...) {
                 std::cout << "ERROR: Can't load instrument!\n";
             }
-        }
-        else if (kw=="set_oversampling") {
+        } else if (kw == "set_oversampling") {
             try {
                 std::lock_guard<SpinMutex> lock { processMutex };
                 synth.setOversamplingFactor(stoi(args));
             } catch (...) {
                 std::cout << "ERROR: Can't set oversampling!\n";
             }
-        }
-        else if (kw=="set_preload_size") {
+        } else if (kw == "set_preload_size") {
             try {
                 std::lock_guard<SpinMutex> lock { processMutex };
                 synth.setPreloadSize(stoi(args));
             } catch (...) {
                 std::cout << "ERROR: Can't set preload size!\n";
             }
-        }
-        else if (kw=="set_voices") {
+        } else if (kw == "set_voices") {
             try {
                 std::lock_guard<SpinMutex> lock { processMutex };
                 synth.setNumVoices(stoi(args));
             } catch (...) {
                 std::cout << "ERROR: Can't set num of voices!\n";
             }
-        }
-        else if (kw=="quit") {
+        } else if (kw == "quit") {
             shouldClose = true;
-        }
-        else if (kw.size()>0){
-            std::cout << "ERROR: Unknown command '" << kw <<"'!\n";
+        } else if (kw.size() > 0) {
+            std::cout << "ERROR: Unknown command '" << kw << "'!\n";
         }
     }
 }
-
 
 ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
@@ -280,9 +276,7 @@ ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
 int main(int argc, char** argv)
 {
-    // std::ios::sync_with_stdio(false);
     auto arguments = absl::ParseCommandLine(argc, argv);
-
 
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
     const std::string clientName = absl::GetFlag(FLAGS_client_name);
@@ -376,23 +370,22 @@ int main(int argc, char** argv)
     }
 
     if (filesToParse[0]) {
-        load_instrument(filesToParse[0]);
+        loadInstrument(filesToParse[0]);
     }
 
-    std::thread cli_thread(cli_thread_proc);
+    std::thread cli_thread(cliThreadProc);
 
     signal(SIGHUP, done);
     signal(SIGINT, done);
     signal(SIGTERM, done);
     signal(SIGQUIT, done);
 
-
-    while (!shouldClose){
+    while (!shouldClose) {
         if (verboseState) {
             std::cout << "Active voices: " << synth.getNumActiveVoices() << '\n';
 #ifndef NDEBUG
-        std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
-        std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
+            std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
+            std::cout << "Total size: " << synth.getAllocatedBytes() << '\n';
 #endif
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
