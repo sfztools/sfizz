@@ -740,8 +740,13 @@ void SfizzVstProcessor::doBackgroundWork()
     for (;;) {
         bool isNotified = _semaToWorker.timed_wait(kBackgroundIdleInterval.count());
 
-        if (!_workRunning)
+        if (!_workRunning) {
+            // if the quit signal is sent, the semaphore is also signaled
+            // make sure the count is kept consistent
+            if (!isNotified)
+                _semaToWorker.wait();
             break;
+        }
 
         const char* id = nullptr;
         RTMessagePtr msg;
