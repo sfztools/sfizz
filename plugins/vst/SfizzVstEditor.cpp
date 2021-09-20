@@ -59,11 +59,8 @@ bool PLUGIN_API SfizzVstEditor::open(void* parent, const VSTGUI::PlatformType& p
     config = &x11config;
 #endif
 
-    Editor* editor = editor_.get();
-    if (!editor) {
-        editor = new Editor(*this);
-        editor_.reset(editor);
-    }
+    Editor* editor = new Editor(*this);
+    editor_.reset(editor);
 
     if (!frame->open(parent, platformType, config)) {
         fprintf(stderr, "[sfizz] error opening frame\n");
@@ -122,12 +119,21 @@ void PLUGIN_API SfizzVstEditor::close()
         for (FObject* update : updates_)
             update->removeDependent(this);
 
-        if (editor_)
+        if (editor_) {
             editor_->close();
+            editor_ = nullptr;
+        }
+
         if (frame->getNbReference() != 1)
             frame->forget();
-        else
+        else {
             frame->close();
+#if !defined(__APPLE__) && !defined(_WIN32)
+            // if vstgui is done using the runloop, destroy it
+            if (!RunLoop::get())
+                _runLoop = nullptr;
+#endif
+        }
         this->frame = nullptr;
     }
 
@@ -158,8 +164,6 @@ CMessageResult SfizzVstEditor::notify(CBaseObject* sender, const char* message)
             //   notifier of X11 events is working. If there is, remove this and
             //   avoid polluting Linux hosts which implement the loop correctly.
             runLoop->processSomeEvents();
-
-            runLoop->cleanupDeadHandlers();
         }
     }
 #endif
