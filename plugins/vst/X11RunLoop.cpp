@@ -9,6 +9,8 @@
 #include "vstgui/lib/platform/linux/x11platform.h"
 #include "base/source/fobject.h"
 #include <vector>
+#include <typeinfo>
+#include <cstdio>
 #include <cassert>
 
 namespace VSTGUI {
