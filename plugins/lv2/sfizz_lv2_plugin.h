@@ -86,6 +86,7 @@ struct sfizz_plugin_t
     LV2_URID sfizz_num_voices_uri {};
     LV2_URID sfizz_preload_size_uri {};
     LV2_URID sfizz_oversampling_uri {};
+    LV2_URID sfizz_last_keyswitch_uri {};
     LV2_URID sfizz_log_status_uri {};
     LV2_URID sfizz_check_modification_uri {};
     LV2_URID sfizz_active_voices_uri {};
@@ -120,6 +121,7 @@ struct sfizz_plugin_t
     float sample_rate {};
     std::atomic<int> must_update_midnam {};
     volatile bool must_automate_cc {};
+    int last_keyswitch { -1 };
 
     // Current instrument description
     std::mutex *sfz_blob_mutex {};
