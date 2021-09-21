@@ -145,6 +145,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     addProgramList(list);
     list->addRef();
 
+    // Use linear knobs
+    setKnobMode(kLinearMode);
+
     return kResultTrue;
 }
 
