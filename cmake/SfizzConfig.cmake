@@ -52,7 +52,7 @@ endif()
 
 # Set macOS compatibility level
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
 endif()
 
 # Do not define macros `min` and `max`
