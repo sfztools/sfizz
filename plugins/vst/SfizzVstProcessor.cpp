@@ -227,6 +227,10 @@ void SfizzVstProcessor::syncStateToSynth()
     synth->setScalaRootKey(_state.scalaRootKey);
     synth->setTuningFrequency(_state.tuningFrequency);
     synth->loadStretchTuningByRatio(_state.stretchedTuning);
+    if (_state.lastKeyswitch >= 0 && _state.lastKeyswitch <= 127) {
+        synth->hdNoteOn(0, _state.lastKeyswitch, 1.0f);
+        synth->hdNoteOff(1, _state.lastKeyswitch, 0.0f);
+    }
 }
 
 tresult PLUGIN_API SfizzVstProcessor::canProcessSampleSize(int32 symbolicSampleSize)
@@ -669,6 +673,14 @@ bool SfizzVstProcessor::processUpdate(FUnknown* changedUnknown, int32 message)
 
 void SfizzVstProcessor::receiveOSC(int delay, const char* path, const char* sig, const sfizz_arg_t* args)
 {
+    if (!strcmp(path, "/sw/last/current") && sig)
+    {
+        if (sig[0] == 'i')
+            _state.lastKeyswitch = args[0].i;
+        else if (sig[0] == 'N')
+            _state.lastKeyswitch = -1;
+    }
+
     uint8_t* oscTemp = _oscTemp.get();
     uint32 oscSize = sfizz_prepare_message(oscTemp, kOscTempSize, path, sig, args);
     if (oscSize <= kOscTempSize) {
@@ -740,8 +752,13 @@ void SfizzVstProcessor::doBackgroundWork()
     for (;;) {
         bool isNotified = _semaToWorker.timed_wait(kBackgroundIdleInterval.count());
 
-        if (!_workRunning)
+        if (!_workRunning) {
+            // if the quit signal is sent, the semaphore is also signaled
+            // make sure the count is kept consistent
+            if (!isNotified)
+                _semaToWorker.wait();
             break;
+        }
 
         const char* id = nullptr;
         RTMessagePtr msg;

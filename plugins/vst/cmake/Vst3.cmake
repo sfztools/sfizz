@@ -30,7 +30,8 @@ add_library(vst3sdk STATIC EXCLUDE_FROM_ALL
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstnoteexpressiontypes.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstparameters.cpp"
     "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstpresetfile.cpp"
-    "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstrepresentation.cpp")
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/vstrepresentation.cpp"
+    "${VST3SDK_BASEDIR}/public.sdk/source/vst/utility/stringconvert.cpp")
 if(WIN32)
     target_sources(vst3sdk PRIVATE
         "${VST3SDK_BASEDIR}/public.sdk/source/common/threadchecker_win32.cpp")
