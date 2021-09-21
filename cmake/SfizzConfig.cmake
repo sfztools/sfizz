@@ -18,9 +18,9 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 # Set C++ compatibility level
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" AND CMAKE_CXX_STANDARD LESS 17)
     set(CMAKE_CXX_STANDARD 17)
-elseif((SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2) AND CMAKE_CXX_STANDARD LESS 14)
-    # if the UI is part of the build, make it 14
-    set(CMAKE_CXX_STANDARD 14)
+elseif((SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2) AND CMAKE_CXX_STANDARD LESS 17)
+    # if the UI is part of the build, make it 17
+    set(CMAKE_CXX_STANDARD 17)
 endif()
 
 # Set build profiling options
@@ -52,7 +52,7 @@ endif()
 
 # Set macOS compatibility level
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14")
 endif()
 
 # Do not define macros `min` and `max`

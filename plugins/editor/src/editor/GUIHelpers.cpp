@@ -5,6 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "GUIHelpers.h"
+#include "utility/vstgui_before.h"
+#include <vstgui/lib/events.h>
+#include "utility/vstgui_after.h"
 
 class SFrameDisabler::KeyAndMouseHook : public CBaseObject,
                                         public IKeyboardHook,
@@ -13,12 +16,10 @@ public:
     void setEnabled(bool value) { enabled_ = value; }
 
 protected:
-    int32_t onKeyDown(const VstKeyCode&, CFrame*) { return enabled_ ? -1 : 1; }
-    int32_t onKeyUp(const VstKeyCode&, CFrame*) { return enabled_ ? -1 : 1; }
-    void onMouseEntered(CView*, CFrame*) {}
-    void onMouseExited(CView*, CFrame*) {}
-    CMouseEventResult onMouseMoved(CFrame*, const CPoint&, const CButtonState&) { return enabled_ ? kMouseEventNotHandled : kMouseEventHandled; }
-    CMouseEventResult onMouseDown(CFrame*, const CPoint&, const CButtonState&) { return enabled_ ? kMouseEventNotHandled : kMouseEventHandled; }
+    void onKeyboardEvent(KeyboardEvent& event, CFrame* frame) override;
+    void onMouseEntered(CView* view, CFrame* frame) override {}
+    void onMouseExited(CView* view, CFrame* frame) override {}
+    void onMouseEvent(MouseEvent& event, CFrame* frame) override;
 
 private:
     bool enabled_ = true;
@@ -50,4 +51,16 @@ void SFrameDisabler::disable()
 {
     hook_->setEnabled(false);
     delayedEnabler_->stop();
+}
+
+void SFrameDisabler::KeyAndMouseHook::onKeyboardEvent(KeyboardEvent& event, CFrame* frame)
+{
+    if (!enabled_)
+        event.consumed = true;
+}
+
+void SFrameDisabler::KeyAndMouseHook::onMouseEvent(MouseEvent& event, CFrame* frame)
+{
+    if (!enabled_)
+        event.consumed = true;
 }
