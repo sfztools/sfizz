@@ -231,7 +231,7 @@ void cliThreadProc()
         std::string args = command.substr(pos + 1);
         std::vector<std::string> tokens = stringTokenize(args);
 
-        if (kw == "loadInstrument") {
+        if (kw == "load_instrument") {
             try {
                 std::lock_guard<SpinMutex> lock { processMutex };
                 loadInstrument(tokens[0].c_str());
