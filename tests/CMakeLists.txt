@@ -49,6 +49,7 @@ set(SFIZZ_TEST_SOURCES
     LFOT.cpp
     MessagingT.cpp
     OversamplerT.cpp
+    MemoryT.cpp
     DataHelpers.h
     DataHelpers.cpp
 )
