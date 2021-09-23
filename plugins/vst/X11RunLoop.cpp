@@ -187,7 +187,7 @@ bool RunLoop::unregisterEventHandler(X11::IEventHandler* handler)
         return false;
 
     Impl::EventHandler *eh = impl->eventHandlers[index].get();
-    if (!impl->runLoop->unregisterEventHandler(eh))
+    if (impl->runLoop->unregisterEventHandler(eh) != Steinberg::kResultTrue)
         return false;
 
     eh->alive = false;
@@ -219,7 +219,7 @@ bool RunLoop::unregisterTimer(X11::ITimerHandler* handler)
         return false;
 
     Impl::TimerHandler *th = impl->timerHandlers[index].get();
-    if (!impl->runLoop->unregisterTimer(th))
+    if (impl->runLoop->unregisterTimer(th) != Steinberg::kResultTrue)
         return false;
 
     th->alive = false;
