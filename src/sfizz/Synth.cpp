@@ -271,6 +271,7 @@ void Synth::Impl::clear()
     filePool.setRamLoading(config::loadInRam);
     clearCCLabels();
     currentUsedCCs_.clear();
+    sustainOrSostenuto_.clear();
     changedCCsThisCycle_.clear();
     changedCCsLastCycle_.clear();
     clearKeyLabels();
@@ -2131,8 +2132,11 @@ void Synth::Impl::collectUsedCCsFromModulations(BitArray<config::numCCs>& usedCC
 BitArray<config::numCCs> Synth::Impl::collectAllUsedCCs()
 {
     BitArray<config::numCCs> used;
-    for (const LayerPtr& layerPtr : layers_)
+    for (const LayerPtr& layerPtr : layers_) {
         collectUsedCCsFromRegion(used, layerPtr->getRegion());
+        sustainOrSostenuto_.set(layerPtr->region_.sustainCC);
+        sustainOrSostenuto_.set(layerPtr->region_.sostenutoCC);
+    }
     collectUsedCCsFromModulations(used, resources_.getModMatrix());
     return used;
 }

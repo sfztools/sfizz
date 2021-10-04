@@ -15,6 +15,7 @@
 #include "vstgui/lib/cvstguitimer.h"
 #include "vstgui/lib/cframe.h"
 #include "utility/vstgui_after.h"
+#include "absl/strings/numbers.h"
 
 ///
 SBoxContainer::SBoxContainer(const CRect& size)
@@ -582,7 +583,7 @@ void SStyledKnob::draw(CDrawContext* dc)
         dc->drawLine(p1, p2);
     }
 
-    if (valueToStringFunction_ && fontColor_.alpha > 0) {
+    if (valueToStringFunction_ && fontColor_.alpha > 0 && !hideValue_) {
         std::string text;
         if (valueToStringFunction_(getValue(), text)) {
             dc->setFont(font_);
@@ -592,12 +593,29 @@ void SStyledKnob::draw(CDrawContext* dc)
     }
 }
 
+void CFilledRect::draw(CDrawContext* dc)
+{
+    CRect bounds = getViewSize();
+    dc->setFillColor(color_);
+    bool isRounded = radius_ > 0.0;
+    if (isRounded) {
+        auto roundRect = owned(dc->createRoundRectGraphicsPath(bounds, radius_));
+        dc->drawGraphicsPath(roundRect, CDrawContext::kPathFilled);
+    } else {
+        dc->drawRect(bounds, kDrawFilled);
+    }
+}
+
 ///
 SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t tag)
     : CViewContainer(size),
       label_(makeOwned<CTextLabel>(CRect())),
+      valueEdit_(makeOwned<CTextEdit>(CRect(), listener, tag)),
       knob_(makeOwned<SStyledKnob>(CRect(), listener, tag)),
-      ccLabel_(makeOwned<CTextLabel>(CRect()))
+      ccLabel_(makeOwned<CTextLabel>(CRect())),
+      shadingRectangle_(makeOwned<CFilledRect>(CRect())),
+      menuEntry_(makeOwned<CMenuItem>("Use HDCC", tag)),
+      menuListener_(owned(new MenuListener(*this)))
 {
     setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
 
@@ -614,15 +632,127 @@ SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t ta
     ccLabel_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
     ccLabel_->setFontColor(CColor(0xff, 0xff, 0xff));
 
+    valueEdit_->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+    valueEdit_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+    valueEdit_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
+    valueEdit_->registerViewListener(this);
+    setHDMode(false);
+    valueEdit_->setVisible(false);
+
+    shadingRectangle_->setVisible(false);
+
     addView(label_);
     label_->remember();
     addView(knob_);
     knob_->remember();
+    addView(shadingRectangle_);
+    shadingRectangle_->remember();
+    addView(valueEdit_);
+    valueEdit_->remember();
     addView(ccLabel_);
     ccLabel_->remember();
-
     updateViewColors();
     updateViewSizes();
+}
+
+SKnobCCBox::~SKnobCCBox()
+{
+    valueEdit_->unregisterViewListener(this);
+}
+
+void SKnobCCBox::setHDMode(bool mode)
+{
+    if (mode) {
+        auto valueToString = [](float value, std::string& text, VSTGUI::CParamDisplay*) -> bool {
+            std::string s = std::to_string(value + 0.005f);
+            text = s.substr(0, 4);
+            return true;
+        };
+        knob_->setValueToStringFunction([valueToString](float value, std::string& text) {
+            return valueToString(value, text, nullptr);
+        });
+        valueEdit_->setValueToStringFunction2(valueToString);
+
+        valueEdit_->setStringToValueFunction([](UTF8StringPtr txt, float& result, CTextEdit*) -> bool {
+            float value;
+            if (absl::SimpleAtof(txt, &value)) {
+                result = value;
+                return true;
+            }
+
+            return false;
+        });
+        menuEntry_->setTitle("Use low-res. CC");
+    } else {
+        auto valueToString = [](float value, std::string& text, VSTGUI::CParamDisplay*) -> bool {
+            text = std::to_string(std::lround(value * 127));
+            return true;
+        };
+        knob_->setValueToStringFunction([valueToString](float value, std::string& text) {
+            return valueToString(value, text, nullptr);
+        });
+        valueEdit_->setValueToStringFunction2(valueToString);
+
+        valueEdit_->setStringToValueFunction([](UTF8StringPtr txt, float& result, CTextEdit*) -> bool {
+            float value;
+            if (absl::SimpleAtof(txt, &value)) {
+                result = value / 127.0f;
+                return true;
+            }
+
+            return false;
+        });
+        menuEntry_->setTitle("Use high-res. CC");
+    }
+
+    hdMode_ = mode;
+    valueEdit_->setValue(valueEdit_->getValue());
+    invalid();
+}
+
+CMouseEventResult SKnobCCBox::onMouseDown(CPoint& where, const CButtonState& buttons)
+{
+    if (buttons.isRightButton()) {
+        CFrame* frame = getFrame();
+        CPoint frameWhere = where;
+        frameWhere.offset(-getViewSize().left, -getViewSize().top);
+        this->localToFrame(frameWhere);
+
+        auto self = shared(this);
+        frame->doAfterEventProcessing([self, frameWhere]() {
+            if (CFrame* frame = self->getFrame()) {
+                SharedPointer<COptionMenu> menu =
+                    owned(new COptionMenu(CRect(), self->menuListener_, -1, nullptr, nullptr, COptionMenu::kPopupStyle));
+                menu->addEntry(self->menuEntry_);
+                self->menuEntry_->remember(); // above call does not increment refcount
+
+                menu->setFont(self->getValueEditFont());
+                menu->setFontColor(self->getValueEditFontColor());
+                menu->setBackColor(self->getValueEditBackColor());
+                menu->popup(frame, frameWhere);
+            }
+        });
+        return kMouseEventHandled;
+    } else if (buttons.isDoubleClick() && !valueEdit_->isVisible()) {
+        valueEdit_->setVisible(true);
+        shadingRectangle_->setVisible(true);
+        knob_->setHideValue(true);
+        valueEdit_->takeFocus();
+        invalid();
+        return kMouseEventHandled;
+    }
+
+    return CViewContainer::onMouseDown(where, buttons);
+}
+
+void SKnobCCBox::viewLostFocus (CView* view)
+{
+    if (view == valueEdit_.get()) {
+        shadingRectangle_->setVisible(false);
+        valueEdit_->setVisible(false);
+        knob_->setHideValue(false);
+        invalid();
+    }
 }
 
 void SKnobCCBox::setHue(float hue)
@@ -637,10 +767,31 @@ void SKnobCCBox::setNameLabelFont(CFontRef font)
     updateViewSizes();
 }
 
+void SKnobCCBox::setValueEditFont(CFontRef font)
+{
+    label_->setFont(font);
+    updateViewSizes();
+}
+
 void SKnobCCBox::setCCLabelFont(CFontRef font)
 {
     ccLabel_->setFont(font);
     updateViewSizes();
+}
+
+void SKnobCCBox::setValue(float value)
+{
+    float oldValue = knob_->getValue();
+    knob_->setValue(value);
+    valueEdit_->setValue(value);
+    if (value != oldValue)
+        invalid();
+}
+
+void SKnobCCBox::setDefaultValue(float value)
+{
+    knob_->setDefaultValue(value);
+    valueEdit_->setDefaultValue(value);
 }
 
 void SKnobCCBox::updateViewSizes()
@@ -650,19 +801,30 @@ void SKnobCCBox::updateViewSizes()
 
     const CFontRef nameFont = label_->getFont();
     const CFontRef ccFont = ccLabel_->getFont();
+    const CFontRef valueFont = valueEdit_->getFont();
 
     nameLabelSize_ = CRect(0.0, 0.0, size.getWidth(), nameFont->getSize() + 2 * ypad);
     ccLabelSize_ = CRect(0.0, size.getHeight() - ccFont->getSize() - 2 * ypad, size.getWidth(), size.getHeight());
     knobSize_ = CRect(0.0, nameLabelSize_.bottom, size.getWidth(), ccLabelSize_.top);
+    valueEditSize_ = CRect(
+        size.getWidth() / 2 - valueFont->getSize(),
+        size.getHeight() / 2 - valueFont->getSize() / 2,
+        size.getWidth() / 2 + valueFont->getSize(),
+        size.getHeight() / 2 + valueFont->getSize() / 2
+    );
 
     // remove knob side areas
     CCoord side = std::max(0.0, knobSize_.getWidth() - knobSize_.getHeight());
     knobSize_.extend(-0.5 * side, 0.0);
+    shadingRectangleSize_ = knobSize_;
+    shadingRectangleSize_.bottom -= ypad;
 
     //
     label_->setViewSize(nameLabelSize_);
     knob_->setViewSize(knobSize_);
     ccLabel_->setViewSize(ccLabelSize_);
+    valueEdit_->setViewSize(valueEditSize_);
+    shadingRectangle_->setViewSize(shadingRectangleSize_);
 
     invalid();
 }
@@ -746,11 +908,6 @@ SControlsPanel::ControlSlot* SControlsPanel::getOrCreateSlot(uint32_t index)
     slot->box = box;
     slot->box->setCCLabelText(("CC " + std::to_string(index)).c_str());
 
-    slot->box->setValueToStringFunction([](float value, std::string& text) -> bool {
-        text = std::to_string(std::lround(value * 127));
-        return true;
-    });
-
     syncSlotStyle(index);
 
     return slot;
@@ -760,10 +917,9 @@ void SControlsPanel::setControlValue(uint32_t index, float value)
 {
     ControlSlot* slot = getOrCreateSlot(index);
     SKnobCCBox* box = slot->box;
-    auto* control = box->getControl();
-    float oldValue = control->getValue();
-    control->setValue(value);
-    if (control->getValue() != oldValue)
+    float oldValue = box->getValue();
+    box->setValue(value);
+    if (box->getValue() != oldValue)
         box->invalid();
 }
 
@@ -771,7 +927,7 @@ void SControlsPanel::setControlDefaultValue(uint32_t index, float value)
 {
     ControlSlot* slot = getOrCreateSlot(index);
     SKnobCCBox* box = slot->box;
-    box->getControl()->setDefaultValue(value);
+    box->setDefaultValue(value);
 }
 
 void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
@@ -788,12 +944,14 @@ void SControlsPanel::setControlLabelText(uint32_t index, UTF8StringPtr text)
 void SControlsPanel::setNameLabelFont(CFontRef font)
 {
     slots_[0]->box->setNameLabelFont(font);
+    slots_[0]->box->setValueEditFont(font);
     syncAllSlotStyles();
 }
 
 void SControlsPanel::setNameLabelFontColor(CColor color)
 {
     slots_[0]->box->setNameLabelFontColor(color);
+    slots_[0]->box->setValueEditFontColor(color);
     syncAllSlotStyles();
 }
 
@@ -812,6 +970,24 @@ void SControlsPanel::setCCLabelBackColor(CColor color)
 void SControlsPanel::setCCLabelFontColor(CColor color)
 {
     slots_[0]->box->setCCLabelFontColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setValueEditBackColor(CColor color)
+{
+    slots_[0]->box->setValueEditBackColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setShadingRectangleColor(CColor color)
+{
+    slots_[0]->box->setShadingRectangleColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setValueEditFontColor(CColor color)
+{
+    slots_[0]->box->setValueEditFontColor(color);
     syncAllSlotStyles();
 }
 
@@ -946,6 +1122,11 @@ void SControlsPanel::syncSlotStyle(uint32_t index)
     if (cur != ref) {
         cur->setNameLabelFont(ref->getNameLabelFont());
         cur->setNameLabelFontColor(ref->getNameLabelFontColor());
+
+        cur->setValueEditFont(ref->getValueEditFont());
+        cur->setValueEditFontColor(ref->getValueEditFontColor());
+
+        cur->setShadingRectangleColor(ref->getShadingRectangleColor());
 
         cur->setCCLabelFont(ref->getCCLabelFont());
         cur->setCCLabelFontColor(ref->getCCLabelFontColor());

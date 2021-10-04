@@ -193,7 +193,8 @@ set(SFIZZ_SOURCES
     sfizz/effects/impl/ResonantStringAVX.cpp
     sfizz/effects/impl/ResonantArray.cpp
     sfizz/effects/impl/ResonantArraySSE.cpp
-    sfizz/effects/impl/ResonantArrayAVX.cpp)
+    sfizz/effects/impl/ResonantArrayAVX.cpp
+    sfizz/utility/c++17/AlignedMemorySupport.cpp)
 
 include(SfizzSIMDSourceFiles)
 sfizz_add_simd_sources(SFIZZ_SOURCES ".")
@@ -302,6 +303,9 @@ if(SFIZZ_USE_SNDFILE)
 endif()
 if(SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
+if(SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT)
+    target_compile_definitions(sfizz_internal PRIVATE "SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT=1")
 endif()
 sfizz_enable_fast_math(sfizz_internal)
 

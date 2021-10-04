@@ -145,6 +145,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     addProgramList(list);
     list->addRef();
 
+    // Use linear knobs
+    setKnobMode(kLinearMode);
+
     return kResultTrue;
 }
 
@@ -364,8 +367,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
         }
 
         if (Vst::IComponentHandler* componentHandler = getComponentHandler())
-            // NOTE(jpc) I think that's the right one, but it needs confirmation
-            componentHandler->restartComponent(Vst::kNoteExpressionChanged);
+            componentHandler->restartComponent(Vst::kKeyswitchChanged);
 
         // update the parameter titles and notify
         for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {

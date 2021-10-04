@@ -42,6 +42,9 @@
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <vector>
+
+sfz::Sfizz synth;
 
 static jack_port_t* midiInputPort;
 static jack_port_t* outputPort1;
@@ -149,30 +152,148 @@ static void done(int sig)
     // exit(0);
 }
 
+bool loadInstrument(const char* fpath)
+{
+    const char* importFormat = nullptr;
+    if (!sfizz_load_or_import_file(synth.handle(), fpath, &importFormat)) {
+        std::cout << "Could not load the instrument file: " << fpath << '\n';
+        return false;
+    }
+
+    std::cout << "Instrument loaded: " << fpath << '\n';
+    std::cout << "===========================" << '\n';
+    std::cout << "Total:" << '\n';
+    std::cout << "\tMasters: " << synth.getNumMasters() << '\n';
+    std::cout << "\tGroups: " << synth.getNumGroups() << '\n';
+    std::cout << "\tRegions: " << synth.getNumRegions() << '\n';
+    std::cout << "\tCurves: " << synth.getNumCurves() << '\n';
+    std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
+#if 0 // not currently in public API
+    std::cout << "===========================" << '\n';
+    std::cout << "Included files:" << '\n';
+    for (auto& file : synth.getParser().getIncludedFiles())
+        std::cout << '\t' << file << '\n';
+    std::cout << "===========================" << '\n';
+    std::cout << "Defines:" << '\n';
+    for (auto& define : synth.getParser().getDefines())
+        std::cout << '\t' << define.first << '=' << define.second << '\n';
+#endif
+    std::cout << "===========================" << '\n';
+    std::cout << "Unknown opcodes:";
+    for (auto& opcode : synth.getUnknownOpcodes())
+        std::cout << opcode << ',';
+    std::cout << '\n';
+    if (importFormat) {
+        std::cout << "===========================" << '\n';
+        std::cout << "Import format: " << importFormat << '\n';
+    }
+    // std::cout << std::flush;
+
+    return true;
+}
+
+std::vector<std::string> stringTokenize(const std::string& str)
+{
+    std::vector<std::string> tokens;
+    std::string part = "";
+    for (size_t i = 0; i < str.length(); i++) {
+        char c = str[i];
+        if (c == ' ' && part != "") {
+            tokens.push_back(part);
+            part = "";
+        } else if (c == '\"') {
+            i++;
+            while (str[i] != '\"') {
+                part += str[i];
+                i++;
+            }
+            tokens.push_back(part);
+            part = "";
+        } else {
+            part += c;
+        }
+    }
+    if (part != "") {
+        tokens.push_back(part);
+    }
+    return tokens;
+}
+
+void cliThreadProc()
+{
+    while (!shouldClose) {
+        std::cout << "\n> ";
+
+        std::string command;
+        std::getline(std::cin, command);
+        std::size_t pos = command.find(" ");
+        std::string kw = command.substr(0, pos);
+        std::string args = command.substr(pos + 1);
+        std::vector<std::string> tokens = stringTokenize(args);
+
+        if (kw == "load_instrument") {
+            try {
+                std::lock_guard<SpinMutex> lock { processMutex };
+                loadInstrument(tokens[0].c_str());
+            } catch (...) {
+                std::cout << "ERROR: Can't load instrument!\n";
+            }
+        } else if (kw == "set_oversampling") {
+            try {
+                std::lock_guard<SpinMutex> lock { processMutex };
+                synth.setOversamplingFactor(stoi(args));
+            } catch (...) {
+                std::cout << "ERROR: Can't set oversampling!\n";
+            }
+        } else if (kw == "set_preload_size") {
+            try {
+                std::lock_guard<SpinMutex> lock { processMutex };
+                synth.setPreloadSize(stoi(args));
+            } catch (...) {
+                std::cout << "ERROR: Can't set preload size!\n";
+            }
+        } else if (kw == "set_voices") {
+            try {
+                std::lock_guard<SpinMutex> lock { processMutex };
+                synth.setNumVoices(stoi(args));
+            } catch (...) {
+                std::cout << "ERROR: Can't set num of voices!\n";
+            }
+        } else if (kw == "quit") {
+            shouldClose = true;
+        } else if (kw.size() > 0) {
+            std::cout << "ERROR: Unknown command '" << kw << "'!\n";
+        }
+    }
+}
+
 ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
-ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded value");
+ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded size");
+ABSL_FLAG(uint32_t, num_voices, 32, "Num of voices");
+ABSL_FLAG(bool, jack_autoconnect, false, "Autoconnect audio output");
 ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
 int main(int argc, char** argv)
 {
-    // std::ios::sync_with_stdio(false);
     auto arguments = absl::ParseCommandLine(argc, argv);
-    if (arguments.size() < 2) {
-        std::cout << "You need to specify an SFZ file to load." << '\n';
-        return -1;
-    }
 
     auto filesToParse = absl::MakeConstSpan(arguments).subspan(1);
     const std::string clientName = absl::GetFlag(FLAGS_client_name);
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
+    const uint32_t num_voices = absl::GetFlag(FLAGS_num_voices);
+    const bool jack_autoconnect = absl::GetFlag(FLAGS_jack_autoconnect);
     const bool verboseState = absl::GetFlag(FLAGS_state);
 
     std::cout << "Flags" << '\n';
     std::cout << "- Client name: " << clientName << '\n';
     std::cout << "- Oversampling: " << oversampling << '\n';
-    std::cout << "- Preloaded Size: " << preload_size << '\n';
+    std::cout << "- Preloaded size: " << preload_size << '\n';
+    std::cout << "- Num of voices: " << num_voices << '\n';
+    std::cout << "- Audio Autoconnect: " << jack_autoconnect << '\n';
+    std::cout << "- Verbose State: " << verboseState << '\n';
+
     const auto factor = [&]() {
         if (oversampling == "x1") return 1;
         if (oversampling == "x2") return 2;
@@ -186,43 +307,9 @@ int main(int argc, char** argv)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
-    sfz::Sfizz synth;
     synth.setOversamplingFactor(factor);
     synth.setPreloadSize(preload_size);
-
-    const char *importFormat = nullptr;
-    if (!sfizz_load_or_import_file(synth.handle(), filesToParse[0], &importFormat)) {
-        std::cout << "Could not load the instrument file: " << filesToParse[0] << '\n';
-        return 1;
-    }
-
-    std::cout << "==========" << '\n';
-    std::cout << "Total:" << '\n';
-    std::cout << "\tMasters: " << synth.getNumMasters() << '\n';
-    std::cout << "\tGroups: " << synth.getNumGroups() << '\n';
-    std::cout << "\tRegions: " << synth.getNumRegions() << '\n';
-    std::cout << "\tCurves: " << synth.getNumCurves() << '\n';
-    std::cout << "\tPreloadedSamples: " << synth.getNumPreloadedSamples() << '\n';
-#if 0 // not currently in public API
-    std::cout << "==========" << '\n';
-    std::cout << "Included files:" << '\n';
-    for (auto& file : synth.getParser().getIncludedFiles())
-        std::cout << '\t' << file << '\n';
-    std::cout << "==========" << '\n';
-    std::cout << "Defines:" << '\n';
-    for (auto& define : synth.getParser().getDefines())
-        std::cout << '\t' << define.first << '=' << define.second << '\n';
-#endif
-    std::cout << "==========" << '\n';
-    std::cout << "Unknown opcodes:";
-    for (auto& opcode : synth.getUnknownOpcodes())
-        std::cout << opcode << ',';
-    std::cout << '\n';
-    if (importFormat) {
-        std::cout << "==========" << '\n';
-        std::cout << "Import format: " << importFormat << '\n';
-    }
-    // std::cout << std::flush;
+    synth.setNumVoices(num_voices);
 
     jack_status_t status;
     client = jack_client_open(clientName.c_str(), JackNullOption, &status);
@@ -265,32 +352,40 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto systemPorts = jack_get_ports(client, nullptr, nullptr, JackPortIsPhysical | JackPortIsInput);
-    if (systemPorts == nullptr) {
-        std::cerr << "No physical output ports found" << '\n';
-        return 1;
+    if (jack_autoconnect) {
+        auto systemPorts = jack_get_ports(client, nullptr, nullptr, JackPortIsPhysical | JackPortIsInput);
+        if (systemPorts == nullptr) {
+            std::cerr << "No physical output ports found" << '\n';
+            return 1;
+        }
+
+        if (jack_connect(client, jack_port_name(outputPort1), systemPorts[0])) {
+            std::cerr << "Cannot connect to physical output ports (0)" << '\n';
+        }
+
+        if (jack_connect(client, jack_port_name(outputPort2), systemPorts[1])) {
+            std::cerr << "Cannot connect to physical output ports (1)" << '\n';
+        }
+        jack_free(systemPorts);
     }
 
-    if (jack_connect(client, jack_port_name(outputPort1), systemPorts[0])) {
-        std::cerr << "Cannot connect to physical output ports (0)" << '\n';
+    if (filesToParse[0]) {
+        loadInstrument(filesToParse[0]);
     }
 
-    if (jack_connect(client, jack_port_name(outputPort2), systemPorts[1])) {
-        std::cerr << "Cannot connect to physical output ports (1)" << '\n';
-    }
-    jack_free(systemPorts);
+    std::thread cli_thread(cliThreadProc);
 
     signal(SIGHUP, done);
     signal(SIGINT, done);
     signal(SIGTERM, done);
     signal(SIGQUIT, done);
 
-    while (!shouldClose){
+    while (!shouldClose) {
         if (verboseState) {
             std::cout << "Active voices: " << synth.getNumActiveVoices() << '\n';
 #ifndef NDEBUG
-        std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
-        std::cout << "Total size: " << synth.getAllocatedBytes()  << '\n';
+            std::cout << "Allocated buffers: " << synth.getAllocatedBuffers() << '\n';
+            std::cout << "Total size: " << synth.getAllocatedBytes() << '\n';
 #endif
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));

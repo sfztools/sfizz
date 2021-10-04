@@ -86,6 +86,7 @@ struct sfizz_plugin_t
     LV2_URID sfizz_num_voices_uri {};
     LV2_URID sfizz_preload_size_uri {};
     LV2_URID sfizz_oversampling_uri {};
+    LV2_URID sfizz_last_keyswitch_uri {};
     LV2_URID sfizz_log_status_uri {};
     LV2_URID sfizz_check_modification_uri {};
     LV2_URID sfizz_active_voices_uri {};
@@ -120,12 +121,16 @@ struct sfizz_plugin_t
     float sample_rate {};
     std::atomic<int> must_update_midnam {};
     volatile bool must_automate_cc {};
+    int last_keyswitch { -1 };
 
     // Current instrument description
     std::mutex *sfz_blob_mutex {};
     volatile int sfz_blob_serial {};
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
+
+    // Sostenuto or sustain
+    char sustain_or_sostenuto[16] {};
 
     // Current CC values in the synth (synchronized by `synth_mutex`)
     // updated by hdcc or file load

@@ -1568,6 +1568,26 @@ TEST_CASE("[Synth] Off by alone and repeated")
     REQUIRE( numPlayingVoices(synth) == 3 );
 }
 
+TEST_CASE("[Synth] Off by with staccato notes")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> group=1 off_by=1 sample=*sine ampeg_release=2
+    )");
+    synth.noteOn(0, 60, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 1 );
+    synth.noteOff(0, 60, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numPlayingVoices(synth) == 0 );
+    REQUIRE( numActiveVoices(synth) == 1 );
+    synth.noteOn(0, 62, 85);
+    synth.renderBlock(buffer);
+    REQUIRE( numActiveVoices(synth) == 1 );
+}
+
 
 TEST_CASE("[Synth] Off by same note and group")
 {

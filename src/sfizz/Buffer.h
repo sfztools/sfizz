@@ -26,10 +26,12 @@
 #pragma once
 #include "Config.h"
 #include "utility/LeakDetector.h"
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <type_traits>
+#include <algorithm>
 #include <utility>
 #include <atomic>
 

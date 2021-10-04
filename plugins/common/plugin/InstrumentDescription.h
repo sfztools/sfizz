@@ -26,6 +26,7 @@ struct InstrumentDescription {
     std::string image;
     BitArray<128> keyUsed {};
     BitArray<128> keyswitchUsed {};
+    BitArray<128> sustainOrSostenuto {};
     BitArray<sfz::config::numCCs> ccUsed {};
     std::array<std::string, 128> keyLabel {};
     std::array<std::string, 128> keyswitchLabel {};
