@@ -1414,10 +1414,10 @@ void Voice::Impl::fillInterpolatedWithQuality(
     absl::Span<const int> indices, absl::Span<const float> coeffs,
     absl::Span<const float> addingGains, int quality, float mod)
 {
-    switch (clamp(quality, 0, 10)) {
+    switch (clamp(quality, 0, 11)) {
     case 0:
         {
-            constexpr auto itp = kInterpolatorLoFi;
+            constexpr auto itp = kInterpolatorNearest;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
@@ -1484,6 +1484,12 @@ void Voice::Impl::fillInterpolatedWithQuality(
     case 10:
         {
             constexpr auto itp = kInterpolatorSinc72;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
+    case 11:
+        {
+            constexpr auto itp = kInterpolatorLoFi;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;

@@ -160,7 +160,7 @@ FloatSpec flexEGPointTimeMod { 0.0f, {-100.0f, 100.0f}, kPermissiveBounds };
 FloatSpec flexEGPointLevel { 0.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 FloatSpec flexEGPointLevelMod { 0.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 FloatSpec flexEGPointShape { 0.0f, {-100.0f, 100.0f}, kPermissiveBounds };
-Int32Spec sampleQuality { 2, {0, 10}, 0 };
+Int32Spec sampleQuality { 2, {0, 11}, 0 };
 Int32Spec octaveOffset { 0, {-10, 10}, kPermissiveBounds };
 Int32Spec noteOffset { 0, {-127, 127}, kPermissiveBounds };
 
