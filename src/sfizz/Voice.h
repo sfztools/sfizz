@@ -225,6 +225,7 @@ public:
      * @return int
      */
     const TriggerEvent& getTriggerEvent() const noexcept;
+    sfz::Filter downsampleFilter;
 
     /**
      * @brief Reset the voice to its initial values
