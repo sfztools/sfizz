@@ -68,7 +68,7 @@ TEST_CASE("[Synth] Change the number of voice while playing")
 TEST_CASE("[Synth] Check that the sample per block and sample rate are actually propagated to all voices even on recreation")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(256);
+    synth.setSamplesPerBlock(2);
     synth.setSampleRate(96000);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
@@ -81,7 +81,7 @@ TEST_CASE("[Synth] Check that the sample per block and sample rate are actually 
         REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 256 );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 96000.0f );
     }
-    synth.setSamplesPerBlock(128);
+    synth.setSamplesPerBlock(1);
     synth.setSampleRate(48000);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
@@ -205,7 +205,7 @@ TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at t
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE(synth.getVoiceView(0)->offedOrFree());
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -232,7 +232,7 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE(synth.getVoiceView(0)->released());
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -259,7 +259,7 @@ TEST_CASE("[Synth] loopmode=one_shot and an envelope properly kills the voice at
     synth.renderBlock(buffer); // Decay (0.02)
     synth.renderBlock(buffer);
     synth.renderBlock(buffer); // Release (0.1)
-    REQUIRE(synth.getVoiceView(0)->released());
+    REQUIRE(synth.getVoiceView(0)->releasedOrFree());
     // Release is 0.1s
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
@@ -429,6 +429,98 @@ TEST_CASE("[Synth] Velocity points")
     REQUIRE( !synth.getRegionView(1)->velocityPoints.empty());
     REQUIRE( synth.getRegionView(1)->velocityPoints[0].first == 64 );
     REQUIRE( synth.getRegionView(1)->velocityPoints[0].second == 1.0_a );
+}
+
+TEST_CASE("[Synth] velcurve")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/velocity_endpoints.sfz", R"(
+        <region> amp_velcurve_064=1 sample=*sine
+        <region> amp_velcurve_064=1 amp_veltrack=-100 sample=*sine
+    )");
+
+    struct VelocityData { float velocity, gain; bool exact; };
+
+    static const VelocityData veldata[] = {
+        { 0_norm, 0.0, true },
+        { 32_norm, 0.5f, false },
+        { 64_norm, 1.0, true },
+        { 96_norm, 1.0, true },
+        { 127_norm, 1.0, true },
+    };
+
+    REQUIRE(synth.getNumRegions() == 2);
+    const sfz::Region* r1 = synth.getRegionView(0);
+    const sfz::Region* r2 = synth.getRegionView(1);
+
+    for (const VelocityData& vd : veldata) {
+        if (vd.exact) {
+            REQUIRE(r1->velocityCurve(vd.velocity) == vd.gain);
+            REQUIRE(r2->velocityCurve(vd.velocity) == 1.0f - vd.gain);
+        }
+        else {
+            REQUIRE(r1->velocityCurve(vd.velocity) == Approx(vd.gain).margin(1e-2));
+            REQUIRE(r2->velocityCurve(vd.velocity) == Approx(1.0f - vd.gain).margin(1e-2));
+        }
+    }
+}
+
+TEST_CASE("[Synth] veltrack")
+{
+    struct VelocityData { float velocity, dBGain; };
+    struct VeltrackData { float veltrack; absl::Span<const VelocityData> veldata; };
+
+    // measured on ARIA
+    const VelocityData veldata25[] = {
+        { 127_norm, 0.0 },
+        { 96_norm,  -1 },
+        { 64_norm,  -1.8 },
+        { 32_norm,  -2.3 },
+        { 1_norm,   -2.5 },
+    };
+    const VelocityData veldata50[] = {
+        { 127_norm,  0.0 },
+        { 96_norm,  -2.1 },
+        { 64_norm,  -4.1 },
+        { 32_norm,  -5.5 },
+        { 1_norm,   -6.0 },
+    };
+    const VelocityData veldata75[] = {
+        { 127_norm,  0.0 },
+        { 96_norm,  -3.4 },
+        { 64_norm,  -7.2 },
+        { 32_norm,  -10.5 },
+        { 1_norm,   -12.0 },
+    };
+    const VelocityData veldata100[] = {
+        { 127_norm,  0.0 },
+        { 96_norm,  -4.9 },
+        { 64_norm,  -12.0 },
+        { 32_norm,  -24.0 },
+        { 1_norm,   -84.1 },
+    };
+
+    const VeltrackData veltrackdata[] = {
+        { 25, absl::MakeConstSpan(veldata25) },
+        { 50, absl::MakeConstSpan(veldata50) },
+        { 75, absl::MakeConstSpan(veldata75) },
+        { 100, absl::MakeConstSpan(veldata100) },
+    };
+
+    for (const VeltrackData& vt : veltrackdata) {
+        sfz::Synth synth;
+        const std::string sfzCode = "<region>sample=*sine amp_veltrack=" +
+            std::to_string(vt.veltrack);
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/veltrack.sfz", sfzCode);
+
+        REQUIRE(synth.getNumRegions() == 1);
+        const sfz::Region* r = synth.getRegionView(0);
+
+        for (const VelocityData& vd : vt.veldata) {
+            float dBGain = 20.0f * std::log10(r->velocityCurve(vd.velocity));
+            REQUIRE(dBGain == Approx(vd.dBGain).margin(0.1));
+        }
+    }
 }
 
 TEST_CASE("[Synth] Region by identifier")
@@ -1503,29 +1595,6 @@ TEST_CASE("[Synth] Off by standard")
     REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
 }
 
-TEST_CASE("[Synth] Off by negative groups")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-
-    synth.loadSfzString(fs::current_path(), R"(
-        <region> group=-1 off_by=-2 sample=*saw transpose=12 key=60
-        <region> group=-2 off_by=-1 sample=*triangle key=62
-    )");
-    synth.noteOn(0, 60, 85);
-    synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    synth.noteOn(10, 62, 85);
-    synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    auto playingVoices = getPlayingVoices(synth);
-    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(62) );
-    synth.noteOn(10, 60, 85);
-    synth.renderBlock(buffer);
-    playingVoices = getPlayingVoices(synth);
-    REQUIRE( playingVoices.front()->getRegion()->keyRange.containsWithEnd(60) );
-}
-
 TEST_CASE("[Synth] Off by same group")
 {
     sfz::Synth synth;
@@ -1566,26 +1635,6 @@ TEST_CASE("[Synth] Off by alone and repeated")
     synth.noteOn(0, 60, 85);
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 3 );
-}
-
-TEST_CASE("[Synth] Off by with staccato notes")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-
-    synth.loadSfzString(fs::current_path(), R"(
-        <region> group=1 off_by=1 sample=*sine ampeg_release=2
-    )");
-    synth.noteOn(0, 60, 85);
-    synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 1 );
-    synth.noteOff(0, 60, 85);
-    synth.renderBlock(buffer);
-    REQUIRE( numPlayingVoices(synth) == 0 );
-    REQUIRE( numActiveVoices(synth) == 1 );
-    synth.noteOn(0, 62, 85);
-    synth.renderBlock(buffer);
-    REQUIRE( numActiveVoices(synth) == 1 );
 }
 
 
@@ -1642,23 +1691,6 @@ TEST_CASE("[Synth] Off by a CC event")
     synth.cc(10, 67, 127);
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" });
-}
-
-TEST_CASE("[Synth] CC triggered off by a CC event")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-
-    synth.loadSfzString(fs::current_path(), R"(
-        <region> group=1 off_by=2 sample=*saw hikey=-1 on_locc64=126 on_hicc64=127
-        <region> group=2 sample=*triangle hikey=-1 on_locc64=0 on_hicc64=1
-    )");
-    synth.cc(0, 64, 127);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*saw" });
-    synth.cc(0, 64, 0);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*triangle" });
 }
 
 TEST_CASE("[Synth] Off by a note-off event")
@@ -1795,145 +1827,4 @@ TEST_CASE("[Synth] Short empty files are turned into *silence")
         "/region0/sample,s : { *silence }",
     };
     REQUIRE(messageList == expected);
-}
-
-TEST_CASE("[Synth] Sustain cancels release (Flex EG)")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
-        <control> hint_sustain_cancels_release=1
-        <region> sample=*sine
-            eg01_ampeg=1 eg01_sustain=2
-            eg01_time1=0 eg01_level1=0.00
-            eg01_time2=0.06 eg01_level2=0.92
-            eg01_time3=1.00 eg01_level3=0.00 eg01_shape3=-3
-    )");
-    synth.noteOn(0, 60, 63 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-    synth.noteOff(0, 60, 0 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-    synth.renderBlock(buffer);
-    synth.renderBlock(buffer);
-    synth.cc(0, 64, 127);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-}
-
-TEST_CASE("[Synth] Sustain cancels release (Flex EG) is off by default")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
-        <region> sample=*sine
-            eg01_ampeg=1 eg01_sustain=2
-            eg01_time1=0 eg01_level1=0.00
-            eg01_time2=0.06 eg01_level2=0.92
-            eg01_time3=1.00 eg01_level3=0.00 eg01_shape3=-3
-    )");
-    synth.noteOn(0, 60, 63 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-    synth.noteOff(0, 60, 0 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-    synth.renderBlock(buffer);
-    synth.renderBlock(buffer);
-    synth.cc(0, 64, 127);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-}
-
-TEST_CASE("[Synth] Sustain cancels release")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
-        <control> hint_sustain_cancels_release=1
-        <region> sample=*sine ampeg_release=10
-    )");
-    synth.noteOn(0, 60, 63 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-    synth.noteOff(0, 60, 0 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-    synth.renderBlock(buffer);
-    synth.renderBlock(buffer);
-    synth.cc(0, 64, 127);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-}
-
-TEST_CASE("[Synth] Sustain cancels release is off by default")
-{
-    sfz::Synth synth;
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
-        <region> sample=*sine ampeg_release=10
-    )");
-    synth.noteOn(0, 60, 63 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-    synth.noteOff(0, 60, 0 );
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-    synth.renderBlock(buffer);
-    synth.renderBlock(buffer);
-    synth.cc(0, 64, 127);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { } );
-}
-
-TEST_CASE("[Synth] Resets all controllers to default values")
-{
-    sfz::Synth synth;
-    std::vector<std::string> messageList;
-    sfz::Client client(&messageList);
-    client.setReceiveCallback(&simpleMessageReceiver);
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/default_cc.sfz", R"(
-        <control> set_cc56=64
-        <region> sample=*sine
-    )");
-    REQUIRE( synth.getHdcc(56) == 64_norm );
-    REQUIRE( synth.getHdcc(78) == 0.0f );
-    synth.cc(0, 56, 10);
-    synth.cc(0, 78, 100);
-    synth.renderBlock(buffer);
-    REQUIRE( synth.getHdcc(56) == 10_norm );
-    REQUIRE( synth.getHdcc(78) == 100_norm );
-    synth.cc(0, 121, 127);
-    synth.cc(0, 121, 0);
-    synth.renderBlock(buffer);
-    REQUIRE( synth.getHdcc(56) == 64_norm );
-    REQUIRE( synth.getHdcc(78) == 0.0f );
-}
-
-TEST_CASE("[Synth] Sequences also work on cc triggers")
-{
-    sfz::Synth synth;
-    std::vector<std::string> messageList;
-    sfz::Client client(&messageList);
-    client.setReceiveCallback(&simpleMessageReceiver);
-    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sequence_cc_triggers.sfz", R"(
-        <global> seq_length=3
-        <region> sample=*sine hikey=-1 start_locc61=0 start_hicc61=64 seq_position=1
-        <region> sample=*saw hikey=-1 start_locc61=0 start_hicc61=64 seq_position=2
-    )");
-    synth.cc(0, 61, 10);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
-    synth.cc(0, 61, 20);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw" } );
-    synth.cc(0, 61, 20);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw" } );
-    synth.cc(0, 61, 20);
-    synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw", "*sine" } );
 }
