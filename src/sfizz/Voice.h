@@ -225,7 +225,6 @@ public:
      * @return int
      */
     const TriggerEvent& getTriggerEvent() const noexcept;
-    sfz::Filter downsampleFilter;
 
     /**
      * @brief Reset the voice to its initial values
@@ -417,6 +416,7 @@ public:
      * @brief Get the trigger event
      */
     const TriggerEvent& getTriggerEvent();
+    sfz::Filter downsampleFilter;
 
     /**
      * @brief Get the extended CC values

@@ -1414,10 +1414,10 @@ void Voice::Impl::fillInterpolatedWithQuality(
     absl::Span<const int> indices, absl::Span<const float> coeffs,
     absl::Span<const float> addingGains, int quality, float mod)
 {
-    switch (clamp(quality, 0, 11)) {
+    switch (clamp(quality, 0, 10)) {
     case 0:
         {
-            constexpr auto itp = kInterpolatorNearest;
+            constexpr auto itp = kInterpolatorLoFi;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
@@ -1484,12 +1484,6 @@ void Voice::Impl::fillInterpolatedWithQuality(
     case 10:
         {
             constexpr auto itp = kInterpolatorSinc72;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
-        }
-        break;
-    case 11:
-        {
-            constexpr auto itp = kInterpolatorLoFi;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
@@ -1698,7 +1692,7 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if (region == nullptr || other == nullptr)
         return false;
 
-    if (impl.offed_)
+    if (impl.released())
         return false;
 
     if ((impl.triggerEvent_.type == TriggerEventType::NoteOn
