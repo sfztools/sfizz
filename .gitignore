@@ -31,7 +31,3 @@ clients/sfzprint
 *.code-*
 .kak.tags.namecache
 .clangd
-vst/external/CoreAudioUtilityClasses/
-external/abseil-cpp
-external/filesystem
-external/simde
