@@ -68,7 +68,7 @@ TEST_CASE("[Synth] Change the number of voice while playing")
 TEST_CASE("[Synth] Check that the sample per block and sample rate are actually propagated to all voices even on recreation")
 {
     sfz::Synth synth;
-    synth.setSamplesPerBlock(2);
+    synth.setSamplesPerBlock(256);
     synth.setSampleRate(96000);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
@@ -81,7 +81,7 @@ TEST_CASE("[Synth] Check that the sample per block and sample rate are actually 
         REQUIRE( synth.getVoiceView(i)->getSamplesPerBlock() == 256 );
         REQUIRE( synth.getVoiceView(i)->getSampleRate() == 96000.0f );
     }
-    synth.setSamplesPerBlock(1);
+    synth.setSamplesPerBlock(128);
     synth.setSampleRate(48000);
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
