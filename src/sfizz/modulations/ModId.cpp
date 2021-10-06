@@ -150,6 +150,8 @@ int ModIds::flags(ModId id) noexcept
         return kModIsPerVoice|kModIsAdditive;
     case ModId::EGEqBandwidthDepth:
         return kModIsPerVoice|kModIsAdditive;
+    case ModId::EGLFOFreqDepth:
+        return kModIsPerVoice|kModIsAdditive;
 
         // unknown
     default:

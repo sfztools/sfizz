@@ -730,7 +730,7 @@ void Voice::registerTempo(int delay, float secondsPerQuarter) noexcept
 void Voice::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
-    impl.sampleRate_ = sampleRate * float(impl.resources_.getSynthConfig().OSFactor);
+    impl.sampleRate_ = sampleRate;
     impl.gainSmoother_.setSmoothing(config::gainSmoothing, impl.sampleRate_);
     impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, impl.sampleRate_);
 
@@ -756,10 +756,6 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(impl.sampleRate_);
 
     impl.powerFollower_.setSampleRate(impl.sampleRate_);
-    downsampleFilter.setType(FilterType::kFilterLpf6p);
-    downsampleFilter.setChannels(2);
-    downsampleFilter.init(sampleRate);
-    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -778,12 +774,9 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     const Region* region = impl.region_;
     if (region == nullptr || region->disabled())
         return;
-    AudioBuffer<float> interBuffer(buffer.getNumChannels(), buffer.getNumFrames() * impl.resources_.getSynthConfig().OSFactor);
-    AudioSpan<float> downsampled_buffer(interBuffer);
-    downsampled_buffer.fill(0.0f);
 
-    const auto delay = min(static_cast<size_t>(impl.initialDelay_), downsampled_buffer.getNumFrames());
-    auto delayed_buffer = downsampled_buffer.subspan(delay);
+    const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
+    auto delayed_buffer = buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
     { // Fill buffer with raw data
@@ -795,29 +788,14 @@ void Voice::renderBlock(AudioSpan<float> buffer) noexcept
     }
 
     if (region->isStereo()) {
-        impl.ampStageStereo(downsampled_buffer);
-        impl.panStageStereo(downsampled_buffer);
-        impl.filterStageStereo(downsampled_buffer);
+        impl.ampStageStereo(buffer);
+        impl.panStageStereo(buffer);
+        impl.filterStageStereo(buffer);
     } else {
-        impl.ampStageMono(downsampled_buffer);
-        impl.filterStageMono(downsampled_buffer);
-        impl.panStageMono(downsampled_buffer);
+        impl.ampStageMono(buffer);
+        impl.filterStageMono(buffer);
+        impl.panStageMono(buffer);
     }
-
-    if (impl.resources_.getSynthConfig().OSFactor > 1)
-	downsampleFilter.process(downsampled_buffer, downsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.getSynthConfig().OSFactor) / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0, downsampled_buffer.getNumFrames());
-
-    for (size_t i = 0; i < buffer.getNumChannels(); ++i)
-{
-    for (size_t j = 0; j < buffer.getNumFrames(); ++j)
-{
-    buffer[i][j] = downsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor];
-    if (impl.resources_.getSynthConfig().OSFactor > 1)
-    for (int k = 1; k < impl.resources_.getSynthConfig().OSFactor; ++k)
-         buffer[i][j] += downsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor + k];
-    buffer[i][j] /= float(impl.resources_.getSynthConfig().OSFactor);
-}
-}
 
     if (!region->flexAmpEG) {
         if (!impl.egAmplitude_.isSmoothing())
@@ -1678,7 +1656,6 @@ bool Voice::Impl::released() const noexcept
     if (!region_ || state_ != State::playing)
         return true;
 
-
     if (!region_->flexAmpEG)
         return egAmplitude_.isReleased();
     else
@@ -1692,7 +1669,7 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if (region == nullptr || other == nullptr)
         return false;
 
-    if (impl.released())
+    if (impl.offed_)
         return false;
 
     if ((impl.triggerEvent_.type == TriggerEventType::NoteOn

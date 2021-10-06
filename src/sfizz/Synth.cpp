@@ -449,6 +449,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         		voice.setSamplesPerBlock(samplesPerBlock_);
     		}
 	    }
+            break;
         case hash("hint_sustain_cancels_release"):
         {
             SynthConfig& config = resources_.getSynthConfig();
@@ -929,7 +930,6 @@ int Synth::getNumActiveVoices() const noexcept
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
-    samplesPerBlock *= 128;
     ASSERT(samplesPerBlock <= config::maxBlockSize);
 
     impl.samplesPerBlock_ = samplesPerBlock;
@@ -2069,7 +2069,6 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccHold);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
-
     if (region.pitchEG) {
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
@@ -2079,7 +2078,6 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccSustain);
     }
-
     if (region.filterEG) {
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccRelease);
@@ -2089,7 +2087,6 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccStart);
         collectUsedCCsFromCCMap(usedCCs, region.filterEG->ccSustain);
     }
-
     for (const LFODescription& lfo : region.lfos) {
         collectUsedCCsFromCCMap(usedCCs, lfo.phaseCC);
         collectUsedCCsFromCCMap(usedCCs, lfo.delayCC);

@@ -272,6 +272,7 @@ namespace Default
     extern const OpcodeSpec<float> flexEGPointLevel;
     extern const OpcodeSpec<float> flexEGPointLevelMod;
     extern const OpcodeSpec<float> flexEGPointShape;
+    extern const OpcodeSpec<float> flexEGPointShape3;
     extern const OpcodeSpec<int32_t> sampleQuality;
     extern const OpcodeSpec<int32_t> octaveOffset;
     extern const OpcodeSpec<int32_t> noteOffset;
