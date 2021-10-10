@@ -601,6 +601,15 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             filters[filterIndex].cutoffCC[cc].curve = opcode.read(Default::curveCC);
         }
         break;
+    case hash("cutoff&_stepcc&"): case hash("cutoff&_smoothcc&"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            processGenericCc(opcode, Default::filterCutoffMod, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
+        }
+        break;
     case_any_ccN("resonance&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
         {
             const auto filterIndex = opcode.parameters.front() - 1;
