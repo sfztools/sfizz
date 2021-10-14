@@ -263,6 +263,8 @@ void Synth::Impl::clear()
     rootPath_.clear();
     numGroups_ = 0;
     numMasters_ = 0;
+    noteOffset_ = 0;
+    octaveOffset_ = 0;
     currentSwitch_ = absl::nullopt;
     defaultPath_ = "";
     image_ = "";

@@ -87,6 +87,14 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, int(impl.resources_.getFilePool().getNumPreloadedSamples()));
         } break;
 
+        MATCH("/octave_offset", "") {
+            client.receive<'i'>(delay, path, impl.octaveOffset_);
+        } break;
+
+        MATCH("/note_offset", "") {
+            client.receive<'i'>(delay, path, impl.noteOffset_);
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/key/slots", "") {

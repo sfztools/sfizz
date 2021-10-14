@@ -1937,3 +1937,30 @@ TEST_CASE("[Synth] Sequences also work on cc triggers")
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw", "*sine" } );
 }
+
+TEST_CASE("[Synth] Loading resets note and octave offsets")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/octave_offset.sfz", R"(
+        <control> note_offset=1 octave_offset=-1
+        <region> sample=*sine
+    )");
+    synth.dispatchMessage(client, 0, "/note_offset", "", nullptr);
+    synth.dispatchMessage(client, 0, "/octave_offset", "", nullptr);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/octave_offset.sfz", R"(
+        <region> sample=*sine
+    )");
+    synth.dispatchMessage(client, 0, "/note_offset", "", nullptr);
+    synth.dispatchMessage(client, 0, "/octave_offset", "", nullptr);
+    std::vector<std::string> expected {
+        "/note_offset,i : { 1 }",
+        "/octave_offset,i : { -1 }",
+        "/note_offset,i : { 0 }",
+        "/octave_offset,i : { 0 }",
+    };
+    REQUIRE(messageList == expected);
+}
