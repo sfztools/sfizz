@@ -1162,7 +1162,7 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
 void Synth::Impl::checkOffGroups(const Region* region, int delay, int number)
 {
     for (auto& voice : voiceManager_) {
-        if (voice.checkOffGroup(region, delay, number)) {
+        if (voice.checkOffGroup(region, delay, number) && region->triggerOnNote) {
             const TriggerEvent& event = voice.getTriggerEvent();
             noteOffDispatch(delay, event.number, event.value);
         }
