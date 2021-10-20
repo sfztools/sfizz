@@ -369,7 +369,7 @@ int main(int argc, char** argv)
         jack_free(systemPorts);
     }
 
-    if (filesToParse[0]) {
+    if (!filesToParse.empty() && filesToParse[0]) {
         loadInstrument(filesToParse[0]);
     }
 

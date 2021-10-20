@@ -1,5 +1,3 @@
-include(GNUInstallDirs)
-
 set(FAUST_FILES
     sfizz/dsp/filters/filters_modulable.dsp
     sfizz/dsp/filters/rbj_filters.dsp
