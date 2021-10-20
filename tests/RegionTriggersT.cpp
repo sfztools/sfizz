@@ -390,7 +390,6 @@ TEST_CASE("[Triggers] sw_vel, consider the previous velocity for triggers")
     }
 }
 
-
 TEST_CASE("[Triggers] Honor lorand/hirand on CC triggers")
 {
     Synth synth;
@@ -407,4 +406,23 @@ TEST_CASE("[Triggers] Honor lorand/hirand on CC triggers")
     REQUIRE(numPlayingVoices(synth) == 0);
     synth.hdcc(0, 64, 100_norm);
     REQUIRE(numPlayingVoices(synth) == 1);
+}
+
+TEST_CASE("[Triggers] Offed voices with CC triggers do not activate release triggers")
+{
+    Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> sample=*sine hikey=-1 start_locc64=63 start_hicc64=127 group=1 off_by=2
+        <region> sample=*saw hikey=-1 start_locc64=0 start_hicc64=62 group=2
+        <region> sample=*noise trigger=release_key
+    )");
+
+    synth.hdcc(0, 64, 100_norm);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "*sine" });
+    synth.hdcc(10, 64, 10_norm);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw" });
 }
