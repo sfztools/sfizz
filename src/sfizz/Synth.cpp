@@ -1164,7 +1164,8 @@ void Synth::Impl::checkOffGroups(const Region* region, int delay, int number)
     for (auto& voice : voiceManager_) {
         if (voice.checkOffGroup(region, delay, number)) {
             const TriggerEvent& event = voice.getTriggerEvent();
-            noteOffDispatch(delay, event.number, event.value);
+            if (event.type == TriggerEventType::NoteOn)
+                noteOffDispatch(delay, event.number, event.value);
         }
     }
 }
