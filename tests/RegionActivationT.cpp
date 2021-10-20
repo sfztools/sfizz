@@ -21,7 +21,7 @@ TEST_CASE("Region activation", "Region tests")
     SECTION("Basic state")
     {
         sfz::Layer layer { region, midiState };
-        layer.registerCC(4, 0_norm);
+        layer.updateCCState(4, 0_norm);
         REQUIRE(layer.isSwitchedOn());
     }
 
@@ -30,19 +30,19 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "locc4", "56" });
         region.parseOpcode({ "hicc4", "59" });
         sfz::Layer layer { region, midiState };
-        layer.registerCC(4, 0_norm);
+        layer.updateCCState(4, 0_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(4, 57_norm);
+        layer.updateCCState(4, 57_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 56_norm);
+        layer.updateCCState(4, 56_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 59_norm);
+        layer.updateCCState(4, 59_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 43_norm);
+        layer.updateCCState(4, 43_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(4, 65_norm);
+        layer.updateCCState(4, 65_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(6, 57_norm);
+        layer.updateCCState(6, 57_norm);
         REQUIRE(!layer.isSwitchedOn());
     }
 
@@ -53,26 +53,26 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "locc54", "18" });
         region.parseOpcode({ "hicc54", "27" });
         sfz::Layer layer { region, midiState };
-        layer.registerCC(4, 0_norm);
-        layer.registerCC(54, 0_norm);
+        layer.updateCCState(4, 0_norm);
+        layer.updateCCState(54, 0_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(4, 57_norm);
+        layer.updateCCState(4, 57_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(54, 19_norm);
+        layer.updateCCState(54, 19_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(54, 17_norm);
+        layer.updateCCState(54, 17_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(54, 27_norm);
+        layer.updateCCState(54, 27_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 56_norm);
+        layer.updateCCState(4, 56_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 59_norm);
+        layer.updateCCState(4, 59_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(54, 2_norm);
+        layer.updateCCState(54, 2_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(54, 26_norm);
+        layer.updateCCState(54, 26_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 65_norm);
+        layer.updateCCState(4, 65_norm);
         REQUIRE(!layer.isSwitchedOn());
     }
 

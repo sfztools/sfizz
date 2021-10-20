@@ -129,7 +129,7 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
     return false;
 }
 
-bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
+void Layer::updateCCState(int ccNumber, float ccValue) noexcept
 {
     const Region& region = region_;
 
@@ -151,8 +151,21 @@ bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
         ccSwitched_.set(ccNumber, true);
     else
         ccSwitched_.set(ccNumber, false);
+}
 
-    if (dontTrigger || !region.triggerOnCC)
+bool Layer::registerCC(int ccNumber, float ccValue, float randValue) noexcept
+{
+    const Region& region = region_;
+
+    updateCCState(ccNumber, ccValue);
+
+    if (!region.triggerOnCC)
+        return false;
+
+    const bool randOk = region.randRange.contains(randValue)
+        || (randValue >= 1.0f && region.randRange.isValid() && region.randRange.getEnd() >= 1.0f);
+
+    if (!randOk)
         return false;
 
     if (auto triggerRange = region.ccTriggers.get(ccNumber)) {

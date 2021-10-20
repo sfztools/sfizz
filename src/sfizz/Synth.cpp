@@ -727,7 +727,7 @@ void Synth::Impl::finalizeSfzLoad()
         // Defaults
         MidiState& midiState = resources_.getMidiState();
         for (int cc = 0; cc < config::numCCs; cc++) {
-            layer.registerCC(cc, midiState.getCCValue(cc), true);
+            layer.updateCCState(cc, midiState.getCCValue(cc));
         }
 
 
@@ -1273,6 +1273,7 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
 {
     SisterVoiceRingBuilder ring;
     TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
+    const auto randValue = randNoteDistribution_(Random::randomGenerator);
     for (Layer* layer : ccActivationLists_[ccNumber]) {
         const Region& region = layer->getRegion();
 
@@ -1290,7 +1291,7 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
             }
         }
 
-        if (layer->registerCC(ccNumber, value)) {
+        if (layer->registerCC(ccNumber, value, randValue)) {
             checkOffGroups(&region, delay, ccNumber);
             startVoice(layer, delay, triggerEvent, ring);
         }
@@ -1952,7 +1953,7 @@ void Synth::Impl::resetAllControllers(int delay) noexcept
     for (const LayerPtr& layerPtr : layers_) {
         Layer& layer = *layerPtr;
         for (int cc = 0; cc < config::numCCs; ++cc)
-            layer.registerCC(cc, defaultCCValues_[cc], true);
+            layer.updateCCState(cc, defaultCCValues_[cc]);
     }
 }
 
