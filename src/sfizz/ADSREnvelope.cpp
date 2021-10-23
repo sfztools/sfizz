@@ -38,30 +38,54 @@ Float ADSREnvelope::secondsToExpRate(Float timeInSeconds) const noexcept
     return std::exp(Float(-9.0) / (timeInSeconds * sampleRate));
 };
 
-void ADSREnvelope::reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept
+void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int delay, float velocity, float sampleRate) noexcept
 {
     this->sampleRate = sampleRate;
-
-    this->delay = delay + secondsToSamples(desc.getDelay(state, velocity));
-    this->attackStep = secondsToLinRate(desc.getAttack(state, velocity));
-    this->decayRate = secondsToExpRate(desc.getDecay(state, velocity));
-    this->releaseRate = secondsToExpRate(desc.getRelease(state, velocity));
-    this->hold = secondsToSamples(desc.getHold(state, velocity));
-    this->sustain = clamp(desc.getSustain(state, velocity), 0.0f, 1.0f);
-    this->start = clamp(desc.getStart(state, velocity), 0.0f, 1.0f);
-
+    desc_ = &desc;
+    triggerVelocity_ = velocity;
+    currentState = State::Delay; // Has to be before the update
+    updateValues(delay);
     releaseDelay = 0;
-    sustainThreshold = this->sustain + config::virtuallyZero;
     shouldRelease = false;
     freeRunning = (
         (this->sustain <= Float(config::sustainFreeRunningThreshold))
         || (region.loopMode == LoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
-    currentState = State::Delay;
+}
+
+void ADSREnvelope::updateValues(int delay) noexcept
+{
+    if (currentState == State::Delay)
+        this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, triggerVelocity_, delay));
+
+    this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, triggerVelocity_, delay));
+    this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, triggerVelocity_, delay));
+    this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, triggerVelocity_, delay));
+    this->hold = secondsToSamples(desc_->getHold(midiState_, triggerVelocity_, delay));
+    this->sustain = clamp(desc_->getSustain(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
+    this->start = clamp(desc_->getStart(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
+    sustainThreshold = this->sustain + config::virtuallyZero;
 }
 
 void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
+{
+    if (desc_ && desc_->dynamic) {
+        int processed = 0;
+        int remaining = static_cast<int>(output.size());
+        while(remaining > 0) {
+            updateValues(processed);
+            int chunkSize = min(config::processChunkSize, remaining);
+            getBlockInternal(output.subspan(processed, chunkSize));
+            processed += chunkSize;
+            remaining -= chunkSize;
+        }
+    } else {
+        getBlockInternal(output);
+    }
+}
+
+void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
 {
     State currentState = this->currentState;
     Float currentValue = this->currentValue;
@@ -122,7 +146,8 @@ void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
                 break;
             }
             while (count < size) {
-                currentValue = std::max(sustain, currentValue + transitionDelta);
+                if (currentValue > sustain)
+                    currentValue += transitionDelta;
                 output[count++] = currentValue;
             }
             break;
@@ -171,6 +196,14 @@ void ADSREnvelope::startRelease(int releaseDelay) noexcept
 {
     shouldRelease = true;
     this->releaseDelay = releaseDelay;
+}
+
+void ADSREnvelope::cancelRelease(int delay) noexcept
+{
+    (void)delay;
+    currentState = State::Sustain;
+    shouldRelease = false;
+    this->releaseDelay = -1;
 }
 
 void ADSREnvelope::setReleaseTime(Float timeInSeconds) noexcept

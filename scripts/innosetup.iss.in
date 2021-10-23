@@ -36,8 +36,8 @@ LicenseFile="sfizz.lv2\LICENSE.md"
 OutputBaseFileName={#MyAppName}-{#MyAppVersion}-msvc-{#Arch}-setup
 OutputDir=.
 UninstallFilesDir={app}
-WizardImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernImage-IS.bmp"
-WizardSmallImageFile="C:\Program Files (x86)\Inno Setup 6\WizModernSmallImage-IS.bmp"
+WizardImageFile=compiler:WizClassicImage-IS.bmp
+WizardSmallImageFile=compiler:WizClassicSmallImage-IS.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -46,6 +46,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "main"; Description: "Shared files"; Types: full custom; Flags: fixed
 Name: "lv2"; Description: "LV2 plugin"; Types: full custom;
 Name: "vst3"; Description: "VST3 plugin"; Types: full custom;
+Name: "puredata"; Description: "Puredata external"; Types: full custom;
 
 [Files]
 Source: "sfizz.lv2\Contents\Binary\sfizz.dll"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2\Contents\Binary"; Flags: ignoreversion
@@ -54,13 +55,13 @@ Source: "sfizz.lv2\Contents\Resources\*"; Components: lv2; DestDir: "{commoncf}\
 Source: "sfizz.lv2\manifest.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\sfizz.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
 Source: "sfizz.lv2\sfizz_ui.ttl"; Components: lv2; DestDir: "{commoncf}\LV2\sfizz.lv2"
-Source: "sfizz.lv2\lgpl-3.0.txt"; Components: main; DestDir: "{app}"
 Source: "sfizz.lv2\LICENSE.md"; Components: main; DestDir: "{app}"
 Source: "sfizz.vst3\desktop.ini"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
 Source: "sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win\sfizz.vst3"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\@VST3_PACKAGE_ARCHITECTURE@-win"; Flags: ignoreversion
 Source: "sfizz.vst3\Contents\Resources\*"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3\Contents\Resources"; Flags: recursesubdirs
 Source: "sfizz.vst3\Plugin.ico"; Components: vst3; DestDir: "{commoncf}\VST3\sfizz.vst3"
 Source: "sfizz.vst3\gpl-3.0.txt"; Components: main; DestDir: "{app}"
+Source: "pd\*"; Components: puredata; DestDir: "{commoncf}\Pd"; Flags: recursesubdirs
 ; Note(sfizz): OS older than Windows 10 require UI fonts to be installed system-wide
 Source: "sfizz.vst3\Contents\Resources\Fonts\sfizz-fluentui-system-r20.ttf"; DestDir: "{fonts}"; FontInstall: "Sfizz Fluent System R20"; Flags: uninsneveruninstall; OnlyBelowVersion: 6.4
 Source: "sfizz.vst3\Contents\Resources\Fonts\sfizz-fluentui-system-f20.ttf"; DestDir: "{fonts}"; FontInstall: "Sfizz Fluent System F20"; Flags: uninsneveruninstall; OnlyBelowVersion: 6.4

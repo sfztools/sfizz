@@ -19,11 +19,19 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
     ASSERT(velocity >= 0 && velocity <= 1.0);
 
     if (noteNumber >= 0 && noteNumber < 128) {
+        velocityOverride = lastNoteVelocities[lastNotePlayed];
         lastNoteVelocities[noteNumber] = velocity;
         noteOnTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
         lastNotePlayed = noteNumber;
-        activeNotes++;
         noteStates[noteNumber] = true;
+        ccEvent(delay, ExtendedCCs::noteOnVelocity, velocity);
+        ccEvent(delay, ExtendedCCs::keyboardNoteNumber, normalize7Bits(noteNumber));
+        ccEvent(delay, ExtendedCCs::unipolarRandom, unipolarDist(Random::randomGenerator));
+        ccEvent(delay, ExtendedCCs::bipolarRandom, bipolarDist(Random::randomGenerator));
+        ccEvent(delay, ExtendedCCs::keyboardNoteGate, activeNotes > 0 ? 1.0f : 0.0f);
+        activeNotes++;
+
+        ccEvent(delay, ExtendedCCs::alternate, alternate);
         alternate = alternate == 0.0f ? 1.0f : 0.0f;
     }
 
@@ -37,6 +45,10 @@ void sfz::MidiState::noteOffEvent(int delay, int noteNumber, float velocity) noe
     UNUSED(velocity);
     if (noteNumber >= 0 && noteNumber < 128) {
         noteOffTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
+        ccEvent(delay, ExtendedCCs::noteOffVelocity, velocity);
+        ccEvent(delay, ExtendedCCs::keyboardNoteNumber, normalize7Bits(noteNumber));
+        ccEvent(delay, ExtendedCCs::unipolarRandom, unipolarDist(Random::randomGenerator));
+        ccEvent(delay, ExtendedCCs::bipolarRandom, bipolarDist(Random::randomGenerator));
         if (activeNotes > 0)
             activeNotes--;
         noteStates[noteNumber] = false;
@@ -107,8 +119,10 @@ float sfz::MidiState::getNoteDuration(int noteNumber, int delay) const
     if (noteNumber < 0 || noteNumber >= 128)
         return 0.0f;
 
+#if 0
     if (!noteStates[noteNumber])
         return 0.0f;
+#endif
 
     const unsigned timeInSamples = internalClock + static_cast<unsigned>(delay) - noteOnTimes[noteNumber];
     return static_cast<float>(timeInSamples) / sampleRate;
@@ -121,9 +135,9 @@ float sfz::MidiState::getNoteVelocity(int noteNumber) const noexcept
     return lastNoteVelocities[noteNumber];
 }
 
-float sfz::MidiState::getLastVelocity() const noexcept
+float sfz::MidiState::getVelocityOverride() const noexcept
 {
-    return lastNoteVelocities[lastNotePlayed];
+    return velocityOverride;
 }
 
 void sfz::MidiState::insertEventInVector(EventVector& events, int delay, float value)
@@ -172,7 +186,7 @@ float sfz::MidiState::getPolyAftertouch(int noteNumber) const noexcept
 {
     if (noteNumber < 0 || noteNumber > 127)
         return 0.0f;
-    
+
     ASSERT(polyAftertouchEvents[noteNumber].size() > 0);
     return polyAftertouchEvents[noteNumber].back().value;
 }
@@ -188,10 +202,21 @@ float sfz::MidiState::getCCValue(int ccNumber) const noexcept
     return ccEvents[ccNumber].back().value;
 }
 
+float sfz::MidiState::getCCValueAt(int ccNumber, int delay) const noexcept
+{
+    ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
+    const auto ccEvent = absl::c_lower_bound(
+        ccEvents[ccNumber], delay, MidiEventDelayComparator {});
+    if (ccEvent != ccEvents[ccNumber].end())
+        return ccEvent->value;
+    else
+        return ccEvents[ccNumber].back().value;
+}
+
 void sfz::MidiState::reset() noexcept
 {
     for (auto& velocity: lastNoteVelocities)
-        velocity = 0;
+        velocity = 0.0f;
 
     auto clearEvents = [] (EventVector& events) {
         events.clear();
@@ -207,20 +232,13 @@ void sfz::MidiState::reset() noexcept
     clearEvents(pitchEvents);
     clearEvents(channelAftertouchEvents);
 
+    velocityOverride = 0.0f;
     activeNotes = 0;
     internalClock = 0;
     lastNotePlayed = 0;
     noteStates.reset();
     absl::c_fill(noteOnTimes, 0);
     absl::c_fill(noteOffTimes, 0);
-}
-
-void sfz::MidiState::resetAllControllers(int delay) noexcept
-{
-    for (int ccIdx = 0; ccIdx < config::numCCs; ++ccIdx)
-        ccEvent(delay, ccIdx, 0.0f);
-
-    pitchBendEvent(delay, 0.0f);
 }
 
 const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept

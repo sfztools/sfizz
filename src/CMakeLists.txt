@@ -1,5 +1,3 @@
-include(GNUInstallDirs)
-
 set(FAUST_FILES
     sfizz/dsp/filters/filters_modulable.dsp
     sfizz/dsp/filters/rbj_filters.dsp
@@ -96,6 +94,7 @@ set(SFIZZ_HEADERS
     sfizz/railsback/4-1.h
     sfizz/railsback/4-2.h
     sfizz/Region.h
+    sfizz/RegionStateful.h
     sfizz/RegionSet.h
     sfizz/Resources.h
     sfizz/RTSemaphore.h
@@ -131,6 +130,7 @@ set(SFIZZ_SOURCES
     sfizz/AudioReader.cpp
     sfizz/FilterPool.cpp
     sfizz/EQPool.cpp
+    sfizz/RegionStateful.cpp
     sfizz/Region.cpp
     sfizz/Voice.cpp
     sfizz/ScopedFTZ.cpp
@@ -161,6 +161,7 @@ set(SFIZZ_SOURCES
     sfizz/WindowedSinc.cpp
     sfizz/Interpolators.cpp
     sfizz/Layer.cpp
+    sfizz/Resources.cpp
     sfizz/modulations/ModId.cpp
     sfizz/modulations/ModKey.cpp
     sfizz/modulations/ModKeyHash.cpp
@@ -190,7 +191,8 @@ set(SFIZZ_SOURCES
     sfizz/effects/impl/ResonantStringAVX.cpp
     sfizz/effects/impl/ResonantArray.cpp
     sfizz/effects/impl/ResonantArraySSE.cpp
-    sfizz/effects/impl/ResonantArrayAVX.cpp)
+    sfizz/effects/impl/ResonantArrayAVX.cpp
+    sfizz/utility/c++17/AlignedMemorySupport.cpp)
 
 include(SfizzSIMDSourceFiles)
 sfizz_add_simd_sources(SFIZZ_SOURCES ".")
@@ -201,6 +203,7 @@ set(SFIZZ_PARSER_HEADERS
     sfizz/Range.h
     sfizz/Opcode.h
     sfizz/parser/Parser.h
+    sfizz/parser/ParserListener.h
     sfizz/parser/ParserPrivate.h
     sfizz/parser/ParserPrivate.hpp
     sfizz/SfzHelpers.h)
@@ -249,11 +252,13 @@ endif()
 
 # Import library
 set(SFIZZ_IMPORT_HEADERS
+    sfizz/import/sfizz_import.h
     sfizz/import/ForeignInstrument.h
     sfizz/import/foreign_instruments/AudioFile.h
     sfizz/import/foreign_instruments/DecentSampler.h)
 
 set(SFIZZ_IMPORT_SOURCES
+    sfizz/import/sfizz_import.cpp
     sfizz/import/ForeignInstrument.cpp
     sfizz/import/foreign_instruments/AudioFile.cpp
     sfizz/import/foreign_instruments/DecentSampler.cpp)
@@ -294,11 +299,11 @@ if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
     target_link_libraries(sfizz_internal PUBLIC st_audiofile)
 endif()
-if(WIN32)
-    target_compile_definitions(sfizz_internal PRIVATE _USE_MATH_DEFINES)
-endif()
 if(SFIZZ_RELEASE_ASSERTS)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+endif()
+if(SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT)
+    target_compile_definitions(sfizz_internal PRIVATE "SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT=1")
 endif()
 sfizz_enable_fast_math(sfizz_internal)
 
@@ -315,7 +320,12 @@ add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sf
 add_library(sfizz::static ALIAS sfizz_static)
 target_include_directories(sfizz_static PUBLIC .)
 target_link_libraries(sfizz_static PRIVATE sfizz::internal)
-set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+set_target_properties(sfizz_static PROPERTIES PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+if(MSVC)
+    set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz_static")
+else()
+    set_target_properties(sfizz_static PROPERTIES OUTPUT_NAME "sfizz")
+endif()
 
 # Shared library and installation target
 if(SFIZZ_SHARED)
@@ -324,7 +334,7 @@ if(SFIZZ_SHARED)
     target_include_directories(sfizz_shared PUBLIC .)
     target_link_libraries(sfizz_shared PRIVATE sfizz::internal)
     target_compile_definitions(sfizz_shared PRIVATE SFIZZ_EXPORT_SYMBOLS)
-    set_target_properties(sfizz_shared PROPERTIES SOVERSION "${PROJECT_VERSION_MAJOR}" OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
+    set_target_properties(sfizz_shared PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION "${PROJECT_VERSION_MAJOR}" OUTPUT_NAME "sfizz" PUBLIC_HEADER "sfizz.h;sfizz.hpp;sfizz_message.h")
     sfizz_enable_lto_if_needed(sfizz_shared)
 
     if(NOT MSVC)
@@ -346,6 +356,19 @@ endif()
 
 # Generic library alias
 add_library(sfizz::sfizz ALIAS sfizz_static)
+
+# Git build identifier
+add_custom_target(sfizz-generate-git-build-id
+    COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+            "-DOUTPUT_FILE=${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c"
+            "-P" "${PROJECT_SOURCE_DIR}/cmake/GitBuildID.cmake"
+    BYPRODUCTS "${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c")
+add_library(sfizz-git-build-id STATIC EXCLUDE_FROM_ALL
+    "sfizz/git-build-id/GitBuildId.h"
+    "${PROJECT_BINARY_DIR}/git-build-id/GitBuildId.c")
+target_include_directories(sfizz-git-build-id PUBLIC "sfizz/git-build-id")
+add_dependencies(sfizz-git-build-id sfizz-generate-git-build-id)
 
 # Preserve generated files (Faust)
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)

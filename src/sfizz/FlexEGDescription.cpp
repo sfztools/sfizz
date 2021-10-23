@@ -6,6 +6,7 @@
 
 #include "FlexEGDescription.h"
 #include "Curve.h"
+#include "MidiState.h"
 #include <absl/container/flat_hash_map.h>
 #include <cmath>
 
@@ -82,6 +83,23 @@ void FlexEGs::clearUnusedCurves()
         else
             ++it;
     }
+}
+
+///
+float FlexEGPoint::getTime(const MidiState& state, int delay) const noexcept
+{
+    float returnedValue { time };
+    for (const CCData<float>& mod : ccTime)
+        returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+    return returnedValue;
+}
+
+float FlexEGPoint::getLevel(const MidiState& state, int delay) const noexcept
+{
+    float returnedValue { level };
+    for (const CCData<float>& mod : ccLevel)
+        returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+    return returnedValue;
 }
 
 } // namespace sfz

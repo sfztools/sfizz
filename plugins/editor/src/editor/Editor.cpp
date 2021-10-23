@@ -66,6 +66,7 @@ struct Editor::Impl : EditorController::Receiver,
 
     enum {
         kPanelGeneral,
+        kPanelInfo,
         kPanelControls,
         kPanelSettings,
         kNumPanels,
@@ -153,16 +154,19 @@ struct Editor::Impl : EditorController::Receiver,
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
 
+    SLevelMeter* leftMeter_ = nullptr;
+    SLevelMeter* rightMeter_ = nullptr;
+
     SAboutDialog* aboutDialog_ = nullptr;
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
 
-    CControl* getSecondaryCCControl(unsigned cc)
+    SKnobCCBox* getSecondaryCCKnob(unsigned cc)
     {
         switch (cc) {
-        case 7: return volumeCCKnob_ ? volumeCCKnob_->getControl() : nullptr;
-        case 10: return panCCKnob_ ? panCCKnob_->getControl() : nullptr;
+        case 7: return volumeCCKnob_ ? volumeCCKnob_ : nullptr;
+        case 10: return panCCKnob_ ? panCCKnob_ : nullptr;
         default: return nullptr;
         }
     }
@@ -504,6 +508,20 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateBackgroundImage(value.c_str());
         }
         break;
+    case EditId::LeftLevel:
+        {
+            const float value = v.to_float();
+            if (SLevelMeter* meter = leftMeter_)
+                meter->setValue(value);
+        }
+        break;
+    case EditId::RightLevel:
+        {
+            const float value = v.to_float();
+            if (SLevelMeter* meter = rightMeter_)
+                meter->setValue(value);
+        }
+        break;
     default:
         if (editIdIsKey(id)) {
             const int key = keyForEditId(id);
@@ -703,11 +721,15 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
-        auto createVMeter = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            // TODO the volume meter...
-            CViewContainer* container = new CViewContainer(bounds);
-            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
-            return container;
+        auto createVMeter = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            SLevelMeter* meter = new SLevelMeter(bounds);
+            meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
+            meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
+            OnThemeChanged.push_back([meter, palette]() {
+                meter->setBackColor(palette->knobInactiveTrack);
+            });
+            return meter;
         };
 #if 0
         auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -796,6 +818,9 @@ void Editor::Impl::createFrameContents()
         auto createHomeButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             return createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
         };
+        auto createInfoButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            return createGlyphButton(u8"\ue1e7", bounds, tag, fontsize);
+        };
         auto createCCButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
             // return createGlyphButton(u8"\ue240", bounds, tag, fontsize);
             return createGlyphButton(u8"\ue253", bounds, tag, fontsize);
@@ -881,16 +906,16 @@ void Editor::Impl::createFrameContents()
             box->setCCLabelFont(font);
             OnThemeChanged.push_back([box, palette]() {
                 box->setNameLabelFontColor(palette->knobText);
+                box->setValueEditFontColor(palette->knobText);
+                auto shadingColor = palette->knobText;
+                shadingColor.alpha = 70;
+                box->setShadingRectangleColor(shadingColor);
                 box->setCCLabelFontColor(palette->knobLabelText);
                 box->setCCLabelBackColor(palette->knobLabelBackground);
                 box->setKnobFontColor(palette->knobText);
                 box->setKnobLineIndicatorColor(palette->knobLineIndicator);
                 box->setKnobActiveTrackColor(palette->knobActiveTrack);
                 box->setKnobInactiveTrackColor(palette->knobInactiveTrack);
-            });
-            box->setValueToStringFunction([](float value, std::string& text) -> bool {
-                text = std::to_string(std::lround(value * 127));
-                return true;
             });
             return box;
         };
@@ -907,6 +932,10 @@ void Editor::Impl::createFrameContents()
             panel->setCCLabelFont(font);
             OnThemeChanged.push_back([panel, palette]() {
                 panel->setNameLabelFontColor(palette->knobText);
+                panel->setValueEditFontColor(palette->knobText);
+                auto shadingColor = palette->knobText;
+                shadingColor.alpha = 70;
+                panel->setShadingRectangleColor(shadingColor);
                 panel->setCCLabelFontColor(palette->knobLabelText);
                 panel->setCCLabelBackColor(palette->knobLabelBackground);
                 panel->setKnobFontColor(palette->knobText);
@@ -1640,7 +1669,7 @@ void Editor::Impl::updateCCValue(unsigned cc, float value)
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlValue(cc, value);
 
-    if (CControl* other = getSecondaryCCControl(cc)) {
+    if (SKnobCCBox* other = getSecondaryCCKnob(cc)) {
         other->setValue(value);
         other->invalid();
     }
@@ -1651,7 +1680,7 @@ void Editor::Impl::updateCCDefaultValue(unsigned cc, float value)
     if (SControlsPanel* panel = controlsPanel_)
         panel->setControlDefaultValue(cc, value);
 
-    if (CControl* other = getSecondaryCCControl(cc))
+    if (SKnobCCBox* other = getSecondaryCCKnob(cc))
         other->setDefaultValue(value);
 }
 
@@ -1977,4 +2006,6 @@ void Editor::Impl::onThemeChanged()
         if (function)
             function();
     }
+    if (CFrame* frame = frame_)
+        frame->invalid();
 }

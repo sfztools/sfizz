@@ -18,15 +18,17 @@ namespace sfz {
 template <class T, bool C, class U>
 float crossfadeIn(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurve curve)
 {
+    constexpr float gapOffset { static_cast<T>(normalize7Bits(1)) };
     if (value < crossfadeRange.getStart())
         return 0.0f;
 
-    const auto length = static_cast<float>(crossfadeRange.length());
+    const auto length = static_cast<float>(crossfadeRange.length()) - gapOffset;
     if (length <= 0.0f)
         return 1.0f;
 
     else if (value < crossfadeRange.getEnd()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
+        const auto distanceFromStart = static_cast<float>(value - crossfadeRange.getStart());
+        const auto crossfadePosition = distanceFromStart / length;
         if (curve == CrossfadeCurve::power)
             return sqrt(crossfadePosition);
         if (curve == CrossfadeCurve::gain)
@@ -42,15 +44,16 @@ float crossfadeIn(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurv
 template <class T, bool C, class U>
 float crossfadeOut(const sfz::Range<T, C>& crossfadeRange, U value, CrossfadeCurve curve)
 {
-    if (value > crossfadeRange.getEnd())
-        return 0.0f;
-
-    const auto length = static_cast<float>(crossfadeRange.length());
+    constexpr float gapOffset { static_cast<T>(normalize7Bits(1)) };
+    const auto length = static_cast<float>(crossfadeRange.length()) - gapOffset;
     if (length <= 0.0f)
         return 1.0f;
 
     else if (value > crossfadeRange.getStart()) {
-        const auto crossfadePosition = static_cast<float>(value - crossfadeRange.getStart()) / length;
+        const auto distanceFromStart = static_cast<float>(value - crossfadeRange.getStart());
+        const auto crossfadePosition = distanceFromStart / length;
+        if (crossfadePosition > 1.0f)
+            return 0.0f;
         if (curve == CrossfadeCurve::power)
             return std::sqrt(1 - crossfadePosition);
         if (curve == CrossfadeCurve::gain)

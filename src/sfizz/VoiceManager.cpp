@@ -19,7 +19,7 @@ void VoiceManager::onVoiceStateChanging(NumericId<Voice> id, Voice::State state)
         const uint32_t group = region->group;
         RegionSet::removeVoiceFromHierarchy(region, voice);
         swapAndPopFirst(activeVoices_, [voice](const Voice* v) { return v == voice; });
-        ASSERT(group < polyphonyGroups_.size());
+        ASSERT(polyphonyGroups_.contains(group));
         polyphonyGroups_[group].removeVoice(voice);
     } else if (state == Voice::State::playing) {
         Voice* voice = getVoiceById(id);
@@ -27,7 +27,7 @@ void VoiceManager::onVoiceStateChanging(NumericId<Voice> id, Voice::State state)
         const uint32_t group = region->group;
         activeVoices_.push_back(voice);
         RegionSet::registerVoiceInHierarchy(region, voice);
-        ASSERT(group < polyphonyGroups_.size());
+        ASSERT(polyphonyGroups_.contains(group));
         polyphonyGroups_[group].registerVoice(voice);
     }
 }
@@ -61,8 +61,7 @@ void VoiceManager::reset()
         voice.reset();
 
     polyphonyGroups_.clear();
-    polyphonyGroups_.emplace_back();
-    polyphonyGroups_.back().setPolyphonyLimit(config::maxVoices);
+    polyphonyGroups_.emplace(0, PolyphonyGroup{});
     setStealingAlgorithm(StealingAlgorithm::Oldest);
 }
 
@@ -84,29 +83,31 @@ bool VoiceManager::playingAttackVoice(const Region* releaseRegion) noexcept
         return true;
 }
 
-void VoiceManager::ensureNumPolyphonyGroups(unsigned groupIdx) noexcept
+void VoiceManager::ensureNumPolyphonyGroups(int groupIdx) noexcept
 {
-    size_t neededSize = static_cast<size_t>(groupIdx) + 1;
-    if (polyphonyGroups_.size() < neededSize)
-        polyphonyGroups_.resize(neededSize);
+    if (!polyphonyGroups_.contains(groupIdx))
+        polyphonyGroups_.emplace(groupIdx, PolyphonyGroup{});
 }
 
-void VoiceManager::setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept
+void VoiceManager::setGroupPolyphony(int groupIdx, unsigned polyphony) noexcept
 {
     ensureNumPolyphonyGroups(groupIdx);
     polyphonyGroups_[groupIdx].setPolyphonyLimit(polyphony);
 }
 
 
-const PolyphonyGroup* VoiceManager::getPolyphonyGroupView(int idx) const noexcept
+const PolyphonyGroup* VoiceManager::getPolyphonyGroupView(int idx) noexcept
 {
-    return (size_t)idx < polyphonyGroups_.size() ? &polyphonyGroups_[idx] : nullptr;
+    if (!polyphonyGroups_.contains(idx))
+        return {};
+
+    return &polyphonyGroups_[idx];
 }
 
 void VoiceManager::clear()
 {
-    for (PolyphonyGroup& pg : polyphonyGroups_)
-        pg.removeAllVoices();
+    for (auto& pg : polyphonyGroups_)
+        pg.second.removeAllVoices();
     list_.clear();
     activeVoices_.clear();
 }
@@ -164,6 +165,7 @@ void VoiceManager::requireNumVoices(int numVoices, Resources& resources)
 
     clear();
     list_.reserve(numEffectiveVoices);
+    temp_.reserve(numEffectiveVoices);
     activeVoices_.reserve(numEffectiveVoices);
 
     for (int i = 0; i < numEffectiveVoices; ++i) {
@@ -185,33 +187,42 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
         return;
 
     unsigned notePolyphonyCounter { 0 };
-    Voice* selfMaskCandidate { nullptr };
+    temp_.clear();
 
     for (Voice* voice : activeVoices_) {
         const TriggerEvent& voiceTriggerEvent = voice->getTriggerEvent();
-        if (!voice->releasedOrFree()
+        if (!voice->offedOrFree()
             && voice->getRegion()->group == region->group
             && voiceTriggerEvent.number == triggerEvent.number) {
             notePolyphonyCounter += 1;
-            switch (region->selfMask) {
-            case SelfMask::mask:
-                if (voiceTriggerEvent.value <= triggerEvent.value) {
-                    if (!selfMaskCandidate
-                        || selfMaskCandidate->getTriggerEvent().value > voiceTriggerEvent.value) {
-                        selfMaskCandidate = voice;
-                    }
-                }
-                break;
-            case SelfMask::dontMask:
-                if (!selfMaskCandidate || selfMaskCandidate->getAge() < voice->getAge())
-                    selfMaskCandidate = voice;
-                break;
-            }
+            if (region->selfMask == SelfMask::dontMask || voiceTriggerEvent.value <= triggerEvent.value)
+                temp_.push_back(voice);
         }
     }
 
-    if (notePolyphonyCounter >= *region->notePolyphony) {
-        SisterVoiceRing::offAllSisters(selfMaskCandidate, delay);
+    if (region->selfMask == SelfMask::mask) {
+        absl::c_sort(temp_, [](const Voice* lhs, const Voice* rhs) {
+            const auto lhsTrigger = lhs->getTriggerEvent();
+            const auto rhsTrigger = rhs->getTriggerEvent();
+            return lhsTrigger.value < rhsTrigger.value;
+        });
+    } else if (region->selfMask == SelfMask::dontMask) {
+        absl::c_sort(temp_, [](const Voice* lhs, const Voice* rhs) {
+            return lhs->getAge() > rhs->getAge();
+        });
+    } else {
+        ASSERTFALSE;
+    }
+
+    auto it = temp_.begin();
+    unsigned targetPolyphony { *region->notePolyphony - 1 };
+    while (notePolyphonyCounter > targetPolyphony && it < temp_.end()) {
+        Voice* voice = *it;
+        if (!voice->offedOrFree())
+            SisterVoiceRing::offAllSisters(voice, delay);
+
+        notePolyphonyCounter--;
+        it++;
     }
 }
 

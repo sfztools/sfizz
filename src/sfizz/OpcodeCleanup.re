@@ -192,6 +192,21 @@ end_region_oncc:
         goto end_region;
     }
 
+    "loop_startcc" (number) END {
+        opcode = absl::StrCat("loop_start_oncc", group(1));
+        goto end_region;
+    }
+
+    "loop_lengthcc" (number) END {
+        opcode = absl::StrCat("loop_end_oncc", group(1));
+        goto end_region;
+    }
+
+    "loop_length_oncc" (number) END {
+        opcode = absl::StrCat("loop_end_oncc", group(1));
+        goto end_region;
+    }
+
     * {
         goto end_region;
     }

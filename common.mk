@@ -107,6 +107,8 @@ SFIZZ_SOURCES = \
 	src/sfizz/PowerFollower.cpp \
 	src/sfizz/Region.cpp \
 	src/sfizz/RegionSet.cpp \
+	src/sfizz/RegionStateful.cpp \
+	src/sfizz/Resources.cpp \
 	src/sfizz/RTSemaphore.cpp \
 	src/sfizz/ScopedFTZ.cpp \
 	src/sfizz/sfizz.cpp \

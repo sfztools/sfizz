@@ -510,7 +510,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int dela
  *
  * @param synth      The synth.
  * @param delay      The delay at which the event occurs; this should be lower
- *                   than the size of the block in the next call to renderBlock().
+ *                   than the size of the block in the next call to sfizz_render_block().
  * @param aftertouch The aftertouch value, in domain 0 to 127.
  *
  * @par Thread-safety constraints
@@ -528,7 +528,7 @@ SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_aftertouch(sfizz_synth_t
  *
  * @param synth      The synth.
  * @param delay      The delay at which the event occurs; this should be lower
- *                   than the size of the block in the next call to renderBlock().
+ *                   than the size of the block in the next call to sfizz_render_block().
  * @param aftertouch The aftertouch value, in domain 0 to 127.
  *
  * @par Thread-safety constraints
@@ -546,7 +546,7 @@ SFIZZ_EXPORTED_API void sfizz_send_channel_aftertouch(sfizz_synth_t* synth, int 
  *
  * @param synth      The synth.
  * @param delay      The delay at which the event occurs; this should be lower
- *                   than the size of the block in the next call to renderBlock().
+ *                   than the size of the block in the next call to sfizz_render_block().
  * @param aftertouch The normalized aftertouch value, in domain 0 to 1.
  *
  * @par Thread-safety constraints
@@ -565,7 +565,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_channel_aftertouch(sfizz_synth_t* synth, i
  *
  * @param synth         The synth.
  * @param delay         The delay at which the event occurs; this should be lower
- *                      than the size of the block in the next call to renderBlock().
+ *                      than the size of the block in the next call to sfizz_render_block().
  * @param note_number   The note number, in domain 0 to 127.
  * @param aftertouch    The aftertouch value, in domain 0 to 127.
  *
@@ -585,7 +585,7 @@ SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch(sfizz_synth_t* synth, int del
  *
  * @param synth         The synth.
  * @param delay         The delay at which the event occurs; this should be lower
- *                      than the size of the block in the next call to renderBlock().
+ *                      than the size of the block in the next call to sfizz_render_block().
  * @param note_number   The note number, in domain 0 to 127.
  * @param aftertouch    The normalized aftertouch value, in domain 0 to 1.
  *
@@ -598,8 +598,8 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int 
  * @brief Send a tempo event.
  *
  * This command should be delay-ordered with all other time/signature commands, namely
- * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
- * of the synth is undefined.
+ * sfizz_send_tempo(), sfizz_send_time_signature(), sfizz_send_time_position(),
+ * and sfizz_send_playback_state(), otherwise the behavior of the synth is undefined.
  *
  * @since 0.2.0
  *
@@ -616,8 +616,8 @@ SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_send_tempo(sfizz_synth_t* syn
  * @brief Send a tempo event.
  *
  * This command should be delay-ordered with all other time/signature commands, namely
- * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
- * of the synth is undefined.
+ * sfizz_send_tempo(), sfizz_send_time_signature(), sfizz_send_time_position(),
+ * and sfizz_send_playback_state(), otherwise the behavior of the synth is undefined.
  *
  * @since 1.0.0
  *
@@ -634,8 +634,8 @@ SFIZZ_EXPORTED_API void sfizz_send_bpm_tempo(sfizz_synth_t* synth, int delay, fl
  * @brief Send the time signature.
  *
  * This command should be delay-ordered with all other time/signature commands, namely
- * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
- * of the synth is undefined.
+ * sfizz_send_tempo(), sfizz_send_time_signature(), sfizz_send_time_position(),
+ * and sfizz_send_playback_state(), otherwise the behavior of the synth is undefined.
  *
  * @since 0.5.0
  *
@@ -653,8 +653,8 @@ SFIZZ_EXPORTED_API void sfizz_send_time_signature(sfizz_synth_t* synth, int dela
  * @brief Send the time position.
  *
  * This command should be delay-ordered with all other time/signature commands, namely
- * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
- * of the synth is undefined.
+ * sfizz_send_tempo(), sfizz_send_time_signature(), sfizz_send_time_position(),
+ * and sfizz_send_playback_state(), otherwise the behavior of the synth is undefined.
  *
  * @since 0.5.0
  *
@@ -672,8 +672,8 @@ SFIZZ_EXPORTED_API void sfizz_send_time_position(sfizz_synth_t* synth, int delay
  * @brief Send the playback state.
  *
  * This command should be delay-ordered with all other time/signature commands, namely
- * tempo(), timeSignature(), timePosition(), and playbackState(), otherwise the behavior
- * of the synth is undefined.
+ * sfizz_send_tempo(), sfizz_send_time_signature(), sfizz_send_time_position(),
+ * and sfizz_send_playback_state(), otherwise the behavior of the synth is undefined.
  *
  * @since 0.5.0
  *

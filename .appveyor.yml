@@ -42,9 +42,9 @@ for:
   - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/before_build.sh
   build_script:
   - cd build
-  - make -j2 sfizz_tests
+  - cmake --build . -j2 --target sfizz_tests
   - tests/sfizz_tests
-  - make -j2
+  - cmake --build . -j2
   after_build:
   - chmod +x ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh
   - ${APPVEYOR_BUILD_FOLDER}/scripts/appveyor/after_build.sh

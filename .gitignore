@@ -15,6 +15,8 @@ compile_commands.json
 *.autosave
 /Doxyfile
 .DS_Store
+.cache/
+.cmake/
 
 clients/sfizz_jack
 clients/sfzprint

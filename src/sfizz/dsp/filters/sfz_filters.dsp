@@ -154,7 +154,7 @@ sfz2chEqHshelf = par(i,2,sfzEqHshelf);
 // Filter parameters
 
 cutoff = hslider("[01] Cutoff [unit:Hz] [scale:log]", 440.0, 50.0, 10000.0, 1.0) : max(1.0) : min(20000.0);
-Q = vslider("[02] Resonance [unit:dB]", 0.0, 0.0, 40.0, 0.1) : max(0.0) : min(60.0) : ba.db2linear;
+Q = vslider("[02] Resonance [unit:dB]", 0.0, 0.0, 40.0, 0.1) : max(-60.0) : min(60.0) : ba.db2linear;
 pkShGain = vslider("[03] Peak/shelf gain [unit:dB]", 0.0, 0.0, 40.0, 0.1) : max(-120.0) : min(60.0);
 bandwidthOrSlope = vslider("[04] Bandwidth [unit:octave]", 1.0, 0.1, 10.0, 0.01);
 bandwidth = bandwidthOrSlope : max(1e-2) : min(12.0);

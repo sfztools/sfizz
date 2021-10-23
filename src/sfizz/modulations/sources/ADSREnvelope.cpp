@@ -13,9 +13,55 @@
 
 namespace sfz {
 
-ADSREnvelopeSource::ADSREnvelopeSource(VoiceManager& manager, MidiState& state)
-    : voiceManager_(manager), midiState_(state)
+ADSREnvelopeSource::ADSREnvelopeSource(VoiceManager& manager)
+    : voiceManager_(manager)
 {
+}
+
+ADSREnvelope* getEG(Voice* voice, const ModKey& key)
+{
+    ADSREnvelope* eg = nullptr;
+    if (!voice)
+        return eg;
+
+    switch (key.id()) {
+    case ModId::AmpEG:
+        eg = voice->getAmplitudeEG();
+        break;
+    case ModId::PitchEG:
+        eg = voice->getPitchEG();
+        break;
+    case ModId::FilEG:
+        eg = voice->getFilterEG();
+        break;
+    default:
+        return eg;
+    }
+
+    return eg;
+}
+
+const EGDescription* getEGDescription(const Region* region, const ModKey& key)
+{
+    const EGDescription* desc = nullptr;
+    if (!region)
+        return desc;
+
+    switch (key.id()) {
+    case ModId::AmpEG:
+        desc = &region->amplitudeEG;
+        break;
+    case ModId::PitchEG:
+        desc = &*region->pitchEG;
+        break;
+    case ModId::FilEG:
+        desc = &*region->filterEG;
+        break;
+    default:
+        return desc;
+    }
+
+    return desc;
 }
 
 void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
@@ -27,33 +73,13 @@ void ADSREnvelopeSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId,
     }
 
     const Region* region = voice->getRegion();
-    ADSREnvelope* eg = nullptr;
-    const EGDescription* desc = nullptr;
-
-    switch (sourceKey.id()) {
-    case ModId::AmpEG:
-        eg = voice->getAmplitudeEG();
-        ASSERT(eg);
-        desc = &region->amplitudeEG;
-        break;
-    case ModId::PitchEG:
-        eg = voice->getPitchEG();
-        ASSERT(eg);
-        desc = &*region->pitchEG;
-        break;
-    case ModId::FilEG:
-        eg = voice->getFilterEG();
-        ASSERT(eg);
-        desc = &*region->filterEG;
-        break;
-    default:
-        ASSERTFALSE;
-        return;
-    }
+    ADSREnvelope* eg = getEG(voice, sourceKey);
+    const EGDescription* desc = getEGDescription(region, sourceKey);
+    ASSERT(eg);
 
     const TriggerEvent& triggerEvent = voice->getTriggerEvent();
     const float sampleRate = voice->getSampleRate();
-    eg->reset(*desc, *region, midiState_, delay, triggerEvent.value, sampleRate);
+    eg->reset(*desc, *region, delay, triggerEvent.value, sampleRate);
 }
 
 void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
@@ -64,27 +90,24 @@ void ADSREnvelopeSource::release(const ModKey& sourceKey, NumericId<Voice> voice
         return;
     }
 
-    ADSREnvelope* eg = nullptr;
+    ADSREnvelope* eg = getEG(voice, sourceKey);
+    ASSERT(eg);
 
-    switch (sourceKey.id()) {
-    case ModId::AmpEG:
-        eg = voice->getAmplitudeEG();
-        ASSERT(eg);
-        break;
-    case ModId::PitchEG:
-        eg = voice->getPitchEG();
-        ASSERT(eg);
-        break;
-    case ModId::FilEG:
-        eg = voice->getFilterEG();
-        ASSERT(eg);
-        break;
-    default:
+    eg->startRelease(delay);
+}
+
+void ADSREnvelopeSource::cancelRelease(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
+{
+    Voice* voice = voiceManager_.getVoiceById(voiceId);
+    if (!voice) {
         ASSERTFALSE;
         return;
     }
 
-    eg->startRelease(delay);
+    ADSREnvelope* eg = getEG(voice, sourceKey);
+    ASSERT(eg);
+
+    eg->cancelRelease(delay);
 }
 
 void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
@@ -95,25 +118,8 @@ void ADSREnvelopeSource::generate(const ModKey& sourceKey, NumericId<Voice> voic
         return;
     }
 
-    ADSREnvelope* eg = nullptr;
-
-    switch (sourceKey.id()) {
-    case ModId::AmpEG:
-        eg = voice->getAmplitudeEG();
-        ASSERT(eg);
-        break;
-    case ModId::PitchEG:
-        eg = voice->getPitchEG();
-        ASSERT(eg);
-        break;
-    case ModId::FilEG:
-        eg = voice->getFilterEG();
-        ASSERT(eg);
-        break;
-    default:
-        ASSERTFALSE;
-        return;
-    }
+    ADSREnvelope* eg = getEG(voice, sourceKey);
+    ASSERT(eg);
 
     eg->getBlock(buffer);
 }

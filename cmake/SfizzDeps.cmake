@@ -1,3 +1,5 @@
+include(CheckCXXSourceCompiles)
+
 # Find system threads
 find_package(Threads REQUIRED)
 
@@ -65,9 +67,19 @@ add_library(sfizz::jsl ALIAS sfizz_jsl)
 target_include_directories(sfizz_jsl INTERFACE "external/jsl/include")
 
 # The cxxopts library
-add_library(sfizz_cxxopts INTERFACE)
+if(SFIZZ_USE_SYSTEM_CXXOPTS)
+    find_path(CXXOPTS_INCLUDE_DIR "cxxopts.hpp")
+    if(NOT CXXOPTS_INCLUDE_DIR)
+        message(FATAL_ERROR "Cannot find cxxopts")
+    endif()
+    add_library(sfizz_cxxopts INTERFACE)
+    target_include_directories(sfizz_cxxopts INTERFACE "${CXXOPTS_INCLUDE_DIR}")
+else()
+    add_library(sfizz_cxxopts INTERFACE)
+    add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
+    target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
+endif()
 add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
-target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
 
 # The sndfile library
 if(SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_DEVTOOLS OR SFIZZ_BENCHMARKS)
@@ -105,10 +117,25 @@ add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 add_library(sfizz_simde INTERFACE)
 add_library(sfizz::simde ALIAS sfizz_simde)
 if(SFIZZ_USE_SYSTEM_SIMDE)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SIMDE "simde" REQUIRED)
-    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIRS}")
-    if(NOT SIMDE_VERSION OR SIMDE_VERSION VERSION_LESS_EQUAL "0.7.2")
+    find_path(SIMDE_INCLUDE_DIR "simde/simde-features.h")
+    if(NOT SIMDE_INCLUDE_DIR)
+        message(FATAL_ERROR "Cannot find simde")
+    endif()
+    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIR}")
+
+    function(sfizz_ensure_simde_version result major minor micro)
+        set(CMAKE_REQUIRED_INCLUDES "${SIMDE_INCLUDE_DIR}")
+        check_cxx_source_compiles(
+            "#include <simde/simde-common.h>
+#if SIMDE_VERSION < HEDLEY_VERSION_ENCODE(${major}, ${minor}, ${micro})
+#   error Version check failed
+#endif
+int main() { return 0; }"
+            "${result}")
+    endfunction()
+
+    sfizz_ensure_simde_version(SFIZZ_SIMDE_AT_LEAST_0_7_3 0 7 3)
+    if(NOT SFIZZ_SIMDE_AT_LEAST_0_7_3)
         message(WARNING "The version of SIMDe on this system has known issues. \
 It is recommended to either update if a newer version is available, or use the \
 version bundled with this package. Refer to following issues: \
@@ -122,9 +149,18 @@ if(TARGET sfizz::openmp)
 endif()
 
 # The pugixml library
-add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+if(SFIZZ_USE_SYSTEM_PUGIXML)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PUGIXML "pugixml" REQUIRED)
+    add_library(sfizz_pugixml INTERFACE)
+    target_include_directories(sfizz_pugixml INTERFACE ${PUGIXML_INCLUDE_DIRS})
+    target_link_libraries(sfizz_pugixml INTERFACE ${PUGIXML_LIBRARIES})
+    link_directories(${PUGIXML_LIBRARY_DIRS})
+else()
+    add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
+    target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
+endif()
 add_library(sfizz::pugixml ALIAS sfizz_pugixml)
-target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
 
 # The spline library
 add_library(sfizz_spline STATIC "src/external/spline/spline/spline.cpp")
@@ -148,13 +184,31 @@ add_library(sfizz::hiir_polyphase_iir2designer ALIAS sfizz_hiir_polyphase_iir2de
 target_link_libraries(sfizz_hiir_polyphase_iir2designer PUBLIC sfizz::hiir)
 
 # The kissfft library
-add_library(sfizz_kissfft STATIC
-    "src/external/kiss_fft/kiss_fft.c"
-    "src/external/kiss_fft/tools/kiss_fftr.c")
+if (SFIZZ_USE_SYSTEM_KISS_FFT)
+    find_path(KISSFFT_INCLUDE_DIR "kiss_fft.h" PATH_SUFFIXES "kissfft")
+    find_path(KISSFFTR_INCLUDE_DIR "kiss_fftr.h" PATH_SUFFIXES "kissfft")
+    find_library(KISSFFT_FFTR_LIBRARY "kiss_fftr_float" KISSFFTR_INCLUDE_DIR)
+    find_library(KISSFFT_FFT_LIBRARY "kiss_fft_float" KISSFFT_INCLUDE_DIR)
+    add_library(sfizz_kissfft INTERFACE)
+    if(NOT KISSFFT_FFT_LIBRARY)
+        message(FATAL_ERROR "Cannot find kiss fft")
+    endif()
+    if(NOT KISSFFT_FFTR_LIBRARY)
+        message(FATAL_ERROR "Cannot find kiss fftr")
+    endif()
+    target_include_directories(sfizz_kissfft INTERFACE "${KISSFFTR_INCLUDE_DIR}")
+    target_include_directories(sfizz_kissfft INTERFACE "${KISSFFT_INCLUDE_DIR}")
+    target_link_libraries(sfizz_kissfft INTERFACE "${KISSFFT_FFTR_LIBRARY}")
+    target_link_libraries(sfizz_kissfft INTERFACE "${KISSFFT_FFT_LIBRARY}")
+else()
+    add_library(sfizz_kissfft STATIC
+        "src/external/kiss_fft/kiss_fft.c"
+        "src/external/kiss_fft/tools/kiss_fftr.c")
+    target_include_directories(sfizz_kissfft
+        PUBLIC "src/external/kiss_fft"
+        PUBLIC "src/external/kiss_fft/tools")
+endif()
 add_library(sfizz::kissfft ALIAS sfizz_kissfft)
-target_include_directories(sfizz_kissfft
-    PUBLIC "src/external/kiss_fft"
-    PUBLIC "src/external/kiss_fft/tools")
 
 # The cephes library
 add_library(sfizz_cephes STATIC
@@ -183,9 +237,27 @@ add_library(sfizz::atomic_queue ALIAS sfizz_atomic_queue)
 target_include_directories(sfizz_atomic_queue INTERFACE "external/atomic_queue/include")
 
 # The ghc::filesystem library
-add_library(sfizz_filesystem INTERFACE)
+if(FALSE)
+    # header-only
+    add_library(sfizz_filesystem INTERFACE)
+    target_include_directories(sfizz_filesystem INTERFACE "external/filesystem/include")
+else()
+    # static library
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp" "#include <ghc/fs_std_impl.hpp>")
+    add_library(sfizz_filesystem_impl STATIC "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp")
+    target_include_directories(sfizz_filesystem_impl PUBLIC "external/filesystem/include")
+    # Add the needed linker option for GCC 8
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU"
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+        target_link_libraries(sfizz_filesystem_impl PUBLIC stdc++fs)
+    endif()
+    #
+    add_library(sfizz_filesystem INTERFACE)
+    target_compile_definitions(sfizz_filesystem INTERFACE "GHC_FILESYSTEM_FWD")
+    target_link_libraries(sfizz_filesystem INTERFACE sfizz_filesystem_impl)
+endif()
 add_library(sfizz::filesystem ALIAS sfizz_filesystem)
-target_include_directories(sfizz_filesystem INTERFACE "external/filesystem/include")
 
 # The atomic library
 add_library(sfizz_atomic INTERFACE)

@@ -353,12 +353,12 @@ void sfz::Sfizz::allSoundOff() noexcept
 
 void sfz::Sfizz::addExternalDefinition(const std::string& id, const std::string& value)
 {
-    synth->synth.getParser().addExternalDefinition(id, value);
+    synth->synth.addExternalDefinition(id, value);
 }
 
 void sfz::Sfizz::clearExternalDefinitions()
 {
-    synth->synth.getParser().clearExternalDefinitions();
+    synth->synth.clearExternalDefinitions();
 }
 
 std::string sfz::Sfizz::exportMidnam(const std::string& model) const

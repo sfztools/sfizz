@@ -69,7 +69,7 @@ bool Layer::registerNoteOn(int noteNumber, float velocity, float randValue) noex
         return false;
 
     if (region.velocityOverride == VelocityOverride::previous)
-        velocity = midiState_.getLastVelocity();
+        velocity = midiState_.getVelocityOverride();
 
     const bool velOk = region.velocityRange.containsWithEnd(velocity);
     const bool randOk = region.randRange.contains(randValue) || (randValue >= 1.0f && region.randRange.isValid() && region.randRange.getEnd() >= 1.0f);
@@ -129,10 +129,8 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
     return false;
 }
 
-bool Layer::registerCC(int ccNumber, float ccValue) noexcept
+void Layer::updateCCState(int ccNumber, float ccValue) noexcept
 {
-    ASSERT(ccValue >= 0.0f && ccValue <= 1.0f);
-
     const Region& region = region_;
 
     if (ccNumber == region.sustainCC)
@@ -153,15 +151,30 @@ bool Layer::registerCC(int ccNumber, float ccValue) noexcept
         ccSwitched_.set(ccNumber, true);
     else
         ccSwitched_.set(ccNumber, false);
+}
 
-    if (!isSwitchedOn())
-        return false;
+bool Layer::registerCC(int ccNumber, float ccValue, float randValue) noexcept
+{
+    const Region& region = region_;
+
+    updateCCState(ccNumber, ccValue);
 
     if (!region.triggerOnCC)
         return false;
 
+    const bool randOk = region.randRange.contains(randValue)
+        || (randValue >= 1.0f && region.randRange.isValid() && region.randRange.getEnd() >= 1.0f);
+
+    if (!randOk)
+        return false;
+
     if (auto triggerRange = region.ccTriggers.get(ccNumber)) {
-        if (triggerRange->containsWithEnd(ccValue))
+        if (!triggerRange->containsWithEnd(ccValue))
+            return false;
+
+        sequenceSwitched_ =
+            ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
+        if (isSwitchedOn())
             return true;
     }
 

@@ -6,6 +6,7 @@
 
 #include "TestHelpers.h"
 #include "sfizz/modulations/ModId.h"
+#include <absl/strings/str_cat.h>
 
 size_t RegionCCView::size() const
 {
@@ -68,7 +69,7 @@ const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth)
     std::vector<const sfz::Voice*> playingVoices;
     for (int i = 0; i < synth.getNumVoices(); ++i) {
         const auto* voice = synth.getVoiceView(i);
-        if (!voice->releasedOrFree())
+        if (!voice->released())
             playingVoices.push_back(voice);
     }
     return playingVoices;
@@ -77,7 +78,14 @@ const std::vector<const sfz::Voice*> getPlayingVoices(const sfz::Synth& synth)
 unsigned numPlayingVoices(const sfz::Synth& synth)
 {
     return absl::c_count_if(getActiveVoices(synth), [](const sfz::Voice* v) {
-        return !v->releasedOrFree();
+        return !v->released();
+    });
+}
+
+unsigned numActiveVoices(const sfz::Synth& synth)
+{
+    return absl::c_count_if(getActiveVoices(synth), [](const sfz::Voice* v) {
+        return !v->offedOrFree();
     });
 }
 
@@ -86,7 +94,7 @@ const std::vector<std::string> playingSamples(const sfz::Synth& synth)
     std::vector<std::string> samples;
     for (int i = 0; i < synth.getNumVoices(); ++i) {
         const auto* voice = synth.getVoiceView(i);
-        if (!voice->releasedOrFree()) {
+        if (!voice->released()) {
             if (auto region = voice->getRegion())
                 samples.push_back(region->sampleId->filename());
         }
@@ -99,7 +107,7 @@ const std::vector<float> playingVelocities(const sfz::Synth& synth)
     std::vector<float> velocities;
     for (int i = 0; i < synth.getNumVoices(); ++i) {
         const auto* voice = synth.getVoiceView(i);
-        if (!voice->releasedOrFree())
+        if (!voice->released())
             velocities.push_back(voice->getTriggerEvent().value);
     }
     return velocities;

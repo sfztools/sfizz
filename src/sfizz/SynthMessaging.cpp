@@ -5,6 +5,9 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "SynthPrivate.h"
+#include "FilePool.h"
+#include "Curve.h"
+#include "MidiState.h"
 #include "utility/StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
@@ -48,6 +51,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 break;                            \
             const auto& lfo = region.lfos[idx];
 
+        #define GET_EG_OR_BREAK(idx)              \
+            if (idx >= region.flexEGs.size())     \
+                break;                            \
+            auto& eg = region.flexEGs[idx];
+
+        #define GET_EG_POINT_OR_BREAK(idx)        \
+            if (idx >= eg.points.size())          \
+                break;                            \
+            auto& point = eg.points[idx];
+
         MATCH("/hello", "") {
             client.receive(delay, "/hello", "", nullptr);
         } break;
@@ -67,11 +80,19 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         } break;
 
         MATCH("/num_curves", "") {
-            client.receive<'i'>(delay, path, int(impl.resources_.curves.getNumCurves()));
+            client.receive<'i'>(delay, path, int(impl.resources_.getCurves().getNumCurves()));
         } break;
 
         MATCH("/num_samples", "") {
-            client.receive<'i'>(delay, path, int(impl.resources_.filePool.getNumPreloadedSamples()));
+            client.receive<'i'>(delay, path, int(impl.resources_.getFilePool().getNumPreloadedSamples()));
+        } break;
+
+        MATCH("/octave_offset", "") {
+            client.receive<'i'>(delay, path, impl.octaveOffset_);
+        } break;
+
+        MATCH("/note_offset", "") {
+            client.receive<'i'>(delay, path, impl.noteOffset_);
         } break;
 
         //----------------------------------------------------------------------
@@ -139,13 +160,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             if (indices[0] >= config::numCCs)
                 break;
             // Note: result value is not frame-exact
-            client.receive<'f'>(delay, path, impl.resources_.midiState.getCCValue(indices[0]));
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getCCValue(indices[0]));
         } break;
 
         MATCH("/cc&/value", "f") {
             if (indices[0] >= config::numCCs)
                 break;
-            impl.resources_.midiState.ccEvent(delay, indices[0], args[0].f);
+            impl.resources_.getMidiState().ccEvent(delay, indices[0], args[0].f);
         } break;
 
         MATCH("/cc&/label", "") {
@@ -164,6 +185,13 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/cc/changed~", "") {
             const BitArray<config::numCCs>& changedCCs = impl.changedCCsLastCycle_;
             sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
+            client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/sustain_or_sostenuto/slots", "") {
+            const BitArray<128>& sustainOrSostenuto = impl.sustainOrSostenuto_;
+            sfizz_blob_t blob { sustainOrSostenuto.data(),
+                static_cast<uint32_t>(sustainOrSostenuto.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
         } break;
 
@@ -769,6 +797,26 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, region.ampVeltrack * 100.0f);
         } break;
 
+        MATCH("/region&/amp_veltrack_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.ampVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.ampVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/amp_veltrack_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.ampVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.ampVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'i'>(delay, path, cc.curve );
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
         MATCH("/region&/amp_random", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.ampRandom);
@@ -906,6 +954,26 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         MATCH("/region&/pitch_veltrack", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'i'>(delay, path, region.pitchVeltrack);
+        } break;
+
+        MATCH("/region&/pitch_veltrack_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.pitchVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'f'>(delay, path, cc.modifier);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/pitch_veltrack_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.pitchVeltrackCC.contains(indices[1])) {
+                const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
+                client.receive<'i'>(delay, path, cc.curve );
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
         } break;
 
         MATCH("/region&/pitch_random", "") {
@@ -1070,6 +1138,33 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             if (indices[1] != 2)
                 break;
             client.receive<'f'>(delay, path, region.amplitudeEG.vel2depth);
+        } break;
+
+        MATCH("/region&/ampeg_dynamic", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.amplitudeEG.dynamic) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/fileg_dynamic", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.filterEG && region.filterEG->dynamic) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/pitcheg_dynamic", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.pitchEG && region.pitchEG->dynamic) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
         } break;
 
         MATCH("/region&/note_polyphony", "") {
@@ -1264,6 +1359,28 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, filter.veltrack);
         } break;
 
+        MATCH("/region&/filter&/veltrack_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_FILTER_OR_BREAK(indices[1])
+            if (filter.veltrackCC.contains(indices[2])) {
+                const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
+                client.receive<'f'>(delay, path, cc.modifier);
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
+        MATCH("/region&/filter&/veltrack_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_FILTER_OR_BREAK(indices[1])
+            if (filter.veltrackCC.contains(indices[2])) {
+                const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
+                client.receive<'i'>(delay, path, cc.curve );
+            } else {
+                client.receive<'N'>(delay, path, {});
+            }
+        } break;
+
         MATCH("/region&/filter&/type", "") {
             GET_REGION_OR_BREAK(indices[0])
             GET_FILTER_OR_BREAK(indices[1])
@@ -1349,10 +1466,44 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, static_cast<int32_t>(lfo.sub[0].wave));
         } break;
 
+        MATCH("/region&/eg&/point&/time", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.time);
+        } break;
+
+        MATCH("/region&/eg&/point&/time_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.ccTime.getWithDefault(indices[3]));
+        } break;
+
+        MATCH("/region&/eg&/point&/level", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.level);
+        } break;
+
+        MATCH("/region&/eg&/point&/level_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            GET_EG_OR_BREAK(indices[1])
+            GET_EG_POINT_OR_BREAK(indices[2] + 1)
+
+            client.receive<'f'>(delay, path, point.ccLevel.getWithDefault(indices[3]));
+        } break;
+
         #undef GET_REGION_OR_BREAK
         #undef GET_FILTER_OR_BREAK
         #undef GET_EQ_OR_BREAK
         #undef GET_LFO_OR_BREAK
+        #undef GET_EG_OR_BREAK
+        #undef GET_EG_POINT_OR_BREAK
 
         //----------------------------------------------------------------------
         // Setting values
@@ -1452,6 +1603,16 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 break;
             }
 
+        } break;
+
+        MATCH("/voice&/remaining_delay", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getRemainingDelay());
+        } break;
+
+        MATCH("/voice&/source_position", "") {
+            GET_VOICE_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, voice.getSourcePosition());
         } break;
 
         #undef MATCH

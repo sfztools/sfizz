@@ -28,5 +28,7 @@ struct SynthConfig
     {
         return freeWheeling ? freeWheelingOscillatorQuality : liveOscillatorQuality;
     }
+
+    bool sustainCancelsRelease { Default::sustainCancelsRelease };
 };
 }

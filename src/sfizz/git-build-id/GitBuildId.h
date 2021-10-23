@@ -6,7 +6,9 @@
 
 #pragma once
 
+#if defined(__cplusplus)
 extern "C" {
+#endif
 
 /**
  * @brief Short identifier of the current head commit.
@@ -14,4 +16,6 @@ extern "C" {
  */
 extern const char* GitBuildId;
 
+#if defined(__cplusplus)
 } // extern "C"
+#endif

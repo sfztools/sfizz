@@ -61,6 +61,12 @@ if(SFIZZ_LV2_UI)
     endif()
 endif()
 
+# Define a preprocessor variable to indicate a build with UI enabled
+if(SFIZZ_LV2_UI)
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME} PRIVATE "SFIZZ_LV2_UI=1")
+    target_compile_definitions(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "SFIZZ_LV2_UI=1")
+endif()
+
 # Remove the "lib" prefix, rename the target name and build it in the .lv build dir
 # <build_dir>/lv2/<plugin_name>_lv2.<ext> to
 # <build_dir>/lv2/<plugin_name>.lv2/<plugin_name>.<ext>
@@ -83,9 +89,6 @@ if(SFIZZ_LV2_UI)
     configure_file(${PROJECT_NAME}_ui.ttl.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_ui.ttl)
 endif()
 configure_file(LICENSE.md.in ${PROJECT_BINARY_DIR}/LICENSE.md)
-if(SFIZZ_USE_VCPKG OR SFIZZ_STATIC_DEPENDENCIES OR CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    file(COPY "lgpl-3.0.txt" DESTINATION ${PROJECT_BINARY_DIR})
-endif()
 
 # Generate controllers.ttl
 sfizz_lv2_generate_controllers_ttl("${PROJECT_BINARY_DIR}/controllers.ttl")
@@ -114,7 +117,8 @@ endif()
 # Installation
 if(NOT MSVC)
     install(DIRECTORY ${PROJECT_BINARY_DIR} DESTINATION ${LV2PLUGIN_INSTALL_DIR}
-        COMPONENT "lv2")
+        COMPONENT "lv2"
+        USE_SOURCE_PERMISSIONS)
     bundle_dylibs(lv2
         "${LV2PLUGIN_INSTALL_DIR}/${PROJECT_NAME}.lv2/Contents/Binary/sfizz.so"
         COMPONENT "lv2")

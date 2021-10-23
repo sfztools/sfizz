@@ -13,6 +13,8 @@
 #include "modulations/sources/ChannelAftertouch.h"
 #include "modulations/sources/PolyAftertouch.h"
 #include "modulations/sources/LFO.h"
+#include "parser/Parser.h"
+#include "parser/ParserListener.h"
 
 namespace sfz {
 
@@ -246,6 +248,7 @@ struct Synth::Impl final: public Parser::Listener {
     std::map<int, size_t> keyLabelsMap_;
     BitArray<128> keySlots_;
     BitArray<128> swLastSlots_;
+    BitArray<128> sustainOrSostenuto_;
     std::vector<NoteNamePair> keyswitchLabels_;
     std::map<int, size_t> keyswitchLabelsMap_;
 
@@ -325,7 +328,7 @@ struct Synth::Impl final: public Parser::Listener {
     Parser parser_;
     absl::optional<fs::file_time_type> modificationTime_ { };
 
-    std::array<float, config::numCCs> defaultCCValues_;
+    std::array<float, config::numCCs> defaultCCValues_ { };
     BitArray<config::numCCs> currentUsedCCs_;
     BitArray<config::numCCs> changedCCsThisCycle_;
     BitArray<config::numCCs> changedCCsLastCycle_;

@@ -86,11 +86,11 @@ public:
     float getNoteVelocity(int noteNumber) const noexcept;
 
     /**
-     * @brief Get the velocity of the last note played
+     * @brief Get the velocity override value (sw_vel in SFZ)
      *
      * @return float
      */
-    float getLastVelocity() const noexcept;
+    float getVelocityOverride() const noexcept;
 
     /**
      * @brief Register a pitch bend event
@@ -167,7 +167,7 @@ public:
     bool isNotePressed(int noteNumber) const noexcept { return noteStates[noteNumber]; }
 
     /**
-     * @brief Get the CC value for CC number
+     * @brief Get the last CC value for CC number
      *
      * @param ccNumber
      * @return float
@@ -175,27 +175,24 @@ public:
     float getCCValue(int ccNumber) const noexcept;
 
     /**
+     * @brief Get the CC value for CC number
+     *
+     * @param ccNumber
+     * @param delay
+     * @return float
+     */
+    float getCCValueAt(int ccNumber, int delay) const noexcept;
+
+    /**
      * @brief Reset the midi state (does not impact the last note on time)
      *
      */
     void reset() noexcept;
 
-    /**
-     * @brief Reset all the controllers
-     */
-    void resetAllControllers(int delay) noexcept;
-
     const EventVector& getCCEvents(int ccIdx) const noexcept;
     const EventVector& getPolyAftertouchEvents(int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
-
-    /**
-     * @brief Get the alternate state value, for extended CC 137
-     *
-     * @return float
-     */
-    float getAlternateState() const noexcept { return alternate; }
 
 private:
 
@@ -237,6 +234,11 @@ private:
     MidiNoteArray<float> lastNoteVelocities;
 
     /**
+     * @brief Velocity override value (sw_vel in SFZ)
+     */
+    float velocityOverride;
+
+    /**
      * @brief Last note played
      */
     int lastNotePlayed { 0 };
@@ -272,5 +274,7 @@ private:
     int samplesPerBlock { config::defaultSamplesPerBlock };
     float alternate { 0.0f };
     unsigned internalClock { 0 };
+    fast_real_distribution<float> unipolarDist { 0.0f, 1.0f };
+    fast_real_distribution<float> bipolarDist { -1.0f, 1.0f };
 };
 }

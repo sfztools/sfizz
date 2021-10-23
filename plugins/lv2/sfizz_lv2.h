@@ -39,35 +39,38 @@
 #define SFIZZ__numVoices SFIZZ_URI ":" "numvoices"
 #define SFIZZ__preloadSize SFIZZ_URI ":" "preload_size"
 #define SFIZZ__oversampling SFIZZ_URI ":" "oversampling"
+#define SFIZZ__lastKeyswitch SFIZZ_URI ":" "last_keyswitch"
 // These ones are just for the worker
 #define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
 #define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
 // OSC atoms
 #define SFIZZ__OSCBlob SFIZZ_URI ":" "OSCBlob"
+#define SFIZZ__Notify SFIZZ_URI ":" "Notify"
+// Level atoms
+#define SFIZZ__AudioLevel SFIZZ_URI ":" "AudioLevel"
 
 enum
 {
     SFIZZ_CONTROL = 0,
-    SFIZZ_NOTIFY = 1,
-    SFIZZ_AUTOMATE = 2,
-    SFIZZ_LEFT = 3,
-    SFIZZ_RIGHT = 4,
-    SFIZZ_VOLUME = 5,
-    SFIZZ_POLYPHONY = 6,
-    SFIZZ_OVERSAMPLING = 7,
-    SFIZZ_PRELOAD = 8,
-    SFIZZ_FREEWHEELING = 9,
-    SFIZZ_SCALA_ROOT_KEY = 10,
-    SFIZZ_TUNING_FREQUENCY = 11,
-    SFIZZ_STRETCH_TUNING = 12,
-    SFIZZ_SAMPLE_QUALITY = 13,
-    SFIZZ_OSCILLATOR_QUALITY = 14,
-    SFIZZ_ACTIVE_VOICES = 15,
-    SFIZZ_NUM_CURVES = 16,
-    SFIZZ_NUM_MASTERS = 17,
-    SFIZZ_NUM_GROUPS = 18,
-    SFIZZ_NUM_REGIONS = 19,
-    SFIZZ_NUM_SAMPLES = 20,
+    SFIZZ_AUTOMATE = 1,
+    SFIZZ_LEFT = 2,
+    SFIZZ_RIGHT = 3,
+    SFIZZ_VOLUME = 4,
+    SFIZZ_POLYPHONY = 5,
+    SFIZZ_OVERSAMPLING = 6,
+    SFIZZ_PRELOAD = 7,
+    SFIZZ_FREEWHEELING = 8,
+    SFIZZ_SCALA_ROOT_KEY = 9,
+    SFIZZ_TUNING_FREQUENCY = 10,
+    SFIZZ_STRETCH_TUNING = 11,
+    SFIZZ_SAMPLE_QUALITY = 12,
+    SFIZZ_OSCILLATOR_QUALITY = 13,
+    SFIZZ_ACTIVE_VOICES = 14,
+    SFIZZ_NUM_CURVES = 15,
+    SFIZZ_NUM_MASTERS = 16,
+    SFIZZ_NUM_GROUPS = 17,
+    SFIZZ_NUM_REGIONS = 18,
+    SFIZZ_NUM_SAMPLES = 19,
 };
 
 // For use with instance-access
@@ -88,6 +91,10 @@ struct sfizz_plugin_t;
 bool sfizz_lv2_fetch_description(
     sfizz_plugin_t *self, const int *serial,
     uint8_t **descp, uint32_t *sizep, int *serialp);
+
+#if defined(SFIZZ_LV2_UI)
+void sfizz_lv2_set_ui_active(sfizz_plugin_t *self, bool ui_active);
+#endif
 
 // Mapping URID to CC and vice-versa
 struct sfizz_lv2_ccmap;

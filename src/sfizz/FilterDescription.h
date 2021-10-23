@@ -20,6 +20,7 @@ struct FilterDescription
     float keytrack { Default::filterKeytrack };
     uint8_t keycenter { Default::key };
     float veltrack { Default::filterVeltrack };
+    CCMap<ModifierCurvePair<float>> veltrackCC { ModifierCurvePair<float>{ Default::filterVeltrackMod, Default::curveCC } };
     float random { Default::filterRandom };
     FilterType type { FilterType::kFilterLpf2p };
 };

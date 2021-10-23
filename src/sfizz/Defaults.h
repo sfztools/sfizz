@@ -60,6 +60,7 @@ enum OpcodeFlags : int {
     kNormalizeBend = 1 << 7,
     kWrapPhase = 1 << 8,
     kDb2Mag = 1 << 9,
+    kFillGap = 1 << 10, // Fill in the gap when converting from discrete midi values to float, so that 13 is actually 13.999999...
 };
 
 template<class T>
@@ -97,8 +98,12 @@ struct OpcodeSpec
             return input;
         else if (flags & kNormalizePercent)
             return static_cast<U>(input / U(100));
-        else if (flags & kNormalizeMidi)
-            return static_cast<U>(input / U(127));
+        else if (flags & kNormalizeMidi) {
+            if ((flags & kFillGap) && (input <= U(126)) && input >= 0)
+                return std::nextafter(static_cast<U>((input + 1.0f) / U(127)), 0.0f);
+            else
+                return static_cast<U>(input / U(127));
+        }
         else if (flags & kNormalizeBend)
             return static_cast<U>(input / U(8191));
         else if (flags & kDb2Mag)
@@ -148,7 +153,7 @@ namespace Default
     extern const OpcodeSpec<float> oscillatorModDepth;
     extern const OpcodeSpec<float> oscillatorModDepthMod;
     extern const OpcodeSpec<int32_t> oscillatorQuality;
-    extern const OpcodeSpec<uint32_t> group;
+    extern const OpcodeSpec<int64_t> group;
     extern const OpcodeSpec<float> offTime;
     extern const OpcodeSpec<uint32_t> polyphony;
     extern const OpcodeSpec<uint32_t> notePolyphony;
@@ -159,6 +164,10 @@ namespace Default
     extern const OpcodeSpec<float> hiVel;
     extern const OpcodeSpec<float> loCC;
     extern const OpcodeSpec<float> hiCC;
+    extern const OpcodeSpec<float> xfoutLo;
+    extern const OpcodeSpec<float> xfoutHi;
+    extern const OpcodeSpec<float> xfinHi;
+    extern const OpcodeSpec<float> xfinLo;
     extern const OpcodeSpec<float> loBend;
     extern const OpcodeSpec<float> hiBend;
     extern const OpcodeSpec<float> loNormalized;
@@ -193,6 +202,7 @@ namespace Default
     extern const OpcodeSpec<float> widthMod;
     extern const OpcodeSpec<float> ampKeytrack;
     extern const OpcodeSpec<float> ampVeltrack;
+    extern const OpcodeSpec<float> ampVeltrackMod;
     extern const OpcodeSpec<float> ampVelcurve;
     extern const OpcodeSpec<float> ampRandom;
     extern const OpcodeSpec<bool> rtDead;
@@ -206,6 +216,7 @@ namespace Default
     extern const OpcodeSpec<float> filterRandom;
     extern const OpcodeSpec<float> filterKeytrack;
     extern const OpcodeSpec<float> filterVeltrack;
+    extern const OpcodeSpec<float> filterVeltrackMod;
     extern const OpcodeSpec<float> eqBandwidth;
     extern const OpcodeSpec<float> eqBandwidthMod;
     extern const OpcodeSpec<float> eqFrequency;
@@ -217,6 +228,7 @@ namespace Default
     extern const OpcodeSpec<float> pitchKeytrack;
     extern const OpcodeSpec<float> pitchRandom;
     extern const OpcodeSpec<float> pitchVeltrack;
+    extern const OpcodeSpec<float> pitchVeltrackMod;
     extern const OpcodeSpec<float> transpose;
     extern const OpcodeSpec<float> pitch;
     extern const OpcodeSpec<float> pitchMod;
@@ -251,11 +263,14 @@ namespace Default
     extern const OpcodeSpec<float> egPercentMod;
     extern const OpcodeSpec<float> egDepth;
     extern const OpcodeSpec<float> egVel2Depth;
+    extern const OpcodeSpec<bool> egDynamic;
     extern const OpcodeSpec<bool> flexEGAmpeg;
     extern const OpcodeSpec<bool> flexEGDynamic;
     extern const OpcodeSpec<int32_t> flexEGSustain;
     extern const OpcodeSpec<float> flexEGPointTime;
+    extern const OpcodeSpec<float> flexEGPointTimeMod;
     extern const OpcodeSpec<float> flexEGPointLevel;
+    extern const OpcodeSpec<float> flexEGPointLevelMod;
     extern const OpcodeSpec<float> flexEGPointShape;
     extern const OpcodeSpec<int32_t> sampleQuality;
     extern const OpcodeSpec<int32_t> octaveOffset;
@@ -296,6 +311,7 @@ namespace Default
     extern const OpcodeSpec<SelfMask> selfMask;
     extern const OpcodeSpec<FilterType> filter;
     extern const OpcodeSpec<EqType> eq;
+    extern const OpcodeSpec<bool> sustainCancelsRelease;
 
     // Default/max count for objects
     constexpr int numEQs { 3 };

@@ -10,6 +10,7 @@
 #include "Region.h"
 #include "Resources.h"
 #include "AudioSpan.h"
+#include "Logger.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
 #include <memory>
@@ -205,12 +206,19 @@ public:
      */
     bool isFree() const noexcept;
     /**
-     * @brief Can the voice be reused (i.e. is it releasing or free)
+     * @brief Is the voice released?
      *
      * @return true
      * @return false
      */
-    bool releasedOrFree() const noexcept;
+    bool released() const noexcept;
+    /**
+     * @brief Can the voice be reused (i.e. is it releasing after being killed or free)
+     *
+     * @return true
+     * @return false
+     */
+    bool offedOrFree() const noexcept;
     /**
      * @brief Get the event that triggered the voice
      *
@@ -415,6 +423,19 @@ public:
      * @return const ExtendedCCValues&
      */
     const ExtendedCCValues& getExtendedCCValues() const noexcept;
+
+    /**
+     * @brief Get the remaining delay before the sample starts, in samples
+     *
+     * @return int
+     */
+    int getRemainingDelay() const noexcept;
+    /**
+     * @brief Get the current position in the source sample
+     *
+     * @return int
+     */
+    int getSourcePosition() const noexcept;
 
 public:
     /**

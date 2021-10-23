@@ -7,6 +7,9 @@
 #pragma once
 
 #include "sfizz_lv2.h"
+#if defined(SFIZZ_LV2_UI)
+#include "plugin/RMSFollower.h"
+#endif
 #include <spin_mutex.h>
 #include <sfizz.h>
 #include <stdbool.h>
@@ -31,7 +34,6 @@ struct sfizz_plugin_t
 
     // Ports
     const LV2_Atom_Sequence *control_port {};
-    LV2_Atom_Sequence *notify_port {};
     LV2_Atom_Sequence *automate_port {};
     float *output_buffers[2] {};
     const float *volume_port {};
@@ -52,7 +54,6 @@ struct sfizz_plugin_t
     float *num_samples_port {};
 
     // Atom forge
-    LV2_Atom_Forge forge_notify {};       ///< Forge for writing notification atoms in run thread
     LV2_Atom_Forge forge_automate {};     ///< Forge for writing automation atoms in run thread
     LV2_Atom_Forge forge_secondary {};    ///< Forge for writing into other buffers
 
@@ -85,10 +86,13 @@ struct sfizz_plugin_t
     LV2_URID sfizz_num_voices_uri {};
     LV2_URID sfizz_preload_size_uri {};
     LV2_URID sfizz_oversampling_uri {};
+    LV2_URID sfizz_last_keyswitch_uri {};
     LV2_URID sfizz_log_status_uri {};
     LV2_URID sfizz_check_modification_uri {};
     LV2_URID sfizz_active_voices_uri {};
     LV2_URID sfizz_osc_blob_uri {};
+    LV2_URID sfizz_notify_uri {};
+    LV2_URID sfizz_audio_level_uri {};
     LV2_URID time_position_uri {};
     LV2_URID time_bar_uri {};
     LV2_URID time_bar_beat_uri {};
@@ -117,12 +121,16 @@ struct sfizz_plugin_t
     float sample_rate {};
     std::atomic<int> must_update_midnam {};
     volatile bool must_automate_cc {};
+    int last_keyswitch { -1 };
 
     // Current instrument description
     std::mutex *sfz_blob_mutex {};
     volatile int sfz_blob_serial {};
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
+
+    // Sostenuto or sustain
+    char sustain_or_sostenuto[16] {};
 
     // Current CC values in the synth (synchronized by `synth_mutex`)
     // updated by hdcc or file load
@@ -145,4 +153,10 @@ struct sfizz_plugin_t
 
     // OSC
     uint8_t osc_temp[OSC_TEMP_SIZE] {};
+
+#if defined(SFIZZ_LV2_UI)
+    // UI
+    volatile bool ui_active = false;
+    RMSFollower rms_follower;
+#endif
 };

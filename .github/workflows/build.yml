@@ -44,6 +44,7 @@ jobs:
       run: |
         sudo apt-get update && \
         sudo apt-get install \
+          ninja-build \
           libjack-jackd2-dev \
           libsndfile1-dev \
           libcairo2-dev \
@@ -64,10 +65,12 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake "$GITHUB_WORKSPACE" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+        cmake "$GITHUB_WORKSPACE" -G Ninja \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DSFIZZ_JACK=ON \
           -DSFIZZ_VST=ON \
           -DSFIZZ_LV2_UI=ON \
+          -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_TESTS=ON \
           -DSFIZZ_SHARED=OFF \
           -DSFIZZ_STATIC_DEPENDENCIES=OFF \
@@ -137,15 +140,24 @@ jobs:
         name: MOD devices tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
-  build_for_win32:
+  build_for_windows:
     runs-on: windows-2019
+    strategy:
+      matrix:
+        include:
+        - platform: x86
+          pkg_platform: Win32
+          release_arch: Win32
+          bits: 32
+        - platform: x64
+          pkg_platform: Win64
+          release_arch: x64
+          bits: 64
     steps:
     - name: Set install name
       run: |
-        echo platform=x86 >> "${Env:GITHUB_ENV}"
-        echo release_arch=Win32 >> "${Env:GITHUB_ENV}"
         echo "install_ref=$(${Env:GITHUB_REF}.split('/')[-1])" >> "${Env:GITHUB_ENV}"
-        echo "install_name=sfizz-$(${Env:GITHUB_REF}.split('/')[-1])-win32" >> "${Env:GITHUB_ENV}"
+        echo "install_name=sfizz-$(${Env:GITHUB_REF}.split('/')[-1])-win${{matrix.bits}}" >> "${Env:GITHUB_ENV}"
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -155,42 +167,7 @@ jobs:
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
       run: |
-       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
-    - name: Build tests
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
-    - name: Test
-      run: ${{runner.workspace}}/build/tests/Release/sfizz_tests
-    - name: Build all
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
-    - name: Create installer
-      working-directory: ${{runner.workspace}}/build
-      run: iscc /O"." /F"${Env:install_name}" /dARCH="${Env:platform}" innosetup.iss
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Win32 installer
-        path: ${{runner.workspace}}/build/${{env.install_name}}.exe
-
-  build_for_win64:
-    runs-on: windows-2019
-    steps:
-    - name: Set install name
-      run: |
-        echo platform=x64 >> "${Env:GITHUB_ENV}"
-        echo release_arch=x64 >> "${Env:GITHUB_ENV}"
-        echo "install_ref=$(${Env:GITHUB_REF}.split('/')[-1])" >> "${Env:GITHUB_ENV}"
-        echo "install_name=sfizz-$(${Env:GITHUB_REF}.split('/')[-1])-win64" >> "${Env:GITHUB_ENV}"
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: Create Build Environment
-      working-directory: ${{runner.workspace}}
-      run: cmake -E make_directory build
-    - name: Configure CMake
-      working-directory: ${{runner.workspace}}/build
-      run: |
-       cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${Env:release_arch}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON
+        cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${{matrix.release_arch}}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON -DSFIZZ_PUREDATA=ON
     - name: Build tests
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
@@ -200,31 +177,42 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
     - name: Install pluginval
+      if: ${{ matrix.platform == 'x64' }}
       run: |
         Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_Windows.zip -OutFile pluginval.zip
         Expand-Archive pluginval.zip -DestinationPath pluginval
         echo "$(Get-Location)\pluginval" | Out-File -FilePath ${Env:GITHUB_PATH} -Encoding utf8 -Append
         pluginval\pluginval --version
     - name: Validate VST3
+      if: ${{ matrix.platform == 'x64' }}
       working-directory: ${{runner.workspace}}/build
       run: pluginval --validate-in-process --validate sfizz.vst3
     - name: Create installer
       working-directory: ${{runner.workspace}}/build
-      run: iscc /O"." /F"${Env:install_name}" /dARCH="${Env:platform}" innosetup.iss
+      run: iscc /O"." /F"${Env:install_name}" /dARCH="${{matrix.platform}}" innosetup.iss
     - uses: actions/upload-artifact@v2
       with:
-        name: Win64 installer
+        name: ${{matrix.pkg_platform}} installer
         path: ${{runner.workspace}}/build/${{env.install_name}}.exe
 
-  build_for_mingw32:
+  build_for_mingw:
     runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        include:
+        - platform: i686
+          pkg_platform: Win32
+          bits: 32
+        - platform: x86_64
+          pkg_platform: Win64
+          bits: 64
     container:
       image: archlinux
     steps:
     - name: Set install name
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-        echo "install_name=sfizz-${GITHUB_REF##*/}-mingw32" >> "$GITHUB_ENV"
+        echo "install_name=sfizz-${GITHUB_REF##*/}-mingw${{matrix.bits}}" >> "$GITHUB_ENV"
     - name: Configure pacman repositories
       shell: bash
       run: |
@@ -239,7 +227,7 @@ jobs:
       shell: bash
       run: |
         pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm base-devel git wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
+        pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -247,14 +235,7 @@ jobs:
       shell: bash
       run: |
         cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
-            /usr/i686-w64-mingw32/include/dwrite_3.h
-    - name: Fix VST sources
-      shell: bash
-      # need to convert some includes to lower case (as of VST 3.7.1)
-      run: |
-        find "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK -type d -name source -exec \
-            find {} -type f -name '*.[hc]' -o -name '*.[hc]pp' -print0 \; | \
-          xargs -0 sed -i 's/<Windows.h>/<windows.h>/'
+            /usr/${{matrix.platform}}-w64-mingw32/include/dwrite_3.h
     - name: Create Build Environment
       shell: bash
       working-directory: ${{runner.workspace}}
@@ -263,95 +244,27 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: |
-        i686-w64-mingw32-cmake "$GITHUB_WORKSPACE" \
+        ${{matrix.platform}}-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DENABLE_LTO=OFF \
           -DSFIZZ_JACK=OFF \
           -DSFIZZ_VST=ON \
+          -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_STATIC_DEPENDENCIES=ON \
           -DCMAKE_CXX_STANDARD=17
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: i686-w64-mingw32-cmake --build . --config "$BUILD_TYPE" -j 2
+      run: ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" -j 2
     - name: Install
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
-        DESTDIR="$(pwd)/$install_name" i686-w64-mingw32-cmake --build . --config "$BUILD_TYPE" --target install
+        DESTDIR="$(pwd)/$install_name" ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" --target install
         tar czvf "$install_name".tar.gz "$install_name"
     - uses: actions/upload-artifact@v2
       with:
-        name: Win32 MinGW tarball
-        path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
-
-  build_for_mingw64:
-    runs-on: ubuntu-18.04
-    container:
-      image: archlinux
-    steps:
-    - name: Set install name
-      run: |
-        echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-        echo "install_name=sfizz-${GITHUB_REF##*/}-mingw64" >> "$GITHUB_ENV"
-    - name: Configure pacman repositories
-      shell: bash
-      run: |
-        cat >>/etc/pacman.conf <<EOF
-        [multilib]
-        Include = /etc/pacman.d/mirrorlist
-        [mingw-w64]
-        SigLevel = Optional TrustAll
-        Server = https://github.com/jpcima/arch-mingw-w64/releases/download/repo.\$arch/
-        EOF
-    - name: Set up dependencies
-      shell: bash
-      run: |
-        pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm base-devel git wget mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: Fix MinGW headers
-      shell: bash
-      run: |
-        cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
-            /usr/x86_64-w64-mingw32/include/dwrite_3.h
-    - name: Fix VST sources
-      shell: bash
-      # need to convert some includes to lower case (as of VST 3.7.1)
-      run: |
-        find "$GITHUB_WORKSPACE"/plugins/vst/external/VST_SDK -type d -name source -exec \
-            find {} -type f -name '*.[hc]' -o -name '*.[hc]pp' -print0 \; | \
-          xargs -0 sed -i 's/<Windows.h>/<windows.h>/'
-    - name: Create Build Environment
-      shell: bash
-      working-directory: ${{runner.workspace}}
-      run: cmake -E make_directory build
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: |
-        x86_64-w64-mingw32-cmake "$GITHUB_WORKSPACE" \
-          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-          -DENABLE_LTO=OFF \
-          -DSFIZZ_JACK=OFF \
-          -DSFIZZ_VST=ON \
-          -DSFIZZ_STATIC_DEPENDENCIES=ON \
-          -DCMAKE_CXX_STANDARD=17
-    - name: Build
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: x86_64-w64-mingw32-cmake --build . --config "$BUILD_TYPE" -j 2
-    - name: Install
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      run: |
-        DESTDIR="$(pwd)/$install_name" x86_64-w64-mingw32-cmake --build . --config "$BUILD_TYPE" --target install
-        tar czvf "$install_name".tar.gz "$install_name"
-    - uses: actions/upload-artifact@v2
-      with:
-        name: Win64 MinGW tarball
+        name: ${{matrix.pkg_platform}} MinGW tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
   build_with_makefile:
@@ -417,16 +330,16 @@ jobs:
     needs:
       - build_for_linux
       - build_for_mod
-      - build_for_mingw32
-      - build_for_mingw64
+      - build_for_mingw
+      - build_for_windows
       - archive_source_code
     steps:
       - name: Set install name
         run: |
           echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-      - uses: actions/download-artifact@v2
-        with:
-          name: Linux tarball
+      # - uses: actions/download-artifact@v2
+      #   with:
+      #     name: Linux tarball
       - uses: actions/download-artifact@v2
         with:
           name: MOD devices tarball
@@ -436,6 +349,12 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Win64 MinGW tarball
+      - uses: actions/download-artifact@v2
+        with:
+          name: Win32 installer
+      - uses: actions/download-artifact@v2
+        with:
+          name: Win64 installer
       - uses: actions/download-artifact@v2
         with:
           name: Source code tarball

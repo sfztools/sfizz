@@ -18,7 +18,8 @@ class ADSREnvelope {
 public:
     using Float = float;
 
-    ADSREnvelope() = default;
+    ADSREnvelope(const MidiState& state)
+    : midiState_(state) {}
     /**
      * @brief Resets the ADSR envelope given a Region, the current midi state, and a delay and
      * trigger velocity
@@ -29,10 +30,9 @@ public:
      * @param delay
      * @param velocity
      */
-    void reset(const EGDescription& desc, const Region& region, const MidiState& state, int delay, float velocity, float sampleRate) noexcept;
+    void reset(const EGDescription& desc, const Region& region, int delay, float velocity, float sampleRate) noexcept;
     /**
-     * @brief Get a block of values for the envelope. This method tries hard to be efficient
-     * and hopefully it is.
+     * @brief Get the next block of values for the envelope.
      *
      * @param output
      */
@@ -49,6 +49,12 @@ public:
      * @param releaseDelay the delay before releasing in samples
      */
     void startRelease(int releaseDelay) noexcept;
+    /**
+     * @brief Cancel a release and get back into sustain.
+     *
+     * @param delay
+     */
+    void cancelRelease(int delay) noexcept;
     /**
      * @brief Is the envelope smoothing?
      *
@@ -75,6 +81,8 @@ private:
     int secondsToSamples(Float timeInSeconds) const noexcept;
     Float secondsToLinRate(Float timeInSeconds) const noexcept;
     Float secondsToExpRate(Float timeInSeconds) const noexcept;
+    void updateValues(int delay = 0) noexcept;
+    void getBlockInternal(absl::Span<Float> output) noexcept;
 
     enum class State {
         Delay,
@@ -88,6 +96,9 @@ private:
     };
     State currentState { State::Done };
     Float currentValue { 0.0 };
+    const EGDescription* desc_ { nullptr };
+    const MidiState& midiState_;
+    float triggerVelocity_ { 0.0f };
     int delay { 0 };
     Float attackStep { 0 };
     Float decayRate { 0 };

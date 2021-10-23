@@ -6,13 +6,11 @@
 
 #include "Region.h"
 #include "Opcode.h"
-#include "MidiState.h"
 #include "MathHelpers.h"
 #include "utility/SwapAndPop.h"
 #include "utility/StringViewHelpers.h"
 #include "utility/Macros.h"
 #include "utility/Debug.h"
-#include "ModifierHelpers.h"
 #include "modulations/ModId.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_cat.h"
@@ -130,13 +128,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("loop_start"): // also loopstart
         loopRange.setStart(opcode.read(Default::loopStart));
         break;
-    case hash("loop_start_oncc&"): // also loop_start_cc&
+    case hash("loop_start_oncc&"): // also loop_start_cc&, loop_startcc&
         if (opcode.parameters.back() > config::numCCs)
             return false;
 
         loopStartCC[opcode.parameters.back()] = opcode.read(Default::loopMod);
         break;
-    case hash("loop_end_oncc&"): // also loop_end_cc&
+    case hash("loop_end_oncc&"): // also loop_end_cc&, loop_lengthcc&, loop_length_oncc&, loop_length_cc&
         if (opcode.parameters.back() > config::numCCs)
             return false;
 
@@ -208,8 +206,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         break;
     // Region logic: key mapping
     case hash("lokey"):
-        triggerOnNote = true;
-        keyRange.setStart(opcode.read(Default::loKey));
+        {
+            absl::optional<uint8_t> optValue = opcode.readOptional(Default::loKey);
+            triggerOnNote = optValue != absl::nullopt;
+            uint8_t value = optValue.value_or(Default::loKey);
+            keyRange.setStart(value);
+        }
         break;
     case hash("hikey"):
         {
@@ -449,6 +451,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("amp_veltrack"):
         ampVeltrack = opcode.read(Default::ampVeltrack);
         break;
+    case hash("amp_veltrack_oncc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        ampVeltrackCC[opcode.parameters.back()].modifier = opcode.read(Default::ampVeltrackMod);
+        break;
+    case hash("amp_veltrack_curvecc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        ampVeltrackCC[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
+        break;
     case hash("amp_random"):
         ampRandom = opcode.read(Default::ampRandom);
         break;
@@ -474,16 +488,16 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         crossfadeKeyOutRange.setEnd(opcode.read(Default::hiKey));
         break;
     case hash("xfin_lovel"):
-        crossfadeVelInRange.setStart(opcode.read(Default::loVel));
+        crossfadeVelInRange.setStart(opcode.read(Default::xfinLo));
         break;
     case hash("xfin_hivel"):
-        crossfadeVelInRange.setEnd(opcode.read(Default::loVel)); // loVel for the proper default
+        crossfadeVelInRange.setEnd(opcode.read(Default::xfinHi));
         break;
     case hash("xfout_lovel"):
-        crossfadeVelOutRange.setStart(opcode.read(Default::hiVel)); // hiVel for the proper default
+        crossfadeVelOutRange.setStart(opcode.read(Default::xfoutLo));
         break;
     case hash("xfout_hivel"):
-        crossfadeVelOutRange.setEnd(opcode.read(Default::hiVel));
+        crossfadeVelOutRange.setEnd(opcode.read(Default::xfoutHi));
         break;
     case hash("xf_keycurve"):
         crossfadeKeyCurve = opcode.read(Default::crossfadeCurve);
@@ -495,28 +509,28 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::loCC)
+            opcode.read(Default::xfinLo)
         );
         break;
     case hash("xfin_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCInRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::loCC) // loCC for the proper default
+            opcode.read(Default::xfinHi)
         );
         break;
     case hash("xfout_locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setStart(
-            opcode.read(Default::hiCC) // hiCC for the proper default
+            opcode.read(Default::xfoutLo)
         );
         break;
     case hash("xfout_hicc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;
         crossfadeCCOutRange[opcode.parameters.back()].setEnd(
-            opcode.read(Default::hiCC)
+            opcode.read(Default::xfoutHi)
         );
         break;
     case hash("xf_cccurve"):
@@ -623,6 +637,32 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
             filters[filterIndex].veltrack = opcode.read(Default::filterVeltrack);
+        }
+        break;
+    case hash("fil&_veltrack_oncc&"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const auto cc = opcode.parameters.back();
+            if (cc >= config::numCCs)
+                return false;
+
+            filters[filterIndex].veltrackCC[cc].modifier = opcode.read(Default::filterVeltrackMod);
+        }
+        break;
+    case hash("fil&_veltrack_curvecc&"):
+        {
+            const auto filterIndex = opcode.parameters.front() - 1;
+            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
+                return false;
+
+            const auto cc = opcode.parameters.back();
+            if (cc >= config::numCCs)
+                return false;
+
+            filters[filterIndex].veltrackCC[cc].curve = opcode.read(Default::curveCC);
         }
         break;
     case hash("fil&_random"): // also fil_random, cutoff_random, cutoff&_random
@@ -754,6 +794,18 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         break;
     case hash("pitch_veltrack"):
         pitchVeltrack = opcode.read(Default::pitchVeltrack);
+        break;
+    case hash("pitch_veltrack_oncc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        pitchVeltrackCC[opcode.parameters.back()].modifier = opcode.read(Default::pitchVeltrackMod);
+        break;
+    case hash("pitch_veltrack_curvecc&"):
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        pitchVeltrackCC[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
         break;
     case hash("pitch_random"):
         pitchRandom = opcode.read(Default::pitchRandom);
@@ -1089,6 +1141,10 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
 
         eg.ccSustain[opcode.parameters.back()] = opcode.read(Default::egPercentMod);
 
+        break;
+
+    case_any_eg("dynamic"):
+        eg.dynamic = opcode.read(Default::egDynamic);
         break;
 
     case hash("pitcheg_depth"):
@@ -1452,9 +1508,29 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
         else
             return false;
         break;
+    case hash("eg&_time&_oncc&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint()) {
+            auto ccNumber = opcode.parameters.back();
+            if (ccNumber >= config::numCCs)
+                return false;
+            point->ccTime[ccNumber] = opcode.read(Default::flexEGPointTimeMod);
+        }
+        else
+            return false;
+        break;
     case hash("eg&_level&"):
         if (FlexEGPoint* point = getOrCreateEGPoint())
             point->level = opcode.read(Default::flexEGPointLevel);
+        else
+            return false;
+        break;
+    case hash("eg&_level&_oncc&"):
+        if (FlexEGPoint* point = getOrCreateEGPoint()) {
+            auto ccNumber = opcode.parameters.back();
+            if (ccNumber >= config::numCCs)
+                return false;
+            point->ccLevel[ccNumber] = opcode.read(Default::flexEGPointLevelMod);
+        }
         else
             return false;
         break;
@@ -1656,31 +1732,6 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
     return true;
 }
 
-float sfz::Region::getBasePitchVariation(float noteNumber, float velocity) const noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    fast_real_distribution<float> pitchDistribution { 0.0f, pitchRandom };
-    float pitchVariationInCents = pitchKeytrack * (noteNumber - float(pitchKeycenter)); // note difference with pitch center
-    pitchVariationInCents += pitch; // sample tuning
-    pitchVariationInCents += config::centPerSemitone * transpose; // sample transpose
-    pitchVariationInCents += velocity * pitchVeltrack; // track velocity
-    pitchVariationInCents += pitchDistribution(Random::randomGenerator); // random pitch changes
-    return centsFactor(pitchVariationInCents);
-}
-
-float sfz::Region::getBaseVolumedB(const MidiState& midiState, int noteNumber) const noexcept
-{
-    fast_real_distribution<float> volumeDistribution { 0.0f, ampRandom };
-    auto baseVolumedB = volume + volumeDistribution(Random::randomGenerator);
-    baseVolumedB += globalVolume;
-    baseVolumedB += masterVolume;
-    baseVolumedB += groupVolume;
-    if (trigger == Trigger::release || trigger == Trigger::release_key)
-        baseVolumedB -= rtDecay * midiState.getNoteDuration(noteNumber);
-    return baseVolumedB;
-}
-
 float sfz::Region::getBaseGain() const noexcept
 {
     float baseGain = amplitude;
@@ -1702,115 +1753,6 @@ float sfz::Region::getPhase() const noexcept
         phase = phaseDist(Random::randomGenerator);
     }
     return phase;
-}
-
-uint64_t sfz::Region::getOffset(const MidiState& midiState) const noexcept
-{
-    std::uniform_int_distribution<int64_t> offsetDistribution { 0, offsetRandom };
-    uint64_t finalOffset = offset + offsetDistribution(Random::randomGenerator);
-    for (const auto& mod: offsetCC)
-        finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
-    return Default::offset.bounds.clamp(finalOffset);
-}
-
-float sfz::Region::getDelay(const MidiState& midiState) const noexcept
-{
-    fast_real_distribution<float> delayDistribution { 0, delayRandom };
-    float finalDelay { delay };
-    finalDelay += delayDistribution(Random::randomGenerator);
-    for (const auto& mod: delayCC)
-        finalDelay += mod.data * midiState.getCCValue(mod.cc);
-
-    return Default::delay.bounds.clamp(finalDelay);
-}
-
-uint32_t sfz::Region::getSampleEnd(MidiState& midiState) const noexcept
-{
-    int64_t end = sampleEnd;
-    for (const auto& mod: endCC)
-        end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
-
-    end = clamp(end, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(end);
-}
-
-uint32_t sfz::Region::loopStart(MidiState& midiState) const noexcept
-{
-    auto start = loopRange.getStart();
-    for (const auto& mod: loopStartCC)
-        start += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
-
-    start = clamp(start, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(start);
-}
-
-uint32_t sfz::Region::loopEnd(MidiState& midiState) const noexcept
-{
-    auto end = loopRange.getEnd();
-    for (const auto& mod: loopEndCC)
-        end += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
-
-    end = clamp(end, int64_t { 0 }, sampleEnd);
-    return static_cast<uint32_t>(end);
-}
-
-float sfz::Region::getNoteGain(int noteNumber, float velocity) const noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    float baseGain { 1.0f };
-
-    // Amplitude key tracking
-    baseGain *= db2mag(ampKeytrack * static_cast<float>(noteNumber - ampKeycenter));
-
-    // Crossfades related to the note number
-    baseGain *= crossfadeIn(crossfadeKeyInRange, noteNumber, crossfadeKeyCurve);
-    baseGain *= crossfadeOut(crossfadeKeyOutRange, noteNumber, crossfadeKeyCurve);
-
-    // Amplitude velocity tracking
-    baseGain *= velocityCurve(velocity);
-
-    // Crossfades related to velocity
-    baseGain *= crossfadeIn(crossfadeVelInRange, velocity, crossfadeVelCurve);
-    baseGain *= crossfadeOut(crossfadeVelOutRange, velocity, crossfadeVelCurve);
-
-    return baseGain;
-}
-
-float sfz::Region::getCrossfadeGain(const MidiState& midiState) const noexcept
-{
-    float gain { 1.0f };
-
-    // Crossfades due to CC states
-    for (const auto& ccData : crossfadeCCInRange) {
-        const auto ccValue = midiState.getCCValue(ccData.cc);
-        const auto crossfadeRange = ccData.data;
-        gain *= crossfadeIn(crossfadeRange, ccValue, crossfadeCCCurve);
-    }
-
-    for (const auto& ccData : crossfadeCCOutRange) {
-        const auto ccValue = midiState.getCCValue(ccData.cc);
-        const auto crossfadeRange = ccData.data;
-        gain *= crossfadeOut(crossfadeRange, ccValue, crossfadeCCCurve);
-    }
-
-    return gain;
-}
-
-float sfz::Region::velocityCurve(float velocity) const noexcept
-{
-    ASSERT(velocity >= 0.0f && velocity <= 1.0f);
-
-    float gain;
-    if (velCurve)
-        gain = velCurve->evalNormalized(velocity);
-    else
-        gain = velocity * velocity;
-
-    gain = std::fabs(ampVeltrack) * (1.0f - gain);
-    gain = (ampVeltrack < 0) ? gain : (1.0f - gain);
-
-    return gain;
 }
 
 void sfz::Region::offsetAllKeys(int offset) noexcept

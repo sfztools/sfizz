@@ -57,7 +57,7 @@ void sfz::RegionSet::removeVoiceFromHierarchy(const Region* region, const Voice*
 unsigned sfz::RegionSet::numPlayingVoices() const noexcept
 {
     return absl::c_count_if(voices, [](const Voice* v) {
-        return !v->releasedOrFree();
+        return !v->offedOrFree();
     });
 }
 

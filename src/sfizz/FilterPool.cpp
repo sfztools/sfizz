@@ -1,4 +1,7 @@
 #include "FilterPool.h"
+#include "Region.h"
+#include "Resources.h"
+#include "BufferPool.h"
 #include "SIMDHelpers.h"
 #include "utility/SwapAndPop.h"
 #include <absl/algorithm/container.h>
@@ -35,14 +38,21 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
     }
     const auto keytrack = description->keytrack * float(noteNumber - description->keycenter);
     baseCutoff *= centsFactor(keytrack);
-    const auto veltrack = description->veltrack * velocity;
-    baseCutoff *= centsFactor(veltrack);
+    auto veltrack = description->veltrack;
+
+    for (const auto& mod : description->veltrackCC) {
+        const auto& curve = resources.getCurves().getCurve(mod.data.curve);
+        const float value = resources.getMidiState().getCCValue(mod.cc);
+        veltrack += curve.evalNormalized(value) * mod.data.modifier;
+    }
+
+    baseCutoff *= centsFactor(veltrack * velocity);
     baseCutoff = Default::filterCutoff.bounds.clamp(baseCutoff);
 
     baseGain = description->gain;
     baseResonance = description->resonance;
 
-    ModMatrix& mm = resources.modMatrix;
+    ModMatrix& mm = resources.getModMatrix();
     gainTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilGain, region.id, filterId));
     cutoffTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilCutoff, region.id, filterId));
     resonanceTarget = mm.findTarget(ModKey::createNXYZ(ModId::FilResonance, region.id, filterId));
@@ -62,10 +72,11 @@ void sfz::FilterHolder::process(const float** inputs, float** outputs, unsigned 
         return;
     }
 
-    ModMatrix& mm = resources.modMatrix;
-    auto cutoffSpan = resources.bufferPool.getBuffer(numFrames);
-    auto resonanceSpan = resources.bufferPool.getBuffer(numFrames);
-    auto gainSpan = resources.bufferPool.getBuffer(numFrames);
+    ModMatrix& mm = resources.getModMatrix();
+    BufferPool& bufferPool = resources.getBufferPool();
+    auto cutoffSpan = bufferPool.getBuffer(numFrames);
+    auto resonanceSpan = bufferPool.getBuffer(numFrames);
+    auto gainSpan = bufferPool.getBuffer(numFrames);
 
     if (!cutoffSpan || !resonanceSpan || !gainSpan)
         return;

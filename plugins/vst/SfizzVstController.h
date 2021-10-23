@@ -9,7 +9,9 @@
 #include "SfizzVstUpdates.h"
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "public.sdk/source/vst/vstparameters.h"
+#include "public.sdk/source/common/threadchecker.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
+#include "pluginterfaces/vst/ivstnoteexpression.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include <sfizz_message.h>
 #include <mutex>
@@ -19,8 +21,10 @@ class SfizzVstEditor;
 using namespace Steinberg;
 using namespace VSTGUI;
 
-class SfizzVstControllerNoUi : public Vst::EditController,
-                               public Vst::IMidiMapping {
+class SfizzVstControllerNoUi : public Vst::EditControllerEx1,
+                               public Vst::IMidiMapping,
+                               public Vst::IKeyswitchController,
+                               public Vst::IEditControllerHostEditing {
 public:
     virtual ~SfizzVstControllerNoUi() {}
 
@@ -28,6 +32,12 @@ public:
     tresult PLUGIN_API terminate() override;
 
     tresult PLUGIN_API getMidiControllerAssignment(int32 busIndex, int16 channel, Vst::CtrlNumber midiControllerNumber, Vst::ParamID& id) override;
+
+    int32 PLUGIN_API getKeyswitchCount (int32 busIndex, int16 channel) override;
+    tresult PLUGIN_API getKeyswitchInfo (int32 busIndex, int16 channel, int32 keySwitchIndex, Vst::KeyswitchInfo& info) override;
+
+    tresult PLUGIN_API beginEditFromHost(Vst::ParamID paramID) override;
+    tresult PLUGIN_API endEditFromHost(Vst::ParamID paramID) override;
 
     tresult PLUGIN_API getParamStringByValue(Vst::ParamID tag, Vst::ParamValue valueNormalized, Vst::String128 string) override;
     tresult PLUGIN_API getParamValueByString(Vst::ParamID tag, Vst::TChar* string, Vst::ParamValue& valueNormalized) override;
@@ -37,20 +47,23 @@ public:
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
 
     // interfaces
-    OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditController)
+    OBJ_METHODS(SfizzVstControllerNoUi, Vst::EditControllerEx1)
     DEFINE_INTERFACES
     DEF_INTERFACE(Vst::IMidiMapping)
-    END_DEFINE_INTERFACES(Vst::EditController)
-    REFCOUNT_METHODS(Vst::EditController)
+    DEF_INTERFACE(Vst::IKeyswitchController)
+    DEF_INTERFACE(Vst::IEditControllerHostEditing)
+    END_DEFINE_INTERFACES(Vst::EditControllerEx1)
+    REFCOUNT_METHODS(Vst::EditControllerEx1)
 
 protected:
-    Steinberg::IPtr<OSCUpdate> oscUpdate_;
-    Steinberg::IPtr<NoteUpdate> noteUpdate_;
+    std::unique_ptr<Vst::ThreadChecker> threadChecker_;
+    Steinberg::IPtr<QueuedUpdates> queuedUpdates_;
     Steinberg::IPtr<SfzUpdate> sfzUpdate_;
     Steinberg::IPtr<SfzDescriptionUpdate> sfzDescriptionUpdate_;
     Steinberg::IPtr<ScalaUpdate> scalaUpdate_;
     Steinberg::IPtr<PlayStateUpdate> playStateUpdate_;
     Vst::ParamID midiMapping_[Vst::kCountCtrlNumber] {};
+    std::vector<Vst::KeyswitchInfo> keyswitches_;
 };
 
 class SfizzVstController : public SfizzVstControllerNoUi, public VSTGUI::VST3EditorDelegate {

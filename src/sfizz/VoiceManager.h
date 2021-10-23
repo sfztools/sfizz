@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "absl/container/flat_hash_map.h"
 #include "Config.h"
 #include "PolyphonyGroup.h"
 #include "Region.h"
@@ -59,7 +60,7 @@ struct VoiceManager final : public Voice::StateListener
      *
      * @param groupIdx
      */
-    void ensureNumPolyphonyGroups(unsigned groupIdx) noexcept;
+    void ensureNumPolyphonyGroups(int groupIdx) noexcept;
 
     /**
      * @brief Set the polyphony for a given group
@@ -69,7 +70,7 @@ struct VoiceManager final : public Voice::StateListener
      * @param groupIdx
      * @param polyphony
      */
-    void setGroupPolyphony(unsigned groupIdx, unsigned polyphony) noexcept;
+    void setGroupPolyphony(int groupIdx, unsigned polyphony) noexcept;
 
     /**
      * @brief Get a view into a given polyphony group
@@ -77,7 +78,7 @@ struct VoiceManager final : public Voice::StateListener
      * @param idx
      * @return const PolyphonyGroup*
      */
-    const PolyphonyGroup* getPolyphonyGroupView(int idx) const noexcept;
+    const PolyphonyGroup* getPolyphonyGroupView(int idx) noexcept;
 
     /**
      * @brief Clear all voices and polyphony groups.
@@ -136,8 +137,9 @@ private:
     int getNumEffectiveVoices() const noexcept { return config::calculateActualVoices(numRequiredVoices_); }
     std::vector<Voice> list_;
     std::vector<Voice*> activeVoices_;
+    std::vector<Voice*> temp_;
     // These are the `group=` groups where you can off voices
-    std::vector<PolyphonyGroup> polyphonyGroups_;
+    absl::flat_hash_map<int, PolyphonyGroup> polyphonyGroups_;
     std::unique_ptr<VoiceStealer> stealer_ { absl::make_unique<OldestStealer>() };
 
     /**

@@ -37,8 +37,8 @@ ControllerSource::~ControllerSource()
 float ControllerSource::Impl::getLastTransformedValue(uint16_t cc, uint8_t curveIndex) const noexcept
 {
     ASSERT(res_);
-    const Curve& curve = res_->curves.getCurve(curveIndex);
-    const auto lastCCValue = res_->midiState.getCCValue(cc);
+    const Curve& curve = res_->getCurves().getCurve(curveIndex);
+    const auto lastCCValue = res_->getMidiState().getCCValue(cc);
     return curve.evalNormalized(lastCCValue);
 }
 
@@ -89,16 +89,15 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
 {
     const ModKey::Parameters p = sourceKey.parameters();
     const Resources& res = *impl_->res_;
-    const Curve& curve = res.curves.getCurve(p.curve);
-    const MidiState& ms = res.midiState;
+    const Curve& curve = res.getCurves().getCurve(p.curve);
+    const MidiState& ms = res.getMidiState();
     bool canShortcut = false;
 
-    auto transformValue = [p, &curve](float x) {
+    auto transformValue = [&] (float x) {
         return curve.evalNormalized(x);
     };
 
-    // Ignore the eventual curve for the extended CCs
-    auto quantize = [p](float x) {
+    auto quantize = [&] (float x) {
         if (p.step > 0.0f)
             return std::trunc(x / p.step) * p.step;
 
@@ -110,9 +109,9 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue =
                 voice && voice->getTriggerEvent().type == TriggerEventType::NoteOn ?
-                impl_->res_->midiState.getPolyAftertouch(voice->getTriggerEvent().number) : 0.0f;
+                impl_->res_->getMidiState().getPolyAftertouch(voice->getTriggerEvent().number) : 0.0f;
 
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
@@ -122,7 +121,7 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
                 voice && voice->getTriggerEvent().type == TriggerEventType::NoteOn ?
                 voice->getTriggerEvent().value : 0.0f;
 
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
@@ -132,42 +131,42 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
                 voice && voice->getTriggerEvent().type == TriggerEventType::NoteOff ?
                 voice->getTriggerEvent().value : 0.0f;
 
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
     case ExtendedCCs::keyboardNoteNumber: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? normalize7Bits(voice->getTriggerEvent().number) : 0.0f;
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
     case ExtendedCCs::keyboardNoteGate: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? voice->getExtendedCCValues().noteGate : 0.0f;
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
     case ExtendedCCs::unipolarRandom: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? voice->getExtendedCCValues().unipolar : 0.0f;
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
     case ExtendedCCs::bipolarRandom: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? voice->getExtendedCCValues().bipolar : 0.0f;
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }
     case ExtendedCCs::alternate: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? voice->getExtendedCCValues().alternate : 0.0f;
-            sfz::fill(buffer, quantize(fillValue));
+            sfz::fill(buffer, quantize(transformValue(fillValue)));
             canShortcut = true;
             break;
         }

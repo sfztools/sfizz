@@ -66,6 +66,7 @@ int main(int argc, char** argv)
     bool help { false };
     bool useEOT { false };
     int quality { 2 };
+    int polyphony { 64 };
 
     options.add_options()
         ("sfz", "SFZ file", cxxopts::value<std::string>())
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
         ("b,blocksize", "Block size for the sfizz callbacks", cxxopts::value(blockSize))
         ("s,samplerate", "Output sample rate", cxxopts::value(sampleRate))
         ("q,quality", "Resampling quality", cxxopts::value(quality))
+        ("p,polyphony", "Polyphony max", cxxopts::value(polyphony))
         ("v,verbose", "Verbose output", cxxopts::value(verbose))
         ("log", "Produce logs", cxxopts::value<std::string>())
         ("use-eot", "End the rendering at the last End of Track Midi message", cxxopts::value(useEOT))
@@ -114,11 +116,13 @@ int main(int argc, char** argv)
     LOG_INFO("Output file: " << outputPath.string());
     LOG_INFO("Block size: " << blockSize);
     LOG_INFO("Sample rate: " << sampleRate);
+    LOG_INFO("Polyphony Max: " << polyphony);
 
     sfz::Synth synth;
     synth.setSamplesPerBlock(blockSize);
     synth.setSampleRate(sampleRate);
     synth.setSampleQuality(sfz::Synth::ProcessMode::ProcessFreewheeling, quality);
+    synth.setNumVoices(polyphony);
     synth.enableFreeWheeling();
 
     if (params.count("log") > 0)

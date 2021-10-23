@@ -7,21 +7,20 @@
 #pragma once
 #include "../ModGenerator.h"
 #include "../../VoiceManager.h"
-#include "../../MidiState.h"
 
 namespace sfz {
 class Synth;
 
 class ADSREnvelopeSource : public ModGenerator {
 public:
-    explicit ADSREnvelopeSource(VoiceManager &manager, MidiState& state);
+    explicit ADSREnvelopeSource(VoiceManager &manager);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
+    void cancelRelease(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:
     VoiceManager& voiceManager_;
-    MidiState& midiState_;
 };
 
 } // namespace sfz

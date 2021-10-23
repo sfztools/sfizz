@@ -8,8 +8,10 @@
 #include "SfizzVstController.h"
 #include "editor/EditorController.h"
 #include "public.sdk/source/vst/vstguieditor.h"
+#include "public.sdk/source/common/threadchecker.h"
 #include <absl/types/span.h>
 #include <mutex>
+#include <set>
 class Editor;
 #if !defined(__APPLE__) && !defined(_WIN32)
 namespace VSTGUI { class RunLoop; }
@@ -23,10 +25,7 @@ class SfizzVstEditor : public Vst::VSTGUIEditor,
 public:
     using Self = SfizzVstEditor;
 
-    SfizzVstEditor(
-        SfizzVstController* controller,
-        absl::Span<FObject*> continuousUpdates,
-        absl::Span<FObject*> triggerUpdates);
+    SfizzVstEditor(SfizzVstController* controller, absl::Span<FObject*> updates);
     ~SfizzVstEditor();
 
     bool PLUGIN_API open(void* parent, const VSTGUI::PlatformType& platformType) override;
@@ -37,18 +36,18 @@ public:
         return static_cast<SfizzVstController*>(Vst::VSTGUIEditor::getController());
     }
 
+    void updateEditorIsOpenParameter();
+
     // VSTGUIEditor
     CMessageResult notify(CBaseObject* sender, const char* message) override;
     // FObject
     void PLUGIN_API update(FUnknown* changedUnknown, int32 message) override;
 
     //
-    void updateState(const SfizzVstState& state);
-    void updatePlayState(const SfizzPlayState& playState);
-
 private:
-    void processOscQueue();
-    void processNoteEventQueue();
+    bool processUpdate(FUnknown* changedUnknown, int32 message);
+    void processParameterUpdates();
+    void updateParameter(Vst::Parameter* parameterToUpdate);
 
 protected:
     // EditorController
@@ -73,16 +72,14 @@ private:
     // messaging
     std::unique_ptr<uint8[]> oscTemp_;
 
-    // editor state
-    // note: might be updated from a non-UI thread
-    typedef std::vector<uint8_t> OscByteVec;
-    std::unique_ptr<OscByteVec> oscQueue_;
-    std::mutex oscQueueMutex_;
-    typedef std::vector<std::pair<uint32, float>> NoteEventsVec;
-    std::unique_ptr<NoteEventsVec> noteEventQueue_;
-    std::mutex noteEventQueueMutex_;
-
     // subscribed updates
-    std::vector<IPtr<FObject>> continuousUpdates_;
-    std::vector<IPtr<FObject>> triggerUpdates_;
+    std::vector<IPtr<FObject>> updates_;
+
+    // thread safety
+    std::unique_ptr<Vst::ThreadChecker> threadChecker_;
+
+    // parameters to process, whose values have received changes
+    // Note(jpc) it's because hosts send us parameter updates in the wrong thread..
+    std::set<Vst::ParamID> parametersToUpdate_;
+    std::mutex parametersToUpdateMutex_;
 };

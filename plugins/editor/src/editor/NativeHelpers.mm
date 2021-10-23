@@ -24,11 +24,30 @@ static bool openFileWithApplication(const char *fileName, NSString *application)
 
 bool openFileInExternalEditor(const char *fileName)
 {
-    NSURL* applicationURL = (__bridge_transfer NSURL*)LSCopyDefaultApplicationURLForContentType(
-        kUTTypePlainText, kLSRolesEditor, nil);
-    if (!applicationURL || ![applicationURL isFileURL])
+    NSURL* appURL = nil;
+    NSURL* fileURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:fileName]];
+    const LSRolesMask roles = kLSRolesEditor;
+
+    NSArray* editorApps = (__bridge_transfer NSArray*)LSCopyApplicationURLsForURL(
+        (__bridge CFURLRef)fileURL, roles);
+
+    for (NSUInteger i = 0, n = [editorApps count]; i < n && !appURL; ++i) {
+        NSURL* url = [editorApps objectAtIndex:i];
+        if (url && [url isFileURL])
+            appURL = url;
+    }
+
+    if (!appURL) {
+        NSURL* url = (__bridge_transfer NSURL*)LSCopyDefaultApplicationURLForContentType(
+            kUTTypePlainText, roles, nil);
+        if (url && [url isFileURL])
+            appURL = url;
+    }
+
+    if (!appURL)
         return false;
-    return openFileWithApplication(fileName, [applicationURL path]);
+
+    return openFileWithApplication(fileName, [appURL path]);
 }
 
 bool openDirectoryInExplorer(const char *fileName)

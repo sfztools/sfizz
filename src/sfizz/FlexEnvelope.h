@@ -10,13 +10,14 @@
 
 namespace sfz {
 struct FlexEGDescription;
+class Resources;
 
 /**
    Flex envelope generator (according to ARIA)
  */
 class FlexEnvelope {
 public:
-    FlexEnvelope();
+    explicit FlexEnvelope(Resources &resources);
     ~FlexEnvelope();
 
     /**
@@ -46,6 +47,11 @@ public:
        Release the EG.
      */
     void release(unsigned releaseDelay);
+
+    /**
+       Cancel the release
+     */
+    void cancelRelease(unsigned delay);
 
     /**
        Get the remaining delay samples

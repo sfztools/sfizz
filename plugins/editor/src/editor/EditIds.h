@@ -38,6 +38,9 @@ enum class EditId : int {
     CC_RANGE(ControllerDefault),
     CC_RANGE(ControllerLabel),
     //
+    LeftLevel,
+    RightLevel,
+    //
     UINumCurves,
     UINumMasters,
     UINumGroups,

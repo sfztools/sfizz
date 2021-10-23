@@ -80,15 +80,26 @@ public:
      */
     bool registerNoteOff(int noteNumber, float velocity, float randValue) noexcept;
     /**
-     * @brief Register a new CC event. The region may be switched on or off using CCs so
-     * this function checks if it indeeds need to activate or not.
+     * @brief Update the internal state of the layer with respect to CC events (sustain, CC
+     *  switch, etc).
      *
      * @param ccNumber
      * @param ccValue
-     * @return true if the region should trigger on this event
      * @return false
      */
-    bool registerCC(int ccNumber, float ccValue) noexcept;
+    void updateCCState(int ccNumber, float ccValue) noexcept;
+    /**
+     * @brief Register a new CC event,. This method updates the internal CC state with respect
+     * to CC events (sustain, CC switch, etc) and checks if the region should trigger on this
+     * event.
+     *
+     * @param ccNumber
+     * @param ccValue
+     * @param randValue
+     * @return true if the region should trigger on this event
+     * @return false otherwise
+     */
+    bool registerCC(int ccNumber, float ccValue, float randValue) noexcept;
     /**
      * @brief Register a new pitch wheel event.
      *

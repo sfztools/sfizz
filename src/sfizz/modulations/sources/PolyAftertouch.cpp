@@ -23,13 +23,6 @@ void PolyAftertouchSource::init(const ModKey& sourceKey, NumericId<Voice> voiceI
     UNUSED(delay);
 }
 
-void PolyAftertouchSource::release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
-{
-    UNUSED(sourceKey);
-    UNUSED(voiceId);
-    UNUSED(delay);
-}
-
 void PolyAftertouchSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     UNUSED(sourceKey);

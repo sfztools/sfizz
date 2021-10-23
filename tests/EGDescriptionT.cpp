@@ -45,7 +45,7 @@ TEST_CASE("[EGDescription] Delay range")
     //REQUIRE(eg.getDelay(state, 127_norm) == 0.0f);
     state.ccEvent(0, 63, 127_norm);
     REQUIRE(eg.getDelay(state, 127_norm) == 1.0f);
-    REQUIRE(eg.getDelay(state, 0_norm) == 2.27f);
+    REQUIRE(eg.getDelay(state, 0_norm, 1) == 2.27f);
     //eg.ccDelay[63] = 127.0f;
     //REQUIRE(eg.getDelay(state, 0_norm) == 100.0f);
     eg.ccDelay[63] = 1.27f;

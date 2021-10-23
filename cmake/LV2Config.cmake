@@ -8,7 +8,7 @@ set(LV2PLUGIN_VERSION_MICRO   0)
 set(LV2PLUGIN_NAME            "sfizz")
 set(LV2PLUGIN_COMMENT         "SFZ sampler")
 set(LV2PLUGIN_URI             "http://sfztools.github.io/sfizz")
-set(LV2PLUGIN_REPOSITORY      "https://github.com/sfztools/sfizz")
+set(LV2PLUGIN_REPOSITORY      SFIZZ_REPOSITORY)
 set(LV2PLUGIN_AUTHOR          "SFZTools")
 set(LV2PLUGIN_EMAIL           "paul@ferrand.cc")
 if(SFIZZ_USE_VCPKG)
@@ -62,7 +62,9 @@ function(sfizz_lv2_generate_controllers_ttl FILE)
 sfizz:cc${_i}
   a lv2:Parameter ;
   rdfs:label \"Controller ${_i}\" ;
-  rdfs:range atom:Float")
+  rdfs:range atom:Float ;
+  lv2:minimum 0.0 ;
+  lv2:maximum 1.0")
 
         if(_i LESS 128 AND NOT SFIZZ_LV2_PSA)
             math(EXPR _digit1 "${_i}>>4")

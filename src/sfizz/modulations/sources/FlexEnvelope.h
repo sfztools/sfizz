@@ -16,6 +16,7 @@ public:
     explicit FlexEnvelopeSource(VoiceManager& manager);
     void init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void release(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
+    void cancelRelease(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay) override;
     void generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer) override;
 
 private:

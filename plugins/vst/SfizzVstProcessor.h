@@ -6,7 +6,9 @@
 
 #pragma once
 #include "SfizzVstState.h"
+#include "SfizzVstUpdates.h"
 #include "OrderedEventProcessor.h"
+#include "plugin/RMSFollower.h"
 #include "sfizz/RTSemaphore.h"
 #include "ring_buffer/ring_buffer.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
@@ -26,6 +28,7 @@ public:
     ~SfizzVstProcessor();
 
     tresult PLUGIN_API initialize(FUnknown* context) override;
+    tresult PLUGIN_API terminate() override;
     tresult PLUGIN_API setBusArrangements(Vst::SpeakerArrangement* inputs, int32 numIns, Vst::SpeakerArrangement* outputs, int32 numOuts) override;
 
     tresult PLUGIN_API connect(IConnectionPoint* other) override;
@@ -45,6 +48,7 @@ public:
     void processMessagesFromUi();
 
     tresult PLUGIN_API notify(Vst::IMessage* message) override;
+    void PLUGIN_API update(FUnknown* changedUnknown, int32 message) override;
 
     static FUnknown* createInstance(void*);
 
@@ -54,8 +58,6 @@ public:
 private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
-    Steinberg::IPtr<Vst::IMessage> _loadedSfzMessage;
-    Steinberg::IPtr<Vst::IMessage> _automateMessage;
     bool _isActive = false;
     SfizzVstState _state;
     float _currentStretchedTuning = 0;
@@ -63,10 +65,23 @@ private:
     // whether allowed to perform events (owns the processing lock)
     bool _canPerformEventsAndParameters {};
 
+    // level meters
+    RMSFollower _rmsFollower;
+    bool _editorIsOpen = false;
+
+    // updates
+    IPtr<QueuedUpdates> _queuedMessages;
+    IPtr<PlayStateUpdate> _playStateUpdate;
+    IPtr<SfzUpdate> _sfzUpdate;
+    IPtr<SfzDescriptionUpdate> _sfzDescriptionUpdate;
+    IPtr<ScalaUpdate> _scalaUpdate;
+    IPtr<AutomationUpdate> _automationUpdate;
+    bool processUpdate(FUnknown* changedUnknown, int32 message);
+
     // client
     sfz::ClientPtr _client;
     std::unique_ptr<uint8_t[]> _oscTemp;
-    void receiveMessage(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
+    void receiveOSC(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     // misc
     void loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState);

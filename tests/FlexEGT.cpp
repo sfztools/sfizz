@@ -8,6 +8,7 @@
 #include "sfizz/Synth.h"
 #include "sfizz/AudioBuffer.h"
 #include "sfizz/FlexEnvelope.h"
+#include "sfizz/modulations/ModMatrix.h"
 #include "catch2/catch.hpp"
 #include "TestHelpers.h"
 #include <array>
@@ -42,7 +43,7 @@ TEST_CASE("[FlexEG] Values")
     REQUIRE( egDescription.points[4].time == .4_a );
     REQUIRE( egDescription.points[4].level == 1.0_a );
     REQUIRE( egDescription.sustain == 3 );
-    REQUIRE(synth.getResources().modMatrix.toDotGraph() == createDefaultGraph({
+    REQUIRE(synth.getResources().getModMatrix().toDotGraph() == createDefaultGraph({
         R"("EG 1 {0}" -> "Amplitude {0}")",
     }));
 }
@@ -68,7 +69,7 @@ TEST_CASE("[FlexEG] Default values")
     REQUIRE( egDescription.points[1].level == 0.0_a );
     REQUIRE( egDescription.points[2].time == .1_a );
     REQUIRE( egDescription.points[2].level == .25_a );
-    REQUIRE( synth.getResources().modMatrix.toDotGraph() == createDefaultGraph({}) );
+    REQUIRE( synth.getResources().getModMatrix().toDotGraph() == createDefaultGraph({}) );
 }
 
 TEST_CASE("[FlexEG] Connections")
@@ -86,7 +87,7 @@ TEST_CASE("[FlexEG] Connections")
     REQUIRE(synth.getNumRegions() == 6);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     REQUIRE( synth.getRegionView(0)->flexEGs[0].points.size() == 2 );
-    REQUIRE( synth.getResources().modMatrix.toDotGraph() == createDefaultGraph({
+    REQUIRE( synth.getResources().getModMatrix().toDotGraph() == createDefaultGraph({
         R"("EG 1 {0}" -> "Amplitude {0}")",
         R"("EG 1 {1}" -> "Pan {1}")",
         R"("EG 1 {2}" -> "Width {2}")",
@@ -106,7 +107,7 @@ TEST_CASE("[FlexEG] Coarse numerical envelope test (No release)")
         eg1_time2=0.5  eg1_level2=1
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -131,7 +132,7 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test")
         eg1_time2=0.5  eg1_level2=1
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -154,7 +155,7 @@ TEST_CASE("[FlexEG] Coarse numerical envelope test (with release)")
         eg1_time2=0.5  eg1_level2=1
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -183,7 +184,7 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test (with release and release r
         eg1_time3=0.5  eg1_level3=0
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -215,7 +216,7 @@ TEST_CASE("[FlexEG] Coarse numerical envelope test (with shapes)")
         eg1_sustain=2
         eg1_time3=0.5  eg1_level3=0 eg1_shape3=4
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -243,7 +244,7 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test (with shapes)")
         eg1_time3=0.5  eg1_level3=0 eg1_shape3=4
         eg1_sustain=2
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE( synth.getRegionView(0)->flexEGs.size() == 1 );
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -275,7 +276,7 @@ TEST_CASE("[FlexEG] Zero delay transitions")
         eg1_time3=1  eg1_level3=.5 eg1_sustain=3
         eg1_time4=1  eg1_level4=1
     )");
-    sfz::FlexEnvelope envelope;
+    sfz::FlexEnvelope envelope(synth.getResources());
     REQUIRE(synth.getNumRegions() == 1);
     REQUIRE(synth.getRegionView(0)->flexEGs.size() == 1);
     envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -302,7 +303,7 @@ TEST_CASE("[FlexEG] Early release")
         eg1_time2=1.0  eg1_level2=1.0 eg1_sustain=2
         eg1_time3=1.0  eg1_level3=0.0
     )");
-        sfz::FlexEnvelope envelope;
+        sfz::FlexEnvelope envelope(synth.getResources());
         REQUIRE(synth.getNumRegions() == 1);
         REQUIRE(synth.getRegionView(0)->flexEGs.size() == 1);
         envelope.configure(&synth.getRegionView(0)->flexEGs[0]);
@@ -415,4 +416,44 @@ TEST_CASE("[FlexEG] Free-running flex AmpEG (no sustain)")
     synth.noteOff(0, 64, 0); // the release stage is 0 duration
     synth.renderBlock(buffer);
     REQUIRE( synth.getNumActiveVoices() == 0 );
+}
+
+TEST_CASE("[FlexEG] Modulation of time and level")
+{
+    sfz::Synth synth;
+
+    synth.loadSfzString(fs::current_path(), R"(
+        <region> sample=*noise
+            eg1_time1=0           eg1_level1=1
+            eg1_time2=0.7         eg1_level2=0.5
+            eg1_time2_oncc1=-0.7  eg1_level2_oncc2=0.5
+            eg1_time3=0.3         eg1_level3=0.0
+    )");
+
+    REQUIRE( synth.getNumRegions() == 1 );
+    const sfz::Region* region = synth.getRegionView(0);
+    REQUIRE( region->flexEGs.size() == 1 );
+    const sfz::FlexEGDescription& desc = synth.getRegionView(0)->flexEGs[0];
+    REQUIRE( desc.points.size() == 4 );
+
+    REQUIRE( desc.points[2].time == Approx(0.7f) );
+    REQUIRE( desc.points[2].level == Approx(0.5f) );
+
+    sfz::MidiState state;
+
+    REQUIRE( desc.points[2].getTime(state) == Approx(0.7f) );
+    state.ccEvent(0, 1, 0.0f);
+    REQUIRE( desc.points[2].getTime(state) == Approx(0.7f) );
+    state.ccEvent(0, 1, 0.5f);
+    REQUIRE( desc.points[2].getTime(state) == Approx(0.35f) );
+    state.ccEvent(0, 1, 1.0f);
+    REQUIRE( desc.points[2].getTime(state) == Approx(0.0f) );
+
+    REQUIRE( desc.points[2].getLevel(state) == Approx(0.5f) );
+    state.ccEvent(0, 2, 0.0f);
+    REQUIRE( desc.points[2].getLevel(state) == Approx(0.5f) );
+    state.ccEvent(0, 2, 0.5f);
+    REQUIRE( desc.points[2].getLevel(state) == Approx(0.75f) );
+    state.ccEvent(0, 2, 1.0f);
+    REQUIRE( desc.points[2].getLevel(state) == Approx(1.0f) );
 }
