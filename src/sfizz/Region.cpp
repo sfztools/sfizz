@@ -182,6 +182,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("group"): // also polyphony_group
         group = opcode.read(Default::group);
         break;
+    case hash("output"):
+        output = opcode.read(Default::output);
+        break;
     case hash("off_by"): // also offby
         offBy = opcode.readOptional(Default::group);
         break;

@@ -154,6 +154,7 @@ namespace Default
     extern const OpcodeSpec<float> oscillatorModDepthMod;
     extern const OpcodeSpec<int32_t> oscillatorQuality;
     extern const OpcodeSpec<int64_t> group;
+    extern const OpcodeSpec<uint16_t> output;
     extern const OpcodeSpec<float> offTime;
     extern const OpcodeSpec<uint32_t> polyphony;
     extern const OpcodeSpec<uint32_t> notePolyphony;

@@ -99,9 +99,17 @@ public:
     void addEffect(std::unique_ptr<Effect> fx);
 
     /**
+     * @brief Get a view into an effect in the chain
+     *
+     * @param index
+     * @return const Effect*
+     */
+    const Effect* effectView(unsigned index) const;
+
+    /**
        @brief Checks whether this bus can produce output.
      */
-    bool hasNonZeroOutput() const { return _gainToMain != 0 || _gainToMix != 0; }
+    bool hasNonZeroOutput() const { return _hasSignal && (_gainToMain != 0 || _gainToMix != 0); }
 
     /**
        @brief Sets the amount of effect output going to the main.
@@ -181,6 +189,7 @@ private:
     AudioBuffer<float> _outputs { EffectChannels, config::defaultSamplesPerBlock };
     float _gainToMain { Default::effect };
     float _gainToMix { Default::effect };
+    bool _hasSignal { false };
 };
 
 } // namespace sfz

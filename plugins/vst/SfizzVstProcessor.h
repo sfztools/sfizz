@@ -55,6 +55,9 @@ public:
     static FUID cid;
 
     // --- Sfizz stuff here below ---
+protected:
+    RMSFollower _rmsFollower {};
+    bool _multi { false };
 private:
     // synth state. acquire processMutex before accessing
     std::unique_ptr<sfz::Sfizz> _synth;
@@ -66,7 +69,6 @@ private:
     bool _canPerformEventsAndParameters {};
 
     // level meters
-    RMSFollower _rmsFollower;
     bool _editorIsOpen = false;
 
     // updates
@@ -129,6 +131,12 @@ private:
     static bool writeMessage(Ring_Buffer& fifo, const char* type, const void* data, uintptr_t size);
 };
 
+class SfizzVstProcessorMulti : public SfizzVstProcessor {
+public:
+    tresult PLUGIN_API initialize(FUnknown* context) override;
+    static FUnknown* createInstance(void*);
+    static FUID cid;
+};
 //------------------------------------------------------------------------------
 
 template <class T> const T* SfizzVstProcessor::RTMessage::payload() const

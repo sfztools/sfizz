@@ -206,6 +206,5 @@ namespace fx {
         fPhase = phase;
         fLastValue = lastValue;
     }
-
 } // namespace fx
 } // namespace sfz

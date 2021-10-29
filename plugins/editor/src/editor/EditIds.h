@@ -26,6 +26,7 @@ enum class EditId : int {
     //
     #define KEY_RANGE(Name) Name##0, Name##Last = Name##0 + 128 - 1
     #define CC_RANGE(Name) Name##0, Name##Last = Name##0 + sfz::config::numCCs - 1
+    #define METER_RANGE(Name) Name##0, Name##Last = Name##0 + 16 - 1
     //
     KEY_RANGE(Key),
     CC_RANGE(Controller),
@@ -38,8 +39,7 @@ enum class EditId : int {
     CC_RANGE(ControllerDefault),
     CC_RANGE(ControllerLabel),
     //
-    LeftLevel,
-    RightLevel,
+    METER_RANGE(Level),
     //
     UINumCurves,
     UINumMasters,
@@ -53,9 +53,11 @@ enum class EditId : int {
     //
     PluginFormat,
     PluginHost,
+    PluginOutputs,
     //
     #undef KEY_RANGE
     #undef CC_RANGE
+    #undef METER_RANGE
 };
 
 struct EditRange {
@@ -89,6 +91,7 @@ struct EditRange {
 
 // defines editIdForCC, ccForEditId, editIdIsCC, etc..
 DEFINE_EDIT_ID_RANGE_HELPERS(cc, CC, Controller)
+DEFINE_EDIT_ID_RANGE_HELPERS(level, Level, Level)
 DEFINE_EDIT_ID_RANGE_HELPERS(key, Key, Key)
 DEFINE_EDIT_ID_RANGE_HELPERS(keyUsed, KeyUsed, KeyUsed)
 DEFINE_EDIT_ID_RANGE_HELPERS(keyLabel, KeyLabel, KeyLabel)

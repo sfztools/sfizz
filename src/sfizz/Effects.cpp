@@ -100,6 +100,14 @@ void EffectBus::addEffect(std::unique_ptr<Effect> fx)
     _effects.emplace_back(std::move(fx));
 }
 
+const Effect* EffectBus::effectView(unsigned index) const
+{
+    if (index > _effects.size())
+        return {};
+
+    return _effects[index].get();
+}
+
 void EffectBus::clearInputs(unsigned nframes)
 {
     AudioSpan<float>(_inputs).first(nframes).fill(0.0f);
@@ -110,6 +118,8 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
 {
     if (addGain == 0)
         return;
+
+    _hasSignal = true;
 
     for (unsigned c = 0; c < EffectChannels; ++c) {
         absl::Span<const float> addIn { addInput[c], nframes };
@@ -144,15 +154,19 @@ void EffectBus::process(unsigned nframes)
 {
     size_t numEffects = _effects.size();
 
+    // TODO: Can we have only one buffer and pass stuff without copies?
     if (numEffects > 0 && hasNonZeroOutput()) {
         _effects[0]->process(
             AudioSpan<float>(_inputs), AudioSpan<float>(_outputs), nframes);
         for (size_t i = 1; i < numEffects; ++i)
             _effects[i]->process(
                 AudioSpan<float>(_outputs), AudioSpan<float>(_outputs), nframes);
-    } else
+    } else {
         fx::Nothing().process(
             AudioSpan<float>(_inputs), AudioSpan<float>(_outputs), nframes);
+    }
+
+    _hasSignal = false;
 }
 
 void EffectBus::mixOutputsTo(float* const mainOutput[], float* const mixOutput[], unsigned nframes)
