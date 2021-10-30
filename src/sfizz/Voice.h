@@ -26,6 +26,7 @@ struct ExtendedCCValues {
     float bipolar {};
     float noteGate {};
     float alternate {};
+    float keydelta {};
 };
 
 /**

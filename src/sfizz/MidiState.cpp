@@ -19,7 +19,13 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
     ASSERT(velocity >= 0 && velocity <= 1.0);
 
     if (noteNumber >= 0 && noteNumber < 128) {
-        velocityOverride = lastNoteVelocities[lastNotePlayed];
+        float keydelta { 0 };
+
+        if (lastNotePlayed >= 0) {
+            keydelta = static_cast<float>(noteNumber - lastNotePlayed);
+            velocityOverride = lastNoteVelocities[lastNotePlayed];
+        }
+
         lastNoteVelocities[noteNumber] = velocity;
         noteOnTimes[noteNumber] = internalClock + static_cast<unsigned>(delay);
         lastNotePlayed = noteNumber;
@@ -29,6 +35,8 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
         ccEvent(delay, ExtendedCCs::unipolarRandom, unipolarDist(Random::randomGenerator));
         ccEvent(delay, ExtendedCCs::bipolarRandom, bipolarDist(Random::randomGenerator));
         ccEvent(delay, ExtendedCCs::keyboardNoteGate, activeNotes > 0 ? 1.0f : 0.0f);
+        ccEvent(delay, ExtendedCCs::keydelta, keydelta);
+        ccEvent(delay, ExtendedCCs::absoluteKeydelta, std::abs(keydelta));
         activeNotes++;
 
         ccEvent(delay, ExtendedCCs::alternate, alternate);
@@ -235,7 +243,7 @@ void sfz::MidiState::reset() noexcept
     velocityOverride = 0.0f;
     activeNotes = 0;
     internalClock = 0;
-    lastNotePlayed = 0;
+    lastNotePlayed = -1;
     noteStates.reset();
     absl::c_fill(noteOnTimes, 0);
     absl::c_fill(noteOffTimes, 0);

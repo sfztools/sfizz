@@ -1721,6 +1721,8 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
         case ExtendedCCs::unipolarRandom: // fallthrough
         case ExtendedCCs::bipolarRandom: // fallthrough
         case ExtendedCCs::alternate:
+        case ExtendedCCs::keydelta:
+        case ExtendedCCs::absoluteKeydelta:
             conn->source = ModKey(ModId::PerVoiceController, id, p);
             break;
         default:

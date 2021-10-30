@@ -399,6 +399,7 @@ void Voice::Impl::updateExtendedCCValues() noexcept
     extendedCCValues_.bipolar = midiState.getCCValue(ExtendedCCs::bipolarRandom);
     extendedCCValues_.alternate = midiState.getCCValue(ExtendedCCs::alternate);
     extendedCCValues_.noteGate = midiState.getCCValue(ExtendedCCs::keyboardNoteGate);
+    extendedCCValues_.keydelta = midiState.getCCValue(ExtendedCCs::keydelta);
 }
 
 bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
