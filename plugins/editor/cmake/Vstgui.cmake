@@ -1,3 +1,11 @@
+# Find vstgui version
+FILE(READ ${VSTGUI_BASEDIR}/vstgui/lib/vstguibase.h VSTGUIBASE_HEADER)
+string(REGEX MATCH "\#define VSTGUI_VERSION_MAJOR  ([0-9]*)" _ ${VSTGUIBASE_HEADER})
+set(VSTGUI_VERSION_MAJOR ${CMAKE_MATCH_1})
+string(REGEX MATCH "\#define VSTGUI_VERSION_MINOR  ([0-9]*)" _ ${VSTGUIBASE_HEADER})
+set(VSTGUI_VERSION_MINOR ${CMAKE_MATCH_1})
+set(VSTGUI_VERSION "${VSTGUI_VERSION_MAJOR}.${VSTGUI_VERSION_MINOR}")
+
 add_library(sfizz_vstgui STATIC EXCLUDE_FROM_ALL
     "${VSTGUI_BASEDIR}/vstgui/lib/animation/animations.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/animation/animator.cpp"
@@ -39,7 +47,6 @@ add_library(sfizz_vstgui STATIC EXCLUDE_FROM_ALL
     "${VSTGUI_BASEDIR}/vstgui/lib/cfileselector.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/cfont.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/cframe.cpp"
-    "${VSTGUI_BASEDIR}/vstgui/lib/cgradient.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/cgradientview.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/cgraphicspath.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/clayeredviewcontainer.cpp"
@@ -58,11 +65,16 @@ add_library(sfizz_vstgui STATIC EXCLUDE_FROM_ALL
     "${VSTGUI_BASEDIR}/vstgui/lib/cview.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/cviewcontainer.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/cvstguitimer.cpp"
-    "${VSTGUI_BASEDIR}/vstgui/lib/events.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/genericstringlistdatabrowsersource.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/pixelbuffer.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/vstguidebug.cpp"
     "${VSTGUI_BASEDIR}/vstgui/lib/vstguiinit.cpp")
+
+if(${VSTGUI_VERSION} VERSION_GREATER "4.10")
+    target_sources(sfizz_vstgui PRIVATE
+        ${VSTGUI_BASEDIR}/vstgui/lib/cgradient.cpp
+        ${VSTGUI_BASEDIR}/vstgui/lib/events.cpp)
+endif()
 
 add_library(sfizz::vstgui ALIAS sfizz_vstgui)
 
@@ -71,7 +83,6 @@ if(WIN32)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dbitmap.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2ddrawcontext.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dfont.cpp"
-        "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dgradient.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dgraphicspath.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32datapackage.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32dragging.cpp"
@@ -85,6 +96,10 @@ if(WIN32)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/winfileselector.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/winstring.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/wintimer.cpp")
+    if(${VSTGUI_VERSION} VERSION_GREATER "4.10")
+        target_sources(sfizz_vstgui PRIVATE
+            ${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dgradient.cpp)
+    endif()
 elseif(APPLE)
     target_sources(sfizz_vstgui PRIVATE
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/mac/carbon/hiviewframe.cpp"
