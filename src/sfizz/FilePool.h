@@ -109,6 +109,7 @@ struct FileData
     FileAudioBuffer preloadedData;
     FileInformation information;
     FileAudioBuffer fileData {};
+    int preloadCallCount { 0 };
     std::atomic<Status> status { Status::Invalid };
     std::atomic<size_t> availableFrames { 0 };
     std::atomic<int> readerCount { 0 };
@@ -258,6 +259,17 @@ public:
      *
      */
     void clear();
+
+    /**
+     * @brief Reset the number of preloadFile counts for each sample.
+     */
+    void resetPreloadCallCounts() noexcept;
+
+    /**
+     * @brief Clear all files with a preload call count of 0.
+     */
+    void removeUnusedPreloadedData() noexcept;
+
     /**
      * @brief Get a handle on a file, which triggers background loading
      *

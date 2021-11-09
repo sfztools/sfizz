@@ -1758,7 +1758,7 @@ TEST_CASE("[Synth] Initial values of CC")
     REQUIRE(synth.getHdcc(10) == 0.7f);
     REQUIRE(synth.getDefaultHdcc(10) == 0.5f);
 
-    synth.loadSfzString(fs::current_path() / "init_cc.sfz", R"(
+    synth.loadSfzString(fs::current_path() / "init_cc_new_file.sfz", R"(
         <control> set_hdcc111=0.1234 set_cc112=77
         <region> sample=*sine
     )");
@@ -2015,5 +2015,128 @@ TEST_CASE("[Synth] Loading resets note and octave offsets")
         "/note_offset,i : { 0 }",
         "/octave_offset,i : { 0 }",
     };
+    REQUIRE(messageList == expected);
+}
+
+
+TEST_CASE("[Synth] Default CC values")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/default.sfz", R"(
+        <region> sample=*sine
+    )");
+    synth.renderBlock(buffer);
+    synth.dispatchMessage(client, 0, "/cc7/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc10/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc11/value", "", nullptr);
+
+    std::vector<std::string> expected {
+        "/cc7/value,f : { 0.787402 }",
+        "/cc10/value,f : { 0.5 }",
+        "/cc11/value,f : { 1 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Synth] Loading a new file doesn't reset the midi state")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sine.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    synth.hdcc(10, 63, 0.4f);
+    synth.hdcc(10, 7, 0.41f);
+    synth.hdcc(10, 10, 0.42f);
+    synth.hdcc(10, 11, 0.43f);
+    synth.hdChannelAftertouch(20, 0.1f);
+    synth.hdPolyAftertouch(30, 64, 0.2f);
+    synth.hdPitchWheel(40, 0.3f);
+    synth.renderBlock(buffer);
+    synth.dispatchMessage(client, 0, "/cc63/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc7/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc10/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc11/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/aftertouch", "", nullptr);
+    synth.dispatchMessage(client, 0, "/poly_aftertouch/64", "", nullptr);
+    synth.dispatchMessage(client, 0, "/pitch_bend", "", nullptr);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/saw.sfz", R"(
+        <region> sample=*saw
+    )");
+    synth.renderBlock(buffer);
+    synth.dispatchMessage(client, 0, "/cc63/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc7/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc10/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/cc11/value", "", nullptr);
+    synth.dispatchMessage(client, 0, "/aftertouch", "", nullptr);
+    synth.dispatchMessage(client, 0, "/poly_aftertouch/64", "", nullptr);
+    synth.dispatchMessage(client, 0, "/pitch_bend", "", nullptr);
+
+    std::vector<std::string> expected {
+        "/cc63/value,f : { 0.4 }",
+        "/cc7/value,f : { 0.41 }",
+        "/cc10/value,f : { 0.42 }",
+        "/cc11/value,f : { 0.43 }",
+        "/aftertouch,f : { 0.1 }",
+        "/poly_aftertouch/64,f : { 0.2 }",
+        "/pitch_bend,f : { 0.3 }",
+        "/cc63/value,f : { 0.4 }",
+        "/cc7/value,f : { 0.41 }",
+        "/cc10/value,f : { 0.42 }",
+        "/cc11/value,f : { 0.43 }",
+        "/aftertouch,f : { 0.1 }",
+        "/poly_aftertouch/64,f : { 0.2 }",
+        "/pitch_bend,f : { 0.3 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Synth] Reloading a file ignores the `set_ccN` opcodes")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sine.sfz", R"(
+        <control> set_cc1=0
+        <region> sample=*sine
+    )");
+
+    synth.hdcc(10, 1, 0.4f);
+    synth.renderBlock(buffer);
+    synth.dispatchMessage(client, 0, "/cc1/value", "", nullptr);
+
+    // Same file
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sine.sfz", R"(
+        <control> set_cc1=0
+        <region> sample=*sine
+    )");
+    synth.renderBlock(buffer);
+    synth.dispatchMessage(client, 0, "/cc1/value", "", nullptr);
+
+    // Different file
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/saw.sfz", R"(
+        <control> set_cc1=0
+        <region> sample=*saw
+    )");
+    synth.renderBlock(buffer);
+    synth.dispatchMessage(client, 0, "/cc1/value", "", nullptr);
+
+    std::vector<std::string> expected {
+        "/cc1/value,f : { 0.4 }",
+        "/cc1/value,f : { 0.4 }",
+        "/cc1/value,f : { 0 }",
+    };
+
     REQUIRE(messageList == expected);
 }

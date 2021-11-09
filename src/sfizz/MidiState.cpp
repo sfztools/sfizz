@@ -10,7 +10,8 @@
 
 sfz::MidiState::MidiState()
 {
-    reset();
+    resetEventStates();
+    resetNoteStates();
 }
 
 void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noexcept
@@ -213,11 +214,36 @@ float sfz::MidiState::getCCValueAt(int ccNumber, int delay) const noexcept
         return ccEvents[ccNumber].back().value;
 }
 
-void sfz::MidiState::reset() noexcept
+void sfz::MidiState::resetNoteStates() noexcept
 {
     for (auto& velocity: lastNoteVelocities)
         velocity = 0.0f;
 
+    velocityOverride = 0.0f;
+    activeNotes = 0;
+    internalClock = 0;
+    lastNotePlayed = 0;
+    alternate = 0.0f;
+
+    auto setEvents = [] (EventVector& events, float value) {
+        events.clear();
+        events.push_back({ 0, value });
+    };
+
+    setEvents(ccEvents[ExtendedCCs::noteOnVelocity], 0.0f);
+    setEvents(ccEvents[ExtendedCCs::keyboardNoteNumber], 0.0f);
+    setEvents(ccEvents[ExtendedCCs::unipolarRandom], 0.0f);
+    setEvents(ccEvents[ExtendedCCs::bipolarRandom], 0.0f);
+    setEvents(ccEvents[ExtendedCCs::keyboardNoteGate], 0.0f);
+    setEvents(ccEvents[ExtendedCCs::alternate], 0.0f);
+
+    noteStates.reset();
+    absl::c_fill(noteOnTimes, 0);
+    absl::c_fill(noteOffTimes, 0);
+}
+
+void sfz::MidiState::resetEventStates() noexcept
+{
     auto clearEvents = [] (EventVector& events) {
         events.clear();
         events.push_back({ 0, 0.0f });
@@ -231,14 +257,6 @@ void sfz::MidiState::reset() noexcept
 
     clearEvents(pitchEvents);
     clearEvents(channelAftertouchEvents);
-
-    velocityOverride = 0.0f;
-    activeNotes = 0;
-    internalClock = 0;
-    lastNotePlayed = 0;
-    noteStates.reset();
-    absl::c_fill(noteOnTimes, 0);
-    absl::c_fill(noteOffTimes, 0);
 }
 
 const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept

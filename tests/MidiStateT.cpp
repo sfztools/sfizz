@@ -45,16 +45,67 @@ TEST_CASE("[MidiState] Set and get pitch bends")
     REQUIRE(state.getPitchBend() == 0.0f);
 }
 
-TEST_CASE("[MidiState] Reset")
+TEST_CASE("[MidiState] Resetting things")
 {
     sfz::MidiState state;
     state.pitchBendEvent(0, 0.7f);
     state.noteOnEvent(0, 64, 24_norm);
     state.ccEvent(0, 123, 124_norm);
-    state.reset();
-    REQUIRE(state.getPitchBend() == 0.0f);
+    state.channelAftertouchEvent(0, 56_norm);
+    state.polyAftertouchEvent(0, 64, 43_norm);
+    state.advanceTime(1024);
+
+    // Only reset note stuff
+    state.resetNoteStates();
     REQUIRE(state.getNoteVelocity(64) == 0_norm);
+    REQUIRE(state.getNoteDuration(64) == 0_norm);
+    REQUIRE(state.getActiveNotes() == 0);
+
+    // Extended CCs too
+    REQUIRE(state.getCCValue(131) == 0.0f);
+    REQUIRE(state.getCCValue(132) == 0.0f);
+    REQUIRE(state.getCCValue(133) == 0.0f);
+    REQUIRE(state.getCCValue(134) == 0.0f);
+    REQUIRE(state.getCCValue(135) == 0.0f);
+    REQUIRE(state.getCCValue(136) == 0.0f);
+    REQUIRE(state.getCCValue(137) == 0.0f);
+
+    // State isn't reset
+    REQUIRE(state.getPitchBend() != 0.0f);
+    REQUIRE(state.getCCValue(123) != 0_norm);
+    REQUIRE(state.getChannelAftertouch() != 0_norm);
+    REQUIRE(state.getPolyAftertouch(64) != 0_norm);
+
+    state.resetEventStates(); // But now it is
+    REQUIRE(state.getPitchBend() == 0.0f);
     REQUIRE(state.getCCValue(123) == 0_norm);
+    REQUIRE(state.getChannelAftertouch() == 0_norm);
+    REQUIRE(state.getPolyAftertouch(64) == 0_norm);
+}
+
+TEST_CASE("[MidiState] Flushing state")
+{
+    sfz::MidiState state;
+    state.pitchBendEvent(40, 0.7f);
+    state.ccEvent(100, 123, 124_norm);
+    state.channelAftertouchEvent(20, 56_norm);
+    state.polyAftertouchEvent(80, 64, 43_norm);
+
+    REQUIRE(state.getCCEvents(123).size() > 1);
+    REQUIRE(state.getChannelAftertouchEvents().size() > 1);
+    REQUIRE(state.getPolyAftertouchEvents(64).size() > 1);
+    REQUIRE(state.getPitchEvents().size() > 1);
+
+    state.flushEvents();
+    REQUIRE(state.getCCEvents(123).size() == 1);
+    REQUIRE(state.getChannelAftertouchEvents().size() == 1);
+    REQUIRE(state.getPolyAftertouchEvents(64).size() == 1);
+    REQUIRE(state.getPitchEvents().size() == 1);
+
+    REQUIRE(state.getCCValue(123) == 124_norm);
+    REQUIRE(state.getChannelAftertouch() == 56_norm);
+    REQUIRE(state.getPolyAftertouch(64) == 43_norm);
+    REQUIRE(state.getPitchBend() == 0.7f);
 }
 
 TEST_CASE("[MidiState] Set and get note velocities")

@@ -177,8 +177,23 @@ struct Synth::Impl final: public Parser::Listener {
     void startDelayedSostenutoReleases(Layer* layer, int delay, SisterVoiceRingBuilder& ring) noexcept;
 
     /**
+     * @brief Reset the default CCs
+     *
+     */
+    void resetDefaultCCValues() noexcept;
+
+    /**
+     * @brief Prepare before loading a new SFZ file. The behavior of this function
+     * is changed by the reloading state.
+     *
+     * @param path
+     */
+    void prepareSfzLoad(const fs::path& path);
+
+    /**
      * @brief Finalize SFZ loading, following a successful execution of the
-     *        parsing step.
+     * parsing step. The behavior of this function is changed by the reloading
+     * state.
      */
     void finalizeSfzLoad();
 
@@ -330,7 +345,9 @@ struct Synth::Impl final: public Parser::Listener {
     std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_;
 
     Parser parser_;
+    std::string lastPath_;
     absl::optional<fs::file_time_type> modificationTime_ { };
+    bool reloading { false };
 
     std::array<float, config::numCCs> defaultCCValues_ { };
     BitArray<config::numCCs> currentUsedCCs_;

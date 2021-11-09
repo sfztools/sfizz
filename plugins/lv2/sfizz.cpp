@@ -1388,10 +1388,10 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             // Mark all the used CCs for automation with default values
-            self->ccauto[cc] = desc.ccDefault[cc];
+            self->ccauto[cc] = desc.ccValue[cc];
             self->have_ccauto = true;
             // Update the current CCs
-            self->cc_current[cc] = desc.ccDefault[cc];
+            self->cc_current[cc] = desc.ccValue[cc];
         }
     }
 
@@ -1476,7 +1476,7 @@ restore(LV2_Handle instance,
 
         if (path)
         {
-            strncpy(self->sfz_file_path, path, MAX_PATH_SIZE);
+            strncpy(self->sfz_file_path, path, MAX_PATH_SIZE - 1);
             self->sfz_file_path[MAX_PATH_SIZE - 1] = '\0';
 
             if (map_path)
@@ -1497,7 +1497,7 @@ restore(LV2_Handle instance,
 
         if (path)
         {
-            strncpy(self->scala_file_path, path, MAX_PATH_SIZE);
+            strncpy(self->scala_file_path, path, MAX_PATH_SIZE - 1);
             self->scala_file_path[MAX_PATH_SIZE - 1] = '\0';
 
             if (map_path)

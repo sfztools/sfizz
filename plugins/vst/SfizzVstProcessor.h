@@ -86,7 +86,7 @@ private:
     void receiveOSC(int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     // misc
-    void loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState);
+    void loadSfzFileOrDefault(const std::string& filePath);
 
     // note event tracking
     std::array<float, 128> _noteEventsCurrentCycle; // 0: off, >0: on, <0: no change

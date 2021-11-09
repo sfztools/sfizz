@@ -65,6 +65,8 @@ Synth::Impl::Impl()
     effectFactory_.registerStandardEffectTypes();
     initEffectBuses();
     resetVoices(config::numVoices);
+    resetDefaultCCValues();
+    resetAllControllers(0);
 
     // modulation sources
     MidiState& midiState = resources_.getMidiState();
@@ -274,7 +276,7 @@ void Synth::Impl::clear()
     currentSet_ = nullptr;
     sets_.clear();
     layers_.clear();
-    resources_.clear();
+    resources_.clearNonState();
     rootPath_.clear();
     numGroups_ = 0;
     numMasters_ = 0;
@@ -284,8 +286,8 @@ void Synth::Impl::clear()
     currentSwitch_ = absl::nullopt;
     defaultPath_ = "";
     image_ = "";
-    midiState.reset();
-    filePool.clear();
+    midiState.resetNoteStates();
+    midiState.flushEvents();
     filePool.setRamLoading(config::loadInRam);
     clearCCLabels();
     currentUsedCCs_.clear();
@@ -302,18 +304,6 @@ void Synth::Impl::clear()
     unknownOpcodes_.clear();
     modificationTime_ = absl::nullopt;
     playheadMoved_ = false;
-
-    // set default controllers
-    // midistate is reset above
-    fill(absl::MakeSpan(defaultCCValues_), 0.0f);
-    setDefaultHdcc(7, normalizeCC(100));
-    setDefaultHdcc(10, 0.5f);
-    setDefaultHdcc(11, 1.0f);
-
-    // set default controller labels
-    setCCLabel(7, "Volume");
-    setCCLabel(10, "Pan");
-    setCCLabel(11, "Expression");
 
     initEffectBuses();
 }
@@ -401,12 +391,20 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         switch (member.lettersOnlyHash) {
         case hash("set_cc&"):
             if (Default::ccNumber.bounds.containsWithEnd(member.parameters.back())) {
-                setDefaultHdcc(member.parameters.back(), member.read(Default::loCC));
+                const auto ccNumber = member.parameters.back();
+                const auto value = member.read(Default::loCC);
+                setDefaultHdcc(ccNumber, value);
+                if (!reloading)
+                    resources_.getMidiState().ccEvent(0, ccNumber, value);
             }
             break;
         case hash("set_hdcc&"):
             if (Default::ccNumber.bounds.containsWithEnd(member.parameters.back())) {
-                setDefaultHdcc(member.parameters.back(), member.read(Default::loNormalized));
+                const auto ccNumber = member.parameters.back();
+                const auto value = member.read(Default::loNormalized);
+                setDefaultHdcc(ccNumber, value);
+                if (!reloading)
+                    resources_.getMidiState().ccEvent(0, ccNumber, value);
             }
             break;
         case hash("label_cc&"):
@@ -550,15 +548,53 @@ void Synth::Impl::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
     getOrCreateBus(busIndex).addEffect(std::move(fx));
 }
 
+void Synth::Impl::resetDefaultCCValues() noexcept
+{
+    fill(absl::MakeSpan(defaultCCValues_), 0.0f);
+    setDefaultHdcc(7, normalizeCC(100));
+    setDefaultHdcc(10, 0.5f);
+    setDefaultHdcc(11, 1.0f);
+
+    setCCLabel(7, "Volume");
+    setCCLabel(10, "Pan");
+    setCCLabel(11, "Expression");
+}
+
+void Synth::Impl::prepareSfzLoad(const fs::path& path)
+{
+    auto newPath_ = path.string();
+    reloading = (lastPath_ == newPath_);
+
+    clear();
+
+#ifndef NDEBUG
+    if (reloading) {
+        DBG("[sfizz] Reloading the current file");
+    }
+#endif
+
+    if (!reloading) {
+
+        // Clear the background queues and clear the filePool
+        auto& filePool = resources_.getFilePool();
+        filePool.waitForBackgroundLoading();
+        filePool.clear();
+
+        // Set the default hdcc to their default
+        resetDefaultCCValues();
+
+        // Store the new path
+        lastPath_ = std::move(newPath_);
+    }
+}
+
 bool Synth::loadSfzFile(const fs::path& file)
 {
     Impl& impl = *impl_;
-
-    impl.clear();
+    impl.prepareSfzLoad(file);
 
     std::error_code ec;
     fs::path realFile = fs::canonical(file, ec);
-
     bool success = true;
     Parser& parser = impl.parser_;
     parser.parseFile(ec ? file : realFile);
@@ -570,7 +606,10 @@ bool Synth::loadSfzFile(const fs::path& file)
     success = success && !impl.layers_.empty();
 
     if (!success) {
+        DBG("[sfizz] Loading failed");
+        auto& filePool = impl.resources_.getFilePool();
         parser.clear();
+        filePool.clear();
         return false;
     }
 
@@ -581,8 +620,7 @@ bool Synth::loadSfzFile(const fs::path& file)
 bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 {
     Impl& impl = *impl_;
-
-    impl.clear();
+    impl.prepareSfzLoad(path);
 
     bool success = true;
     Parser& parser = impl.parser_;
@@ -595,7 +633,10 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
     success = success && !impl.layers_.empty();
 
     if (!success) {
+        auto& filePool = impl.resources_.getFilePool();
+        DBG("[sfizz] Loading failed");
         parser.clear();
+        filePool.clear();
         return false;
     }
 
@@ -605,8 +646,10 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 
 void Synth::Impl::finalizeSfzLoad()
 {
-    const fs::path& rootDirectory = parser_.originalDirectory();
     FilePool& filePool = resources_.getFilePool();
+    WavetablePool& wavePool = resources_.getWavePool();
+
+    const fs::path& rootDirectory = parser_.originalDirectory();
     filePool.setRootDirectory(rootDirectory);
 
     // a string representation used for OSC purposes
@@ -641,9 +684,6 @@ void Synth::Impl::finalizeSfzLoad()
         Region& region = layer.getRegion();
 
         absl::optional<FileInformation> fileInformation;
-
-        FilePool& filePool = resources_.getFilePool();
-        WavetablePool& wavePool = resources_.getWavePool();
 
         if (!region.isGenerator()) {
             if (!filePool.checkSampleId(*region.sampleId)) {
@@ -797,10 +837,19 @@ void Synth::Impl::finalizeSfzLoad()
         ++currentRegionIndex;
     }
 
-    for (const auto& toLoad: filesToLoad) {
-        filePool.preloadFile(toLoad.first, toLoad.second);
-    }
+    // Reset the preload call count to check for unused preloaded samples
+    // when reloading
+    if (reloading)
+        filePool.resetPreloadCallCounts();
 
+    for (const auto& toLoad: filesToLoad)
+        filePool.preloadFile(toLoad.first, toLoad.second);
+
+    // Remove preloaded data with no linked regions
+    if (reloading)
+        filePool.removeUnusedPreloadedData();
+
+    // Remove bad regions with unknown files
     if (currentRegionCount < layers_.size()) {
         DBG("Removing " << (layers_.size() - currentRegionCount)
             << " out of " << layers_.size() << " regions");
@@ -1393,7 +1442,6 @@ void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
     ASSERT(ccNumber >= 0);
     ASSERT(ccNumber < config::numCCs);
     defaultCCValues_[ccNumber] = value;
-    resources_.getMidiState().ccEvent(0, ccNumber, value);
 }
 
 float Synth::getHdcc(int ccNumber)
