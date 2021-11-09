@@ -320,6 +320,7 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
             preloadedFiles[fileId].information.maxOffset = maxOffset;
             preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad);
         }
+        existingFile->second.preloadCallCount++;
     } else {
         fileInformation->sampleRate = static_cast<double>(reader->sampleRate());
         auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
@@ -327,12 +328,28 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
             *fileInformation
         });
 
-        if (!insertedPair.second)
-            return false;
-
         insertedPair.first->second.status = FileData::Status::Preloaded;
+        insertedPair.first->second.preloadCallCount++;
     }
+
     return true;
+}
+
+void sfz::FilePool::resetPreloadCallCounts() noexcept
+{
+    for (auto& preloadedFile: preloadedFiles)
+        preloadedFile.second.preloadCallCount = 0;
+}
+
+void sfz::FilePool::removeUnusedPreloadedData() noexcept
+{
+    for (auto it = preloadedFiles.begin(), end = preloadedFiles.end(); it != end; ) {
+        auto copyIt = it++;
+        if (copyIt->second.preloadCallCount == 0) {
+            DBG("[sfizz] Removing unused preloaded data: " << copyIt->first.filename());
+            preloadedFiles.erase(copyIt);
+        }
+    }
 }
 
 sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
@@ -363,7 +380,7 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
 {
     const auto preloaded = preloadedFiles.find(*fileId);
     if (preloaded == preloadedFiles.end()) {
-        DBG("[sfizz] File not found in the preloaded files: " << fileId);
+        DBG("[sfizz] File not found in the preloaded files: " << fileId->filename());
         return {};
     }
     QueuedFileData queuedData { fileId, &preloaded->second, std::chrono::high_resolution_clock::now() };

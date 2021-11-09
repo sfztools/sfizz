@@ -699,3 +699,19 @@ TEST_CASE("[Files] Key center from audio file")
     REQUIRE(synth.getRegionView(4)->pitchKeycenter == 10);
     REQUIRE(synth.getRegionView(5)->pitchKeycenter == 62);
 }
+
+TEST_CASE("[Files] Unused samples are cleared on reloading")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/unused_samples.sfz", R"(
+        <region> sample=*sine
+        <region> sample=kick.wav
+    )");
+    REQUIRE(synth.getNumPreloadedSamples() == 1);
+
+    // Same file path to reload
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/unused_samples.sfz", R"(
+        <region> sample=*sine
+    )");
+    REQUIRE(synth.getNumPreloadedSamples() == 0);
+}

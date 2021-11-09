@@ -32,6 +32,7 @@ struct InstrumentDescription {
     std::array<std::string, 128> keyswitchLabel {};
     std::array<std::string, sfz::config::numCCs> ccLabel {};
     std::array<float, sfz::config::numCCs> ccDefault {};
+    std::array<float, sfz::config::numCCs> ccValue {};
 };
 
 /**

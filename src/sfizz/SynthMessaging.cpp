@@ -195,6 +195,22 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'b'>(delay, path, &blob);
         } break;
 
+        MATCH("/aftertouch", "") {
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getChannelAftertouch());
+        } break;
+
+        MATCH("/poly_aftertouch/&", "") {
+            if (indices[0] > 127)
+                break;
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPolyAftertouch(indices[0]));
+        } break;
+
+        MATCH("/pitch_bend", "") {
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPitchBend());
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/mem/buffers", "") {

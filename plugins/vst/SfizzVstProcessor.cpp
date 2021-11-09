@@ -113,7 +113,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth->setBroadcastCallback(onMessage, this);
 
     _currentStretchedTuning = 0.0;
-    loadSfzFileOrDefault({}, false);
+    loadSfzFileOrDefault({});
 
     _synth->bpmTempo(0, 120);
     _timeSigNumerator = 4;
@@ -218,7 +218,7 @@ void SfizzVstProcessor::syncStateToSynth()
     if (!synth)
         return;
 
-    loadSfzFileOrDefault(_state.sfzFile, true);
+    loadSfzFileOrDefault(_state.sfzFile);
     synth->setVolume(_state.volume);
     synth->setNumVoices(_state.numVoices);
     synth->setOversamplingFactor(1 << _state.oversamplingLog2);
@@ -574,7 +574,7 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 
         std::unique_lock<SpinMutex> lock(_processMutex);
         _state.sfzFile.assign(static_cast<const char *>(data), size);
-        loadSfzFileOrDefault(_state.sfzFile, false);
+        loadSfzFileOrDefault(_state.sfzFile);
         lock.unlock();
     }
     else if (!std::strcmp(id, "LoadScala")) {
@@ -689,7 +689,7 @@ void SfizzVstProcessor::receiveOSC(int delay, const char* path, const char* sig,
     }
 }
 
-void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState)
+void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath)
 {
     sfz::Sfizz& synth = *_synth;
 
@@ -709,16 +709,7 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool i
         const InstrumentDescription desc = parseDescriptionBlob(descBlob);
         for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
             if (desc.ccUsed.test(cc))
-                newControllers[cc] = desc.ccDefault[cc];
-        }
-        // set CC from existing state
-        if (initParametersFromState) {
-            for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
-                if (absl::optional<float> value = oldControllers[cc]) {
-                    newControllers[cc] = *value;
-                    synth.automateHdcc(0, int(cc), *value);
-                }
-            }
+                newControllers[cc] = desc.ccValue[cc];
         }
         _state.controllers = std::move(newControllers);
     }
@@ -822,7 +813,7 @@ void SfizzVstProcessor::doBackgroundIdle(size_t idleCounter)
         if (_synth->shouldReloadFile()) {
             fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
             std::lock_guard<SpinMutex> lock(_processMutex);
-            loadSfzFileOrDefault(_state.sfzFile, false);
+            loadSfzFileOrDefault(_state.sfzFile);
         }
         if (_synth->shouldReloadScala()) {
             fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
