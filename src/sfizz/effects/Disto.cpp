@@ -191,6 +191,5 @@ std::unique_ptr<Effect> Disto::makeInstance(absl::Span<const Opcode> members)
 
     return fx;
 }
-
 } // namespace sfz
 } // namespace fx

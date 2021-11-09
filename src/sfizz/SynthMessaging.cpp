@@ -95,6 +95,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, impl.noteOffset_);
         } break;
 
+        MATCH("/num_outputs", "") {
+            client.receive<'i'>(delay, path, impl.numOutputs_);
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/key/slots", "") {
@@ -360,6 +364,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 client.receive<'h'>(delay, path, *region.loopCount);
             else
                 client.receive<'N'>(delay, path, {});
+        } break;
+
+        MATCH("/region&/output", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.output);
         } break;
 
         MATCH("/region&/group", "") {

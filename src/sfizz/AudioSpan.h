@@ -70,7 +70,7 @@ namespace sfz
  * @tparam Type the underlying buffer type
  * @tparam MaxChannels the maximum number of channels. Defaults to sfz::config::numChannels
  */
-template <class Type, size_t MaxChannels = sfz::config::numChannels>
+template <class Type, size_t MaxChannels = sfz::config::maxChannels>
 class AudioSpan {
 public:
     using size_type = size_t;
@@ -87,6 +87,23 @@ public:
      * @param numFrames size of the AudioSpan
      */
     AudioSpan(const std::array<Type*, MaxChannels>& spans, size_type numChannels, size_type offset, size_type numFrames)
+        : numFrames(numFrames)
+        , numChannels(numChannels)
+    {
+        ASSERT(numChannels <= MaxChannels);
+        for (size_t i = 0; i < numChannels; ++i)
+            this->spans[i] = spans[i] + offset;
+    }
+
+    /**
+     * @brief Construct a new Audio Span object
+     *
+     * @param spans an array of pointers to buffers.
+     * @param numChannels the number of spans to take in from the array
+     * @param offset starting offset for the AudioSpan
+     * @param numFrames size of the AudioSpan
+     */
+    AudioSpan(Type** spans, size_type numChannels, size_type offset, size_type numFrames)
         : numFrames(numFrames)
         , numChannels(numChannels)
     {
@@ -440,10 +457,16 @@ public:
      *
      * @param length the number of elements to take on each channel
      */
-    AudioSpan<Type> subspan(size_type offset) const
+    AudioSpan<Type, MaxChannels> subspan(size_type offset) const
     {
         ASSERT(offset <= numFrames);
         return { spans, numChannels, offset, numFrames - offset };
+    }
+
+    AudioSpan<Type, 2> getStereoSpan(size_type start) const
+    {
+        ASSERT(start + 1 < numChannels);
+        return { { spans[start], spans[start+1] }, 2, 0, numFrames };
     }
 
 private:

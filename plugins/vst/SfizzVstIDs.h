@@ -13,6 +13,8 @@
  */
 #define SfizzVstProcessor_cid \
     Steinberg::FUID(0xe8fab718, 0x15ed46e3, 0x8b598310, 0x1e12993f)
+#define SfizzVstProcessorMulti_cid \
+    Steinberg::FUID(0xc9da9274, 0x43794873, 0xa900ed81, 0xd1946115)
 #define SfizzVstController_cid \
     Steinberg::FUID(0x7129736c, 0xbc784134, 0xbb899d56, 0x2ebafe4f)
 

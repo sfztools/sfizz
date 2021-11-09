@@ -271,7 +271,6 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
 
-    REQUIRE( synth.getEffectBusView(0) == nullptr); // No effects at first
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
@@ -396,6 +395,60 @@ TEST_CASE("[Synth] Gain to mix")
     REQUIRE( bus->numEffects() == 1 );
     REQUIRE( bus->gainToMain() == 0 );
     REQUIRE( bus->gainToMix() == 0.5 );
+}
+
+TEST_CASE("[Synth] Effect with two outputs")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
+        <region> lokey=0 hikey=127 sample=*sine effect1=100
+        <region> lokey=0 hikey=127 sample=*sine effect1=100 output=1
+        <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10
+    )");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(0, 1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1, 1);
+    REQUIRE( bus == nullptr);
+}
+
+TEST_CASE("[Synth] Effect on the second output, with two outputs")
+{
+    sfz::Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
+        <region> lokey=0 hikey=127 sample=*sine effect1=100
+        <region> lokey=0 hikey=127 sample=*sine effect1=100 output=1
+        <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10 output=1
+    )");
+    auto bus = synth.getEffectBusView(0);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 1 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1);
+    REQUIRE( bus == nullptr);
+    bus = synth.getEffectBusView(0, 1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 0 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
+    bus = synth.getEffectBusView(1, 1);
+    REQUIRE( bus != nullptr);
+    REQUIRE( bus->numEffects() == 1 );
+    REQUIRE( bus->gainToMain() == 0.5 );
+    REQUIRE( bus->gainToMix() == 0 );
 }
 
 TEST_CASE("[Synth] Basic curves")

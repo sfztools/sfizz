@@ -237,9 +237,10 @@ public:
      * You'll need to include "Effects.h" to resolve the forward declaration.
      *
      * @param idx
+     * @param output
      * @return const EffectBus*
      */
-    const EffectBus* getEffectBusView(int idx) const noexcept;
+    const EffectBus* getEffectBusView(int idx, int output = 0) const noexcept;
     /**
      * @brief Get a raw view into a specific set of regions. This is mostly used
      * for testing.

@@ -699,7 +699,8 @@ SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int dela
  *
  * @param synth         The synth.
  * @param channels      Pointers to the left and right channel of the output.
- * @param num_channels  Should be equal to 2 for the time being.
+ * @param num_channels  Number of output channels; should be a multiple of 2 as
+ *                      sfizz only handles stereo outputs.
  * @param num_frames    Number of frames to fill. This should be less than
  *                      or equal to the expected samples_per_block.
  *

@@ -58,6 +58,7 @@ struct Editor::Impl : EditorController::Receiver,
     std::string currentThemeName_;
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
+    bool multi_ { false };
 
     int currentKeyswitch_ = -1;
     std::unordered_map<unsigned, std::string> keyswitchNames_;
@@ -154,9 +155,7 @@ struct Editor::Impl : EditorController::Receiver,
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
 
-    SLevelMeter* leftMeter_ = nullptr;
-    SLevelMeter* rightMeter_ = nullptr;
-
+    SLevelMeter* meters_[16] {};
     SAboutDialog* aboutDialog_ = nullptr;
 
     SharedPointer<CBitmap> backgroundBitmap_;
@@ -183,6 +182,7 @@ struct Editor::Impl : EditorController::Receiver,
     SharedPointer<CVSTGUITimer> oscSendQueueTimer_;
 
     void createFrameContents();
+    SLevelMeter* createVMeter(const CRect& bounds, int, const char*, CHoriTxtAlign, int);
 
     template <class Control>
     void adjustMinMaxToEditRange(Control* c, EditId id)
@@ -332,6 +332,16 @@ void Editor::close()
         impl.frame_ = nullptr;
     }
 }
+
+SLevelMeter* Editor::Impl::createVMeter(const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+    SLevelMeter* meter = new SLevelMeter(bounds);
+    Palette* palette = &theme_->invertedPalette;
+    meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+    meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
+    meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
+    meter->setBackColor(palette->knobInactiveTrack);
+    return meter;
+};
 
 void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 {
@@ -508,20 +518,51 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateBackgroundImage(value.c_str());
         }
         break;
-    case EditId::LeftLevel:
+    case EditId::PluginOutputs:
         {
-            const float value = v.to_float();
-            if (SLevelMeter* meter = leftMeter_)
-                meter->setValue(value);
+            const int value = static_cast<int>(v.to_float());
+            if (!meters_[0])
+                return;
+
+            const auto firstMeterRect = meters_[0]->getViewSize();
+            const auto minLeft = firstMeterRect.left;
+            auto maxRight = firstMeterRect.right;
+            auto numMeters = 1;
+            for (; numMeters < 16; ++numMeters) {
+                if (!meters_[numMeters])
+                    break;
+
+                maxRight = meters_[numMeters]->getViewSize().right;
+            }
+            const auto meterWidth = std::max(1.0, (maxRight - minLeft - value + 1) / value);
+
+            auto meterParent = meters_[0]->getParentView()->asViewContainer();
+            const auto roundRectRadius = [value] {
+                if (value < 4)
+                    return 5.0;
+                else if (value < 8)
+                    return 3.0;
+                else if (value < 16)
+                    return 1.0;
+                else
+                    return 0.0;
+            }();
+
+            for (int i = 0; i < 16; ++i) {
+                if (meters_[i]) {
+                    meterParent->removeView(meters_[i]);
+                }
+
+                if (i < value) {
+                    double left { minLeft + i * (meterWidth + 1) };
+                    CRect rect { left, firstMeterRect.top, left + meterWidth, firstMeterRect.bottom };
+                    meters_[i] = createVMeter(rect, -1, "", kCenterText, 14);
+                    meters_[i]->setRoundRectRadius(roundRectRadius);
+                    meterParent->addView(meters_[i]);
+                }
+            }
+            break;
         }
-        break;
-    case EditId::RightLevel:
-        {
-            const float value = v.to_float();
-            if (SLevelMeter* meter = rightMeter_)
-                meter->setValue(value);
-        }
-        break;
     default:
         if (editIdIsKey(id)) {
             const int key = keyForEditId(id);
@@ -553,6 +594,11 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         }
         else if (editIdIsCCLabel(id)) {
             updateCCLabel(ccLabelForEditId(id), v.to_string().c_str());
+        }
+        else if (editIdIsLevel(id)) {
+            const float value = v.to_float();
+            if (SLevelMeter* meter = meters_[levelForEditId(id)])
+                meter->setValue(value);
         }
         break;
     }
@@ -720,16 +766,6 @@ void Editor::Impl::createFrameContents()
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
             return lbl;
-        };
-        auto createVMeter = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            SLevelMeter* meter = new SLevelMeter(bounds);
-            meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
-            meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
-            OnThemeChanged.push_back([meter, palette]() {
-                meter->setBackColor(palette->knobInactiveTrack);
-            });
-            return meter;
         };
 #if 0
         auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -950,6 +986,15 @@ void Editor::Impl::createFrameContents()
 
         OnThemeChanged.push_back([mainView, theme]() {
             mainView->setBackgroundColor(theme->frameBackground);
+        });
+
+        OnThemeChanged.push_back([this, theme]() {
+            for (unsigned i = 0, n = sizeof(meters_)/sizeof(meters_[0]); i < n; ++i ) {
+                Palette& palette = theme->invertedPalette;
+                const auto meter = meters_[i];
+                if (meter)
+                    meter->setBackColor(palette.knobInactiveTrack);
+            }
         });
 
 #if LINUX
