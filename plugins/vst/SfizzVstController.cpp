@@ -105,14 +105,15 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     }
 
     // Volume levels
-    parameters.addParameter(
-        SfizzRange::getForParameter(kPidLeftLevel).createParameter(
-            Steinberg::String("Left level"), pid++, nullptr,
-            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
-    parameters.addParameter(
-        SfizzRange::getForParameter(kPidRightLevel).createParameter(
-            Steinberg::String("Right level"), pid++, nullptr,
-            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+    for (unsigned i = 0; i < 16; ++i) {
+        Steinberg::String title;
+        title.printf("Level %u", i);
+
+        parameters.addParameter(
+            SfizzRange::getForParameter(kPidLevel0 + i).createParameter(
+                title, pid++, nullptr, 0,
+                Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+    }
 
     // Editor status
     parameters.addParameter(

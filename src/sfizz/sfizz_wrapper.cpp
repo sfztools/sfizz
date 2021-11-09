@@ -193,10 +193,8 @@ void sfizz_send_playback_state(sfizz_synth_t* synth, int delay, int playback_sta
 
 void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels, int num_frames)
 {
-    // Only stereo output is supported for now
-    ASSERT(num_channels == 2);
-    UNUSED(num_channels);
-    synth->synth.renderBlock({{channels[0], channels[1]}, static_cast<size_t>(num_frames)});
+    sfz::AudioSpan<float> channelSpan { channels, static_cast<size_t>(num_channels), 0, static_cast<size_t>(num_frames) };
+    synth->synth.renderBlock(channelSpan);
 }
 
 unsigned int sfizz_get_preload_size(sfizz_synth_t* synth)

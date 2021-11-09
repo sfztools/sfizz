@@ -255,9 +255,10 @@ void sfz::Sfizz::playbackState(int delay, int playbackState)
     synth->synth.playbackState(delay, playbackState);
 }
 
-void sfz::Sfizz::renderBlock(float** buffers, size_t numSamples, int /*numOutputs*/) noexcept
+void sfz::Sfizz::renderBlock(float** buffers, size_t numSamples, int numOutputs) noexcept
 {
-    synth->synth.renderBlock({{buffers[0], buffers[1]}, numSamples});
+    sfz::AudioSpan<float> bufferSpan { buffers, static_cast<size_t>(numOutputs * 2), 0, numSamples };
+    synth->synth.renderBlock(bufferSpan);
 }
 
 int sfz::Sfizz::getNumActiveVoices() const noexcept

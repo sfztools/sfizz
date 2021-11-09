@@ -343,16 +343,16 @@ void SfizzVstEditor::updateParameter(Vst::Parameter* parameterToUpdate)
         case kPidOscillatorQuality:
             uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
             break;
-        case kPidLeftLevel:
-            uiReceiveValue(EditId::LeftLevel, range.denormalize(value));
-            break;
-        case kPidRightLevel:
-            uiReceiveValue(EditId::RightLevel, range.denormalize(value));
+        case kPidNumOutputs:
+            uiReceiveValue(EditId::PluginOutputs, (int32)range.denormalize(value));
             break;
         default:
             if (id >= kPidCC0 && id <= kPidCCLast) {
                 int cc = int(id - kPidCC0);
                 uiReceiveValue(editIdForCC(cc), range.denormalize(value));
+            } else if (id >= kPidLevel0 && id <= kPidLevelLast) {
+                int levelId = int(id - kPidLevel0);
+                uiReceiveValue(editIdForLevel(levelId), range.denormalize(value));
             }
             break;
         }
@@ -517,6 +517,8 @@ Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
     default:
         if (editIdIsCC(id))
             return kPidCC0 + ccForEditId(id);
+        else if (editIdIsLevel(id))
+            return kPidLevel0 + levelForEditId(id);
         return Vst::kNoParamId;
     }
 }

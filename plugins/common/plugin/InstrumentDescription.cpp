@@ -88,6 +88,8 @@ std::string getDescriptionBlob(sfizz_synth_t* handle)
                     cdata.synth->sendMessage(*cdata.client, 0, cdata.pathbuf->c_str(), "", nullptr);
                     bufferedStrCat(cdata.pathbuf, "/cc", cc, "/default");
                     cdata.synth->sendMessage(*cdata.client, 0, cdata.pathbuf->c_str(), "", nullptr);
+                    bufferedStrCat(cdata.pathbuf, "/cc", cc, "/value");
+                    cdata.synth->sendMessage(*cdata.client, 0, cdata.pathbuf->c_str(), "", nullptr);
                 }
             }
         }
@@ -163,6 +165,8 @@ InstrumentDescription parseDescriptionBlob(absl::string_view blob)
             desc.ccLabel[indices[0]] = args[0].s;
         else if (Messages::matchOSC("/cc&/default", path, indices) && !strcmp(sig, "f"))
             desc.ccDefault[indices[0]] = args[0].f;
+        else if (Messages::matchOSC("/cc&/value", path, indices) && !strcmp(sig, "f"))
+            desc.ccValue[indices[0]] = args[0].f;
 
         src += byteCount;
         srcSize -= byteCount;

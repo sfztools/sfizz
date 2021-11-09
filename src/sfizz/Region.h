@@ -263,6 +263,7 @@ struct Region {
 
     // Instrument settings: voice lifecycle
     int64_t group { Default::group }; // group
+    uint16_t output { Default::output }; // output
     absl::optional<int64_t> offBy {}; // off_by
     OffMode offMode { Default::offMode }; // off_mode
     float offTime { Default::offTime }; // off_mode

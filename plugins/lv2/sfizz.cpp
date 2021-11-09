@@ -192,7 +192,7 @@ sfizz_atom_extract_integer(sfizz_plugin_t *self, const LV2_Atom *atom, int64_t *
 }
 
 static void
-connect_port(LV2_Handle instance,
+connect_port_stereo(LV2_Handle instance,
              uint32_t port,
              void *data)
 {
@@ -262,6 +262,133 @@ connect_port(LV2_Handle instance,
     default:
         break;
     }
+}
+
+static void
+connect_port_multi(LV2_Handle instance,
+             uint32_t port,
+             void *data)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    switch (port)
+    {
+    case SFIZZ_MULTI_CONTROL:
+        self->control_port = (const LV2_Atom_Sequence *)data;
+        break;
+    case SFIZZ_MULTI_AUTOMATE:
+        self->automate_port = (LV2_Atom_Sequence *)data;
+        break;
+    case SFIZZ_MULTI_OUT1L:
+        self->output_buffers[0] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT1R:
+        self->output_buffers[1] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT2L:
+        self->output_buffers[2] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT2R:
+        self->output_buffers[3] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT3L:
+        self->output_buffers[4] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT3R:
+        self->output_buffers[5] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT4L:
+        self->output_buffers[6] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT4R:
+        self->output_buffers[7] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT5L:
+        self->output_buffers[8] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT5R:
+        self->output_buffers[9] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT6L:
+        self->output_buffers[10] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT6R:
+        self->output_buffers[11] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT7L:
+        self->output_buffers[12] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT7R:
+        self->output_buffers[13] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT8L:
+        self->output_buffers[14] = (float *)data;
+        break;
+    case SFIZZ_MULTI_OUT8R:
+        self->output_buffers[15] = (float *)data;
+        break;
+    case SFIZZ_MULTI_VOLUME:
+        self->volume_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_POLYPHONY:
+        self->polyphony_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_OVERSAMPLING:
+        self->oversampling_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_PRELOAD:
+        self->preload_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_FREEWHEELING:
+        self->freewheel_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_SCALA_ROOT_KEY:
+        self->scala_root_key_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_TUNING_FREQUENCY:
+        self->tuning_frequency_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_STRETCH_TUNING:
+        self->stretch_tuning_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_SAMPLE_QUALITY:
+        self->sample_quality_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_OSCILLATOR_QUALITY:
+        self->oscillator_quality_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_ACTIVE_VOICES:
+        self->active_voices_port = (float *)data;
+        break;
+    case SFIZZ_MULTI_NUM_CURVES:
+        self->num_curves_port = (float *)data;
+        break;
+    case SFIZZ_MULTI_NUM_MASTERS:
+        self->num_masters_port = (float *)data;
+        break;
+    case SFIZZ_MULTI_NUM_GROUPS:
+        self->num_groups_port = (float *)data;
+        break;
+    case SFIZZ_MULTI_NUM_REGIONS:
+        self->num_regions_port = (float *)data;
+        break;
+    case SFIZZ_MULTI_NUM_SAMPLES:
+        self->num_samples_port = (float *)data;
+        break;
+    default:
+        break;
+    }
+}
+
+static void
+connect_port(LV2_Handle instance,
+             uint32_t port,
+             void *data)
+{
+    sfizz_plugin_t *self = (sfizz_plugin_t *)instance;
+    if (self->multi_out)
+        connect_port_multi(instance, port, data);
+    else
+        connect_port_stereo(instance, port, data);
 }
 
 // This function sets the sample rate in the self parameter but does not update it.
@@ -370,6 +497,7 @@ instantiate(const LV2_Descriptor *descriptor,
     self->bundle_path[MAX_BUNDLE_PATH_SIZE - 1] = '\0';
 
     // Set defaults
+    self->multi_out = !strcmp(descriptor->URI, SFIZZ_MULTI_URI);
     self->max_block_size = MAX_BLOCK_SIZE;
     self->sample_rate = (float)rate;
     self->expect_nominal_block_length = false;
@@ -513,6 +641,13 @@ instantiate(const LV2_Descriptor *descriptor,
 
     sfizz_lv2_update_timeinfo(self, 0, ~0);
 
+#if defined(SFIZZ_LV2_UI)
+    if (self->multi_out)
+        self->rms_follower.setNumOutputs(MULTI_OUTPUT_COUNT);
+    else
+        self->rms_follower.setNumOutputs(2);
+#endif
+
     return (LV2_Handle)self;
 }
 
@@ -589,11 +724,8 @@ sfizz_lv2_send_controller(sfizz_plugin_t *self, LV2_URID verb_uri, unsigned cc, 
 
 #if defined(SFIZZ_LV2_UI)
 static void
-sfizz_lv2_send_levels(sfizz_plugin_t *self, float left, float right)
+sfizz_lv2_send_levels(sfizz_plugin_t *self, const float* levels, uint32_t num_levels)
 {
-    const float levels[] = {left, right};
-    uint32_t num_levels = sizeof(levels) / sizeof(levels[0]);
-
     LV2_Atom_Forge* forge = &self->forge_automate;
     bool write_ok = lv2_atom_forge_frame_time(forge, 0);
 
@@ -1083,7 +1215,10 @@ run(LV2_Handle instance, uint32_t sample_count)
     }
 
     // Render the block
-    sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
+    if (self->multi_out)
+        sfizz_render_block(self->synth, self->output_buffers, MULTI_OUTPUT_COUNT, (int)sample_count);
+    else
+        sfizz_render_block(self->synth, self->output_buffers, 2, (int)sample_count);
 
     // Request OSC updates
     sfizz_send_message(self->synth, self->client, 0, "/sw/last/current", "", nullptr);
@@ -1110,10 +1245,19 @@ run(LV2_Handle instance, uint32_t sample_count)
 #if defined(SFIZZ_LV2_UI)
     if (self->ui_active)
     {
-        self->rms_follower.process(self->output_buffers[0], self->output_buffers[1], sample_count);
-        const simde__m128 rms = self->rms_follower.getRMS();
-        const float *levels = (const float *)&rms;
-        sfizz_lv2_send_levels(self, levels[0], levels[1]);
+        if (self->multi_out) {
+            self->rms_follower.process((const float**)self->output_buffers,
+                sample_count, MULTI_OUTPUT_COUNT);
+            float levels[MULTI_OUTPUT_COUNT];
+            self->rms_follower.getRMS(levels, MULTI_OUTPUT_COUNT);
+            sfizz_lv2_send_levels(self, levels, MULTI_OUTPUT_COUNT);
+        } else {
+            self->rms_follower.process((const float**)self->output_buffers,
+                sample_count, 2);
+            float levels[2];
+            self->rms_follower.getRMS(levels, 2);
+            sfizz_lv2_send_levels(self, levels, 2);
+        }
     }
     else
     {
@@ -1244,10 +1388,10 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             // Mark all the used CCs for automation with default values
-            self->ccauto[cc] = desc.ccDefault[cc];
+            self->ccauto[cc] = desc.ccValue[cc];
             self->have_ccauto = true;
             // Update the current CCs
-            self->cc_current[cc] = desc.ccDefault[cc];
+            self->cc_current[cc] = desc.ccValue[cc];
         }
     }
 
@@ -1332,7 +1476,7 @@ restore(LV2_Handle instance,
 
         if (path)
         {
-            strncpy(self->sfz_file_path, path, MAX_PATH_SIZE);
+            strncpy(self->sfz_file_path, path, MAX_PATH_SIZE - 1);
             self->sfz_file_path[MAX_PATH_SIZE - 1] = '\0';
 
             if (map_path)
@@ -1353,7 +1497,7 @@ restore(LV2_Handle instance,
 
         if (path)
         {
-            strncpy(self->scala_file_path, path, MAX_PATH_SIZE);
+            strncpy(self->scala_file_path, path, MAX_PATH_SIZE - 1);
             self->scala_file_path[MAX_PATH_SIZE - 1] = '\0';
 
             if (map_path)
@@ -1769,6 +1913,16 @@ static const LV2_Descriptor descriptor = {
     cleanup,
     extension_data};
 
+static const LV2_Descriptor descriptor_multi = {
+    SFIZZ_MULTI_URI,
+    instantiate,
+    connect_port,
+    activate,
+    run,
+    deactivate,
+    cleanup,
+    extension_data};
+
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor *
 lv2_descriptor(uint32_t index)
@@ -1777,6 +1931,8 @@ lv2_descriptor(uint32_t index)
     {
     case 0:
         return &descriptor;
+    case 1:
+        return &descriptor_multi;
     default:
         return NULL;
     }

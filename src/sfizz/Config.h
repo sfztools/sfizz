@@ -46,7 +46,7 @@ namespace config {
     constexpr int loggerQueueSize { 256 };
     constexpr int voiceLoggerQueueSize { 256 };
     constexpr bool loggingEnabled { false };
-    constexpr size_t numChannels { 2 };
+    constexpr size_t maxChannels { 32 };
     constexpr int numBackgroundThreads { 4 };
     constexpr unsigned fileClearingPeriod { 5 }; // in seconds
     constexpr int numVoices { 64 };

@@ -427,6 +427,64 @@ TEST_CASE("[Values] Loop count")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Values] Output")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("No special outputs") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/num_outputs", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/output,i : { 0 }",
+            "/num_outputs,i : { 1 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("1 output") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav output=1
+            <region> sample=kick.wav output=-1
+        )");
+        synth.dispatchMessage(client, 0, "/region0/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/num_outputs", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/output,i : { 0 }",
+            "/region1/output,i : { 1 }",
+            "/region2/output,i : { 0 }",
+            "/num_outputs,i : { 2 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("More than 1 output") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav output=1
+            <region> sample=kick.wav output=3
+        )");
+        synth.dispatchMessage(client, 0, "/region0/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/num_outputs", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/output,i : { 0 }",
+            "/region1/output,i : { 1 }",
+            "/region2/output,i : { 3 }",
+            "/num_outputs,i : { 4 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+}
 
 TEST_CASE("[Values] Group")
 {

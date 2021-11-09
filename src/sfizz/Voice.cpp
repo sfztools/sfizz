@@ -766,7 +766,7 @@ void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
     impl.powerFollower_.setSamplesPerBlock(samplesPerBlock);
 }
 
-void Voice::renderBlock(AudioSpan<float> buffer) noexcept
+void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);

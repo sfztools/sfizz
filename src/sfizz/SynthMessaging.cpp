@@ -95,6 +95,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'i'>(delay, path, impl.noteOffset_);
         } break;
 
+        MATCH("/num_outputs", "") {
+            client.receive<'i'>(delay, path, impl.numOutputs_);
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/key/slots", "") {
@@ -193,6 +197,22 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             sfizz_blob_t blob { sustainOrSostenuto.data(),
                 static_cast<uint32_t>(sustainOrSostenuto.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/aftertouch", "") {
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getChannelAftertouch());
+        } break;
+
+        MATCH("/poly_aftertouch/&", "") {
+            if (indices[0] > 127)
+                break;
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPolyAftertouch(indices[0]));
+        } break;
+
+        MATCH("/pitch_bend", "") {
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPitchBend());
         } break;
 
         //----------------------------------------------------------------------
@@ -344,6 +364,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 client.receive<'h'>(delay, path, *region.loopCount);
             else
                 client.receive<'N'>(delay, path, {});
+        } break;
+
+        MATCH("/region&/output", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.output);
         } break;
 
         MATCH("/region&/group", "") {

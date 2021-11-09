@@ -33,9 +33,10 @@ struct sfizz_plugin_t
     LV2_Midnam *midnam {};
 
     // Ports
+    bool multi_out { false };
     const LV2_Atom_Sequence *control_port {};
     LV2_Atom_Sequence *automate_port {};
-    float *output_buffers[2] {};
+    float *output_buffers[MULTI_OUTPUT_COUNT] {};
     const float *volume_port {};
     const float *polyphony_port {};
     const float *oversampling_port {};

@@ -26,8 +26,9 @@ enum {
     kPidPitchBend,
     kPidCC0,
     kPidCCLast = kPidCC0 + sfz::config::numCCs - 1,
-    kPidLeftLevel,
-    kPidRightLevel,
+    kPidNumOutputs,
+    kPidLevel0,
+    kPidLevelLast = kPidLevel0 + 16,
     kPidEditorOpen,
     /* Reserved */
     kNumParameters,
@@ -81,14 +82,14 @@ struct SfizzRange {
             return {0.0, 0.0, 1.0};
         case kPidPitchBend:
             return {0.0, -1.0, 1.0};
-        case kPidLeftLevel:
-            return {0.0, 0.0, 1.0};
-        case kPidRightLevel:
-            return {0.0, 0.0, 1.0};
         case kPidEditorOpen:
             return {0.0, 0.0, 1.0};
+        case kPidNumOutputs:
+            return {2.0, 2.0, 16.0};
         default:
             if (id >= kPidCC0 && id <= kPidCCLast)
+                return {0.0, 0.0, 1.0};
+            else if (id >= kPidLevel0 && id <= kPidLevelLast)
                 return {0.0, 0.0, 1.0};
             throw std::runtime_error("Bad parameter ID");
         }

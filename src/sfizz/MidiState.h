@@ -184,15 +184,20 @@ public:
     float getCCValueAt(int ccNumber, int delay) const noexcept;
 
     /**
-     * @brief Reset the midi state (does not impact the last note on time)
+     * @brief Reset the midi note states
      *
      */
-    void reset() noexcept;
+    void resetNoteStates() noexcept;
 
     const EventVector& getCCEvents(int ccIdx) const noexcept;
     const EventVector& getPolyAftertouchEvents(int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
+    /**
+     * @brief Reset the midi event states (CC, AT, and pitch bend)
+     *
+     */
+    void resetEventStates() noexcept;
 
 private:
 

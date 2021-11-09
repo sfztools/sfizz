@@ -61,17 +61,23 @@ void Resources::setSamplesPerBlock(int samplesPerBlock)
     impl.beatClock.setSamplesPerBlock(samplesPerBlock);
 }
 
-void Resources::clear()
+void Resources::clearNonState()
 {
     Impl& impl = *impl_;
     impl.curves = CurveSet::createPredefined();
     impl.filePool.clear();
     impl.wavePool.clearFileWaves();
     impl.logger.clear();
-    impl.midiState.reset();
     impl.modMatrix.clear();
-    impl.beatClock.clear();
     impl.metronome.clear();
+}
+
+void Resources::clearState()
+{
+    Impl& impl = *impl_;
+    impl.midiState.resetNoteStates();
+    impl.midiState.resetEventStates();
+    impl.beatClock.clear();
 }
 
 const SynthConfig& Resources::getSynthConfig() const noexcept
