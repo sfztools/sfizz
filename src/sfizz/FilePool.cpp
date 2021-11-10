@@ -583,7 +583,7 @@ void sfz::FilePool::raiseCurrentThreadPriority() noexcept
         std::system_error error(GetLastError(), std::system_category());
         DBG("[sfizz] Cannot set current thread priority: " << error.what());
     }
-#else
+#elif !defined(EMSCRIPTEN)
     pthread_t thread = pthread_self();
     int policy;
     sched_param param;
