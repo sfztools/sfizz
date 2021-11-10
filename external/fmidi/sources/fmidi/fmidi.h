@@ -65,6 +65,7 @@ FMIDI_API bool fmidi_smf_stream_write(const fmidi_smf_t *smf, FILE *stream);
 typedef enum fmidi_fileformat {
     fmidi_fileformat_smf,
     fmidi_fileformat_xmi,
+    fmidi_fileformat_mus,
 } fmidi_fileformat_t;
 
 FMIDI_API fmidi_fileformat_t fmidi_mem_identify(const uint8_t *data, size_t length);
@@ -116,6 +117,10 @@ FMIDI_API const fmidi_event_t *fmidi_smf_track_next(
 FMIDI_API fmidi_smf_t *fmidi_xmi_mem_read(const uint8_t *data, size_t length);
 FMIDI_API fmidi_smf_t *fmidi_xmi_file_read(const char *filename);
 FMIDI_API fmidi_smf_t *fmidi_xmi_stream_read(FILE *stream);
+
+FMIDI_API fmidi_smf_t *fmidi_mus_mem_read(const uint8_t *data, size_t length);
+FMIDI_API fmidi_smf_t *fmidi_mus_file_read(const char *filename);
+FMIDI_API fmidi_smf_t *fmidi_mus_stream_read(FILE *stream);
 
 ///////////////
 // SEQUENCER //

@@ -33,17 +33,32 @@ THE SOFTWARE.
 #include <list>
 #include <map>
 #include <memory>
-#include <regex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
-#ifdef __cpp_lib_optional
-#include <optional>
-#define CXXOPTS_HAS_OPTIONAL
+#if defined(__GNUC__) && !defined(__clang__)
+#  if (__GNUC__ * 10 + __GNUC_MINOR__) < 49
+#    define CXXOPTS_NO_REGEX true
+#  endif
+#endif
+
+#ifndef CXXOPTS_NO_REGEX
+#  include <regex>
+#endif  // CXXOPTS_NO_REGEX
+
+// Nonstandard before C++17, which is coincidentally what we also need for <optional>
+#ifdef __has_include
+#  if __has_include(<optional>)
+#    include <optional>
+#    ifdef __cpp_lib_optional
+#      define CXXOPTS_HAS_OPTIONAL
+#    endif
+#  endif
 #endif
 
 #if __cplusplus >= 201603L
@@ -59,6 +74,10 @@ THE SOFTWARE.
 #define CXXOPTS__VERSION_MAJOR 3
 #define CXXOPTS__VERSION_MINOR 0
 #define CXXOPTS__VERSION_PATCH 0
+
+#if (__GNUC__ < 10 || (__GNUC__ == 10 && __GNUC_MINOR__ < 1)) && __GNUC__ >= 6
+  #define CXXOPTS_NULL_DEREF_IGNORE
+#endif
 
 namespace cxxopts
 {
@@ -82,7 +101,7 @@ namespace cxxopts
 
 namespace cxxopts
 {
-  typedef icu::UnicodeString String;
+  using String = icu::UnicodeString;
 
   inline
   String
@@ -91,6 +110,14 @@ namespace cxxopts
     return icu::UnicodeString::fromUTF8(std::move(s));
   }
 
+#if defined(__GNUC__)
+// GNU GCC with -Weffc++ will issue a warning regarding the upcoming class, we want to silence it:
+// warning: base class 'class std::enable_shared_from_this<cxxopts::Value>' has accessible non-virtual destructor
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic ignored "-Weffc++"
+// This will be ignored under other compilers like LLVM clang.
+#endif
   class UnicodeStringIterator : public
     std::iterator<std::forward_iterator_tag, int32_t>
   {
@@ -137,6 +164,9 @@ namespace cxxopts
     const icu::UnicodeString* s;
     int32_t i;
   };
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
   inline
   String&
@@ -217,7 +247,7 @@ namespace std
 
 namespace cxxopts
 {
-  typedef std::string String;
+  using String = std::string;
 
   template <typename T>
   T
@@ -288,8 +318,9 @@ namespace cxxopts
 #if defined(__GNUC__)
 // GNU GCC with -Weffc++ will issue a warning regarding the upcoming class, we want to silence it:
 // warning: base class 'class std::enable_shared_from_this<cxxopts::Value>' has accessible non-virtual destructor
-#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic ignored "-Weffc++"
 // This will be ignored under other compilers like LLVM clang.
 #endif
   class Value : public std::enable_shared_from_this<Value>
@@ -465,7 +496,7 @@ namespace cxxopts
     public:
     explicit option_has_no_value_exception(const std::string& option)
     : OptionException(
-        option.empty() ?
+        !option.empty() ?
         ("Option " + LQUOTE + option + RQUOTE + " has no value") :
         "Option has no value")
     {
@@ -518,15 +549,257 @@ namespace cxxopts
 
   namespace values
   {
-    namespace
+    namespace parser_tool
     {
-      std::basic_regex<char> integer_pattern
-        ("(-)?(0x)?([0-9a-zA-Z]+)|((0x)?0)");
-      std::basic_regex<char> truthy_pattern
-        ("(t|T)(rue)?|1");
-      std::basic_regex<char> falsy_pattern
-        ("(f|F)(alse)?|0");
-    } // namespace
+      struct IntegerDesc
+      {
+        std::string negative = "";
+        std::string base     = "";
+        std::string value    = "";
+      };
+      struct ArguDesc {
+        std::string arg_name  = "";
+        bool        grouping  = false;
+        bool        set_value = false;
+        std::string value     = "";
+      };
+#ifdef CXXOPTS_NO_REGEX
+      inline IntegerDesc SplitInteger(const std::string &text)
+      {
+        if (text.empty())
+        {
+          throw_or_mimic<argument_incorrect_type>(text);
+        }
+        IntegerDesc desc;
+        const char *pdata = text.c_str();
+        if (*pdata == '-')
+        {
+          pdata += 1;
+          desc.negative = "-";
+        }
+        if (strncmp(pdata, "0x", 2) == 0)
+        {
+          pdata += 2;
+          desc.base = "0x";
+        }
+        if (*pdata != '\0')
+        {
+          desc.value = std::string(pdata);
+        }
+        else
+        {
+          throw_or_mimic<argument_incorrect_type>(text);
+        }
+        return desc;
+      }
+
+      inline bool IsTrueText(const std::string &text)
+      {
+        const char *pdata = text.c_str();
+        if (*pdata == 't' || *pdata == 'T')
+        {
+          pdata += 1;
+          if (strncmp(pdata, "rue\0", 4) == 0)
+          {
+            return true;
+          }
+        }
+        else if (strncmp(pdata, "1\0", 2) == 0)
+        {
+          return true;
+        }
+        return false;
+      }
+
+      inline bool IsFalseText(const std::string &text)
+      {
+        const char *pdata = text.c_str();
+        if (*pdata == 'f' || *pdata == 'F')
+        {
+          pdata += 1;
+          if (strncmp(pdata, "alse\0", 5) == 0)
+          {
+            return true;
+          }
+        }
+        else if (strncmp(pdata, "0\0", 2) == 0)
+        {
+          return true;
+        }
+        return false;
+      }
+
+      inline std::pair<std::string, std::string> SplitSwitchDef(const std::string &text)
+      {
+        std::string short_sw, long_sw;
+        const char *pdata = text.c_str();
+        if (isalnum(*pdata) && *(pdata + 1) == ',') {
+          short_sw = std::string(1, *pdata);
+          pdata += 2;
+        }
+        while (*pdata == ' ') { pdata += 1; }
+        if (isalnum(*pdata)) {
+          const char *store = pdata;
+          pdata += 1;
+          while (isalnum(*pdata) || *pdata == '-' || *pdata == '_') {
+            pdata += 1;
+          }
+          if (*pdata == '\0') {
+            long_sw = std::string(store, pdata - store);
+          } else {
+            throw_or_mimic<invalid_option_format_error>(text);
+          }
+        }
+        return std::pair<std::string, std::string>(short_sw, long_sw);
+      }
+
+      inline ArguDesc ParseArgument(const char *arg, bool &matched)
+      {
+        ArguDesc argu_desc;
+        const char *pdata = arg;
+        matched = false;
+        if (strncmp(pdata, "--", 2) == 0)
+        {
+          pdata += 2;
+          if (isalnum(*pdata))
+          {
+            argu_desc.arg_name.push_back(*pdata);
+            pdata += 1;
+            while (isalnum(*pdata) || *pdata == '-' || *pdata == '_')
+            {
+              argu_desc.arg_name.push_back(*pdata);
+              pdata += 1;
+            }
+            if (argu_desc.arg_name.length() > 1)
+            {
+              if (*pdata == '=')
+              {
+                argu_desc.set_value = true;
+                pdata += 1;
+                if (*pdata != '\0')
+                {
+                  argu_desc.value = std::string(pdata);
+                }
+                matched = true;
+              }
+              else if (*pdata == '\0')
+              {
+                matched = true;
+              }
+            }
+          }
+        }
+        else if (strncmp(pdata, "-", 1) == 0)
+        {
+          pdata += 1;
+          argu_desc.grouping = true;
+          while (isalnum(*pdata))
+          {
+            argu_desc.arg_name.push_back(*pdata);
+            pdata += 1;
+          }
+          matched = !argu_desc.arg_name.empty() && *pdata == '\0';
+        }
+        return argu_desc;
+      }
+
+#else  // CXXOPTS_NO_REGEX
+
+      namespace
+      {
+
+        std::basic_regex<char> integer_pattern
+          ("(-)?(0x)?([0-9a-zA-Z]+)|((0x)?0)");
+        std::basic_regex<char> truthy_pattern
+          ("(t|T)(rue)?|1");
+        std::basic_regex<char> falsy_pattern
+          ("(f|F)(alse)?|0");
+
+        std::basic_regex<char> option_matcher
+          ("--([[:alnum:]][-_[:alnum:]]+)(=(.*))?|-([[:alnum:]]+)");
+        std::basic_regex<char> option_specifier
+          ("(([[:alnum:]]),)?[ ]*([[:alnum:]][-_[:alnum:]]*)?");
+
+      } // namespace
+
+      inline IntegerDesc SplitInteger(const std::string &text)
+      {
+        std::smatch match;
+        std::regex_match(text, match, integer_pattern);
+
+        if (match.length() == 0)
+        {
+          throw_or_mimic<argument_incorrect_type>(text);
+        }
+
+        IntegerDesc desc;
+        desc.negative = match[1];
+        desc.base = match[2];
+        desc.value = match[3];
+
+        if (match.length(4) > 0)
+        {
+          desc.base = match[5];
+          desc.value = "0";
+          return desc;
+        }
+
+        return desc;
+      }
+
+      inline bool IsTrueText(const std::string &text)
+      {
+        std::smatch result;
+        std::regex_match(text, result, truthy_pattern);
+        return !result.empty();
+      }
+
+      inline bool IsFalseText(const std::string &text)
+      {
+        std::smatch result;
+        std::regex_match(text, result, falsy_pattern);
+        return !result.empty();
+      }
+
+      inline std::pair<std::string, std::string> SplitSwitchDef(const std::string &text)
+      {
+        std::match_results<const char*> result;
+        std::regex_match(text.c_str(), result, option_specifier);
+        if (result.empty())
+        {
+          throw_or_mimic<invalid_option_format_error>(text);
+        }
+
+        const std::string& short_sw = result[2];
+        const std::string& long_sw = result[3];
+
+        return std::pair<std::string, std::string>(short_sw, long_sw);
+      }
+
+      inline ArguDesc ParseArgument(const char *arg, bool &matched)
+      {
+        std::match_results<const char*> result;
+        std::regex_match(arg, result, option_matcher);
+        matched = !result.empty();
+
+        ArguDesc argu_desc;
+        if (matched) {
+          argu_desc.arg_name = result[1].str();
+          argu_desc.set_value = result[2].length() > 0;
+          argu_desc.value = result[3].str();
+          if (result[4].length() > 0)
+          {
+            argu_desc.grouping = true;
+            argu_desc.arg_name = result[4].str();
+          }
+        }
+
+        return argu_desc;
+      }
+
+#endif  // CXXOPTS_NO_REGEX
+#undef CXXOPTS_NO_REGEX
+  }
 
     namespace detail
     {
@@ -562,7 +835,7 @@ namespace cxxopts
       {
         template <typename U>
         void
-        operator()(bool, U, const std::string&) {}
+        operator()(bool, U, const std::string&) const {}
       };
 
       template <typename T, typename U>
@@ -594,45 +867,32 @@ namespace cxxopts
     void
     integer_parser(const std::string& text, T& value)
     {
-      std::smatch match;
-      std::regex_match(text, match, integer_pattern);
-
-      if (match.length() == 0)
-      {
-        throw_or_mimic<argument_incorrect_type>(text);
-      }
-
-      if (match.length(4) > 0)
-      {
-        value = 0;
-        return;
-      }
+      parser_tool::IntegerDesc int_desc = parser_tool::SplitInteger(text);
 
       using US = typename std::make_unsigned<T>::type;
-
       constexpr bool is_signed = std::numeric_limits<T>::is_signed;
-      const bool negative = match.length(1) > 0;
-      const uint8_t base = match.length(2) > 0 ? 16 : 10;
 
-      auto value_match = match[3];
+      const bool          negative    = int_desc.negative.length() > 0;
+      const uint8_t       base        = int_desc.base.length() > 0 ? 16 : 10;
+      const std::string & value_match = int_desc.value;
 
       US result = 0;
 
-      for (auto iter = value_match.first; iter != value_match.second; ++iter)
+      for (char ch : value_match)
       {
         US digit = 0;
 
-        if (*iter >= '0' && *iter <= '9')
+        if (ch >= '0' && ch <= '9')
         {
-          digit = static_cast<US>(*iter - '0');
+          digit = static_cast<US>(ch - '0');
         }
-        else if (base == 16 && *iter >= 'a' && *iter <= 'f')
+        else if (base == 16 && ch >= 'a' && ch <= 'f')
         {
-          digit = static_cast<US>(*iter - 'a' + 10);
+          digit = static_cast<US>(ch - 'a' + 10);
         }
-        else if (base == 16 && *iter >= 'A' && *iter <= 'F')
+        else if (base == 16 && ch >= 'A' && ch <= 'F')
         {
-          digit = static_cast<US>(*iter - 'A' + 10);
+          digit = static_cast<US>(ch - 'A' + 10);
         }
         else
         {
@@ -670,77 +930,25 @@ namespace cxxopts
       }
     }
 
-    inline
-    void
-    parse_value(const std::string& text, uint8_t& value)
+    template <typename T,
+             typename std::enable_if<std::is_integral<T>::value>::type* = nullptr
+             >
+    void parse_value(const std::string& text, T& value)
     {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, int8_t& value)
-    {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, uint16_t& value)
-    {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, int16_t& value)
-    {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, uint32_t& value)
-    {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, int32_t& value)
-    {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, uint64_t& value)
-    {
-      integer_parser(text, value);
-    }
-
-    inline
-    void
-    parse_value(const std::string& text, int64_t& value)
-    {
-      integer_parser(text, value);
+        integer_parser(text, value);
     }
 
     inline
     void
     parse_value(const std::string& text, bool& value)
     {
-      std::smatch result;
-      std::regex_match(text, result, truthy_pattern);
-
-      if (!result.empty())
+      if (parser_tool::IsTrueText(text))
       {
         value = true;
         return;
       }
 
-      std::regex_match(text, result, falsy_pattern);
-      if (!result.empty())
+      if (parser_tool::IsFalseText(text))
       {
         value = false;
         return;
@@ -759,7 +967,9 @@ namespace cxxopts
     // The fallback parser. It uses the stringstream parser to parse all types
     // that have not been overloaded explicitly.  It has to be placed in the
     // source code before all other more specialized templates.
-    template <typename T>
+    template <typename T,
+             typename std::enable_if<!std::is_integral<T>::value>::type* = nullptr
+             >
     void
     parse_value(const std::string& text, T& value) {
       stringstream_parser(text, value);
@@ -769,6 +979,12 @@ namespace cxxopts
     void
     parse_value(const std::string& text, std::vector<T>& value)
     {
+      if (text.empty()) {
+        T v;
+        parse_value(text, v);
+        value.emplace_back(std::move(v));
+        return;
+      }
       std::stringstream in(text);
       std::string token;
       while(!in.eof() && std::getline(in, token, CXXOPTS_VECTOR_DELIMITER)) {
@@ -1030,9 +1246,9 @@ namespace cxxopts
 
     OptionDetails(const OptionDetails& rhs)
     : m_desc(rhs.m_desc)
+    , m_value(rhs.m_value->clone())
     , m_count(rhs.m_count)
     {
-      m_value = rhs.m_value->clone();
     }
 
     OptionDetails(OptionDetails&& rhs) = default;
@@ -1133,12 +1349,27 @@ namespace cxxopts
       m_value->parse();
     }
 
+    void
+    parse_no_value(const std::shared_ptr<const OptionDetails>& details)
+    {
+      m_long_name = &details->long_name();
+    }
+
+#if defined(CXXOPTS_NULL_DEREF_IGNORE)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
     CXXOPTS_NODISCARD
     size_t
     count() const noexcept
     {
       return m_count;
     }
+
+#if defined(CXXOPTS_NULL_DEREF_IGNORE)
+#pragma GCC diagnostic pop
+#endif
 
     // TODO: maybe default options should count towards the number of arguments
     CXXOPTS_NODISCARD
@@ -1227,8 +1458,7 @@ namespace cxxopts
   {
     public:
 
-    ParseResult() {}
-     
+    ParseResult() = default;
     ParseResult(const ParseResult&) = default;
 
     ParseResult(NameHashMap&& keys, ParsedHashMap&& values, std::vector<KeyValue> sequential, std::vector<std::string>&& unmatched_args)
@@ -1366,6 +1596,9 @@ namespace cxxopts
     void
     parse_default(const std::shared_ptr<OptionDetails>& details);
 
+    void
+    parse_no_value(const std::shared_ptr<OptionDetails>& details);
+
     private:
 
     void finalise_aliases();
@@ -1391,6 +1624,8 @@ namespace cxxopts
     , m_positional_help("positional parameters")
     , m_show_positional(false)
     , m_allow_unrecognised(false)
+    , m_width(76)
+    , m_tab_expansion(false)
     , m_options(std::make_shared<OptionMap>())
     {
     }
@@ -1420,6 +1655,20 @@ namespace cxxopts
     allow_unrecognised_options()
     {
       m_allow_unrecognised = true;
+      return *this;
+    }
+
+    Options&
+    set_width(size_t width)
+    {
+      m_width = width;
+      return *this;
+    }
+
+    Options&
+    set_tab_expansion(bool expansion=true)
+    {
+      m_tab_expansion = expansion;
       return *this;
     }
 
@@ -1507,6 +1756,8 @@ namespace cxxopts
     std::string m_positional_help{};
     bool m_show_positional;
     bool m_allow_unrecognised;
+    size_t m_width;
+    bool m_tab_expansion;
 
     std::shared_ptr<OptionMap> m_options;
     std::vector<std::string> m_positional{};
@@ -1545,14 +1796,8 @@ namespace cxxopts
 
   namespace
   {
-    constexpr int OPTION_LONGEST = 30;
-    constexpr int OPTION_DESC_GAP = 2;
-
-    std::basic_regex<char> option_matcher
-      ("--([[:alnum:]][-_[:alnum:]]+)(=(.*))?|-([[:alnum:]]+)");
-
-    std::basic_regex<char> option_specifier
-      ("(([[:alnum:]]),)?[ ]*([[:alnum:]][-_[:alnum:]]*)?");
+    constexpr size_t OPTION_LONGEST = 30;
+    constexpr size_t OPTION_DESC_GAP = 2;
 
     String
     format_option
@@ -1605,7 +1850,8 @@ namespace cxxopts
     (
       const HelpOptionDetails& o,
       size_t start,
-      size_t width
+      size_t allowed,
+      bool tab_expansion
     )
     {
       auto desc = o.desc;
@@ -1624,54 +1870,107 @@ namespace cxxopts
 
       String result;
 
+      if (tab_expansion)
+      {
+        String desc2;
+        auto size = size_t{ 0 };
+        for (auto c = std::begin(desc); c != std::end(desc); ++c)
+        {
+          if (*c == '\n')
+          {
+            desc2 += *c;
+            size = 0;
+          }
+          else if (*c == '\t')
+          {
+            auto skip = 8 - size % 8;
+            stringAppend(desc2, skip, ' ');
+            size += skip;
+          }
+          else
+          {
+            desc2 += *c;
+            ++size;
+          }
+        }
+        desc = desc2;
+      }
+
+      desc += " ";
+
       auto current = std::begin(desc);
+      auto previous = current;
       auto startLine = current;
       auto lastSpace = current;
 
       auto size = size_t{};
 
+      bool appendNewLine;
+      bool onlyWhiteSpace = true;
+
       while (current != std::end(desc))
       {
-        if (*current == ' ')
+        appendNewLine = false;
+
+        if (std::isblank(*previous))
         {
           lastSpace = current;
         }
 
-        if (*current == '\n')
+        if (!std::isblank(*current))
         {
-          startLine = current + 1;
-          lastSpace = startLine;
+          onlyWhiteSpace = false;
         }
-        else if (size > width)
+
+        while (*current == '\n')
         {
-          if (lastSpace == startLine)
+          previous = current;
+          ++current;
+          appendNewLine = true;
+        }
+
+        if (!appendNewLine && size >= allowed)
+        {
+          if (lastSpace != startLine)
           {
-            stringAppend(result, startLine, current + 1);
-            stringAppend(result, "\n");
-            stringAppend(result, start, ' ');
-            startLine = current + 1;
-            lastSpace = startLine;
+            current = lastSpace;
+            previous = current;
           }
-          else
+          appendNewLine = true;
+        }
+
+        if (appendNewLine)
+        {
+          stringAppend(result, startLine, current);
+          startLine = current;
+          lastSpace = current;
+
+          if (*previous != '\n')
           {
-            stringAppend(result, startLine, lastSpace);
             stringAppend(result, "\n");
-            stringAppend(result, start, ' ');
-            startLine = lastSpace + 1;
-            lastSpace = startLine;
           }
+
+          stringAppend(result, start, ' ');
+
+          if (*previous != '\n')
+          {
+            stringAppend(result, lastSpace, current);
+          }
+
+          onlyWhiteSpace = true;
           size = 0;
         }
-        else
-        {
-          ++size;
-        }
 
+        previous = current;
         ++current;
+        ++size;
       }
 
-      //append whatever is left
-      stringAppend(result, startLine, current);
+      //append whatever is left but ignore whitespace
+      if (!onlyWhiteSpace)
+      {
+        stringAppend(result, startLine, previous);
+      }
 
       return result;
     }
@@ -1709,37 +2008,30 @@ OptionAdder::operator()
   std::string arg_help
 )
 {
-  std::match_results<const char*> result;
-  std::regex_match(opts.c_str(), result, option_specifier);
+  std::string short_sw, long_sw;
+  std::tie(short_sw, long_sw) = values::parser_tool::SplitSwitchDef(opts);
 
-  if (result.empty())
+  if (!short_sw.length() && !long_sw.length())
   {
     throw_or_mimic<invalid_option_format_error>(opts);
   }
-
-  const auto& short_match = result[2];
-  const auto& long_match = result[3];
-
-  if (!short_match.length() && !long_match.length())
-  {
-    throw_or_mimic<invalid_option_format_error>(opts);
-  } else if (long_match.length() == 1 && short_match.length())
+  else if (long_sw.length() == 1 && short_sw.length())
   {
     throw_or_mimic<invalid_option_format_error>(opts);
   }
 
   auto option_names = []
   (
-    const std::sub_match<const char*>& short_,
-    const std::sub_match<const char*>& long_
+    const std::string &short_,
+    const std::string &long_
   )
   {
     if (long_.length() == 1)
     {
-      return std::make_tuple(long_.str(), short_.str());
+      return std::make_tuple(long_, short_);
     }
-    return std::make_tuple(short_.str(), long_.str());
-  }(short_match, long_match);
+    return std::make_tuple(short_, long_);
+  }(short_sw, long_sw);
 
   m_options.add_option
   (
@@ -1761,6 +2053,14 @@ OptionParser::parse_default(const std::shared_ptr<OptionDetails>& details)
   // TODO: remove the duplicate code here
   auto& store = m_parsed[details->hash()];
   store.parse_default(details);
+}
+
+inline
+void
+OptionParser::parse_no_value(const std::shared_ptr<OptionDetails>& details)
+{
+  auto& store = m_parsed[details->hash()];
+  store.parse_no_value(details);
 }
 
 inline
@@ -1831,9 +2131,9 @@ OptionParser::consume_positional(const std::string& a, PositionalListIterator& n
     auto iter = m_options.find(*next);
     if (iter != m_options.end())
     {
-      auto& result = m_parsed[iter->second->hash()];
       if (!iter->second->value().is_container())
       {
+        auto& result = m_parsed[iter->second->hash()];
         if (result.count() == 0)
         {
           add_to_option(iter, *next, a);
@@ -1889,7 +2189,7 @@ OptionParser::parse(int argc, const char* const* argv)
 {
   int current = 1;
   bool consume_remaining = false;
-  PositionalListIterator next_positional = m_positional.begin();
+  auto next_positional = m_positional.begin();
 
   std::vector<std::string> unmatched;
 
@@ -1901,11 +2201,11 @@ OptionParser::parse(int argc, const char* const* argv)
       ++current;
       break;
     }
+    bool matched = false;
+    values::parser_tool::ArguDesc argu_desc =
+        values::parser_tool::ParseArgument(argv[current], matched);
 
-    std::match_results<const char*> result;
-    std::regex_match(argv[current], result, option_matcher);
-
-    if (result.empty())
+    if (!matched)
     {
       //not a flag
 
@@ -1923,16 +2223,16 @@ OptionParser::parse(int argc, const char* const* argv)
       }
       else
       {
-        unmatched.push_back(argv[current]);
+        unmatched.emplace_back(argv[current]);
       }
       //if we return from here then it was parsed successfully, so continue
     }
     else
     {
       //short or long option?
-      if (result[4].length() != 0)
+      if (argu_desc.grouping)
       {
-        const std::string& s = result[4];
+        const std::string& s = argu_desc.arg_name;
 
         for (std::size_t i = 0; i != s.size(); ++i)
         {
@@ -1943,6 +2243,7 @@ OptionParser::parse(int argc, const char* const* argv)
           {
             if (m_allow_unrecognised)
             {
+              unmatched.push_back(std::string("-") + s[i]);
               continue;
             }
             //error
@@ -1960,6 +2261,12 @@ OptionParser::parse(int argc, const char* const* argv)
           {
             parse_option(value, name, value->value().get_implicit_value());
           }
+          else if (i + 1 < s.size())
+          {
+            std::string arg_value = s.substr(i + 1);
+            parse_option(value, name, arg_value);
+            break;
+          }
           else
           {
             //error
@@ -1967,9 +2274,9 @@ OptionParser::parse(int argc, const char* const* argv)
           }
         }
       }
-      else if (result[1].length() != 0)
+      else if (argu_desc.arg_name.length() != 0)
       {
-        const std::string& name = result[1];
+        const std::string& name = argu_desc.arg_name;
 
         auto iter = m_options.find(name);
 
@@ -1978,7 +2285,7 @@ OptionParser::parse(int argc, const char* const* argv)
           if (m_allow_unrecognised)
           {
             // keep unrecognised options in argument list, skip to next argument
-            unmatched.push_back(argv[current]);
+            unmatched.emplace_back(argv[current]);
             ++current;
             continue;
           }
@@ -1989,11 +2296,11 @@ OptionParser::parse(int argc, const char* const* argv)
         auto opt = iter->second;
 
         //equals provided for long option?
-        if (result[2].length() != 0)
+        if (argu_desc.set_value)
         {
           //parse the option given
 
-          parse_option(opt, name, result[3]);
+          parse_option(opt, name, argu_desc.value);
         }
         else
         {
@@ -2014,8 +2321,13 @@ OptionParser::parse(int argc, const char* const* argv)
 
     auto& store = m_parsed[detail->hash()];
 
-    if(value.has_default() && !store.count() && !store.has_default()){
-      parse_default(detail);
+    if (value.has_default()) {
+      if (!store.count() && !store.has_default()) {
+        parse_default(detail);
+      }
+    }
+    else {
+      parse_no_value(detail);
     }
   }
 
@@ -2031,7 +2343,7 @@ OptionParser::parse(int argc, const char* const* argv)
 
     //adjust argv for any that couldn't be swallowed
     while (current != argc) {
-      unmatched.push_back(argv[current]);
+      unmatched.emplace_back(argv[current]);
       ++current;
     }
   }
@@ -2160,11 +2472,14 @@ Options::help_one_group(const std::string& g) const
     longest = (std::max)(longest, stringLength(s));
     format.push_back(std::make_pair(s, String()));
   }
+  longest = (std::min)(longest, OPTION_LONGEST);
 
-  longest = (std::min)(longest, static_cast<size_t>(OPTION_LONGEST));
-
-  //widest allowed description
-  auto allowed = size_t{76} - longest - OPTION_DESC_GAP;
+  //widest allowed description -- min 10 chars for helptext/line
+  size_t allowed = 10;
+  if (m_width > allowed + longest + OPTION_DESC_GAP)
+  {
+    allowed = m_width - longest - OPTION_DESC_GAP;
+  }
 
   auto fiter = format.begin();
   for (const auto& o : group->second.options)
@@ -2175,7 +2490,7 @@ Options::help_one_group(const std::string& g) const
       continue;
     }
 
-    auto d = format_description(o, longest + OPTION_DESC_GAP, allowed);
+    auto d = format_description(o, longest + OPTION_DESC_GAP, allowed, m_tab_expansion);
 
     result += fiter->first;
     if (stringLength(fiter->first) > longest)
@@ -2226,12 +2541,16 @@ void
 Options::generate_all_groups_help(String& result) const
 {
   std::vector<std::string> all_groups;
-  all_groups.reserve(m_help.size());
 
-  for (const auto& group : m_help)
-  {
-    all_groups.push_back(group.first);
-  }
+  std::transform(
+    m_help.begin(),
+    m_help.end(),
+    std::back_inserter(all_groups),
+    [] (const std::map<std::string, HelpGroupDetails>::value_type& group)
+    {
+      return group.first;
+    }
+  );
 
   generate_group_help(result, all_groups);
 }

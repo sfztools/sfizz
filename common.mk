@@ -215,9 +215,6 @@ SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/sysinfo.cc \
 	external/abseil-cpp/absl/base/internal/thread_identity.cc \
 	external/abseil-cpp/absl/base/internal/unscaledcycleclock.cc
-# absl::exponential_biased
-SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/base/internal/exponential_biased.cc
 # absl::malloc_internal
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/base/internal/low_level_alloc.cc
@@ -302,9 +299,9 @@ SFIZZ_SOURCES += \
 # absl::city
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/hash/internal/city.cc
-# absl::wyhash
+# absl::low_level_hash
 SFIZZ_SOURCES += \
-	external/abseil-cpp/absl/hash/internal/wyhash.cc
+	external/abseil-cpp/absl/hash/internal/low_level_hash.cc
 # absl::int128
 SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/numeric/int128.cc
@@ -339,11 +336,10 @@ SFIZZ_SOURCES += src/external/pugixml/src/pugixml.cpp
 ### Kissfft dependency
 
 SFIZZ_C_FLAGS += \
-	-I$(SFIZZ_DIR)/src/external/kiss_fft \
-	-I$(SFIZZ_DIR)/src/external/kiss_fft/tools
+	-I$(SFIZZ_DIR)/src/external/kiss_fft
 SFIZZ_SOURCES += \
 	src/external/kiss_fft/kiss_fft.c \
-	src/external/kiss_fft/tools/kiss_fftr.c
+	src/external/kiss_fft/kiss_fftr.c
 
 ### Surge tuning library dependency
 
