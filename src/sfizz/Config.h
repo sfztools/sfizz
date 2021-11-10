@@ -20,15 +20,17 @@ namespace sfz {
 
 enum ExtendedCCs {
     pitchBend = 128,
-    channelAftertouch,
-    polyphonicAftertouch,
-    noteOnVelocity,
-    noteOffVelocity,
-    keyboardNoteNumber,
-    keyboardNoteGate,
-    unipolarRandom,
-    bipolarRandom,
-    alternate
+    channelAftertouch = 129,
+    polyphonicAftertouch = 130,
+    noteOnVelocity = 131,
+    noteOffVelocity = 132,
+    keyboardNoteNumber = 133,
+    keyboardNoteGate = 134,
+    unipolarRandom = 135,
+    bipolarRandom = 136,
+    alternate = 137,
+    keydelta = 140,
+    absoluteKeydelta = 141,
 };
 
 namespace config {

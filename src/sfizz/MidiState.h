@@ -246,7 +246,7 @@ private:
     /**
      * @brief Last note played
      */
-    int lastNotePlayed { 0 };
+    int lastNotePlayed { -1 };
 
     /**
      * @brief Current known values for the CCs.

@@ -25,9 +25,9 @@ float baseVolumedB(const Region& region, const MidiState& midiState, int noteNum
 uint64_t sampleOffset(const Region& region, const MidiState& midiState) noexcept
 {
     std::uniform_int_distribution<int64_t> offsetDistribution { 0, region.offsetRandom };
-    uint64_t finalOffset = region.offset + offsetDistribution(Random::randomGenerator);
+    int64_t finalOffset = region.offset + offsetDistribution(Random::randomGenerator);
     for (const auto& mod: region.offsetCC)
-        finalOffset += static_cast<uint64_t>(mod.data * midiState.getCCValue(mod.cc));
+        finalOffset += static_cast<int64_t>(mod.data * midiState.getCCValue(mod.cc));
     return Default::offset.bounds.clamp(finalOffset);
 }
 
