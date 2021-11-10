@@ -203,10 +203,8 @@ if (SFIZZ_USE_SYSTEM_KISS_FFT)
 else()
     add_library(sfizz_kissfft STATIC
         "src/external/kiss_fft/kiss_fft.c"
-        "src/external/kiss_fft/tools/kiss_fftr.c")
-    target_include_directories(sfizz_kissfft
-        PUBLIC "src/external/kiss_fft"
-        PUBLIC "src/external/kiss_fft/tools")
+        "src/external/kiss_fft/kiss_fftr.c")
+    target_include_directories(sfizz_kissfft PUBLIC "src/external/kiss_fft")
 endif()
 add_library(sfizz::kissfft ALIAS sfizz_kissfft)
 

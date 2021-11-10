@@ -339,11 +339,10 @@ SFIZZ_SOURCES += src/external/pugixml/src/pugixml.cpp
 ### Kissfft dependency
 
 SFIZZ_C_FLAGS += \
-	-I$(SFIZZ_DIR)/src/external/kiss_fft \
-	-I$(SFIZZ_DIR)/src/external/kiss_fft/tools
+	-I$(SFIZZ_DIR)/src/external/kiss_fft
 SFIZZ_SOURCES += \
 	src/external/kiss_fft/kiss_fft.c \
-	src/external/kiss_fft/tools/kiss_fftr.c
+	src/external/kiss_fft/kiss_fftr.c
 
 ### Surge tuning library dependency
 
