@@ -209,12 +209,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         break;
     // Region logic: key mapping
     case hash("lokey"):
-        {
-            absl::optional<uint8_t> optValue = opcode.readOptional(Default::loKey);
-            triggerOnNote = optValue != absl::nullopt;
-            uint8_t value = optValue.value_or(Default::loKey);
-            keyRange.setStart(value);
-        }
+        keyRange.setStart(opcode.read(Default::loKey));
         break;
     case hash("hikey"):
         {
