@@ -3,11 +3,11 @@ version 1.0304
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {108 91 800 475} type Double
+  xywh {607 439 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box imageContainer_ {
-    image {../resources/background.png} xywh {5 110 790 285}
+    image {../resources/background.png} xywh {90 110 790 285}
     class Background
   }
   Fl_Group {} {
@@ -15,7 +15,7 @@ widget_class mainView {open
     xywh {0 0 814 110}
     class LogicalGroup
   } {
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {5 4 175 101} box ROUNDED_BOX align 0
       class RoundedGroup
     } {
@@ -45,7 +45,7 @@ widget_class mainView {open
         class HomeButton
       }
     }
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {185 5 390 100} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -126,7 +126,7 @@ widget_class mainView {open
         class ChevronValueDropDown
       }
     }
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {580 5 215 100} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -155,17 +155,17 @@ widget_class mainView {open
         xywh {739 10 23 90} box BORDER_BOX
         class VMeter
       }
-      Fl_Box {meters_[1]} {selected
+      Fl_Box {meters_[1]} {
         xywh {763 10 23 90} box BORDER_BOX
         class VMeter
       }
     }
   }
-  Fl_Group {subPanels_[kPanelInfo]} {
+  Fl_Group {subPanels_[kPanelInfo]} {open
     xywh {5 110 790 285} hide
     class LogicalGroup
   } {
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {5 110 790 285} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -225,7 +225,7 @@ widget_class mainView {open
     xywh {5 110 790 285} hide
     class LogicalGroup
   } {
-    Fl_Group {} {open
+    Fl_Group {} {
       xywh {5 110 790 285} box ROUNDED_BOX
       class RoundedGroup
     } {
@@ -235,150 +235,205 @@ widget_class mainView {open
       } {}
     }
   }
-  Fl_Group {subPanels_[kPanelSettings]} {
-    xywh {5 110 790 285}
+  Fl_Group {subPanels_[kPanelSettings]} {open
+    xywh {0 110 825 360}
     class LogicalGroup
   } {
-    Fl_Group {} {
-      label Engine open
-      xywh {305 135 195 100} box ROUNDED_BOX labelsize 12 align 17
-      class TitleGroup
+    Fl_Group {} {open
+      xywh {5 110 790 285} box ROUNDED_BOX
+      class RoundedGroup
     } {
       Fl_Spinner oversamplingSlider_ {
         comment {tag=kTagSetOversampling}
-        xywh {330 195 60 25} labelsize 12 textsize 12
+        xywh {175 185 70 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Oversampling
-        xywh {320 155 80 25} labelsize 12
-        class ValueLabel
+        xywh {20 185 85 25} labelsize 12 align 20
+        class Label
       }
       Fl_Box {} {
         label {Preload size}
-        xywh {405 155 80 25} labelsize 12
-        class ValueLabel
+        xywh {20 160 75 25} labelsize 12 align 20
+        class Label
       }
       Fl_Spinner preloadSizeSlider_ {
         comment {tag=kTagSetPreloadSize}
-        xywh {415 195 60 25} labelsize 12 textsize 12
+        xywh {175 160 70 25} labelsize 12 textsize 12
         class ValueMenu
       }
-    }
-    Fl_Group {} {
-      label Tuning open
-      xywh {175 270 415 100} box ROUNDED_BOX labelsize 12 align 17
-      class TitleGroup
-    } {
-      Fl_Box {} {
-        label {Root key}
-        xywh {330 290 80 25} labelsize 12
-        class ValueLabel
-      }
-      Fl_Spinner tuningFrequencySlider_ {
-        comment {tag=kTagSetTuningFrequency}
-        xywh {425 330 60 25} labelsize 12 textsize 12
-        class ValueMenu
-      }
-      Fl_Box {} {
-        label Frequency
-        xywh {415 290 80 25} labelsize 12
-        class ValueLabel
-      }
-      Fl_Dial stretchedTuningSlider_ {
-        comment {tag=kTagSetStretchedTuning}
-        xywh {515 315 48 48} value 0.5
-        class StyledKnob
-      }
-      Fl_Box {} {
-        label Stretch
-        xywh {500 290 80 25} labelsize 12
-        class ValueLabel
-      }
-      Fl_Box {} {
-        label {Scala file}
-        xywh {195 290 100 25} labelsize 12
-        class ValueLabel
-      }
-      Fl_Button scalaFileButton_ {
-        label DefaultScale
-        comment {tag=kTagLoadScalaFile}
-        xywh {195 330 100 25} labelsize 12
-        class ValueButton
-      }
-      Fl_Spinner scalaRootKeySlider_ {
-        comment {tag=kTagSetScalaRootKey}
-        xywh {340 330 35 25} labelsize 12 textsize 12
-        class ValueMenu
-      }
-      Fl_Spinner scalaRootOctaveSlider_ {
-        comment {tag=kTagSetScalaRootKey}
-        xywh {375 330 30 25} labelsize 12 textsize 12
-        class ValueMenu
-      }
-      Fl_Button scalaResetButton_ {
-        comment {tag=kTagResetScalaFile}
-        xywh {295 330 25 25} labelsize 12
-        class ResetSomethingButton
-      }
-    }
-    Fl_Group userFilesGroup_ {
-      label Files open
-      xywh {620 270 139 100} box ROUNDED_BOX labelsize 12 align 17
-      class TitleGroup
-    } {
-      Fl_Box {} {
-        label {User SFZ folder}
-        xywh {640 290 100 25} labelsize 12
-        class ValueLabel
-      }
-      Fl_Button userFilesDirButton_ {
-        label DefaultPath
-        comment {tag=kTagChooseUserFilesDir}
-        xywh {640 330 100 25} labelsize 12
-        class ValueButton
-      }
-    }
-    Fl_Group {} {
-      label Quality open
-      xywh {530 135 195 100} box ROUNDED_BOX labelsize 12 align 17
-      class TitleGroup
-    } {
       Fl_Spinner sampleQualitySlider_ {
         comment {tag=kTagSetSampleQuality}
-        xywh {545 195 80 25} labelsize 12 textsize 12
+        xywh {435 145 80 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Sample
-        xywh {545 155 80 25} labelsize 12
-        class ValueLabel
+        xywh {290 145 50 25} labelsize 12 align 20
+        class Label
       }
       Fl_Box {} {
         label Oscillator
-        xywh {630 155 80 25} labelsize 12
-        class ValueLabel
+        xywh {290 170 60 25} labelsize 12 align 20
+        class Label
       }
       Fl_Spinner oscillatorQualitySlider_ {
         comment {tag=kTagSetOscillatorQuality}
-        xywh {630 195 80 25} labelsize 12 textsize 12
+        xywh {435 170 80 25} labelsize 12 textsize 12
         class ValueMenu
       }
-    }
-    Fl_Group {} {
-      label Appearance open
-      xywh {40 270 105 100} box ROUNDED_BOX labelsize 12 align 17
-      class TitleGroup
-    } {
       Fl_Spinner themeMenu_ {
         comment {tag=kTagThemeMenu}
-        xywh {60 330 65 25} labelsize 12 textsize 12
+        xywh {680 145 100 25} labelsize 12 textsize 12
         class OptionMenu
       }
       Fl_Box {} {
         label Theme
-        xywh {50 295 80 25} labelsize 12
-        class ValueLabel
+        xywh {555 145 45 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label {User SFZ folder}
+        xywh {555 170 95 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Button userFilesDirButton_ {
+        label DefaultPath
+        comment {tag=kTagChooseUserFilesDir}
+        xywh {680 170 100 25} labelsize 12
+        class ValueButton
+      }
+      Fl_Box {} {
+        label {Root key}
+        xywh {290 285 60 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label Frequency
+        xywh {290 310 70 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Dial stretchedTuningSlider_ {
+        comment {tag=kTagSetStretchedTuning}
+        xywh {455 337 48 48} value 0.5
+        class StyledKnob
+      }
+      Fl_Box {} {
+        label Stretch
+        xywh {290 345 50 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label {Scala file}
+        xywh {290 260 60 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Button scalaFileButton_ {
+        label DefaultScale
+        comment {tag=kTagLoadScalaFile}
+        xywh {390 260 100 25} labelsize 12
+        class ValueButton
+      }
+      Fl_Spinner scalaRootKeySlider_ {
+        comment {tag=kTagSetScalaRootKey}
+        xywh {450 285 35 25} labelsize 12 textsize 12
+        class ValueMenu
+      }
+      Fl_Spinner scalaRootOctaveSlider_ {
+        comment {tag=kTagSetScalaRootKey}
+        xywh {485 285 30 25} labelsize 12 textsize 12
+        class ValueMenu
+      }
+      Fl_Button scalaResetButton_ {
+        comment {tag=kTagResetScalaFile}
+        xywh {490 260 25 25} labelsize 12
+        class ResetSomethingButton
+      }
+      Fl_Box {} {
+        label Freewheeling
+        xywh {290 195 85 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Spinner freewheelingQualitySlider_ {
+        comment {tag=kTagSetOscillatorQuality}
+        xywh {435 195 80 25} labelsize 12 textsize 12
+        class ValueMenu
+      }
+      Fl_Box {} {
+        label {Release cancels sustain}
+        xywh {20 210 145 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Check_Button {} {
+        xywh {205 210 25 25} down_box DOWN_BOX
+        class Checkbox
+      }
+      Fl_Box sfizzVersionLabel_ {
+        label SFIZZ_VERSION
+        xywh {20 140 225 20} labelsize 10
+        class Label
+      }
+      Fl_Box {} {
+        label {Rendering quality}
+        xywh {290 115 110 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label {Separator 2}
+        xywh {20 135 225 5} box BORDER_BOX labeltype NO_LABEL
+        class HLine
+      }
+      Fl_Box {} {
+        label {Engine options}
+        xywh {20 115 95 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label {Separator 2}
+        xywh {580 135 185 5} box BORDER_BOX labeltype NO_LABEL
+        class HLine
+      }
+      Fl_Box {} {
+        label Other
+        xywh {555 115 40 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label Tuning
+        xywh {290 230 225 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Box {} {
+        label {Separator 2}
+        xywh {290 135 225 5} box BORDER_BOX labeltype NO_LABEL
+        class HLine
+      }
+      Fl_Box {} {
+        label {Separator 2}
+        xywh {555 135 225 5} box BORDER_BOX labeltype NO_LABEL
+        class HLine
+      }
+      Fl_Box {} {
+        label {Separator 2}
+        xywh {290 250 225 5} box BORDER_BOX labeltype NO_LABEL
+        class HLine
+      }
+      Fl_Button tuningFrequencyDropdown_ {
+        comment {tag=kTagSetTuningFrequency}
+        xywh {490 310 25 25} labelsize 24
+        class ChevronValueDropDown
+      }
+      Fl_Text_Editor tuningFrequencyEdit_ {
+        comment {tag=kTagSetTuningFrequency}
+        xywh {430 310 60 25} labelsize 12
+        class TextEdit
+      }
+      Fl_Button settingsAboutButton_ {
+        label {About sfizz}
+        comment {tag=kTagAbout} selected
+        xywh {610 205 115 25} labelsize 12
+        class ValueButton
       }
     }
   }

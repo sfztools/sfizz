@@ -10,6 +10,7 @@
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
+#include "GitBuildId.h"
 #include "DlgAbout.h"
 #include "ImageHelpers.h"
 #include "NativeHelpers.h"
@@ -20,6 +21,7 @@
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
 #include <absl/strings/ascii.h>
+#include <absl/strings/str_cat.h>
 #include <absl/strings/numbers.h>
 #include <ghc/fs_std.hpp>
 #include <array>
@@ -96,6 +98,8 @@ struct Editor::Impl : EditorController::Receiver,
         kTagSetStretchedTuning,
         kTagSetSampleQuality,
         kTagSetOscillatorQuality,
+        kTagSetFreewheelingQuality,
+        kTagSetReleaseCancelsSustain,
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
@@ -120,12 +124,15 @@ struct Editor::Impl : EditorController::Receiver,
     SValueMenu *scalaRootKeySlider_ = nullptr;
     SValueMenu *scalaRootOctaveSlider_ = nullptr;
     CTextLabel* scalaRootKeyLabel_ = nullptr;
-    SValueMenu *tuningFrequencySlider_ = nullptr;
+    SValueMenu* tuningFrequencyDropdown_ = nullptr;
+    CTextEdit* tuningFrequencyEdit_ = nullptr;
+    STextButton *settingsAboutButton_ = nullptr;
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
     SValueMenu *sampleQualitySlider_ = nullptr;
     SValueMenu *oscillatorQualitySlider_ = nullptr;
+    SValueMenu *freewheelingQualitySlider_ = nullptr;
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
@@ -160,6 +167,8 @@ struct Editor::Impl : EditorController::Receiver,
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
+
+    CTextLabel* sfizzVersionLabel_ = nullptr;
 
     SKnobCCBox* getSecondaryCCKnob(unsigned cc)
     {
@@ -219,7 +228,6 @@ struct Editor::Impl : EditorController::Receiver,
     void updateOversamplingLabel(int oversamplingLog2);
     void updatePreloadSizeLabel(int preloadSize);
     void updateScalaRootKeyLabel(int rootKey);
-    void updateTuningFrequencyLabel(float tuningFrequency);
     void updateStretchedTuningLabel(float stretchedTuning);
 
     absl::string_view getCurrentKeyswitchName() const;
@@ -410,9 +418,8 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::TuningFrequency:
         {
             const float value = v.to_float();
-            if (tuningFrequencySlider_)
-                tuningFrequencySlider_->setValue(value);
-            updateTuningFrequencyLabel(value);
+            if (tuningFrequencyEdit_)
+                tuningFrequencyEdit_->setValue(value);
         }
         break;
     case EditId::StretchTuning:
@@ -695,6 +702,7 @@ void Editor::Impl::createFrameContents()
             });
             return box;
         };
+#if 0
         auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
@@ -707,6 +715,7 @@ void Editor::Impl::createFrameContents()
             box->setTitleFont(font);
             return box;
         };
+#endif
         auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CKickButton(bounds, this, tag, 0.0f, iconShaded);
         };
@@ -734,11 +743,13 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
-        auto createHLine = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createHLine = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             int y = static_cast<int>(0.5 * (bounds.top + bounds.bottom));
             CRect lineBounds(bounds.left, y, bounds.right, y + 1);
             CViewContainer* hline = new CViewContainer(lineBounds);
-            hline->setBackgroundColor(CColor(0xff, 0xff, 0xff, 0xff));
+            OnThemeChanged.push_back([hline, palette]() {
+                hline->setBackgroundColor(palette->text);
+            });
             return hline;
         };
         auto createValueLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -767,15 +778,7 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
-#if 0
-        auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
-            CTextButton* button = new CTextButton(bounds, this, tag, label);
-            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
-            button->setFont(font);
-            button->setTextAlignment(align);
-            return button;
-        };
-#endif
+
         auto createClickableLabel = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             STextButton* button = new STextButton(bounds, this, tag, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
@@ -982,6 +985,26 @@ void Editor::Impl::createFrameContents()
             return panel;
         };
 
+        auto createCheckbox = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int) {
+            auto* checkbox = new CCheckBox(bounds, this, tag, label);
+            return checkbox;
+        };
+
+        auto createTextEdit = [this, &palette] (const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+            auto* edit = new CTextEdit(bounds, this, tag, label, nullptr);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            edit->setFont(font);
+            edit->setHoriAlign(align);
+            edit->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            edit->setStyle(CParamDisplay::kRoundRectStyle);
+            edit->setRoundRectRadius(5.0);
+            OnThemeChanged.push_back([edit, palette]() {
+                edit->setFontColor(palette->valueText);
+                edit->setBackColor(palette->valueBackground);
+            });
+            return edit;
+        };
+
         #include "layout/main.hpp"
 
         OnThemeChanged.push_back([mainView, theme]() {
@@ -1025,6 +1048,11 @@ void Editor::Impl::createFrameContents()
         mainView_ = owned(mainView);
     }
 
+    if (CTextLabel* label = sfizzVersionLabel_) {
+        std::string version = GitBuildId[0] ? absl::StrCat(SFIZZ_VERSION ".", GitBuildId) : SFIZZ_VERSION;
+        label->setText(absl::StrCat(u8"sfizz ", version));
+    }
+
     ///
     currentThemeName_ = theme->loadCurrentName();
     theme->load(currentThemeName_);
@@ -1061,8 +1089,9 @@ void Editor::Impl::createFrameContents()
         scalaRootOctaveSlider_->setDefaultValue(
             static_cast<int>(EditRange::get(EditId::ScalaRootKey).def) / 12);
     }
-    adjustMinMaxToEditRange(tuningFrequencySlider_, EditId::TuningFrequency);
-    tuningFrequencySlider_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
+    adjustMinMaxToEditRange(tuningFrequencyDropdown_, EditId::TuningFrequency);
+    adjustMinMaxToEditRange(tuningFrequencyEdit_, EditId::TuningFrequency);
+    tuningFrequencyEdit_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
     adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
     adjustMinMaxToEditRange(sampleQualitySlider_, EditId::SampleQuality);
     adjustMinMaxToEditRange(oscillatorQualitySlider_, EditId::OscillatorQuality);
@@ -1110,13 +1139,24 @@ void Editor::Impl::createFrameContents()
     };
 
     for (std::pair<float, const char*> value : tuningFrequencies)
-        tuningFrequencySlider_->addEntry(value.second, value.first);
-    tuningFrequencySlider_->setValueToStringFunction(
+        tuningFrequencyDropdown_->addEntry(value.second, value.first);
+
+    tuningFrequencyEdit_->setValueToStringFunction(
         [](float value, char result[256], CParamDisplay*) -> bool
         {
             sprintf(result, "%.1f Hz", value);
             return true;
         });
+
+    tuningFrequencyEdit_->setStringToValueFunction([](UTF8StringPtr txt, float& result, CTextEdit*) -> bool {
+        float value;
+        if (absl::SimpleAtof(txt, &value)) {
+            result = value;
+            return true;
+        }
+
+        return false;
+    });
 
     static const char* notesInOctave[12] = {
         "C", "C#", "D", "D#", "E",
@@ -1616,18 +1656,6 @@ void Editor::Impl::updateScalaRootKeyLabel(int rootKey)
     label->setText(noteName(rootKey));
 }
 
-void Editor::Impl::updateTuningFrequencyLabel(float tuningFrequency)
-{
-    CTextLabel* label = tuningFrequencyLabel_;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%.1f", tuningFrequency);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
 void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
 {
     CTextLabel* label = stretchedTuningLabel_;
@@ -1962,7 +1990,8 @@ void Editor::Impl::valueChanged(CControl* ctl)
 
     case kTagSetTuningFrequency:
         ctrl.uiSendValue(EditId::TuningFrequency, value);
-        updateTuningFrequencyLabel(value);
+        if (tuningFrequencyEdit_)
+            tuningFrequencyEdit_->setValue(value);
         break;
 
     case kTagSetSampleQuality:
