@@ -236,6 +236,11 @@ void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mod
     return synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
+void sfizz_set_sustain_cancels_release(sfizz_synth_t* synth, bool value)
+{
+    return synth->synth.setSustainCancelsRelease(value);
+}
+
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
 {
     synth->synth.setVolume(volume);

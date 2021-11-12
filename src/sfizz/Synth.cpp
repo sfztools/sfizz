@@ -1810,6 +1810,7 @@ void Synth::setSampleQuality(ProcessMode mode, int quality)
         synthConfig.liveSampleQuality = quality;
         break;
     case ProcessFreewheeling:
+        // DBG("Set freewheeling quality" << quality);
         synthConfig.freeWheelingSampleQuality = quality;
         break;
     default:
@@ -1845,12 +1846,18 @@ void Synth::setOscillatorQuality(ProcessMode mode, int quality)
         synthConfig.liveOscillatorQuality = quality;
         break;
     case ProcessFreewheeling:
+        // DBG("Set freewheeling oscillator quality" << quality);
         synthConfig.freeWheelingOscillatorQuality = quality;
         break;
     default:
         SFIZZ_CHECK(false);
         break;
     }
+}
+
+void Synth::setSustainCancelsRelease(bool value)
+{
+    impl_->resources_.getSynthConfig().sustainCancelsRelease = value;
 }
 
 float Synth::getVolume() const noexcept

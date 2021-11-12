@@ -98,8 +98,9 @@ struct Editor::Impl : EditorController::Receiver,
         kTagSetStretchedTuning,
         kTagSetSampleQuality,
         kTagSetOscillatorQuality,
-        kTagSetFreewheelingQuality,
-        kTagSetReleaseCancelsSustain,
+        kTagSetFreewheelingSampleQuality,
+        kTagSetFreewheelingOscillatorQuality,
+        kTagSetSustainCancelsRelease,
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
@@ -132,7 +133,9 @@ struct Editor::Impl : EditorController::Receiver,
     CTextLabel* stretchedTuningLabel_ = nullptr;
     SValueMenu *sampleQualitySlider_ = nullptr;
     SValueMenu *oscillatorQualitySlider_ = nullptr;
-    SValueMenu *freewheelingQualitySlider_ = nullptr;
+    SValueMenu *freewheelingSampleQualitySlider_ = nullptr;
+    SValueMenu *freewheelingOscillatorQualitySlider_ = nullptr;
+    CCheckBox *sustainCancelsReleaseCheckbox_ = nullptr;
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
@@ -445,6 +448,33 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             if (CControl* slider = oscillatorQualitySlider_) {
                 slider->setValue(float(value));
                 slider->invalid();
+            }
+        }
+        break;
+    case EditId::FreewheelingSampleQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = freewheelingSampleQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
+        }
+        break;
+    case EditId::FreewheelingOscillatorQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = freewheelingOscillatorQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
+        }
+        break;
+    case EditId::SustainCancelsRelease:
+        {
+            const bool value = v.to_float();
+            if (CControl* checkbox = sustainCancelsReleaseCheckbox_) {
+                checkbox->setValue(value);
+                checkbox->invalid();
             }
         }
         break;
@@ -1095,6 +1125,9 @@ void Editor::Impl::createFrameContents()
     adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
     adjustMinMaxToEditRange(sampleQualitySlider_, EditId::SampleQuality);
     adjustMinMaxToEditRange(oscillatorQualitySlider_, EditId::OscillatorQuality);
+    adjustMinMaxToEditRange(freewheelingSampleQualitySlider_, EditId::FreewheelingSampleQuality);
+    adjustMinMaxToEditRange(freewheelingOscillatorQualitySlider_, EditId::FreewheelingOscillatorQuality);
+    adjustMinMaxToEditRange(sustainCancelsReleaseCheckbox_, EditId::SustainCancelsRelease);
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
@@ -1186,36 +1219,49 @@ void Editor::Impl::createFrameContents()
         menu->addEntry("Open SFZ folder", kTagOpenSfzFolder);
     }
 
-    if (SValueMenu *menu = sampleQualitySlider_) {
-        static const std::array<const char*, 11> labels {{
-            "Nearest", "Linear", "Polynomial",
-            "Sinc 8", "Sinc 12", "Sinc 16", "Sinc 24",
-            "Sinc 36", "Sinc 48", "Sinc 60", "Sinc 72",
-        }};
-        for (size_t i = 0; i < labels.size(); ++i)
-            menu->addEntry(labels[i], float(i));
-        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
-            int index = int(value);
-            if (index < 0 || unsigned(index) >= labels.size())
-                return false;
-            result = labels[unsigned(index)];
-            return true;
-        });
-    }
-    if (SValueMenu *menu = oscillatorQualitySlider_) {
-        static const std::array<const char*, 4> labels {{
-            "Nearest", "Linear", "High", "Dual-High",
-        }};
-        for (size_t i = 0; i < labels.size(); ++i)
-            menu->addEntry(labels[i], float(i));
-        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
-            int index = int(value);
-            if (index < 0 || unsigned(index) >= labels.size())
-                return false;
-            result = labels[unsigned(index)];
-            return true;
-        });
-    }
+    static const std::array<const char*, 11> sampleQualityLabels {{
+        "Nearest", "Linear", "Polynomial",
+        "Sinc 8", "Sinc 12", "Sinc 16", "Sinc 24",
+        "Sinc 36", "Sinc 48", "Sinc 60", "Sinc 72",
+    }};
+
+    auto setupSampleQualityMenu = [&] (SValueMenu* menu) {
+        if (menu) {
+            for (size_t i = 0; i < sampleQualityLabels.size(); ++i)
+                menu->addEntry(sampleQualityLabels[i], float(i));
+            menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+                int index = int(value);
+                if (index < 0 || unsigned(index) >= sampleQualityLabels.size())
+                    return false;
+                result = sampleQualityLabels[unsigned(index)];
+                return true;
+            });
+        }
+    };
+
+    setupSampleQualityMenu(sampleQualitySlider_);
+    setupSampleQualityMenu(freewheelingSampleQualitySlider_);
+
+    static const std::array<const char*, 4> oscillatorQualityLabels {{
+        "Nearest", "Linear", "High", "Dual-High",
+    }};
+
+    auto setupOscillatorQualityMenu = [&] (SValueMenu* menu) {
+        if (menu) {
+            for (size_t i = 0; i < oscillatorQualityLabels.size(); ++i)
+                menu->addEntry(oscillatorQualityLabels[i], float(i));
+            menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+                int index = int(value);
+                if (index < 0 || unsigned(index) >= oscillatorQualityLabels.size())
+                    return false;
+                result = oscillatorQualityLabels[unsigned(index)];
+                return true;
+            });
+        }
+    };
+
+    setupOscillatorQualityMenu(oscillatorQualitySlider_);
+    setupOscillatorQualityMenu(freewheelingOscillatorQualitySlider_);
 
     if (SPiano* piano = piano_) {
         piano->onKeyPressed = [this](unsigned key, float vel) {
@@ -2000,6 +2046,18 @@ void Editor::Impl::valueChanged(CControl* ctl)
 
     case kTagSetOscillatorQuality:
         ctrl.uiSendValue(EditId::OscillatorQuality, value);
+        break;
+
+    case kTagSetFreewheelingSampleQuality:
+        ctrl.uiSendValue(EditId::FreewheelingSampleQuality, value);
+        break;
+
+    case kTagSetFreewheelingOscillatorQuality:
+        ctrl.uiSendValue(EditId::FreewheelingOscillatorQuality, value);
+        break;
+
+    case kTagSetSustainCancelsRelease:
+        ctrl.uiSendValue(EditId::SustainCancelsRelease, value);
         break;
 
     case kTagSetStretchedTuning:

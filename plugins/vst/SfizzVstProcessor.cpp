@@ -334,6 +334,9 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     }
     synth.setSampleQuality(sfz::Sfizz::ProcessLive, _state.sampleQuality);
     synth.setOscillatorQuality(sfz::Sfizz::ProcessLive, _state.oscillatorQuality);
+    synth.setSampleQuality(sfz::Sfizz::ProcessFreewheeling, _state.freewheelingSampleQuality);
+    synth.setOscillatorQuality(sfz::Sfizz::ProcessFreewheeling, _state.freewheelingOscillatorQuality);
+    synth.setSustainCancelsRelease(_state.sustainCancelsRelease);
 
     synth.renderBlock(outputs, numFrames, data.numOutputs);
 
@@ -449,6 +452,15 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         break;
     case kPidOscillatorQuality:
         _state.oscillatorQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidFreewheelingSampleQuality:
+        _state.freewheelingSampleQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidFreewheelingOscillatorQuality:
+        _state.freewheelingOscillatorQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidSustainCancelsRelease:
+        _state.sustainCancelsRelease = (range.denormalize(value) > 0.0f);
         break;
     case kPidAftertouch:
         synth.hdChannelAftertouch(sampleOffset, value);

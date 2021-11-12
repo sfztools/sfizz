@@ -259,6 +259,15 @@ connect_port_stereo(LV2_Handle instance,
     case SFIZZ_NUM_SAMPLES:
         self->num_samples_port = (float *)data;
         break;
+    case SFIZZ_FREEWHEELING_SAMPLE_QUALITY:
+        self->freewheeling_sample_quality_port = (const float *)data;
+        break;
+    case SFIZZ_FREEWHEELING_OSCILLATOR_QUALITY:
+        self->freewheeling_oscillator_quality_port = (const float *)data;
+        break;
+    case SFIZZ_SUSTAIN_CANCELS_RELEASE:
+        self->sustain_cancels_release_port = (const float *)data;
+        break;
     default:
         break;
     }
@@ -373,6 +382,15 @@ connect_port_multi(LV2_Handle instance,
         break;
     case SFIZZ_MULTI_NUM_SAMPLES:
         self->num_samples_port = (float *)data;
+        break;
+    case SFIZZ_MULTI_FREEWHEELING_SAMPLE_QUALITY:
+        self->freewheeling_sample_quality_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_FREEWHEELING_OSCILLATOR_QUALITY:
+        self->freewheeling_oscillator_quality_port = (const float *)data;
+        break;
+    case SFIZZ_MULTI_SUSTAIN_CANCELS_RELEASE:
+        self->sustain_cancels_release_port = (const float *)data;
         break;
     default:
         break;
@@ -1177,6 +1195,9 @@ run(LV2_Handle instance, uint32_t sample_count)
     sfizz_set_tuning_frequency(self->synth, *(self->tuning_frequency_port));
     sfizz_set_sample_quality(self->synth, SFIZZ_PROCESS_LIVE, (int)(*self->sample_quality_port));
     sfizz_set_oscillator_quality(self->synth, SFIZZ_PROCESS_LIVE, (int)(*self->oscillator_quality_port));
+    sfizz_set_sample_quality(self->synth, SFIZZ_PROCESS_FREEWHEELING, (int)(*self->freewheeling_sample_quality_port));
+    sfizz_set_oscillator_quality(self->synth, SFIZZ_PROCESS_FREEWHEELING, (int)(*self->freewheeling_oscillator_quality_port));
+    sfizz_set_sustain_cancels_release(self->synth, (*self->sustain_cancels_release_port > 0.0f));
     sfizz_lv2_check_stretch_tuning(self);
     sfizz_lv2_check_preload_size(self);
     sfizz_lv2_check_oversampling(self);

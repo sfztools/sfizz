@@ -834,6 +834,14 @@ SFIZZ_EXPORTED_API int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_
 SFIZZ_EXPORTED_API void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
 
 /**
+ * @brief Set whether pressing the sustain pedal cancels the release stage
+ *
+ * @param      synth    The synth.
+ * @param value
+*/
+SFIZZ_EXPORTED_API void sfizz_set_sustain_cancels_release(sfizz_synth_t* synth, bool value);
+
+/**
  * @brief Set the global instrument volume.
  * @since 0.2.0
  *

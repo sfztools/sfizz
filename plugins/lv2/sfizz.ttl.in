@@ -325,7 +325,7 @@ midnam:update a lv2:Feature .
     lv2:name "Sample quality",
       "Qualité des échantillons"@fr ,
       "Qualità del campione"@it ;
-    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:default 2.0 ;
     lv2:minimum 0.0 ;
     lv2:maximum 10.0
@@ -336,7 +336,7 @@ midnam:update a lv2:Feature .
     lv2:name "Oscillator quality",
       "Qualité des oscillateurs"@fr ,
       "Qualità dell'oscillatore"@it ;
-    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:default 1.0 ;
     lv2:minimum 0.0 ;
     lv2:maximum 3.0
@@ -406,6 +406,36 @@ midnam:update a lv2:Feature .
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 65535 ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 20 ;
+    lv2:symbol "freewheeling_sample_quality" ;
+    lv2:name "Freewheeling Sample quality",
+      "Qualité des échantillons en roue libre"@fr;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:default 10.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 10.0
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 21 ;
+    lv2:symbol "freewheeling_oscillator_quality" ;
+    lv2:name "Freewheeling Oscillator quality",
+      "Qualité des oscillateurs en roue libre"@fr ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:default 3.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 3.0
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 22 ;
+    lv2:symbol "sustain_cancels_release" ;
+    lv2:name "Sustain cancels release";
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:portProperty lv2:toggled ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 1 ;
   ] ;
 
   rdfs:seeAlso <controllers.ttl> .
@@ -764,7 +794,7 @@ midnam:update a lv2:Feature .
     lv2:name "Sample quality",
       "Qualité des échantillons"@fr ,
       "Qualità del campione"@it ;
-    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:default 2.0 ;
     lv2:minimum 0.0 ;
     lv2:maximum 10.0
@@ -775,7 +805,7 @@ midnam:update a lv2:Feature .
     lv2:name "Oscillator quality",
       "Qualité des oscillateurs"@fr ,
       "Qualità dell'oscillatore"@it ;
-    pg:group <@LV2PLUGIN_URI@#tuning> ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
     lv2:default 1.0 ;
     lv2:minimum 0.0 ;
     lv2:maximum 3.0
@@ -845,6 +875,36 @@ midnam:update a lv2:Feature .
     lv2:default 0 ;
     lv2:minimum 0 ;
     lv2:maximum 65535 ;
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 34 ;
+    lv2:symbol "freewheeling_sample_quality" ;
+    lv2:name "Freewheeling Sample quality",
+      "Qualité des échantillons en roue libre"@fr;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:default 10.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 10.0
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 35 ;
+    lv2:symbol "freewheeling_oscillator_quality" ;
+    lv2:name "Freewheeling Oscillator quality",
+      "Qualité des oscillateurs en roue libre"@fr ;
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:default 3.0 ;
+    lv2:minimum 0.0 ;
+    lv2:maximum 3.0
+  ] , [
+    a lv2:InputPort, lv2:ControlPort ;
+    lv2:index 36 ;
+    lv2:symbol "sustain_cancels_release" ;
+    lv2:name "Sustain cancels release";
+    pg:group <@LV2PLUGIN_URI@#config> ;
+    lv2:portProperty lv2:toggled ;
+    lv2:default 0 ;
+    lv2:minimum 0 ;
+    lv2:maximum 1 ;
   ] ;
 
   rdfs:seeAlso <controllers.ttl> .

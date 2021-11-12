@@ -150,6 +150,11 @@ void sfz::Sfizz::setOscillatorQuality(ProcessMode mode, int quality)
     synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
+void sfz::Sfizz::setSustainCancelsRelease(bool value)
+{
+    synth->synth.setSustainCancelsRelease(value);
+}
+
 float sfz::Sfizz::getVolume() const noexcept
 {
     return synth->synth.getVolume();

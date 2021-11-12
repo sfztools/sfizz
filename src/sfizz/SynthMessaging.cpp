@@ -8,6 +8,7 @@
 #include "FilePool.h"
 #include "Curve.h"
 #include "MidiState.h"
+#include "SynthConfig.h"
 #include "utility/StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
@@ -1533,6 +1534,34 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         //----------------------------------------------------------------------
         // Setting values
         // Note: all these must be rt-safe within the parseOpcode method in region
+
+        MATCH("/sample_quality", "i") {
+            impl.resources_.getSynthConfig().liveSampleQuality =
+                Opcode::transform(Default::sampleQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/oscillator_quality", "i") {
+            impl.resources_.getSynthConfig().liveOscillatorQuality =
+                Opcode::transform(Default::oscillatorQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/freewheeling_sample_quality", "i") {
+            impl.resources_.getSynthConfig().freeWheelingSampleQuality =
+                Opcode::transform(Default::freewheelingSampleQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/freewheeling_oscillator_quality", "i") {
+            impl.resources_.getSynthConfig().freeWheelingOscillatorQuality =
+                Opcode::transform(Default::freewheelingOscillatorQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/sustain_cancels_release", "T") {
+            impl.resources_.getSynthConfig().sustainCancelsRelease = true;
+        } break;
+
+        MATCH("/sustain_cancels_release", "F") {
+            impl.resources_.getSynthConfig().sustainCancelsRelease = false;
+        } break;
 
         #define GET_REGION_OR_BREAK(idx)            \
             if (idx >= impl.layers_.size())         \

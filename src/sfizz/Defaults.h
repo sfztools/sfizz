@@ -274,6 +274,8 @@ namespace Default
     extern const OpcodeSpec<float> flexEGPointLevelMod;
     extern const OpcodeSpec<float> flexEGPointShape;
     extern const OpcodeSpec<int32_t> sampleQuality;
+    extern const OpcodeSpec<int32_t> freewheelingSampleQuality;
+    extern const OpcodeSpec<int32_t> freewheelingOscillatorQuality;
     extern const OpcodeSpec<int32_t> octaveOffset;
     extern const OpcodeSpec<int32_t> noteOffset;
     extern const OpcodeSpec<float> effect;
@@ -335,8 +337,6 @@ namespace Default
 
     // Various defaut values
     // e.g. "additional" or multiple defautl values
-    constexpr int freewheelingSampleQuality { 10 };
-    constexpr int freewheelingOscillatorQuality { 3 };
     constexpr float globalVolume { -7.35f };
     constexpr float defaultEQFreq [numEQs] { 50.0f, 500.0f, 5000.0f };
 } // namespace Default

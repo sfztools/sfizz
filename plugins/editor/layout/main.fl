@@ -245,22 +245,22 @@ widget_class mainView {open
     } {
       Fl_Spinner oversamplingSlider_ {
         comment {tag=kTagSetOversampling}
-        xywh {175 185 70 25} labelsize 12 textsize 12
+        xywh {175 195 70 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
         label Oversampling
-        xywh {20 185 85 25} labelsize 12 align 20
+        xywh {20 195 85 25} labelsize 12 align 20
         class Label
       }
       Fl_Box {} {
         label {Preload size}
-        xywh {20 160 75 25} labelsize 12 align 20
+        xywh {20 170 75 25} labelsize 12 align 20
         class Label
       }
       Fl_Spinner preloadSizeSlider_ {
         comment {tag=kTagSetPreloadSize}
-        xywh {175 160 70 25} labelsize 12 textsize 12
+        xywh {175 170 70 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Spinner sampleQualitySlider_ {
@@ -275,12 +275,12 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label Oscillator
-        xywh {290 170 60 25} labelsize 12 align 20
+        xywh {290 195 60 25} labelsize 12 align 20
         class Label
       }
       Fl_Spinner oscillatorQualitySlider_ {
         comment {tag=kTagSetOscillatorQuality}
-        xywh {435 170 80 25} labelsize 12 textsize 12
+        xywh {435 195 80 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Spinner themeMenu_ {
@@ -306,72 +306,73 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label {Root key}
-        xywh {290 285 60 25} labelsize 12 align 20
+        xywh {555 285 60 25} labelsize 12 align 20
         class Label
       }
       Fl_Box {} {
         label Frequency
-        xywh {290 310 70 25} labelsize 12 align 20
+        xywh {555 310 70 25} labelsize 12 align 20
         class Label
       }
       Fl_Dial stretchedTuningSlider_ {
         comment {tag=kTagSetStretchedTuning}
-        xywh {455 337 48 48} value 0.5
+        xywh {720 337 48 48} value 0.5
         class StyledKnob
       }
       Fl_Box {} {
         label Stretch
-        xywh {290 345 50 25} labelsize 12 align 20
+        xywh {555 345 50 25} labelsize 12 align 20
         class Label
       }
       Fl_Box {} {
         label {Scala file}
-        xywh {290 260 60 25} labelsize 12 align 20
+        xywh {555 260 60 25} labelsize 12 align 20
         class Label
       }
       Fl_Button scalaFileButton_ {
         label DefaultScale
         comment {tag=kTagLoadScalaFile}
-        xywh {390 260 100 25} labelsize 12
+        xywh {655 260 100 25} labelsize 12
         class ValueButton
       }
       Fl_Spinner scalaRootKeySlider_ {
         comment {tag=kTagSetScalaRootKey}
-        xywh {450 285 35 25} labelsize 12 textsize 12
+        xywh {715 285 35 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Spinner scalaRootOctaveSlider_ {
         comment {tag=kTagSetScalaRootKey}
-        xywh {485 285 30 25} labelsize 12 textsize 12
+        xywh {750 285 30 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Button scalaResetButton_ {
         comment {tag=kTagResetScalaFile}
-        xywh {490 260 25 25} labelsize 12
+        xywh {755 260 25 25} labelsize 12
         class ResetSomethingButton
       }
       Fl_Box {} {
-        label Freewheeling
-        xywh {290 195 85 25} labelsize 12 align 20
+        label {... when freewheeling}
+        xywh {290 170 145 25} labelsize 12 align 20
         class Label
       }
-      Fl_Spinner freewheelingQualitySlider_ {
-        comment {tag=kTagSetOscillatorQuality}
-        xywh {435 195 80 25} labelsize 12 textsize 12
+      Fl_Spinner freewheelingSampleQualitySlider_ {
+        comment {tag=kTagSetFreewheelingSampleQuality}
+        xywh {435 170 80 25} labelsize 12 textsize 12
         class ValueMenu
       }
       Fl_Box {} {
-        label {Release cancels sustain}
-        xywh {20 210 145 25} labelsize 12 align 20
+        label {Sustain cancels release}
+        xywh {20 220 145 25} labelsize 12 align 20
         class Label
       }
-      Fl_Check_Button {} {
-        xywh {205 210 25 25} down_box DOWN_BOX
+      Fl_Check_Button sustainCancelsReleaseCheckbox_ {
+        comment {tag=kTagSetSustainCancelsRelease} selected
+        xywh {200 220 25 25} down_box DOWN_BOX
         class Checkbox
       }
       Fl_Box sfizzVersionLabel_ {
         label SFIZZ_VERSION
-        xywh {20 140 225 20} labelsize 10
+        xywh {20 145 225 20} labelsize 10
         class Label
       }
       Fl_Box {} {
@@ -401,7 +402,7 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label Tuning
-        xywh {290 230 225 25} labelsize 12 align 20
+        xywh {555 230 225 25} labelsize 12 align 20
         class Label
       }
       Fl_Box {} {
@@ -416,24 +417,34 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label {Separator 2}
-        xywh {290 250 225 5} box BORDER_BOX labeltype NO_LABEL
+        xywh {555 250 225 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Button tuningFrequencyDropdown_ {
         comment {tag=kTagSetTuningFrequency}
-        xywh {490 310 25 25} labelsize 24
+        xywh {755 310 25 25} labelsize 24
         class ChevronValueDropDown
       }
       Fl_Text_Editor tuningFrequencyEdit_ {
         comment {tag=kTagSetTuningFrequency}
-        xywh {430 310 60 25} labelsize 12
+        xywh {695 310 60 25} labelsize 12
         class TextEdit
       }
       Fl_Button settingsAboutButton_ {
         label {About sfizz}
-        comment {tag=kTagAbout} selected
+        comment {tag=kTagAbout}
         xywh {610 205 115 25} labelsize 12
         class ValueButton
+      }
+      Fl_Box {} {
+        label {... when freewheeling}
+        xywh {290 220 145 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Spinner freewheelingOscillatorQualitySlider_ {
+        comment {tag=kTagSetFreewheelingOscillatorQuality}
+        xywh {435 220 80 25} labelsize 12 textsize 12
+        class ValueMenu
       }
     }
   }
