@@ -354,6 +354,15 @@ port_event_stereo(sfizz_ui_t *self, uint32_t port_index, const void *buffer)
     case SFIZZ_NUM_SAMPLES:
         self->uiReceiveValue(EditId::UINumPreloadedSamples, v);
         break;
+    case SFIZZ_FREEWHEELING_SAMPLE_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingSampleQuality, v);
+        break;
+    case SFIZZ_FREEWHEELING_OSCILLATOR_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingOscillatorQuality, v);
+        break;
+    case SFIZZ_SUSTAIN_CANCELS_RELEASE:
+        self->uiReceiveValue(EditId::SustainCancelsRelease, v);
+        break;
     }
 }
 
@@ -407,6 +416,15 @@ port_event_multi(sfizz_ui_t *self, uint32_t port_index, const void *buffer)
         break;
     case SFIZZ_MULTI_NUM_SAMPLES:
         self->uiReceiveValue(EditId::UINumPreloadedSamples, v);
+        break;
+    case SFIZZ_MULTI_FREEWHEELING_SAMPLE_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingSampleQuality, v);
+        break;
+    case SFIZZ_MULTI_FREEWHEELING_OSCILLATOR_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingOscillatorQuality, v);
+        break;
+    case SFIZZ_MULTI_SUSTAIN_CANCELS_RELEASE:
+        self->uiReceiveValue(EditId::SustainCancelsRelease, v);
         break;
     }
 }
@@ -663,31 +681,76 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
 
     switch (id) {
     case EditId::Volume:
-        sendFloat(SFIZZ_VOLUME, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_VOLUME, v.to_float());
+        else
+            sendFloat(SFIZZ_VOLUME, v.to_float());
         break;
     case EditId::Polyphony:
-        sendFloat(SFIZZ_POLYPHONY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_POLYPHONY, v.to_float());
+        else
+            sendFloat(SFIZZ_POLYPHONY, v.to_float());
         break;
     case EditId::Oversampling:
-        sendFloat(SFIZZ_OVERSAMPLING, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_OVERSAMPLING, v.to_float());
+        else
+            sendFloat(SFIZZ_OVERSAMPLING, v.to_float());
         break;
     case EditId::PreloadSize:
-        sendFloat(SFIZZ_PRELOAD, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_PRELOAD, v.to_float());
+        else
+            sendFloat(SFIZZ_PRELOAD, v.to_float());
         break;
     case EditId::ScalaRootKey:
-        sendFloat(SFIZZ_SCALA_ROOT_KEY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_SCALA_ROOT_KEY, v.to_float());
+        else
+            sendFloat(SFIZZ_SCALA_ROOT_KEY, v.to_float());
         break;
     case EditId::TuningFrequency:
-        sendFloat(SFIZZ_TUNING_FREQUENCY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_TUNING_FREQUENCY, v.to_float());
+        else
+            sendFloat(SFIZZ_TUNING_FREQUENCY, v.to_float());
         break;
     case EditId::StretchTuning:
-        sendFloat(SFIZZ_STRETCH_TUNING, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_STRETCH_TUNING, v.to_float());
+        else
+            sendFloat(SFIZZ_STRETCH_TUNING, v.to_float());
         break;
     case EditId::SampleQuality:
-        sendFloat(SFIZZ_SAMPLE_QUALITY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_SAMPLE_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_SAMPLE_QUALITY, v.to_float());
         break;
     case EditId::OscillatorQuality:
-        sendFloat(SFIZZ_OSCILLATOR_QUALITY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_OSCILLATOR_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_OSCILLATOR_QUALITY, v.to_float());
+        break;
+    case EditId::FreewheelingSampleQuality:
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_FREEWHEELING_SAMPLE_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_FREEWHEELING_SAMPLE_QUALITY, v.to_float());
+        break;
+    case EditId::FreewheelingOscillatorQuality:
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_FREEWHEELING_OSCILLATOR_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_FREEWHEELING_OSCILLATOR_QUALITY, v.to_float());
+        break;
+    case EditId::SustainCancelsRelease:
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_SUSTAIN_CANCELS_RELEASE, v.to_float());
+        else
+            sendFloat(SFIZZ_SUSTAIN_CANCELS_RELEASE, v.to_float());
         break;
     case EditId::SfzFile:
         sendPath(sfizz_sfz_file_uri, v.to_string());

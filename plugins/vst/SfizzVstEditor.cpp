@@ -343,6 +343,15 @@ void SfizzVstEditor::updateParameter(Vst::Parameter* parameterToUpdate)
         case kPidOscillatorQuality:
             uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
             break;
+        case kPidFreewheelingSampleQuality:
+            uiReceiveValue(EditId::FreewheelingSampleQuality, range.denormalize(value));
+            break;
+        case kPidFreewheelingOscillatorQuality:
+            uiReceiveValue(EditId::FreewheelingOscillatorQuality, range.denormalize(value));
+            break;
+        case kPidSustainCancelsRelease:
+            uiReceiveValue(EditId::SustainCancelsRelease, range.denormalize(value));
+            break;
         case kPidNumOutputs:
             uiReceiveValue(EditId::PluginOutputs, (int32)range.denormalize(value));
             break;
@@ -406,7 +415,15 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
         case EditId::OscillatorQuality:
             normalizeAndSet(kPidOscillatorQuality, v.to_float());
             break;
-
+        case EditId::FreewheelingSampleQuality:
+            normalizeAndSet(kPidFreewheelingSampleQuality, v.to_float());
+            break;
+        case EditId::FreewheelingOscillatorQuality:
+            normalizeAndSet(kPidFreewheelingOscillatorQuality, v.to_float());
+            break;
+        case EditId::SustainCancelsRelease:
+            normalizeAndSet(kPidSustainCancelsRelease, v.to_float());
+            break;
         case EditId::UserFilesDir:
             SfizzPaths::setSfzConfigDefaultPath(fs::u8path(v.to_string()));
             break;

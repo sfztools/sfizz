@@ -22,6 +22,9 @@ enum {
     kPidStretchedTuning,
     kPidSampleQuality,
     kPidOscillatorQuality,
+    kPidFreewheelingSampleQuality,
+    kPidFreewheelingOscillatorQuality,
+    kPidSustainCancelsRelease,
     kPidAftertouch,
     kPidPitchBend,
     kPidCC0,
@@ -78,6 +81,12 @@ struct SfizzRange {
             return {2.0, 0.0, 10.0};
         case kPidOscillatorQuality:
             return {1.0, 0.0, 3.0};
+        case kPidFreewheelingSampleQuality:
+            return {10.0, 0.0, 10.0};
+        case kPidFreewheelingOscillatorQuality:
+            return {3.0, 0.0, 3.0};
+        case kPidSustainCancelsRelease:
+            return {0.0, 0.0, 1.0};
         case kPidAftertouch:
             return {0.0, 0.0, 1.0};
         case kPidPitchBend:

@@ -73,6 +73,17 @@ tresult SfizzVstState::load(IBStream* state)
         oscillatorQuality = defaults.oscillatorQuality;
     }
 
+    if (version >= 5) {
+        if (!s.readInt32(freewheelingSampleQuality))
+            return kResultFalse;
+
+        if (!s.readInt32(freewheelingOscillatorQuality))
+            return kResultFalse;
+
+        if (!s.readBool(sustainCancelsRelease))
+            return kResultFalse;
+    }
+
     if (version >= 4) {
         if (!s.readInt32(lastKeyswitch))
             return kResultFalse;
@@ -141,6 +152,15 @@ tresult SfizzVstState::store(IBStream* state) const
         return kResultFalse;
 
     if (!s.writeInt32(oscillatorQuality))
+        return kResultFalse;
+
+    if (!s.writeInt32(freewheelingSampleQuality))
+        return kResultFalse;
+
+    if (!s.writeInt32(freewheelingOscillatorQuality))
+        return kResultFalse;
+
+    if (!s.writeBool(sustainCancelsRelease))
         return kResultFalse;
 
     if (!s.writeInt32(lastKeyswitch))

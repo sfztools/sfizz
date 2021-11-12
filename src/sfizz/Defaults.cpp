@@ -40,7 +40,6 @@ FloatSpec oscillatorDetune { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
 FloatSpec oscillatorDetuneMod { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
 FloatSpec oscillatorModDepth { 0.0f, {0.0f, 10000.0f}, kNormalizePercent|kPermissiveBounds };
 FloatSpec oscillatorModDepthMod { 0.0f, {0.0f, 10000.0f}, kNormalizePercent|kPermissiveBounds };
-Int32Spec oscillatorQuality { 1, {0, 3}, 0 };
 Int64Spec group { 0, {-int32_t_max, uint32_t_max}, 0 };
 UInt16Spec output { 0, {0, config::maxChannels / 2 - 1}, kEnforceBounds };
 FloatSpec offTime { 6e-3f, {0.0f, 100.0f}, kPermissiveBounds };
@@ -162,6 +161,9 @@ FloatSpec flexEGPointLevel { 0.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 FloatSpec flexEGPointLevelMod { 0.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 FloatSpec flexEGPointShape { 0.0f, {-100.0f, 100.0f}, kPermissiveBounds };
 Int32Spec sampleQuality { 2, {0, 10}, 0 };
+Int32Spec oscillatorQuality { 1, {0, 3}, 0 };
+Int32Spec freewheelingSampleQuality { 10, {0, 10}, 0 };
+Int32Spec freewheelingOscillatorQuality { 3, {0, 3}, 0 };
 Int32Spec octaveOffset { 0, {-10, 10}, kPermissiveBounds };
 Int32Spec noteOffset { 0, {-127, 127}, kPermissiveBounds };
 

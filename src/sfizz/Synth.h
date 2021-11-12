@@ -335,6 +335,12 @@ public:
      */
     void setOscillatorQuality(ProcessMode mode, int quality);
     /**
+     * @brief Set whether pressing the sustain pedal cancels the releases
+     *
+     * @param value
+     */
+    void setSustainCancelsRelease(bool value);
+    /**
      * @brief Get the current value for the volume, in dB.
      *
      * @return float
