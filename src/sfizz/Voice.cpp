@@ -218,6 +218,7 @@ struct Voice::Impl
     const NumericId<Voice> id_;
     StateListener* stateListener_ = nullptr;
 
+    const Layer* layer_ { nullptr };
     const Region* region_ { nullptr };
 
     State state_ { State::idle };
@@ -411,6 +412,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     MidiState& midiState = resources.getMidiState();
     CurveSet& curveSet = resources.getCurves();
 
+    impl.layer_ = layer;
     const Region& region = layer->getRegion();
     impl.region_ = &region;
 
@@ -1663,6 +1665,7 @@ bool Voice::Impl::released() const noexcept
 bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
 {
     Impl& impl = *impl_;
+    const Layer* layer = impl.layer_;
     const Region* region = impl.region_;
     if (region == nullptr || other == nullptr)
         return false;
@@ -1673,7 +1676,7 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if ((impl.triggerEvent_.type == TriggerEventType::NoteOn
             ||  impl.triggerEvent_.type == TriggerEventType::CC)
         && region->offBy && *region->offBy == other->group
-        && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
+        && (region->group != other->group || !layer->ccSwitched_.all() || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
     }
@@ -1685,6 +1688,7 @@ void Voice::reset() noexcept
 {
     Impl& impl = *impl_;
     impl.switchState(State::idle);
+    impl.layer_ = nullptr;
     impl.region_ = nullptr;
     impl.currentPromise_.reset();
     impl.sourcePosition_ = 0;
