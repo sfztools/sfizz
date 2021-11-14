@@ -147,7 +147,12 @@ void Layer::updateCCState(int ccNumber, float ccValue) noexcept
         sostenutoPressed_ = newState;
     }
 
-    if (region.ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
+    const auto conditions = region.ccConditions.get(ccNumber);
+
+    if (!conditions)
+        return;
+
+    if (conditions->containsWithEnd(ccValue))
         ccSwitched_.set(ccNumber, true);
     else
         ccSwitched_.set(ccNumber, false);
