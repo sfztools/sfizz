@@ -358,7 +358,7 @@ void sfz::FilePool::removeUnusedPreloadedData() noexcept
         auto copyIt = it++;
         if (copyIt->second.preloadCallCount == 0) {
             DBG("[sfizz] Removing unused loaded data: " << copyIt->first.filename());
-            preloadedFiles.erase(copyIt);
+            loadedFiles.erase(copyIt);
         }
     }
 }
