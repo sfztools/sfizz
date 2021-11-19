@@ -5,7 +5,6 @@
 #include "SIMDHelpers.h"
 #include "utility/SwapAndPop.h"
 #include <absl/algorithm/container.h>
-#include <thread>
 
 sfz::EQHolder::EQHolder(Resources& resources)
 : resources(resources)
