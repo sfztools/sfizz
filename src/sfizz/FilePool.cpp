@@ -339,6 +339,9 @@ void sfz::FilePool::resetPreloadCallCounts() noexcept
 {
     for (auto& preloadedFile: preloadedFiles)
         preloadedFile.second.preloadCallCount = 0;
+
+    for (auto& loadedFile: loadedFiles)
+        loadedFile.second.preloadCallCount = 0;
 }
 
 void sfz::FilePool::removeUnusedPreloadedData() noexcept
@@ -347,6 +350,14 @@ void sfz::FilePool::removeUnusedPreloadedData() noexcept
         auto copyIt = it++;
         if (copyIt->second.preloadCallCount == 0) {
             DBG("[sfizz] Removing unused preloaded data: " << copyIt->first.filename());
+            preloadedFiles.erase(copyIt);
+        }
+    }
+
+    for (auto it = loadedFiles.begin(), end = loadedFiles.end(); it != end; ) {
+        auto copyIt = it++;
+        if (copyIt->second.preloadCallCount == 0) {
+            DBG("[sfizz] Removing unused loaded data: " << copyIt->first.filename());
             preloadedFiles.erase(copyIt);
         }
     }
@@ -364,14 +375,16 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
     const auto frames = static_cast<uint32_t>(reader->frames());
     const auto existingFile = loadedFiles.find(fileId);
     if (existingFile != loadedFiles.end()) {
+        existingFile->second.preloadCallCount++;
         return { &existingFile->second };
     } else {
         fileInformation->sampleRate = static_cast<double>(reader->sampleRate());
-        auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
+        auto insertedPair = loadedFiles.insert_or_assign(fileId, {
             readFromFile(*reader, frames),
             *fileInformation
         });
         insertedPair.first->second.status = FileData::Status::Preloaded;
+        insertedPair.first->second.preloadCallCount++;
         return { &insertedPair.first->second };
     }
 }
@@ -474,6 +487,7 @@ void sfz::FilePool::clear()
     garbageToCollect.clear();
     lastUsedFiles.clear();
     preloadedFiles.clear();
+    loadedFiles.clear();
 }
 
 uint32_t sfz::FilePool::getPreloadSize() const noexcept
