@@ -1406,7 +1406,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
-    ScopedTiming logger { callbackBreakdown_.dispatch, ScopedTiming::Operation::addToDuration };
+    ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     changedCCsThisCycle_.set(ccNumber);
 
