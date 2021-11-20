@@ -100,12 +100,16 @@ sfzEqPeak = fm.rbjPeakingEqSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
 
 // the SFZ low-shelf with EQ controls
 sfzEqLshelf = fm.rbjLowShelfSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
-  Q = sfzGetQFromSlope(slope);
+//  Q = sfzGetQFromSlope(slope);
+  Q = 1./(2.*ma.sinh(0.5*log(2)*bandwidth*w0/sin(w0)));
+  w0 = 2*ma.PI*cutoff/ma.SR;
 };
 
 // the SFZ high-shelf with EQ controls
 sfzEqHshelf = fm.rbjHighShelfSmooth(smoothCoefs,cutoff,pkShGain,Q) with {
-  Q = sfzGetQFromSlope(slope);
+//  Q = sfzGetQFromSlope(slope);
+  Q = 1./(2.*ma.sinh(0.5*log(2)*bandwidth*w0/sin(w0)));
+  w0 = 2*ma.PI*cutoff/ma.SR;
 };
 
 //==============================================================================
