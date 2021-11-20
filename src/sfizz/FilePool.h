@@ -32,8 +32,8 @@
 #include "FileId.h"
 #include "FileMetadata.h"
 #include "SIMDHelpers.h"
-#include "Logger.h"
 #include "SpinMutex.h"
+#include "utility/Timing.h"
 #include "utility/LeakDetector.h"
 #include "utility/MemoryHelpers.h"
 #include <ghc/fs_std.hpp>
@@ -148,7 +148,7 @@ public:
             return;
 
         data->readerCount -= 1;
-        data->lastViewerLeftAt = std::chrono::high_resolution_clock::now();
+        data->lastViewerLeftAt = highResNow();
         data = nullptr;
     }
     ~FileDataHolder()
@@ -192,7 +192,7 @@ public:
      * This creates the background threads based on config::numBackgroundThreads
      * as well as the garbage collection thread.
      */
-    FilePool(Logger& logger);
+    FilePool();
 
     ~FilePool();
     /**
@@ -325,7 +325,6 @@ public:
      */
     void triggerGarbageCollection() noexcept;
 private:
-    Logger& logger;
     fs::path rootDirectory;
 
     bool loadInRam { config::loadInRam };
@@ -340,13 +339,11 @@ private:
     // Structures for the background loaders
     struct QueuedFileData
     {
-        using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
         QueuedFileData() noexcept {}
-        QueuedFileData(std::weak_ptr<FileId> id, FileData* data, TimePoint queuedTime) noexcept
-        : id(id), data(data), queuedTime(queuedTime) {}
+        QueuedFileData(std::weak_ptr<FileId> id, FileData* data) noexcept
+        : id(id), data(data) {}
         std::weak_ptr<FileId> id;
         FileData* data { nullptr };
-        TimePoint queuedTime {};
     };
 
     using FileQueue = atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices>;

@@ -25,6 +25,7 @@
 #include "SynthConfig.h"
 #include "ScopedFTZ.h"
 #include "utility/StringViewHelpers.h"
+#include "utility/Timing.h"
 #include "utility/XmlHelpers.h"
 #include "Voice.h"
 #include "Interpolators.h"
@@ -1037,7 +1038,10 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 {
     Impl& impl = *impl_;
     ScopedFTZ ftz;
-    CallbackBreakdown callbackBreakdown;
+    auto& callbackBreakdown = impl.callbackBreakdown_;
+    impl.resetCallbackBreakdown();
+    callbackBreakdown.dispatch = impl.dispatchDuration_;
+    impl.dispatchDuration_ = 0.0;
 
     { // Silence buffer
         ScopedTiming logger { callbackBreakdown.renderMethod };
@@ -1057,7 +1061,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     if (synthConfig.freeWheeling)
         filePool.waitForBackgroundLoading();
 
-    const auto now = std::chrono::high_resolution_clock::now();
+    const auto now = highResNow();
     const auto timeSinceLastCollection =
         std::chrono::duration_cast<std::chrono::seconds>(now - impl.lastGarbageCollection_);
 
@@ -1179,17 +1183,9 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
     impl.changedCCsThisCycle_.clear();
 
     { // Clear events and advance midi time
-        ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
+        ScopedTiming logger { impl.callbackBreakdown_.dispatch, ScopedTiming::Operation::addToDuration };
         midiState.advanceTime(buffer.getNumFrames());
     }
-
-    callbackBreakdown.dispatch = impl.dispatchDuration_;
-    Logger& logger = impl.resources_.getLogger();
-    logger.logCallbackTime(
-        callbackBreakdown, impl.voiceManager_.getNumActiveVoices(), numFrames);
-
-    // Reset the dispatch counter
-    impl.dispatchDuration_ = Duration(0);
 
     ASSERT(!hasNanInf(buffer.getConstSpan(0)));
     ASSERT(!hasNanInf(buffer.getConstSpan(1)));
@@ -1906,6 +1902,11 @@ void Synth::Impl::resetVoices(int numVoices)
     applySettingsPerVoice();
 }
 
+void Synth::Impl::resetCallbackBreakdown()
+{
+    callbackBreakdown_ = CallbackBreakdown();
+}
+
 void Synth::Impl::applySettingsPerVoice()
 {
     for (auto& voice : voiceManager_) {
@@ -2093,17 +2094,12 @@ bool Synth::shouldReloadScala()
     return impl.resources_.getTuning().shouldReloadScala();
 }
 
-void Synth::enableLogging(absl::string_view prefix) noexcept
+const Synth::CallbackBreakdown& Synth::getCallbackBreakdown() const noexcept
 {
     Impl& impl = *impl_;
-    impl.resources_.getLogger().enableLogging(prefix);
+    return impl.callbackBreakdown_;
 }
 
-void Synth::disableLogging() noexcept
-{
-    Impl& impl = *impl_;
-    impl.resources_.getLogger().disableLogging();
-}
 
 void Synth::allSoundOff() noexcept
 {

@@ -29,6 +29,7 @@ set(SFIZZ_HEADERS
     sfizz/utility/NumericId.h
     sfizz/utility/StringViewHelpers.h
     sfizz/utility/SwapAndPop.h
+    sfizz/utility/Timing.h
     sfizz/utility/XmlHelpers.h
     sfizz/modulations/ModId.h
     sfizz/modulations/ModKey.h
@@ -76,7 +77,6 @@ set(SFIZZ_HEADERS
     sfizz/Interpolators.h
     sfizz/Interpolators.hpp
     sfizz/Layer.h
-    sfizz/Logger.h
     sfizz/LFO.h
     sfizz/LFOCommon.h
     sfizz/LFOCommon.hpp
@@ -137,7 +137,6 @@ set(SFIZZ_SOURCES
     sfizz/MidiState.cpp
     sfizz/Oversampler.cpp
     sfizz/ADSREnvelope.cpp
-    sfizz/Logger.cpp
     sfizz/SfzFilter.cpp
     sfizz/Curve.cpp
     sfizz/Smoothers.cpp

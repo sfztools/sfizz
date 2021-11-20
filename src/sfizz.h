@@ -971,6 +971,7 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @since 0.3.0
  *
  * @note This can produce many outputs so use with caution.
+ *  Deprecated since 1.2.0.
  *
  * @param synth  The synth.
  * @param prefix The prefix.
@@ -978,24 +979,26 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @par Thread-safety constraints
  * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix);
 
 /**
  * @brief Disable logging.
  * @since 0.3.0
  *
  * @param synth  The synth.
+ *  Deprecated since 1.2.0.
  *
  * @par Thread-safety constraints
  * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_disable_logging(sfizz_synth_t* synth);
 
 /**
  * @brief Enable logging of timings to sidecar CSV files.
  * @since 0.3.2
  *
  * @note This can produce many outputs so use with caution.
+ *  Deprecated since 1.2.0.
  *
  * @param synth  The synth.
  * @param prefix The prefix.
@@ -1004,6 +1007,36 @@ SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
  * - TBD ?
  */
 SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
+
+/**
+ * @brief The callback breakdown structure.
+ * @note Times are in seconds.
+ */
+typedef struct
+{
+    double dispatch;
+    double renderMethod;
+    double data;
+    double amplitude;
+    double filters;
+    double panning;
+    double effects;
+} sfizz_callback_breakdown_t;
+
+/**
+ * @brief Get the last callback breakdown. Call after a render method.
+ *
+ * @since 1.2.0
+ *
+ * @param synth
+ * @param breakdown
+ *
+ * @return CallbackBreakdown
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_get_callback_breakdown(sfizz_synth_t* synth, sfizz_callback_breakdown_t* breakdown);
 
 /**
  * @brief Shuts down the current processing, clear buffers and reset the voices.
