@@ -316,7 +316,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
     ///
     if (!strcmp(id, SfzUpdate::getFClassID())) {
         if (!sfzUpdate_->convertFromMessage(*message)) {
-            assert(false);
+            // assert(false);
             return kResultFalse;
         }
 
