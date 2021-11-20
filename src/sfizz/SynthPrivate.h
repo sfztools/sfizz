@@ -197,6 +197,13 @@ struct Synth::Impl final: public Parser::Listener {
      */
     void finalizeSfzLoad();
 
+    /**
+     * @brief Set the current keyswitch, taking into account octave offsets and the like.
+     *
+     * @param noteValue
+     */
+    void setCurrentSwitch(uint8_t noteValue);
+
     template<class T>
     static void collectUsedCCsFromCCMap(BitArray<config::numCCs>& usedCCs, const CCMap<T> map) noexcept
     {
