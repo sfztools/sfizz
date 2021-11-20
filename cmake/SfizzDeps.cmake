@@ -2,10 +2,6 @@ include(CheckCXXSourceCompiles)
 
 # Find system threads
 find_package(Threads REQUIRED)
-if (EMSCRIPTEN)
-    add_link_options("-s USE_PTHREADS=1")
-endif()
-
 
 # Find OpenMP
 find_package(OpenMP)
