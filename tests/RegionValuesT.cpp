@@ -3406,7 +3406,7 @@ TEST_CASE("[Values] Flex EGs")
         "/region0/eg0/point0/time,f : { 0.1 }",
         "/region0/eg0/point0/level,f : { 0.5 }",
         "/region0/eg0/point1/time,f : { 0.4 }",
-        "/region0/eg0/point1/level,f : { 2 }",
+        "/region0/eg0/point1/level,f : { 1 }", // Level values in EGs are clamped in Sforzando
         "/region0/eg1/point0/time,f : { 4 }",
         "/region0/eg1/point0/level,f : { 0.1 }",
     };
