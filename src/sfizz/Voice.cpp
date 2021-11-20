@@ -33,6 +33,7 @@
 #include "BufferPool.h"
 #include "SynthConfig.h"
 #include "utility/Macros.h"
+#include "utility/Timing.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <random>
@@ -285,10 +286,10 @@ struct Voice::Impl
     float waveLeftGain_[config::oscillatorsPerVoice] {};
     float waveRightGain_[config::oscillatorsPerVoice] {};
 
-    Duration dataDuration_;
-    Duration amplitudeDuration_;
-    Duration panningDuration_;
-    Duration filterDuration_;
+    double dataDuration_;
+    double amplitudeDuration_;
+    double panningDuration_;
+    double filterDuration_;
 
     fast_real_distribution<float> uniformNoiseDist_ { -config::uniformNoiseBounds, config::uniformNoiseBounds };
     fast_gaussian_generator<float> gaussianNoiseDist_ { 0.0f, config::noiseVariance };
@@ -2091,25 +2092,25 @@ int Voice::getAge() const noexcept
     return impl.age_;
 }
 
-Duration Voice::getLastDataDuration() const noexcept
+double Voice::getLastDataDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.dataDuration_;
 }
 
-Duration Voice::getLastAmplitudeDuration() const noexcept
+double Voice::getLastAmplitudeDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.amplitudeDuration_;
 }
 
-Duration Voice::getLastFilterDuration() const noexcept
+double Voice::getLastFilterDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.filterDuration_;
 }
 
-Duration Voice::getLastPanningDuration() const noexcept
+double Voice::getLastPanningDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.panningDuration_;

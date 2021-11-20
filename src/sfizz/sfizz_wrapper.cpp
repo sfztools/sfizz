@@ -314,10 +314,8 @@ bool sfizz_should_reload_scala(sfizz_synth_t* synth)
 
 void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 {
-    if (prefix)
-        synth->synth.enableLogging(prefix);
-    else
-        synth->synth.enableLogging();
+    (void)synth;
+    (void)prefix;
 }
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
@@ -328,7 +326,19 @@ void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
-    synth->synth.disableLogging();
+    (void)synth;
+}
+
+void sfizz_get_callback_breakdown(sfizz_synth_t* synth, sfizz_callback_breakdown_t* breakdown)
+{
+    const auto& bd = synth->synth.getCallbackBreakdown();
+    breakdown->amplitude = bd.amplitude;
+    breakdown->panning = bd.panning;
+    breakdown->renderMethod = bd.renderMethod;
+    breakdown->data = bd.data;
+    breakdown->dispatch = bd.dispatch;
+    breakdown->filters = bd.filters;
+    breakdown->effects = bd.effects;
 }
 
 void sfizz_all_sound_off(sfizz_synth_t* synth)

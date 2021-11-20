@@ -13,7 +13,6 @@ namespace sfz {
 struct SynthConfig;
 class BufferPool;
 class MidiState;
-class Logger;
 class CurveSet;
 class FilePool;
 struct WavetablePool;
@@ -50,7 +49,6 @@ public:
     ACCESSOR_RW(getSynthConfig, SynthConfig);
     ACCESSOR_RW(getBufferPool, BufferPool);
     ACCESSOR_RW(getMidiState, MidiState);
-    ACCESSOR_RW(getLogger, Logger);
     ACCESSOR_RW(getCurves, CurveSet);
     ACCESSOR_RW(getFilePool, FilePool);
     ACCESSOR_RW(getWavePool, WavetablePool);

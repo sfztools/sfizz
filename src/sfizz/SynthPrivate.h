@@ -247,6 +247,11 @@ struct Synth::Impl final: public Parser::Listener {
      */
     void checkOffGroups(const Region* region, int delay, int number);
 
+    /**
+     * @brief Resets the callback duration breakdown to 0
+     */
+    void resetCallbackBreakdown();
+
     int numGroups_ { 0 };
     int numMasters_ { 0 };
     int numOutputs_ { 1 };
@@ -340,7 +345,8 @@ struct Synth::Impl final: public Parser::Listener {
         bool haveFilterLFO { false };
     } settingsPerVoice_;
 
-    Duration dispatchDuration_ { 0 };
+    CallbackBreakdown callbackBreakdown_;
+    double dispatchDuration_ { 0 };
 
     std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_;
 

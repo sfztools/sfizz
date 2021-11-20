@@ -910,20 +910,23 @@ public:
      * @since 0.3.2
      *
      * @note This can produce many outputs so use with caution.
+     * Deprecated since 1.2.0
      *
      * @param prefix the file prefix to use for logging.
      *
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void enableLogging(const std::string& prefix) noexcept;
+    SFIZZ_DEPRECATED_API void enableLogging(const std::string& prefix) noexcept;
 
     /**
      * @brief Set the logging prefix.
      *
      * @since 0.3.2
+     * @note Deprecated since 1.2.0
      *
      * @param prefix
+     *
      *
      * @par Thread-safety constraints
      * - TBD ?
@@ -934,11 +937,35 @@ public:
      * @brief Disable logging of timings to sidecar CSV files.
      *
      * @since 0.3.0
+     * @note Deprecated since 1.2.0
      *
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void disableLogging() noexcept;
+    SFIZZ_DEPRECATED_API void disableLogging() noexcept;
+
+    struct CallbackBreakdown
+    {
+        double dispatch;
+        double renderMethod;
+        double data;
+        double amplitude;
+        double filters;
+        double panning;
+        double effects;
+    };
+
+    /**
+     * @brief Get the last callback breakdown. Call after a render method.
+     *
+     * @since 1.2.0
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     *
+     * @return CallbackBreakdown
+     */
+    CallbackBreakdown getCallbackBreakdown() noexcept;
 
     /**
      * @brief Shuts down the current processing, clear buffers and reset the voices.

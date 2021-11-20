@@ -634,17 +634,23 @@ public:
      */
     bool shouldReloadScala();
 
+    struct CallbackBreakdown
+    {
+        double dispatch { 0 };
+        double renderMethod { 0 };
+        double data { 0 };
+        double amplitude { 0 };
+        double filters { 0 };
+        double panning { 0 };
+        double effects { 0 };
+    };
     /**
-     * @brief Enable logging of timings to sidecar CSV files. This can produce
-     * many outputs so use with caution.
+     * @brief View the callback breakdown for the last frame.
+     * Call from the real-time thread after a renderBlock call.
      *
+     * @return const CallbackBreakdown&
      */
-    void enableLogging(absl::string_view prefix = "") noexcept;
-    /**
-     * @brief Disable logging;
-     *
-     */
-    void disableLogging() noexcept;
+    const CallbackBreakdown& getCallbackBreakdown() const noexcept;
 
     /**
      * @brief Shuts down the current processing, clear buffers and reset the voices.

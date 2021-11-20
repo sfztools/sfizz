@@ -334,12 +334,11 @@ bool sfz::Sfizz::shouldReloadScala()
 
 void sfz::Sfizz::enableLogging() noexcept
 {
-    synth->synth.enableLogging();
 }
 
 void sfz::Sfizz::enableLogging(const std::string& prefix) noexcept
 {
-    synth->synth.enableLogging(prefix);
+    (void)prefix;
 }
 
 void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
@@ -349,7 +348,20 @@ void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
 
 void sfz::Sfizz::disableLogging() noexcept
 {
-    synth->synth.disableLogging();
+}
+
+sfz::Sfizz::CallbackBreakdown sfz::Sfizz::getCallbackBreakdown() noexcept
+{
+    CallbackBreakdown breakdown;
+    const auto& bd = synth->synth.getCallbackBreakdown();
+    breakdown.amplitude = bd.amplitude;
+    breakdown.panning = bd.panning;
+    breakdown.renderMethod = bd.renderMethod;
+    breakdown.data = bd.data;
+    breakdown.dispatch = bd.dispatch;
+    breakdown.filters = bd.filters;
+    breakdown.effects = bd.effects;
+    return breakdown;
 }
 
 void sfz::Sfizz::allSoundOff() noexcept

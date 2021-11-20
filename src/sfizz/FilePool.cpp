@@ -140,9 +140,8 @@ void streamFromFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, std:
     }
 }
 
-sfz::FilePool::FilePool(sfz::Logger& logger)
-    : logger(logger),
-      filesToLoad(alignedNew<FileQueue>()),
+sfz::FilePool::FilePool()
+    : filesToLoad(alignedNew<FileQueue>()),
       threadPool(globalThreadPool())
 {
     loadingJobs.reserve(config::maxVoices);
@@ -396,7 +395,7 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
         DBG("[sfizz] File not found in the preloaded files: " << fileId->filename());
         return {};
     }
-    QueuedFileData queuedData { fileId, &preloaded->second, std::chrono::high_resolution_clock::now() };
+    QueuedFileData queuedData { fileId, &preloaded->second };
     if (!filesToLoad->try_push(queuedData)) {
         DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
         return {};
@@ -434,8 +433,6 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
         return;
     }
 
-    const auto loadStartTime = std::chrono::high_resolution_clock::now();
-    const auto waitDuration = loadStartTime - data.queuedTime;
     const fs::path file { rootDirectory / id->filename() };
     std::error_code readError;
     AudioReaderPtr reader = createAudioReader(file, id->isReverse(), &readError);
@@ -468,10 +465,7 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
     if (!data.data->status.compare_exchange_strong(currentStatus, FileData::Status::Streaming))
         return;
 
-    const auto frames = static_cast<uint32_t>(reader->frames());
     streamFromFile(*reader, data.data->fileData, &data.data->availableFrames);
-    const auto loadDuration = std::chrono::high_resolution_clock::now() - loadStartTime;
-    logger.logFileTime(waitDuration, loadDuration, frames, id->filename());
 
     data.data->status = FileData::Status::Done;
 

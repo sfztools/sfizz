@@ -7,7 +7,6 @@ clang-tidy \
   src/sfizz/EQPool.cpp \
   src/sfizz/FilePool.cpp \
   src/sfizz/FilterPool.cpp \
-  src/sfizz/Logger.cpp \
   src/sfizz/MidiState.cpp \
   src/sfizz/Opcode.cpp \
   src/sfizz/Oversampler.cpp \
