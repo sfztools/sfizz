@@ -205,7 +205,7 @@ void Synth::Impl::buildRegion(const std::vector<Opcode>& regionOpcodes)
         previousKeyswitchLists_.push_back(lastLayer);
 
     if (lastRegion->defaultSwitch)
-        currentSwitch_ = *lastRegion->defaultSwitch;
+        setCurrentSwitch(*lastRegion->defaultSwitch);
 
     // There was a combination of group= and polyphony= on a region, so set the group polyphony
     if (lastRegion->group != Default::group && lastRegion->polyphony != config::maxVoices) {
@@ -320,7 +320,7 @@ void Synth::Impl::handleMasterOpcodes(const std::vector<Opcode>& members)
             currentSet_->setPolyphonyLimit(member.read(Default::polyphony));
             break;
         case hash("sw_default"):
-            currentSwitch_ = member.read(Default::key);
+            setCurrentSwitch(member.read(Default::key));
             break;
         }
     }
@@ -337,7 +337,7 @@ void Synth::Impl::handleGlobalOpcodes(const std::vector<Opcode>& members)
             currentSet_->setPolyphonyLimit(member.read(Default::polyphony));
             break;
         case hash("sw_default"):
-            currentSwitch_ = member.read(Default::key);
+            setCurrentSwitch(member.read(Default::key));
             break;
         case hash("volume"):
             // FIXME : Probably best not to mess with this and let the host control the volume
@@ -363,7 +363,7 @@ void Synth::Impl::handleGroupOpcodes(const std::vector<Opcode>& members, const s
             maxPolyphony = member.read(Default::polyphony);
             break;
         case hash("sw_default"):
-            currentSwitch_ = member.read(Default::key);
+            setCurrentSwitch(member.read(Default::key));
             break;
         }
     };
@@ -643,6 +643,11 @@ bool Synth::loadSfzString(const fs::path& path, absl::string_view text)
 
     impl.finalizeSfzLoad();
     return true;
+}
+
+void Synth::Impl::setCurrentSwitch(uint8_t noteValue)
+{
+    currentSwitch_ = noteValue + 12 * octaveOffset_ + noteOffset_;
 }
 
 void Synth::Impl::finalizeSfzLoad()

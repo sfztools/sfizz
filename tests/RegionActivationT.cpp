@@ -8,6 +8,7 @@
 #include "sfizz/Region.h"
 #include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
+#include "TestHelpers.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 using namespace sfz::literals;
@@ -655,3 +656,53 @@ TEST_CASE("[Region activation] Polyphonic aftertouch")
     }
 }
 
+TEST_CASE("[Keyswitches] sw_default with octave_offset")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    std::vector<std::string> expected {
+        "/sw/last/current,i : { 59 }",
+    };
+
+    SECTION("In <global>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <global> sw_default=48
+            <region> sample=*sine
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("In <master>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <master> sw_default=48
+            <region> sample=*sine
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("In <group>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <group> sw_default=48
+            <region> sample=*sine
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("In <region>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <region> sample=*sine sw_default=48
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+}
