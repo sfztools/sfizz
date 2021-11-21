@@ -288,8 +288,26 @@ void Parser::processOpcode()
     }
 
     reader.getChar();
-
     SourceLocation valueStart = reader.location();
+
+    // If we're parsing a base64 data field, ignore comments and process until the next header/directive
+    if (nameExpanded == "base64data") {
+        std::string valueRaw;
+        reader.extractWhile(&valueRaw, [&reader](char c) {
+            if (c == '<' || c == '#')
+                return false;
+
+            return true;
+        });
+        SourceLocation valueEnd = reader.location();
+        _currentOpcodes.emplace_back(nameExpanded, valueRaw);
+
+        if (_listener)
+            _listener->onParseOpcode({ opcodeStart, opcodeEnd }, { valueStart, valueEnd }, nameExpanded, valueRaw);
+
+        return;
+    }
+
     std::string valueRaw;
     extractToEol(reader, &valueRaw);
 

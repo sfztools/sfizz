@@ -206,7 +206,7 @@ public:
      *
      * @return size_t
      */
-    size_t getNumPreloadedSamples() const noexcept { return preloadedFiles.size(); }
+    size_t getNumPreloadedSamples() const noexcept { return preloadedFiles.size() + loadedFiles.size(); }
 
     /**
      * @brief Get metadata information about a file.
@@ -235,6 +235,16 @@ public:
      * @return A handle on the file data
      */
     FileDataHolder loadFile(const FileId& fileId) noexcept;
+
+    /**
+     * @brief Load a file from RAM and return its information. The file pool will store\
+     * this data for future requests so use this function responsibly.
+     *
+     * @param fileId
+     * @param data
+     * @return A handle on the file data
+     */
+    FileDataHolder loadFromRam(const FileId& fileId, const std::vector<char>& data) noexcept;
 
     /**
      * @brief Check that the sample exists. If not, try to find it in a case insensitive way.
@@ -325,6 +335,8 @@ public:
      */
     void triggerGarbageCollection() noexcept;
 private:
+
+    absl::optional<sfz::FileInformation> checkExistingFileInformation(const FileId& fileId) noexcept;
     fs::path rootDirectory;
 
     bool loadInRam { config::loadInRam };

@@ -673,3 +673,75 @@ TEST_CASE("[Parsing] Expanded value of #include")
         REQUIRE(mock.fullBlockHeaders == expectedHeaders);
         REQUIRE(mock.fullBlockMembers == expectedMembers);
 }
+
+TEST_CASE("[Parsing] Sample data")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/opcodeValueWithMultipleConsecutiveSpaces.sfz",R"(
+#define $test 2
+<sample> base64data=fdsfeq==w=ew=/////we/* $test */dsafr
+// fderwq==d=
+<region> sample=*sine
+        )");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"base64data", R"(fdsfeq==w=ew=/////we/* $test */dsafr
+// fderwq==d=)"}},
+            {{"sample", "*sine"}},
+        };
+        std::vector<std::string> expectedHeaders = {
+            "sample", "region"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}
+
+TEST_CASE("[Parsing] Sample data 2")
+{
+        sfz::Parser parser;
+        ParsingMocker mock;
+        parser.setListener(&mock);
+        parser.parseString("/opcodeValueWithMultipleConsecutiveSpaces.sfz",R"(
+#define $test 2
+<region> sample=*sine
+<sample> base64data=fdsfeq==w=ew=/////we/* $test */dsafr
+// fderwq==d=
+        )");
+
+        std::vector<std::vector<sfz::Opcode>> expectedMembers = {
+            {{"sample", "*sine"}},
+            {{"base64data", R"(fdsfeq==w=ew=/////we/* $test */dsafr
+// fderwq==d=)"}},
+        };
+        std::vector<std::string> expectedHeaders = {
+            "region", "sample"
+        };
+        std::vector<sfz::Opcode> expectedOpcodes;
+
+        for (auto& members: expectedMembers)
+            for (auto& opcode: members)
+                expectedOpcodes.push_back(opcode);
+
+        REQUIRE(mock.beginnings == 1);
+        REQUIRE(mock.endings == 1);
+        REQUIRE(mock.errors.empty());
+        REQUIRE(mock.warnings.empty());
+        REQUIRE(mock.opcodes == expectedOpcodes);
+        REQUIRE(mock.headers == expectedHeaders);
+        REQUIRE(mock.fullBlockHeaders == expectedHeaders);
+        REQUIRE(mock.fullBlockMembers == expectedMembers);
+}

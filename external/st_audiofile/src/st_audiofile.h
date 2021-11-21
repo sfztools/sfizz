@@ -14,6 +14,7 @@
 #endif
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #if defined(_WIN32)
 #include <wchar.h>
 #endif
@@ -33,6 +34,7 @@ typedef enum st_audio_file_type {
     st_audio_file_other,
 } st_audio_file_type;
 
+st_audio_file* st_open_memory(const void* memory, size_t length);
 st_audio_file* st_open_file(const char* filename);
 #if defined(_WIN32)
 st_audio_file* st_open_file_w(const wchar_t* filename);

@@ -270,10 +270,10 @@ TEST_CASE("[Files] Channels (channels.sfz)")
     REQUIRE(synth.getRegionView(1)->isStereo());
 }
 
-TEST_CASE("[Files] Channels (channels_multi.sfz)")
+TEST_CASE("[Files] Generators and wavetables")
 {
     Synth synth;
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/channels_multi.sfz");
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/wavetables.sfz");
     REQUIRE(synth.getNumRegions() == 12);
 
     int regionNumber = 0;
@@ -370,6 +370,69 @@ TEST_CASE("[Files] Channels (channels_multi.sfz)")
     REQUIRE(!region->isStereo());
     REQUIRE(region->isGenerator());
     REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
+}
+
+TEST_CASE("[Files] Embedded wavetables")
+{
+    Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/wavetables_embedded.sfz");
+    REQUIRE(synth.getNumRegions() == 7);
+
+    int regionNumber = 0;
+    const Region* region = nullptr;
+
+    // explicit wavetable
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::On);
+
+    // explicit wavetable with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
+    REQUIRE(region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::On);
+
+    // explicit disabled wavetable
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Off);
+
+    // explicit disabled wavetable with multi
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "ramp_wave.wav");
+    REQUIRE(!region->isStereo());
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Off);
+
+    // implicit wavetable (sound file < 3000 frames and wavetable tags)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "wavetables/surge.wav");
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
+
+    // Parse oscillator=auto and same as above
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "wavetables/surge.wav");
+    REQUIRE(!region->isGenerator());
+    REQUIRE(region->isOscillator());
+    REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
+
+    // implicit non wavetable (sound file < 3000 frames but no wavetable tags)
+    region = synth.getRegionView(regionNumber++);
+    REQUIRE(region->sampleId->filename() == "short_non_wavetable.wav");
+    REQUIRE(!region->isGenerator());
+    REQUIRE(!region->isOscillator());
     REQUIRE(region->oscillatorEnabled == OscillatorEnabled::Auto);
 }
 
@@ -714,4 +777,44 @@ TEST_CASE("[Files] Unused samples are cleared on reloading")
         <region> sample=*sine
     )");
     REQUIRE(synth.getNumPreloadedSamples() == 0);
+}
+
+TEST_CASE("[Files] Embedded sample data")
+{
+    sfz::Synth synth1;
+    sfz::Synth synth2;
+    synth1.loadSfzFile(fs::current_path() / "tests/TestFiles/kick.sfz");
+    synth2.loadSfzFile(fs::current_path() / "tests/TestFiles/kick_embedded.sfz");
+    REQUIRE(synth1.getNumPreloadedSamples() == 1);
+    REQUIRE(synth2.getNumPreloadedSamples() == 1);
+
+    AudioBuffer<float> buffer1 { 2, 1024 };
+    AudioBuffer<float> buffer2 { 2, 1024 };
+    synth1.noteOn(0, 60, 100);
+    synth2.noteOn(0, 60, 100);
+
+    for (unsigned i = 0; i < 100; ++i) {
+        synth1.renderBlock(buffer1);
+        synth2.renderBlock(buffer2);
+        bool equal = true;
+        for (unsigned j = 0; j < buffer1.getNumFrames(); ++j) {
+            equal &= (buffer1.getSample(0, j) == buffer2.getSample(0, j));
+            equal &= (buffer1.getSample(1, j) == buffer2.getSample(1, j));
+        }
+        REQUIRE(equal);
+    }
+}
+
+TEST_CASE("[Files] Key center from audio file, with embedded sample data")
+{
+    sfz::Synth synth;
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/sample_keycenter_embedded.sfz");
+
+    REQUIRE(synth.getNumRegions() == 6);
+    REQUIRE(synth.getRegionView(0)->pitchKeycenter == 38);
+    REQUIRE(synth.getRegionView(1)->pitchKeycenter == 62);
+    REQUIRE(synth.getRegionView(2)->pitchKeycenter == 38);
+    REQUIRE(synth.getRegionView(3)->pitchKeycenter == 62);
+    REQUIRE(synth.getRegionView(4)->pitchKeycenter == 10);
+    REQUIRE(synth.getRegionView(5)->pitchKeycenter == 62);
 }

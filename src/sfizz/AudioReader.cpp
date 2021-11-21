@@ -6,6 +6,7 @@
 
 #include "AudioReader.h"
 #include "FileMetadata.h"
+#include <absl/memory/memory.h>
 #include <st_audiofile.hpp>
 #if defined(SFIZZ_USE_SNDFILE)
 #include <sndfile.h>
@@ -16,17 +17,19 @@ namespace sfz {
 
 class BasicSndfileReader : public AudioReader {
 public:
-    explicit BasicSndfileReader(ST_AudioFile handle) : handle_(std::move(handle)) {}
+    explicit BasicSndfileReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader)
+    : handle_(std::move(handle)), mdReader_(std::move(mdReader)) {}
     virtual ~BasicSndfileReader() {}
 
     int format() const override;
     int64_t frames() const override;
     unsigned channels() const override;
     unsigned sampleRate() const override;
-    bool getInstrument(InstrumentInfo* instrument) override;
-
+    bool getInstrumentInfo(InstrumentInfo& instrument) override;
+    bool getWavetableInfo(WavetableInfo& instrument) override;
 protected:
     ST_AudioFile handle_;
+    std::unique_ptr<MetadataReader> mdReader_;
 };
 
 int BasicSndfileReader::format() const
@@ -49,7 +52,21 @@ unsigned BasicSndfileReader::sampleRate() const
     return handle_.get_sample_rate();
 }
 
-bool BasicSndfileReader::getInstrument(InstrumentInfo* instrument)
+bool BasicSndfileReader::getWavetableInfo(WavetableInfo& wt)
+{
+    if (!mdReader_)
+        return false;
+
+    if (!mdReader_->isOpened())
+        mdReader_->open();
+
+    if (mdReader_->isOpened())
+        return mdReader_->extractWavetableInfo(wt);
+
+    return false;
+};
+
+bool BasicSndfileReader::getInstrumentInfo(InstrumentInfo& instrument)
 {
 #if defined(SFIZZ_USE_SNDFILE)
     SNDFILE* sndfile = reinterpret_cast<SNDFILE*>(handle_.get_sndfile_handle());
@@ -57,7 +74,14 @@ bool BasicSndfileReader::getInstrument(InstrumentInfo* instrument)
     if (sf_command(sndfile, SFC_GET_INSTRUMENT, sfins, sizeof(SF_INSTRUMENT)) == SF_TRUE)
         return true;
 #else
-    (void)instrument;
+    if (!mdReader_)
+        return false;
+
+    if (!mdReader_->isOpened())
+        mdReader_->open();
+
+    if (mdReader_->isOpened())
+        return mdReader_->extractInstrument(instrument);
 #endif
     return false;
 }
@@ -69,13 +93,13 @@ bool BasicSndfileReader::getInstrument(InstrumentInfo* instrument)
  */
 class ForwardReader : public BasicSndfileReader {
 public:
-    explicit ForwardReader(ST_AudioFile handle);
+    explicit ForwardReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader);
     AudioReaderType type() const override;
     size_t readNextBlock(float* buffer, size_t frames) override;
 };
 
-ForwardReader::ForwardReader(ST_AudioFile handle)
-    : BasicSndfileReader(std::move(handle))
+ForwardReader::ForwardReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader)
+    : BasicSndfileReader(std::move(handle), std::move(mdReader))
 {
 }
 
@@ -138,7 +162,7 @@ static void reverse_frames(float* data, size_t frames, unsigned channels)
  */
 class ReverseReader : public BasicSndfileReader {
 public:
-    explicit ReverseReader(ST_AudioFile handle);
+    explicit ReverseReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader);
     AudioReaderType type() const override;
     size_t readNextBlock(float* buffer, size_t frames) override;
 
@@ -146,8 +170,8 @@ private:
     uint64_t position_ {};
 };
 
-ReverseReader::ReverseReader(ST_AudioFile handle)
-    : BasicSndfileReader(std::move(handle))
+ReverseReader::ReverseReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader)
+    : BasicSndfileReader(std::move(handle), std::move(mdReader))
 {
     position_ = handle_.get_frame_count();
 }
@@ -183,7 +207,7 @@ size_t ReverseReader::readNextBlock(float* buffer, size_t frames)
  */
 class NoSeekReverseReader : public BasicSndfileReader {
 public:
-    explicit NoSeekReverseReader(ST_AudioFile handle);
+    explicit NoSeekReverseReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader);
     AudioReaderType type() const override;
     size_t readNextBlock(float* buffer, size_t frames) override;
 
@@ -195,8 +219,8 @@ private:
     uint64_t fileFramesLeft_ { 0 };
 };
 
-NoSeekReverseReader::NoSeekReverseReader(ST_AudioFile handle)
-    : BasicSndfileReader(std::move(handle))
+NoSeekReverseReader::NoSeekReverseReader(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader)
+    : BasicSndfileReader(std::move(handle), std::move(mdReader))
 {
 }
 
@@ -281,6 +305,7 @@ const std::error_category& undetailed_category()
 }
 
 //------------------------------------------------------------------------------
+static fs::path emptyPath_ {};
 
 class DummyAudioReader : public AudioReader {
 public:
@@ -291,8 +316,7 @@ public:
     unsigned channels() const override { return 1; }
     unsigned sampleRate() const override { return 44100; }
     size_t readNextBlock(float*, size_t) override { return 0; }
-    bool getInstrument(InstrumentInfo* ) override { return false; }
-
+    bool getInstrumentInfo(InstrumentInfo& ) override { return false; }
 private:
     AudioReaderType type_ {};
 };
@@ -334,7 +358,7 @@ static bool formatHasFastSeeking(int format)
 }
 #endif
 
-static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, bool reverse, std::error_code* ec)
+static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, std::unique_ptr<MetadataReader> mdReader, bool reverse, std::error_code* ec)
 {
     AudioReaderPtr reader;
 
@@ -347,7 +371,7 @@ static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, bool reve
         reader.reset(new DummyAudioReader(reverse ? AudioReaderType::Reverse : AudioReaderType::Forward));
     }
     else if (!reverse)
-        reader.reset(new ForwardReader(std::move(handle)));
+        reader.reset(new ForwardReader(std::move(handle), std::move(mdReader)));
     else {
 #if defined(SFIZZ_USE_SNDFILE)
         bool hasFastSeeking = formatHasFastSeeking(handle.get_sndfile_format());
@@ -355,9 +379,9 @@ static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, bool reve
         bool hasFastSeeking = true;
 #endif
         if (hasFastSeeking)
-            reader.reset(new ReverseReader(std::move(handle)));
+            reader.reset(new ReverseReader(std::move(handle), std::move(mdReader)));
         else
-            reader.reset(new NoSeekReverseReader(std::move(handle)));
+            reader.reset(new NoSeekReverseReader(std::move(handle), std::move(mdReader)));
     }
 
     return reader;
@@ -371,47 +395,16 @@ AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, std::error_
 #else
     handle.open_file(path.c_str());
 #endif
-    return createAudioReaderWithHandle(std::move(handle), reverse, ec);
+    return createAudioReaderWithHandle(std::move(handle),
+        absl::make_unique<FileMetadataReader>(path), reverse, ec);
 }
 
-static AudioReaderPtr createExplicitAudioReaderWithHandle(ST_AudioFile handle, AudioReaderType type, std::error_code* ec)
-{
-    AudioReaderPtr reader;
-
-    if (ec)
-        ec->clear();
-
-    if (!handle) {
-        if (ec)
-            *ec = std::error_code(1, undetailed_category());
-        reader.reset(new DummyAudioReader(type));
-    }
-    else {
-        switch (type) {
-        case AudioReaderType::Forward:
-            reader.reset(new ForwardReader(std::move(handle)));
-            break;
-        case AudioReaderType::Reverse:
-            reader.reset(new ReverseReader(std::move(handle)));
-            break;
-        case AudioReaderType::NoSeekReverse:
-            reader.reset(new NoSeekReverseReader(std::move(handle)));
-            break;
-        }
-    }
-
-    return reader;
-}
-
-AudioReaderPtr createExplicitAudioReader(const fs::path& path, AudioReaderType type, std::error_code* ec)
+AudioReaderPtr createAudioReaderFromMemory(const void* memory, size_t length, bool reverse, std::error_code* ec)
 {
     ST_AudioFile handle;
-#if defined(_WIN32)
-    handle.open_file_w(path.wstring().c_str());
-#else
-    handle.open_file(path.c_str());
-#endif
-    return createExplicitAudioReaderWithHandle(std::move(handle), type, ec);
+    handle.open_memory(memory, length);
+    return createAudioReaderWithHandle(std::move(handle),
+        absl::make_unique<MemoryMetadataReader>(memory, length), reverse, ec);
 }
 
 } // namespace sfz

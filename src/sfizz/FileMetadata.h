@@ -81,19 +81,10 @@ struct WavetableInfo {
     bool oneShot;
 };
 
-class FileMetadataReader {
+class MetadataReader {
 public:
-    FileMetadataReader();
-    ~FileMetadataReader();
-
-    /**
-     * @brief Open an audio file of supported format and read internal structures
-     */
-    bool open(const fs::path& path);
-    /**
-     * @brief Close an audio file
-     */
-    void close();
+    MetadataReader();
+    virtual ~MetadataReader();
 
     /**
      * @brief Get the number of RIFF chunks in the file
@@ -132,7 +123,66 @@ public:
      */
     bool extractWavetableInfo(WavetableInfo& wt);
 
+    /**
+     * @brief Opens the metadata reader and perform initialization.
+     *  If the reader is opened already it closes it and reopens.
+     *
+     * @return true
+     * @return false
+     */
+    bool open();
+
+    /**
+     * @brief Check if the reader is already opened
+     *
+     * @return true
+     * @return false
+     */
+    bool isOpened();
+
+    /**
+     * @brief Close the metadata reader
+     *
+     */
+    void close();
+protected:
+    virtual bool doOpen() { return true; };
+    virtual void doClose() {}
+    virtual size_t doRead(void* ptr, size_t size, size_t n) = 0;
+    virtual int doSeek(long off, int whence) = 0;
+    virtual void doRewind() = 0;
+    virtual long doTell() = 0;
 private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
+class FileMetadataReader: public MetadataReader {
+public:
+    FileMetadataReader(const fs::path& path);
+    ~FileMetadataReader();
+private:
+    bool doOpen() override;
+    void doClose() override;
+    size_t doRead(void* ptr, size_t size, size_t n) override;
+    int doSeek(long off, int whence) override;
+    void doRewind() override;
+    long doTell() override;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
+class MemoryMetadataReader: public MetadataReader {
+public:
+    MemoryMetadataReader(const void* memory, size_t length);
+    ~MemoryMetadataReader();
+private:
+    bool doOpen() override;
+    void doClose() override;
+    size_t doRead(void* ptr, size_t size, size_t n) override;
+    int doSeek(long off, int whence) override;
+    void doRewind() override;
+    long doTell() override;
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
