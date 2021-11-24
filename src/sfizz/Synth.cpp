@@ -24,6 +24,7 @@
 #include "Metronome.h"
 #include "SynthConfig.h"
 #include "ScopedFTZ.h"
+#include "utility/Base64.h"
 #include "utility/StringViewHelpers.h"
 #include "utility/Timing.h"
 #include "utility/XmlHelpers.h"
@@ -129,6 +130,9 @@ void Synth::Impl::onParseFullBlock(const std::string& header, const std::vector<
         break;
     case hash("effect"):
         handleEffectOpcodes(members);
+        break;
+    case hash("sample"):
+        handleSampleOpcodes(members);
         break;
     default:
         std::cerr << "Unknown header: " << header << '\n';
@@ -547,6 +551,47 @@ void Synth::Impl::handleEffectOpcodes(const std::vector<Opcode>& rawMembers)
     fx->setSampleRate(sampleRate_);
     fx->setSamplesPerBlock(samplesPerBlock_);
     getOrCreateBus(busIndex).addEffect(std::move(fx));
+}
+
+void Synth::Impl::handleSampleOpcodes(const std::vector<Opcode>& rawMembers)
+{
+    absl::string_view name { "" };
+    bool hasData { false };
+    absl::string_view sampleData;
+
+    for (const Opcode& opcode : rawMembers) {
+        switch (opcode.lettersOnlyHash) {
+        case hash("name"):
+            name = opcode.value;
+            break;
+        case hash("base&data"):
+            if (opcode.parameters.front() == 64)
+                sampleData = opcode.value;
+            break;
+        case hash("data"):
+            hasData = true;
+            break;
+        }
+    }
+
+    if (name.empty())
+        return;
+
+    if (hasData && sampleData.empty()) {
+        DBG("The sample data provided for sample " << name
+            << " doesn't use base64 encoding, which is the only one sfizz knows how to decode.\n "
+            << "If it does, please use base64data= instead of data=."
+        );
+        return;
+    }
+
+    if (sampleData.empty())
+        return;
+
+    auto data = decodeBase64(sampleData);
+    FilePool& filePool = resources_.getFilePool();
+    FileId id { std::string(name) };
+    filePool.loadFromRam(id, data);
 }
 
 void Synth::Impl::resetDefaultCCValues() noexcept

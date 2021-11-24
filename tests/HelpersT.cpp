@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "sfizz/utility/StringViewHelpers.h"
+#include "sfizz/utility/Base64.h"
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"
 using namespace Catch::literals;
@@ -64,5 +65,80 @@ TEST_CASE("[Helpers] trim")
     {
         absl::string_view input { "     " };
         REQUIRE(trim(input).empty());
+    }
+}
+
+TEST_CASE("[Parsing] Base64")
+{
+    {
+        auto result = sfz::decodeBase64("");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zg==");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "f" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zg");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "f" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm8=");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "fo" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm8");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "fo" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9v");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "foo" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9vYg==");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "foob" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9vYg");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "foob" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9vYmE=");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "fooba" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9vYmE");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "fooba" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9vYmFy");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "foobar" );
+    }
+
+    {
+        auto result = sfz::decodeBase64("Zm9v\r\n Ym   \tFy");
+        absl::string_view view { result.data(), result.size() };
+        REQUIRE( view  == "foobar" );
     }
 }

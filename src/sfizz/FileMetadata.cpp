@@ -52,50 +52,12 @@ static uint16_t u16be(const uint8_t *bytes)
     return (bytes[0] << 8) | bytes[1];
 }
 
-static bool fread_u32le(FILE* stream, uint32_t& value)
-{
-    uint8_t bytes[4];
-    if (fread(bytes, 4, 1, stream) != 1)
-        return false;
-    value = u32le(bytes);
-    return true;
-}
-
-static bool fread_u32be(FILE* stream, uint32_t& value)
-{
-    uint8_t bytes[4];
-    if (fread(bytes, 4, 1, stream) != 1)
-        return false;
-    value = u32be(bytes);
-    return true;
-}
-
-#if 0
-static bool fread_u16le(FILE* stream, uint16_t& value)
-{
-    uint8_t bytes[2];
-    if (fread(bytes, 2, 1, stream) != 1)
-        return false;
-    value = u16le(bytes);
-    return true;
-}
-#endif
-
-static bool fread_u16be(FILE* stream, uint16_t& value)
-{
-    uint8_t bytes[2];
-    if (fread(bytes, 2, 1, stream) != 1)
-        return false;
-    value = u16be(bytes);
-    return true;
-}
-
 //------------------------------------------------------------------------------
 
-struct FileMetadataReader::Impl {
-    FILE_u stream_;
+struct MetadataReader::Impl {
+    MetadataReader* parent;
     std::vector<RiffChunkInfo> riffChunks_;
-
+    bool opened_ { false };
     enum class ChunkType { None, Riff, Aiff };
     ChunkType chunkType_ = ChunkType::None;
 
@@ -110,35 +72,72 @@ struct FileMetadataReader::Impl {
     const RiffChunkInfo* riffChunk(size_t index) const;
     const RiffChunkInfo* riffChunkById(RiffChunkId id) const;
     size_t readRiffData(size_t index, void* buffer, size_t count);
+    bool read_u32le(uint32_t& value);
+    bool read_u32be(uint32_t& value);
+    bool read_u16le(uint16_t& value);
+    bool read_u16be(uint16_t& value);
 };
 
-FileMetadataReader::FileMetadataReader()
+bool MetadataReader::Impl::read_u32le(uint32_t& value)
+{
+    uint8_t bytes[4];
+    if (parent->doRead(bytes, 4, 1) != 1)
+        return false;
+    value = u32le(bytes);
+    return true;
+}
+
+bool MetadataReader::Impl::read_u32be(uint32_t& value)
+{
+    uint8_t bytes[4];
+    if (parent->doRead(bytes, 4, 1) != 1)
+        return false;
+    value = u32be(bytes);
+    return true;
+}
+
+#if 0
+bool MetadataReader::Impl::read_u16le(uint16_t& value)
+{
+    uint8_t bytes[2];
+    if (parent->do_read(bytes, 2, 1) != 1)
+        return false;
+    value = u16le(bytes);
+    return true;
+}
+#endif
+
+bool MetadataReader::Impl::read_u16be(uint16_t& value)
+{
+    uint8_t bytes[2];
+    if (parent->doRead(bytes, 2, 1) != 1)
+        return false;
+    value = u16be(bytes);
+    return true;
+}
+
+MetadataReader::MetadataReader()
     : impl_(new Impl)
 {
+    impl_->parent = this;
     impl_->riffChunks_.reserve(16);
 }
 
-FileMetadataReader::~FileMetadataReader()
+MetadataReader::~MetadataReader()
 {
+
 }
 
-bool FileMetadataReader::open(const fs::path& path)
+bool MetadataReader::open()
 {
     close();
-
-#if !defined(_WIN32)
-    FILE* stream = fopen(path.c_str(), "rb");
-#else
-    FILE* stream = _wfopen(path.wstring().c_str(), L"rb");
-#endif
-
-    if (!stream)
+    if (!doOpen())
         return false;
 
-    impl_->stream_.reset(stream);
-
+    Impl& impl = *impl_;
+    impl.opened_ = true;
     char magic[4];
-    size_t count = fread(magic, 1, sizeof(magic), stream);
+    size_t count = doRead(magic, 1, sizeof(magic));
 
     if (count >= 4 && !memcmp(magic, "fLaC", 4)) {
         if (!impl_->openFlac()) {
@@ -165,96 +164,99 @@ bool FileMetadataReader::open(const fs::path& path)
     return true;
 }
 
-void FileMetadataReader::close()
+bool MetadataReader::isOpened()
 {
-    impl_->stream_.reset();
-    impl_->riffChunks_.clear();
+    return impl_->opened_;
 }
 
-bool FileMetadataReader::Impl::openFlac()
+void MetadataReader::close()
 {
-    FILE* stream = stream_.get();
+    Impl& impl = *impl_;
+    impl.riffChunks_.clear();
+    doClose();
+    impl.opened_ = false;
+}
+
+bool MetadataReader::Impl::openFlac()
+{
     std::vector<RiffChunkInfo>& riffChunks = riffChunks_;
 
-    if (fseek(stream, 4, SEEK_SET) != 0)
+    if (parent->doSeek(4, SEEK_SET) != 0)
         return false;
 
     uint32_t header = 0;
     while (((header >> 31) & 1) != 1) {
-        if (!fread_u32be(stream, header))
+        if (!read_u32be(header))
             return false;
 
         const uint32_t blockType = (header >> 24) & 0x7f;
         const uint32_t blockSize = header & ((1 << 24) - 1);
 
-        const off_t offStartBlock = ftell(stream);
+        const off_t offStartBlock = parent->doTell();
         const off_t offNextBlock = offStartBlock + blockSize;
 
         if (blockType == 2) { // APPLICATION block
             char blockId[4];
             char riffId[4];
             uint32_t riffChunkSize;
-            if (fread(blockId, 4, 1, stream) == 1 && memcmp(blockId, "riff", 4) == 0 &&
-                fread(riffId, 4, 1, stream) == 1 &&
-                fread_u32le(stream, riffChunkSize) && riffChunkSize <= blockSize - 12)
+            if (parent->doRead(blockId, 4, 1) == 1 && memcmp(blockId, "riff", 4) == 0 &&
+                parent->doRead(riffId, 4, 1) == 1 &&
+                read_u32le(riffChunkSize) && riffChunkSize <= blockSize - 12)
             {
                 RiffChunkInfo info;
                 info.index = riffChunks.size();
-                info.fileOffset = ftell(stream);
+                info.fileOffset = parent->doTell();
                 memcpy(info.id.data(), riffId, 4);
                 info.length = riffChunkSize;
                 riffChunks.push_back(info);
             }
         }
 
-        if (fseek(stream, offNextBlock, SEEK_SET) != 0)
+        if (parent->doSeek(offNextBlock, SEEK_SET) != 0)
             return false;
     }
 
     return true;
 }
 
-bool FileMetadataReader::Impl::openRiff()
+bool MetadataReader::Impl::openRiff()
 {
-    FILE* stream = stream_.get();
     std::vector<RiffChunkInfo>& riffChunks = riffChunks_;
 
-    if (fseek(stream, 12, SEEK_SET) != 0)
+    if (parent->doSeek(12, SEEK_SET) != 0)
         return false;
 
     char riffId[4];
     uint32_t riffChunkSize;
-    while (fread(riffId, 4, 1, stream) == 1 && fread_u32le(stream, riffChunkSize)) {
+    while (parent->doRead(riffId, 4, 1) == 1 && read_u32le(riffChunkSize)) {
         RiffChunkInfo info;
         info.index = riffChunks.size();
-        info.fileOffset = ftell(stream);
+        info.fileOffset = parent->doTell();
         memcpy(info.id.data(), riffId, 4);
         info.length = riffChunkSize;
         riffChunks.push_back(info);
 
-        if (fseek(stream, riffChunkSize + (riffChunkSize & 1), SEEK_CUR) != 0)
+        if (parent->doSeek(riffChunkSize + (riffChunkSize & 1), SEEK_CUR) != 0)
             return false;
     }
 
     return true;
 }
 
-bool FileMetadataReader::Impl::openAiff()
+bool MetadataReader::Impl::openAiff()
 {
-    FILE* stream = stream_.get();
-
-    rewind(stream);
+    parent->doRewind();
 
     char formId[4];
     uint32_t formSize;
-    if (fread(formId, 4, 1, stream) != 1 || memcmp(formId, "FORM", 4) ||
-        !fread_u32be(stream, formSize))
+    if (parent->doRead(formId, 4, 1) != 1 || memcmp(formId, "FORM", 4) ||
+        !read_u32be(formSize))
     {
         return false;
     }
 
     char aiffId[4];
-    if (fread(aiffId, 4, 1, stream) != 1 ||
+    if (parent->doRead(aiffId, 4, 1) != 1 ||
         (memcmp(aiffId, "AIFF", 4) && memcmp(aiffId, "AIFC", 4)))
     {
         return false;
@@ -264,42 +266,42 @@ bool FileMetadataReader::Impl::openAiff()
 
     char riffId[4];
     uint32_t riffChunkSize;
-    while (fread(riffId, 4, 1, stream) == 1 && fread_u32be(stream, riffChunkSize)) {
+    while (parent->doRead(riffId, 4, 1) == 1 && read_u32be(riffChunkSize)) {
         RiffChunkInfo info;
         info.index = riffChunks.size();
-        info.fileOffset = ftell(stream);
+        info.fileOffset = parent->doTell();
         memcpy(info.id.data(), riffId, 4);
         info.length = riffChunkSize;
         riffChunks.push_back(info);
 
-        if (fseek(stream, riffChunkSize + (riffChunkSize & 1), SEEK_CUR) != 0)
+        if (parent->doSeek(riffChunkSize + (riffChunkSize & 1), SEEK_CUR) != 0)
             return false;
     }
 
     return true;
 }
 
-size_t FileMetadataReader::riffChunkCount() const
+size_t MetadataReader::riffChunkCount() const
 {
     return impl_->riffChunks_.size();
 }
 
-const RiffChunkInfo* FileMetadataReader::riffChunk(size_t index) const
+const RiffChunkInfo* MetadataReader::riffChunk(size_t index) const
 {
     return impl_->riffChunk(index);
 }
 
-const RiffChunkInfo* FileMetadataReader::Impl::riffChunk(size_t index) const
+const RiffChunkInfo* MetadataReader::Impl::riffChunk(size_t index) const
 {
     return (index < riffChunks_.size()) ? &riffChunks_[index] : nullptr;
 }
 
-const RiffChunkInfo* FileMetadataReader::riffChunkById(RiffChunkId id) const
+const RiffChunkInfo* MetadataReader::riffChunkById(RiffChunkId id) const
 {
     return impl_->riffChunkById(id);
 }
 
-const RiffChunkInfo* FileMetadataReader::Impl::riffChunkById(RiffChunkId id) const
+const RiffChunkInfo* MetadataReader::Impl::riffChunkById(RiffChunkId id) const
 {
     for (const RiffChunkInfo& riff : riffChunks_) {
         if (riff.id == id)
@@ -308,12 +310,12 @@ const RiffChunkInfo* FileMetadataReader::Impl::riffChunkById(RiffChunkId id) con
     return nullptr;
 }
 
-size_t FileMetadataReader::readRiffData(size_t index, void* buffer, size_t count)
+size_t MetadataReader::readRiffData(size_t index, void* buffer, size_t count)
 {
     return impl_->readRiffData(index, buffer, count);
 }
 
-size_t FileMetadataReader::Impl::readRiffData(size_t index, void* buffer, size_t count)
+size_t MetadataReader::Impl::readRiffData(size_t index, void* buffer, size_t count)
 {
     const RiffChunkInfo* riff = riffChunk(index);
     if (!riff)
@@ -321,14 +323,13 @@ size_t FileMetadataReader::Impl::readRiffData(size_t index, void* buffer, size_t
 
     count = (count < riff->length) ? count : riff->length;
 
-    FILE* stream = stream_.get();
-    if (fseek(stream, riff->fileOffset, SEEK_SET) != 0)
+    if (parent->doSeek(riff->fileOffset, SEEK_SET) != 0)
         return 0;
 
-    return fread(buffer, 1, count, stream);
+    return parent->doRead(buffer, 1, count);
 }
 
-bool FileMetadataReader::extractInstrument(InstrumentInfo& ins)
+bool MetadataReader::extractInstrument(InstrumentInfo& ins)
 {
     if (extractRiffInstrument(ins))
         return true;
@@ -339,7 +340,7 @@ bool FileMetadataReader::extractInstrument(InstrumentInfo& ins)
     return false;
 }
 
-bool FileMetadataReader::extractRiffInstrument(InstrumentInfo& ins)
+bool MetadataReader::extractRiffInstrument(InstrumentInfo& ins)
 {
     if (impl_->chunkType_ != Impl::ChunkType::Riff)
         return false;
@@ -399,9 +400,10 @@ bool FileMetadataReader::extractRiffInstrument(InstrumentInfo& ins)
     return true;
 }
 
-bool FileMetadataReader::extractAiffInstrument(InstrumentInfo& ins)
+bool MetadataReader::extractAiffInstrument(InstrumentInfo& ins)
 {
-    if (impl_->chunkType_ != Impl::ChunkType::Aiff)
+    Impl& impl = *impl_;
+    if (impl.chunkType_ != Impl::ChunkType::Aiff)
         return false;
 
     const RiffChunkInfo* instChunk = riffChunkById(RiffChunkId{'I', 'N', 'S', 'T'});
@@ -418,12 +420,11 @@ bool FileMetadataReader::extractAiffInstrument(InstrumentInfo& ins)
     //
     std::map<uint16_t, uint32_t> markers;
     if (markChunk) {
-        FILE* stream = impl_->stream_.get();
-        if (fseek(stream, markChunk->fileOffset, SEEK_SET) != 0)
+        if (doSeek(markChunk->fileOffset, SEEK_SET) != 0)
             return false;
 
         uint16_t numMarkers;
-        if (!fread_u16be(stream, numMarkers))
+        if (!impl.read_u16be(numMarkers))
             return false;
 
         for (uint32_t i = 0; i < numMarkers; ++i) {
@@ -432,12 +433,12 @@ bool FileMetadataReader::extractAiffInstrument(InstrumentInfo& ins)
             uint8_t size;
             char name[256];
 
-            if (!fread_u16be(stream, id) || !fread_u32be(stream, position) || fread(&size, 1, 1, stream) != 1 || fread(name, size, 1, stream) != 1)
+            if (!impl.read_u16be(id) || !impl.read_u32be(position) || doRead(&size, 1, 1) != 1 || doRead(name, size, 1) != 1)
                 return false;
             name[size] = '\0';
 
             if (i + 1 < numMarkers && ((~size) & 1)) {
-                if (fseek(stream, 1, SEEK_CUR) != 0)
+                if (doSeek(1, SEEK_CUR) != 0)
                     return false;
             }
 
@@ -502,7 +503,7 @@ bool FileMetadataReader::extractAiffInstrument(InstrumentInfo& ins)
     return true;
 }
 
-bool FileMetadataReader::extractWavetableInfo(WavetableInfo& wt)
+bool MetadataReader::extractWavetableInfo(WavetableInfo& wt)
 {
     if (impl_->extractClmWavetable(wt))
         return true;
@@ -520,7 +521,7 @@ bool FileMetadataReader::extractWavetableInfo(WavetableInfo& wt)
     return false;
 }
 
-bool FileMetadataReader::Impl::extractClmWavetable(WavetableInfo &wt)
+bool MetadataReader::Impl::extractClmWavetable(WavetableInfo &wt)
 {
     const RiffChunkInfo* clm = riffChunkById(RiffChunkId{'c', 'l', 'm', ' '});
     if (!clm)
@@ -551,7 +552,7 @@ bool FileMetadataReader::Impl::extractClmWavetable(WavetableInfo &wt)
     return true;
 }
 
-bool FileMetadataReader::Impl::extractSurgeWavetable(WavetableInfo &wt)
+bool MetadataReader::Impl::extractSurgeWavetable(WavetableInfo &wt)
 {
     const RiffChunkInfo* srge;
 
@@ -574,7 +575,7 @@ bool FileMetadataReader::Impl::extractSurgeWavetable(WavetableInfo &wt)
     return true;
 }
 
-bool FileMetadataReader::Impl::extractUheWavetable(WavetableInfo &wt)
+bool MetadataReader::Impl::extractUheWavetable(WavetableInfo &wt)
 {
     const RiffChunkInfo* uhwt = riffChunkById(RiffChunkId{'u', 'h', 'W', 'T'});
     if (!uhwt)
@@ -594,6 +595,162 @@ bool FileMetadataReader::Impl::extractUheWavetable(WavetableInfo &wt)
     wt.oneShot = false;
 
     return true;
+}
+
+struct FileMetadataReader::Impl {
+    fs::path path;
+    FILE_u stream_;
+};
+
+FileMetadataReader::FileMetadataReader(const fs::path& path)
+    : impl_(new Impl)
+{
+    impl_->path = path;
+}
+
+FileMetadataReader::~FileMetadataReader()
+{
+}
+
+void FileMetadataReader::doClose()
+{
+    impl_->stream_.reset();
+}
+
+bool FileMetadataReader::doOpen()
+{
+    Impl& impl = *impl_;
+#if !defined(_WIN32)
+    FILE* stream = fopen(impl.path.c_str(), "rb");
+#else
+    FILE* stream = _wfopen(impl.path.wstring().c_str(), L"rb");
+#endif
+
+    if (!stream)
+        return false;
+
+    impl_->stream_.reset(stream);
+    return true;
+}
+
+size_t FileMetadataReader::doRead(void* ptr, size_t size, size_t n)
+{
+    return fread(ptr, size, n, impl_->stream_.get());
+}
+
+int FileMetadataReader::doSeek(long off, int whence)
+{
+    return fseek(impl_->stream_.get(), off, whence);
+}
+
+void FileMetadataReader::doRewind()
+{
+    rewind(impl_->stream_.get());
+}
+
+long FileMetadataReader::doTell()
+{
+    return ftell(impl_->stream_.get());
+}
+
+struct MemoryMetadataReader::Impl {
+    const char* memory;
+    size_t length;
+    size_t position { 0 };
+};
+
+MemoryMetadataReader::MemoryMetadataReader(const void* memory, size_t length)
+    : impl_(new Impl)
+{
+    impl_->memory = reinterpret_cast<const char*>(memory);
+    impl_->length = length;
+}
+
+MemoryMetadataReader::~MemoryMetadataReader()
+{
+}
+
+void MemoryMetadataReader::doClose()
+{
+}
+
+bool MemoryMetadataReader::doOpen()
+{
+    Impl& impl = *impl_;
+    if (impl.length == 0)
+        return false;
+
+    return true;
+}
+
+size_t MemoryMetadataReader::doRead(void* ptr, size_t size, size_t n)
+{
+    Impl& impl = *impl_;
+    size_t actualCount =
+        (std::min(impl.position + n * size, impl.length) - impl.position) / size;
+    size_t totalBytes = actualCount * size;
+    memcpy(ptr, impl.memory + impl.position, totalBytes);
+    impl.position += totalBytes;
+    return actualCount;
+}
+
+int MemoryMetadataReader::doSeek(long off, int whence)
+{
+    Impl& impl = *impl_;
+
+    switch(whence) {
+    case SEEK_SET:
+        {
+            if (off < 0)
+                return -1;
+
+            const size_t offset = static_cast<size_t>(off);
+            if (offset > impl.length)
+                return -1;
+            impl.position = offset;
+        }
+        break;
+    case SEEK_CUR:
+        {
+            if (off < 0) {
+                const size_t minusOffset = static_cast<size_t>(-off);
+                if (minusOffset > impl.position)
+                    return -1;
+
+                impl.position -= minusOffset;
+            } else {
+                const size_t offset = static_cast<size_t>(off);
+                const size_t newPosition = impl.position + offset;
+                if (newPosition > impl.length)
+                    return -1;
+
+                impl.position = newPosition;
+            }
+        }
+        break;
+    case SEEK_END:
+        {
+            if (off > 0)
+                return -1;
+
+            const size_t minusOffset = static_cast<size_t>(-off);
+            if (minusOffset > impl.length)
+                return -1;
+            impl.position = impl.length - minusOffset;
+        }
+        break;
+    }
+    return 0;
+}
+
+void MemoryMetadataReader::doRewind()
+{
+    impl_->position = 0;
+}
+
+long MemoryMetadataReader::doTell()
+{
+    return static_cast<long>(impl_->position);
 }
 
 } // namespace sfz

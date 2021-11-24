@@ -25,6 +25,7 @@ public:
 #if defined(_WIN32)
     bool open_file_w(const wchar_t* filename);
 #endif
+    bool open_memory(const void* memory, size_t length);
 
     int get_type() const noexcept;
     const char* get_type_string() const noexcept;
@@ -93,6 +94,13 @@ inline void ST_AudioFile::reset(st_audio_file* new_af) noexcept
 bool ST_AudioFile::open_file(const char* filename)
 {
     st_audio_file* new_af = st_open_file(filename);
+    reset(new_af);
+    return new_af != nullptr;
+}
+
+bool ST_AudioFile::open_memory(const void* memory, size_t length)
+{
+    st_audio_file* new_af = st_open_memory(memory, length);
     reset(new_af);
     return new_af != nullptr;
 }

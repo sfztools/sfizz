@@ -8,6 +8,8 @@
 #include "sfizz/FileMetadata.h"
 #include "sfizz/MathHelpers.h"
 #include "catch2/catch.hpp"
+#include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <cmath>
 
@@ -51,10 +53,10 @@ TEST_CASE("[Wavetables] Frequency ranges")
 
 TEST_CASE("[Wavetables] Wavetable sound files: Surge")
 {
-    sfz::FileMetadataReader reader;
+    sfz::FileMetadataReader reader { "tests/TestFiles/wavetables/surge.wav" };
     sfz::WavetableInfo wt;
 
-    REQUIRE(reader.open("tests/TestFiles/wavetables/surge.wav"));
+    REQUIRE(reader.open());
     REQUIRE(reader.extractWavetableInfo(wt));
 
     REQUIRE(wt.tableSize == 256);
@@ -62,10 +64,10 @@ TEST_CASE("[Wavetables] Wavetable sound files: Surge")
 
 TEST_CASE("[Wavetables] Wavetable sound files: Clm")
 {
-    sfz::FileMetadataReader reader;
+    sfz::FileMetadataReader reader { "tests/TestFiles/wavetables/clm.wav" };
     sfz::WavetableInfo wt;
 
-    REQUIRE(reader.open("tests/TestFiles/wavetables/clm.wav"));
+    REQUIRE(reader.open());
     REQUIRE(reader.extractWavetableInfo(wt));
 
     REQUIRE(wt.tableSize == 256);
@@ -73,9 +75,57 @@ TEST_CASE("[Wavetables] Wavetable sound files: Clm")
 
 TEST_CASE("[Wavetables] Non-wavetable sound files")
 {
-    sfz::FileMetadataReader reader;
+    sfz::FileMetadataReader reader { "tests/TestFiles/snare.wav" };
     sfz::WavetableInfo wt;
 
-    REQUIRE(reader.open("tests/TestFiles/snare.wav"));
+    REQUIRE(reader.open());
+    REQUIRE(!reader.extractWavetableInfo(wt));
+}
+
+std::vector<char> readWholeFile(const fs::path& path)
+{
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<char> buffer(size);
+    if (!file.read(buffer.data(), size))
+        buffer.clear();
+
+    return buffer;
+
+}
+
+TEST_CASE("[Wavetables] Wavetable sound files: Surge, from memory")
+{
+    auto file = readWholeFile("tests/TestFiles/wavetables/surge.wav");
+    sfz::MemoryMetadataReader reader { file.data(), file.size() };
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open());
+    REQUIRE(reader.extractWavetableInfo(wt));
+
+    REQUIRE(wt.tableSize == 256);
+}
+
+TEST_CASE("[Wavetables] Wavetable sound files: Clm, from memory")
+{
+    auto file = readWholeFile("tests/TestFiles/wavetables/clm.wav");
+    sfz::MemoryMetadataReader reader { file.data(), file.size() };
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open());
+    REQUIRE(reader.extractWavetableInfo(wt));
+
+    REQUIRE(wt.tableSize == 256);
+}
+
+TEST_CASE("[Wavetables] Non-wavetable sound files, from memory")
+{
+    auto file = readWholeFile("tests/TestFiles/snare.wav");
+    sfz::MemoryMetadataReader reader { file.data(), file.size() };
+    sfz::WavetableInfo wt;
+
+    REQUIRE(reader.open());
     REQUIRE(!reader.extractWavetableInfo(wt));
 }

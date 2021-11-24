@@ -177,6 +177,111 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
     return NULL;
 }
 
+st_audio_file* st_open_memory(const void* memory, size_t length)
+{
+    st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
+    if (!af)
+        return NULL;
+
+    // Try WAV
+    {
+        af->wav = (drwav*)malloc(sizeof(drwav));
+        if (!af->wav) {
+            free(af);
+            return NULL;
+        }
+        drwav_bool32 ok =
+            drwav_init_memory(af->wav, memory, length, NULL);
+        if (!ok)
+            free(af->wav);
+        else {
+            af->type = st_audio_file_wav;
+            return af;
+        }
+    }
+
+    // Try FLAC
+    {
+        af->flac =
+            drflac_open_memory(memory, length, NULL);
+        if (af->flac) {
+            af->type = st_audio_file_flac;
+            return af;
+        }
+    }
+
+    // Try OGG
+    {
+        int err = 0;
+        char* alloc_buffer = NULL;
+        int alloc_size = 0;
+        const int alloc_max_size = 16 * 1024 * 1024;
+
+        af->alloc.ogg.alloc_buffer = NULL;
+        af->alloc.ogg.alloc_buffer_length_in_bytes = 0;
+
+        int try_again;
+        do {
+            af->ogg =
+                stb_vorbis_open_memory(memory, length, &err, &af->alloc.ogg);
+            try_again = 0;
+            if (!af->ogg && err == VORBIS_outofmem) {
+                int next_size = alloc_size ? (int)(alloc_size * 3L / 2) : (128 * 1024);
+                if (next_size <= alloc_max_size) {
+                    free(alloc_buffer);
+                    alloc_size = next_size;
+                    alloc_buffer = (char*)malloc(alloc_size);
+                    af->alloc.ogg.alloc_buffer = alloc_buffer;
+                    af->alloc.ogg.alloc_buffer_length_in_bytes = alloc_size;
+                    try_again = alloc_buffer != NULL;
+                }
+            }
+        } while (try_again);
+
+        if (!af->ogg)
+            free(alloc_buffer);
+        else {
+            af->cache.ogg.frames = stb_vorbis_stream_length_in_samples(af->ogg);
+            if (af->cache.ogg.frames == 0) {
+                stb_vorbis_close(af->ogg);
+                free(alloc_buffer);
+                free(af);
+                return NULL;
+            }
+            stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
+            af->cache.ogg.channels = info.channels;
+            af->cache.ogg.sample_rate = info.sample_rate;
+            af->type = st_audio_file_ogg;
+            return af;
+        }
+    }
+
+    // Try MP3
+    {
+        af->mp3 = (drmp3*)malloc(sizeof(drmp3));
+        if (!af->mp3) {
+            free(af);
+            return NULL;
+        }
+        drmp3_bool32 ok = drmp3_init_memory(af->mp3, memory, length, NULL);
+        if (!ok)
+            free(af->mp3);
+        else {
+            af->cache.mp3.frames = drmp3_get_pcm_frame_count(af->mp3);
+            if (af->cache.mp3.frames == 0) {
+                free(af->mp3);
+                free(af);
+                return NULL;
+            }
+            af->type = st_audio_file_mp3;
+            return af;
+        }
+    }
+
+    free(af);
+    return NULL;
+}
+
 st_audio_file* st_open_file(const char* filename)
 {
     return st_generic_open_file(filename, 0);

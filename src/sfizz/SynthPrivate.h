@@ -89,6 +89,12 @@ struct Synth::Impl final: public Parser::Listener {
      */
     void handleEffectOpcodes(const std::vector<Opcode>& members);
     /**
+     * @brief Helper function to dispatch <effect> opcodes
+     *
+     * @param members the opcodes of the <effect> block
+     */
+    void handleSampleOpcodes(const std::vector<Opcode>& members);
+    /**
      * @brief Helper function to merge all the currently active opcodes
      * as set by the successive callbacks and create a new region to store
      * in the synth.
