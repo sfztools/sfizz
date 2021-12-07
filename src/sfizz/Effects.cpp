@@ -119,8 +119,6 @@ void EffectBus::addToInputs(const float* const addInput[], float addGain, unsign
     if (addGain == 0)
         return;
 
-    _hasSignal = true;
-
     for (unsigned c = 0; c < EffectChannels; ++c) {
         absl::Span<const float> addIn { addInput[c], nframes };
         sfz::multiplyAdd1(addGain, addIn, _inputs.getSpan(c).first(nframes));
@@ -165,8 +163,6 @@ void EffectBus::process(unsigned nframes)
         fx::Nothing().process(
             AudioSpan<float>(_inputs), AudioSpan<float>(_outputs), nframes);
     }
-
-    _hasSignal = false;
 }
 
 void EffectBus::mixOutputsTo(float* const mainOutput[], float* const mixOutput[], unsigned nframes)
@@ -185,6 +181,7 @@ size_t EffectBus::numEffects() const noexcept
 {
     return _effects.size();
 }
+
 void EffectBus::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     _inputs.resize(samplesPerBlock);
