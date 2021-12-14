@@ -3090,8 +3090,8 @@ TEST_CASE("[Values] Filter types")
         "/region4/filter0/type,s : { bpf_2p }",
         "/region5/filter0/type,s : { brf_2p }",
         "/region6/filter0/type,s : { bpf_1p }",
-        "/region7/filter0/type,s : { brf_1p }",
-        "/region8/filter0/type,s : { apf_1p }",
+        "/region7/filter0/type,s : { brf_2p }", // If we have a 1-pole brf at one point, change it back
+        "/region8/filter0/type,s : { none }", // If the apf 1-pole works, change it back
         "/region9/filter0/type,s : { lpf_2p_sv }",
         "/region10/filter0/type,s : { hpf_2p_sv }",
         "/region11/filter0/type,s : { bpf_2p_sv }",
