@@ -179,7 +179,8 @@ bool Layer::registerCC(int ccNumber, float ccValue, float randValue) noexcept
 
         sequenceSwitched_ =
             ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
-        if (isSwitchedOn())
+
+        if (isSwitchedOn() && (ccValue != midiState_.getCCValue(ccNumber)))
             return true;
     }
 
