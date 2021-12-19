@@ -1,5 +1,5 @@
 # This option is for MIDI CC support in absence of host midi:binding support
-option(SFIZZ_LV2_PSA "Enable plugin-side MIDI automations" OFF)
+option(SFIZZ_LV2_PSA "Enable plugin-side MIDI automations" ON)
 
 # Configuration for this plugin
 # TODO: generate version from git
@@ -57,6 +57,10 @@ function(sfizz_lv2_generate_controllers_ttl FILE)
 ")
     math(EXPR _j "${SFIZZ_NUM_CCS}-1")
     foreach(_i RANGE "${_j}")
+        if(_i LESS 128 AND SFIZZ_LV2_PSA)
+            continue() # Don't generate automation parameters for CCs with plugin-side automation
+        endif()
+
         string_left_pad(_i "${_i}" 3 0)
         file(APPEND "${FILE}" "
 sfizz:cc${_i}

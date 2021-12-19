@@ -159,6 +159,7 @@ Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
+LV2 plugin-side CC automation  ${SFIZZ_LV2_PSA}
 
 Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
 Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}
