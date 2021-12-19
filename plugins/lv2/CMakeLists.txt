@@ -35,7 +35,9 @@ endif()
 
 if(SFIZZ_LV2_PSA)
     target_compile_definitions(${LV2PLUGIN_PRJ_NAME} PRIVATE "SFIZZ_LV2_PSA=1")
-    target_compile_definitions(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "SFIZZ_LV2_PSA=1")
+    if(SFIZZ_LV2_UI)
+        target_compile_definitions(${LV2PLUGIN_PRJ_NAME}_ui PRIVATE "SFIZZ_LV2_PSA=1")
+    endif()
 endif()
 
 # Explicitely strip all symbols on Linux but lv2_descriptor()
