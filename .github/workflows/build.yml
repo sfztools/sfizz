@@ -72,7 +72,7 @@ jobs:
           -DSFIZZ_LV2_UI=ON \
           -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_TESTS=ON \
-          -DSFIZZ_SHARED=OFF \
+          -DSFIZZ_SHARED=ON \
           -DSFIZZ_STATIC_DEPENDENCIES=OFF \
           -DSFIZZ_LV2=ON \
           -DCMAKE_CXX_STANDARD=17
@@ -194,6 +194,10 @@ jobs:
       with:
         name: ${{matrix.pkg_platform}} installer
         path: ${{runner.workspace}}/build/${{env.install_name}}.exe
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{matrix.pkg_platform}} sfizz_render
+        path: ${{runner.workspace}}/build/clients/Release/sfizz_render.exe
 
   # build_for_mingw:
   #   runs-on: ubuntu-18.04
