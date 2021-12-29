@@ -70,6 +70,7 @@ fi
 # Only release a tarball if there is a tag
 if [[ ${APPVEYOR_REPO_TAG} ]]; then
   mv "${INSTALL_DIR}.dmg" ${APPVEYOR_BUILD_FOLDER}
+  mv "${INSTALL_DIR}/usr/local/bin/sfizz_render" ${APPVEYOR_BUILD_FOLDER}
 fi
 
 cd ${APPVEYOR_BUILD_FOLDER}

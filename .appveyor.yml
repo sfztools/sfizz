@@ -53,7 +53,7 @@ for:
   - name: macOS DMG
     path: "sfizz-*.dmg"
   - name: sfizz_render executable
-    path: "${INSTALL_DIR}/usr/local/bin/sfizz_render"
+    path: "sfizz_render"
 
 
 deploy:
