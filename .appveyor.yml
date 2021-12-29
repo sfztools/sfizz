@@ -52,6 +52,9 @@ for:
   artifacts:
   - name: macOS DMG
     path: "sfizz-*.dmg"
+  - name: sfizz_render executable
+    path: "${INSTALL_DIR}/usr/local/bin/sfizz_render"
+
 
 deploy:
 - provider: GitHub
