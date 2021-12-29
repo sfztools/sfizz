@@ -1983,10 +1983,10 @@ TEST_CASE("[Synth] Sequences also work on cc triggers")
     synth.cc(0, 61, 20);
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw" } );
-    synth.cc(0, 61, 20);
+    synth.cc(0, 61, 21);
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw" } );
-    synth.cc(0, 61, 20);
+    synth.cc(0, 61, 22);
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*saw", "*sine" } );
 }

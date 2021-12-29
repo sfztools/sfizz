@@ -644,7 +644,6 @@ instantiate(const LV2_Descriptor *descriptor,
 
     self->ccmap = sfizz_lv2_ccmap_create(self->map);
     self->cc_current = new float[sfz::config::numCCs]();
-    self->ccauto = new absl::optional<float>[sfz::config::numCCs];
 
     self->synth = sfizz_create_synth();
     self->client = sfizz_create_client(self);
@@ -678,7 +677,6 @@ cleanup(LV2_Handle instance)
     spin_mutex_destroy(self->synth_mutex);
     sfizz_delete_client(self->client);
     sfizz_free(self->synth);
-    delete[] self->ccauto;
     delete[] self->cc_current;
     sfizz_lv2_ccmap_free(self->ccmap);
     delete self;
@@ -806,7 +804,6 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
             float value = *(const float *)LV2_ATOM_BODY_CONST(atom);
             sfizz_automate_hdcc(self->synth, delay, cc, value);
             self->cc_current[cc] = value;
-            self->ccauto[cc] = absl::nullopt;
         }
     }
     else if (key == self->sfizz_sfz_file_uri)
@@ -874,15 +871,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
             unsigned cc = msg[1];
             float value = float(msg[2]) * (1.0f / 127.0f);
 
-            // Send
-            if (sfizz_is_sustain_or_sostenuto(self, cc)) {
-                sfizz_automate_hdcc(self->synth,
-                                    (int)ev->time.frames,
-                                    (int)cc,
-                                    value);
-                break;
-            }
-
 // Note(jpc) CC must be mapped by host, not handled here.
 //           See LV2 midi:binding.
 #if defined(SFIZZ_LV2_PSA)
@@ -894,9 +882,6 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                                         (int)ev->time.frames,
                                         (int)cc,
                                         value);
-                    self->cc_current[cc] = value;
-                    self->ccauto[cc] = value;
-                    self->have_ccauto = true;
                 }
                 break;
             case LV2_MIDI_CTL_ALL_NOTES_OFF:
@@ -1249,18 +1234,6 @@ run(LV2_Handle instance, uint32_t sample_count)
         self->midnam->update(self->midnam->handle);
     }
 
-    if (self->have_ccauto)
-    {
-        for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
-            absl::optional<float> value = self->ccauto[cc];
-            if (value) {
-                sfizz_lv2_send_controller(self, self->patch_set_uri, cc, *value);
-                self->ccauto[cc] = absl::nullopt;
-            }
-        }
-        self->have_ccauto = false;
-    }
-
     spin_mutex_unlock(self->synth_mutex);
 
 #if defined(SFIZZ_LV2_UI)
@@ -1408,9 +1381,6 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
     const InstrumentDescription desc = parseDescriptionBlob(blob);
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
-            // Mark all the used CCs for automation with default values
-            self->ccauto[cc] = desc.ccValue[cc];
-            self->have_ccauto = true;
             // Update the current CCs
             self->cc_current[cc] = desc.ccValue[cc];
         }
@@ -1579,9 +1549,6 @@ restore(LV2_Handle instance,
         if (value) {
             // Set CC in the synth
             sfizz_automate_hdcc(self->synth, 0, int(cc), *value);
-            // Mark CCs for automation with state values
-            self->ccauto[cc] = *value;
-            self->have_ccauto = true;
             // Update the current CCs
             self->cc_current[cc] = *value;
         }

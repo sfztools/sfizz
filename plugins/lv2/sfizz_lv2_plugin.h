@@ -140,10 +140,6 @@ struct sfizz_plugin_t
     // updated by hdcc or file load
     float *cc_current {};
 
-    // CC queued for automation on next run(). (synchronized by `synth_mutex`)
-    absl::optional<float>* ccauto {};
-    volatile bool have_ccauto {};
-
     // Timing data
     int bar {};
     double bar_beat {};

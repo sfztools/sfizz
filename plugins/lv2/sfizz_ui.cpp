@@ -761,6 +761,17 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
     default:
         if (editIdIsCC(id)) {
             int cc = ccForEditId(id);
+#if defined(SFIZZ_LV2_PSA)
+            if (cc >= 0 && cc < 128) {
+                // Send MIDI message
+                uint8_t msg[3];
+                msg[0] = 0xB0;
+                msg[1] = static_cast<uint8_t>(cc);
+                msg[2] = static_cast<uint8_t>(v.to_float() * 127);
+                uiSendMIDI(msg, 3);
+                break;
+            }
+#endif
             LV2_URID urid = sfizz_lv2_ccmap_map(ccmap.get(), cc);
             sendController(urid, v.to_float());
         }
