@@ -139,6 +139,7 @@ struct Editor::Impl : EditorController::Receiver,
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
+    CTextLabel* lblHover_ = nullptr;
     COptionMenu* themeMenu_ = nullptr;
     std::unique_ptr<Theme> theme_;
 
@@ -232,6 +233,8 @@ struct Editor::Impl : EditorController::Receiver,
     void updatePreloadSizeLabel(int preloadSize);
     void updateScalaRootKeyLabel(int rootKey);
     void updateStretchedTuningLabel(float stretchedTuning);
+    void buttonHoverEnter(CControl* btn, const char* text);
+    void buttonHoverLeave(CControl* btn);
 
     absl::string_view getCurrentKeyswitchName() const;
     void updateKeyswitchNameLabel();
@@ -871,6 +874,19 @@ void Editor::Impl::createFrameContents()
             cb->setRoundRectRadius(5.0);
             return cb;
         };
+        auto createHoverBox = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->valueText);
+                lbl->setBackColor(palette->valueBackground);
+                lbl->setFrameColor(palette->valueText);
+            });
+            lbl->setHoriAlign(align);
+            lbl->setFont(font);
+            lbl->setAutosizeFlags(kAutosizeAll);
+            return lbl;
+        };
         auto createGlyphButton = [this, &palette](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
@@ -884,18 +900,29 @@ void Editor::Impl::createFrameContents()
             btn->setGradientHighlighted(nullptr);
             return btn;
         };
-        auto createHomeButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
+        auto createHomeButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Home"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
-        auto createInfoButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue1e7", bounds, tag, fontsize);
+        auto createInfoButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue1e7", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Information"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
-        auto createCCButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            // return createGlyphButton(u8"\ue240", bounds, tag, fontsize);
-            return createGlyphButton(u8"\ue253", bounds, tag, fontsize);
+        auto createCCButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue253", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Controls"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
-        auto createSettingsButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
+        auto createSettingsButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Settings"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
 #if 0
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
@@ -1714,6 +1741,30 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     label->setText(text);
 }
 
+void Editor::Impl::buttonHoverEnter(CControl* btn, const char* text)
+{
+    lblHover_->setText(text);
+    lblHover_->sizeToFit();
+    CRect rect = lblHover_->getViewSize();
+    CRect btnRect = btn->getViewSize();
+    auto height = rect.getHeight();
+    auto width = rect.getWidth();
+    rect.left = btnRect.left;
+    rect.top = btnRect.bottom + 2;
+    rect.setWidth(width + 10);
+    rect.setHeight(height);
+    lblHover_->setViewSize(rect);
+    lblHover_->setVisible(true);
+    lblHover_->invalid();
+}
+
+void Editor::Impl::buttonHoverLeave(CControl* btn)
+{
+    (void)btn;
+    lblHover_->setVisible(false);
+    lblHover_->invalid();
+}
+
 absl::string_view Editor::Impl::getCurrentKeyswitchName() const
 {
     int sw = currentKeyswitch_;
@@ -2076,7 +2127,10 @@ void Editor::Impl::valueChanged(CControl* ctl)
         if (value != 1)
             break;
 
-        Call::later([this]() { aboutDialog_->setVisible(true); });
+        Call::later([this]() {
+            aboutDialog_->setVisible(true);
+            frame_->registerKeyboardHook(aboutDialog_);
+        });
         break;
 
     case kTagThemeMenu:

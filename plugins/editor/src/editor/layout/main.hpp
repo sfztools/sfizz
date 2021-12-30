@@ -238,3 +238,9 @@ auto* const view__91 = createLogicalGroup(CRect(5, 110, 795, 395), -1, "", kCent
 subPanels_[kPanelGeneral] = view__91;
 view__0->addView(view__91);
 view__91->setVisible(false);
+enterPalette(invertedPalette);
+auto* const view__92 = createHoverBox(CRect(5, 105, 175, 130), -1, "", kCenterText, 12);
+lblHover_ = view__92;
+view__0->addView(view__92);
+view__92->setVisible(false);
+enterPalette(defaultPalette);
