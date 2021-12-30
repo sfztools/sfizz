@@ -873,7 +873,7 @@ void Synth::Impl::finalizeSfzLoad()
 
         layer.registerPitchWheel(midiState.getPitchBend());
         layer.registerAftertouch(midiState.getChannelAftertouch());
-        layer.registerTempo(resources_.getBeatClock().getBeatsPerSecond());
+        layer.registerTempo(static_cast<float>(resources_.getBeatClock().getBeatsPerSecond()));
         layer.registerProgramChange(midiState.getProgram());
         maxFilters = max(maxFilters, region.filters.size());
         maxEQs = max(maxEQs, region.equalizers.size());
