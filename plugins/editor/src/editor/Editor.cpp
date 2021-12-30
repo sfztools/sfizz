@@ -879,7 +879,7 @@ void Editor::Impl::createFrameContents()
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setFontColor(palette->valueText);
-                lbl->setBackColor(palette->boxBackground);
+                lbl->setBackColor(palette->valueBackground);
                 lbl->setFrameColor(palette->valueText);
             });
             lbl->setHoriAlign(align);

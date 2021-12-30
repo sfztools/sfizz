@@ -3,7 +3,7 @@ version 1.0304
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {607 439 800 475} type Double
+  xywh {624 612 800 475} type Double
   class LogicalGroup visible
 } {
   Fl_Box imageContainer_ {
@@ -456,8 +456,9 @@ widget_class mainView {open
     xywh {5 110 790 285} hide
     class LogicalGroup
   } {}
-  Fl_Box lblHover_ {selected
-    xywh {15 105 155 25} labelsize 12 hide
+  Fl_Box lblHover_ {
+    comment {palette=invertedPalette} selected
+    xywh {5 105 170 25} labelsize 12 hide
     class HoverBox
   }
 }
