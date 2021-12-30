@@ -882,7 +882,6 @@ void Editor::Impl::createFrameContents()
                 lbl->setBackColor(palette->boxBackground);
                 lbl->setFrameColor(palette->valueText);
             });
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
             lbl->setHoriAlign(align);
             lbl->setFont(font);
             lbl->setAutosizeFlags(kAutosizeAll);
