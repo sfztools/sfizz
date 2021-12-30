@@ -706,6 +706,31 @@ TEST_CASE("[Values] Bend range")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Values] Program range")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav loprog=1 hiprog=45
+        <region> sample=kick.wav loprog=-1 hiprog=555
+        <region> sample=kick.wav hiprog=-1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/program_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/program_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/program_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region3/program_range", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/program_range,ii : { 0, 127 }",
+        "/region1/program_range,ii : { 1, 45 }",
+        "/region2/program_range,ii : { 0, 127 }",
+        "/region3/program_range,ii : { 0, 127 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
 TEST_CASE("[Values] CC condition range")
 {
     Synth synth;

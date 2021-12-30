@@ -171,6 +171,8 @@ namespace Default
     extern const OpcodeSpec<float> xfinLo;
     extern const OpcodeSpec<float> loBend;
     extern const OpcodeSpec<float> hiBend;
+    extern const OpcodeSpec<uint8_t> loProgram;
+    extern const OpcodeSpec<uint8_t> hiProgram;
     extern const OpcodeSpec<float> loNormalized;
     extern const OpcodeSpec<float> hiNormalized;
     extern const OpcodeSpec<float> loBipolar;

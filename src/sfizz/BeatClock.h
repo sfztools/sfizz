@@ -153,6 +153,12 @@ public:
      */
     double getBeatsPerFrame() const { return beatsPerSecond_ * samplePeriod_; }
     /**
+     * @brief Get beats per second
+     *
+     * @return float
+     */
+    double getBeatsPerSecond() const { return beatsPerSecond_; }
+    /**
      * @brief Create a normalized phase signal for LFO which completes a
      *        period every N-th beat.
      */

@@ -496,6 +496,23 @@ public:
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
 
     /**
+     * @brief Send a program change event to the synth
+     * @since 1.1.2
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param program the cc number, in domain 0 to 127.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void programChange(int delay, int program) noexcept;
+
+    /**
      * @brief Send a high precision CC automation to the synth
      *
      * This updates the CC value known to the synth, but without performing

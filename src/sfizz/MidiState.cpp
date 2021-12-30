@@ -292,3 +292,14 @@ const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int noteNumber) 
 
     return polyAftertouchEvents[noteNumber];
 }
+
+int sfz::MidiState::getProgram() const noexcept
+{
+    return currentProgram;
+}
+
+void sfz::MidiState::programChangeEvent(int delay, int program) noexcept
+{
+    ASSERT(program >= 0 && program <= 127);
+    currentProgram = program;
+}

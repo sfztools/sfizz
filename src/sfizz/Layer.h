@@ -118,6 +118,12 @@ public:
      * @param secondsPerQuarter
      */
     void registerTempo(float secondsPerQuarter) noexcept;
+    /**
+     * @brief Register program change
+     *
+     * @param secondsPerQuarter
+     */
+    void registerProgramChange(int program) noexcept;
 
     // Started notes
     bool sustainPressed_ { false };
@@ -136,6 +142,7 @@ public:
     bool previousKeySwitched_ {};
     bool sequenceSwitched_ {};
     bool pitchSwitched_ {};
+    bool programSwitched_ {};
     bool bpmSwitched_ {};
     bool aftertouchSwitched_ {};
     std::bitset<config::numCCs> ccSwitched_;

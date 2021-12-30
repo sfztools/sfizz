@@ -278,6 +278,7 @@ struct Region {
 
     // Region logic: MIDI conditions
     UncheckedRange<float> bendRange { Default::loBend, Default::hiBend }; // hibend and lobend
+    UncheckedRange<uint8_t> programRange { Default::loProgram, Default::hiProgram }; // loprog and hiprog
     CCMap<UncheckedRange<float>> ccConditions {{ Default::loCC, Default::hiCC }};
     absl::optional<uint8_t> lastKeyswitch {}; // sw_last
     absl::optional<UncheckedRange<uint8_t>> lastKeyswitchRange {}; // sw_last
