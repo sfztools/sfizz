@@ -2128,7 +2128,10 @@ void Editor::Impl::valueChanged(CControl* ctl)
         if (value != 1)
             break;
 
-        Call::later([this]() { aboutDialog_->setVisible(true); });
+        Call::later([this]() {
+            aboutDialog_->setVisible(true);
+            frame_->registerKeyboardHook(aboutDialog_);
+        });
         break;
 
     case kTagThemeMenu:

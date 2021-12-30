@@ -223,6 +223,24 @@ CMouseEventResult SAboutDialog::onMouseDown(CPoint& where, const CButtonState& b
     return result;
 }
 
+int32_t SAboutDialog::onKeyDown (const VstKeyCode& keyCode, CFrame* frame)
+{
+    if (keyCode.virt == VKEY_ESCAPE) {
+        setVisible(false);
+        frame->unregisterKeyboardHook(this);
+        return 1;
+    }
+
+    return -1;
+}
+
+int32_t SAboutDialog::onKeyUp (const VstKeyCode& keyCode, CFrame* frame)
+{
+    (void)keyCode;
+    (void)frame;
+    return -1;
+}
+
 void SAboutDialog::valueChanged(CControl *ctl)
 {
     int32_t tag = ctl->getTag();
