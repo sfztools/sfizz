@@ -117,6 +117,7 @@ sfizz_lv2_map_required_uris(sfizz_plugin_t *self)
     self->state_changed_uri = map->map(map->handle, LV2_STATE__StateChanged);
     self->sfizz_sfz_file_uri = map->map(map->handle, SFIZZ__sfzFile);
     self->sfizz_scala_file_uri = map->map(map->handle, SFIZZ__tuningfile);
+    self->sfizz_description_uri = map->map(map->handle, SFIZZ__description);
     self->sfizz_num_voices_uri = map->map(map->handle, SFIZZ__numVoices);
     self->sfizz_preload_size_uri = map->map(map->handle, SFIZZ__preloadSize);
     self->sfizz_oversampling_uri = map->map(map->handle, SFIZZ__oversampling);
@@ -658,6 +659,9 @@ instantiate(const LV2_Descriptor *descriptor,
 
     sfizz_lv2_update_timeinfo(self, 0, ~0);
 
+    self->text_description[0] = 0;
+    self->resend_description = false;
+
 #if defined(SFIZZ_LV2_UI)
     if (self->multi_out)
         self->rms_follower.setNumOutputs(MULTI_OUTPUT_COUNT);
@@ -714,6 +718,25 @@ sfizz_lv2_send_file_path(sfizz_plugin_t *self, LV2_URID verb_uri, LV2_URID urid,
         lv2_atom_forge_urid(forge, urid) &&
         lv2_atom_forge_key(forge, self->patch_value_uri) &&
         lv2_atom_forge_path(forge, path, (uint32_t)strlen(path));
+
+    if (write_ok)
+        lv2_atom_forge_pop(forge, &frame);
+}
+
+static void
+sfizz_lv2_send_instrument_description(sfizz_plugin_t *self)
+{
+    LV2_Atom_Forge_Frame frame;
+    LV2_Atom_Forge* forge = &self->forge_automate;
+
+    bool write_ok =
+        lv2_atom_forge_frame_time(forge, 0) &&
+        lv2_atom_forge_object(forge, &frame, 0, self->patch_set_uri) &&
+        lv2_atom_forge_key(forge, self->patch_property_uri) &&
+        lv2_atom_forge_urid(forge, self->sfizz_description_uri) &&
+        lv2_atom_forge_key(forge, self->patch_value_uri) &&
+        lv2_atom_forge_string(forge, self->text_description,
+            (uint32_t)strnlen(self->text_description, sizeof(self->text_description)));
 
     if (write_ok)
         lv2_atom_forge_pop(forge, &frame);
@@ -837,12 +860,6 @@ sfizz_lv2_handle_atom_object(sfizz_plugin_t *self, int delay, const LV2_Atom_Obj
                             self->unmap->unmap(self->unmap->handle, key));
         return;
     }
-}
-
-static bool
-sfizz_is_sustain_or_sostenuto(sfizz_plugin_t* self, unsigned cc)
-{
-    return (self->sustain_or_sostenuto[cc / 8] & (1 << (cc % 8)));
 }
 
 static void
@@ -1077,6 +1094,8 @@ run(LV2_Handle instance, uint32_t sample_count)
 
                     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc)
                         sfizz_lv2_send_controller(self, self->sfizz_notify_uri, cc, self->cc_current[cc]);
+
+                    sfizz_lv2_send_instrument_description(self);
                 }
                 else if (property->body == self->sfizz_sfz_file_uri)
                 {
@@ -1085,6 +1104,10 @@ run(LV2_Handle instance, uint32_t sample_count)
                 else if (property->body == self->sfizz_scala_file_uri)
                 {
                     sfizz_lv2_send_file_path(self, self->sfizz_notify_uri, self->sfizz_scala_file_uri, self->scala_file_path);
+                }
+                else if (property->body == self->sfizz_description_uri)
+                {
+                    sfizz_lv2_send_instrument_description(self);
                 }
                 else
                 {
@@ -1198,6 +1221,10 @@ run(LV2_Handle instance, uint32_t sample_count)
     *(self->num_groups_port) = sfizz_get_num_groups(self->synth);
     *(self->num_regions_port) = sfizz_get_num_regions(self->synth);
     *(self->num_samples_port) = sfizz_get_num_preloaded_samples(self->synth);
+    if (self->resend_description) {
+        sfizz_lv2_send_instrument_description(self);
+        self->resend_description = false;
+    }
 
     // Log the buffer usage
     self->sample_counter += (int)sample_count;
@@ -1384,15 +1411,20 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
 
     //
     const InstrumentDescription desc = parseDescriptionBlob(blob);
+    char *cursor = self->text_description;
+    char *end = self->text_description + sizeof(self->text_description);
+    cursor += snprintf(cursor, end - cursor, "CC used:\n");
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             // Update the current CCs
             self->cc_current[cc] = desc.ccValue[cc];
+            if (desc.ccLabel[cc].empty())
+                cursor += snprintf(cursor, end - cursor, "- %d\n", cc);
+            else
+                cursor += snprintf(cursor, end - cursor, "- %d: %s\n",
+                                    cc, desc.ccLabel[cc].c_str());
         }
     }
-
-    memcpy(self->sustain_or_sostenuto, desc.sustainOrSostenuto.data(),
-        sizeof(self->sustain_or_sostenuto));
 }
 
 static bool
@@ -1658,15 +1690,15 @@ save(LV2_Handle instance,
 }
 
 static void
-sfizz_lv2_activate_file_checking(
-    sfizz_plugin_t *self,
+sfizz_lv2_respond_with_simple_atom(
     LV2_Worker_Respond_Function respond,
-    LV2_Worker_Respond_Handle handle)
+    LV2_Worker_Respond_Handle handle,
+    uint32_t type_uri)
 {
-    LV2_Atom check_modification_atom;
-    check_modification_atom.size = 0;
-    check_modification_atom.type = self->sfizz_check_modification_uri;
-    respond(handle, lv2_atom_total_size(&check_modification_atom), &check_modification_atom);
+    LV2_Atom atom;
+    atom.size = 0;
+    atom.type = type_uri;
+    respond(handle, lv2_atom_total_size(&atom), &atom);
 }
 
 // This runs in a lower priority thread
@@ -1699,7 +1731,8 @@ work(LV2_Handle instance,
         }
 
         // Reactivate checking for file changes
-        sfizz_lv2_activate_file_checking(self, respond, handle);
+        sfizz_lv2_respond_with_simple_atom(respond, handle, self->sfizz_check_modification_uri);
+        sfizz_lv2_respond_with_simple_atom(respond, handle, self->sfizz_description_uri);
     }
     else if (atom->type == self->sfizz_scala_file_uri)
     {
@@ -1717,7 +1750,7 @@ work(LV2_Handle instance,
         }
 
         // Reactivate checking for file changes
-        sfizz_lv2_activate_file_checking(self, respond, handle);
+        sfizz_lv2_respond_with_simple_atom(respond, handle, self->sfizz_check_modification_uri);
     }
     else if (atom->type == self->sfizz_num_voices_uri)
     {
@@ -1782,6 +1815,8 @@ work(LV2_Handle instance,
                 lv2_log_error(&self->logger,
                     "[sfizz] Error with %s; no file should be loaded\n", self->sfz_file_path);
             }
+
+            sfizz_lv2_respond_with_simple_atom(respond, handle, self->sfizz_description_uri);
         }
 
         if (sfizz_should_reload_scala(self->synth))
@@ -1803,7 +1838,7 @@ work(LV2_Handle instance,
         }
 
         // Reactivate checking for file changes
-        sfizz_lv2_activate_file_checking(self, respond, handle);
+        sfizz_lv2_respond_with_simple_atom(respond, handle, self->sfizz_check_modification_uri);
     }
     else
     {
@@ -1832,6 +1867,8 @@ work_response(LV2_Handle instance,
     const LV2_Atom *atom = (const LV2_Atom *)data;
     if (atom->type == self->sfizz_check_modification_uri) {
         self->check_modification = true; // check changes
+    } else if (atom->type == self->sfizz_description_uri) {
+        self->resend_description = true;
     } else {
         lv2_log_error(&self->logger, "[sfizz] Got an unexpected atom in work response\n");
         if (self->unmap)

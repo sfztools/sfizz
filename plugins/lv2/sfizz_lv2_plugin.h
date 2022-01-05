@@ -87,6 +87,7 @@ struct sfizz_plugin_t
     LV2_URID state_changed_uri {};
     LV2_URID sfizz_sfz_file_uri {};
     LV2_URID sfizz_scala_file_uri {};
+    LV2_URID sfizz_description_uri {};
     LV2_URID sfizz_num_voices_uri {};
     LV2_URID sfizz_preload_size_uri {};
     LV2_URID sfizz_oversampling_uri {};
@@ -132,9 +133,8 @@ struct sfizz_plugin_t
     volatile int sfz_blob_serial {};
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
-
-    // Sostenuto or sustain
-    char sustain_or_sostenuto[16] {};
+    char text_description[1024];
+    volatile bool resend_description {};
 
     // Current CC values in the synth (synchronized by `synth_mutex`)
     // updated by hdcc or file load
