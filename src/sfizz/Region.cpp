@@ -243,6 +243,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("hibend"):
         bendRange.setEnd(opcode.read(Default::hiBend));
         break;
+    case hash("loprog"):
+        programRange.setStart(opcode.read(Default::loProgram));
+        break;
+    case hash("hiprog"):
+        programRange.setEnd(opcode.read(Default::hiProgram));
+        break;
     case hash("locc&"):
         if (opcode.parameters.back() >= config::numCCs)
             return false;

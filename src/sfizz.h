@@ -446,6 +446,23 @@ SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_nu
 SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value);
 
 /**
+ * @brief Send a program change event to the synth.
+ * @since 1.1.2
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth      The synth.
+ * @param delay      The delay of the event in the block, in samples.
+ * @param program    The program number, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_program_change(sfizz_synth_t* synth, int delay, int program);
+
+/**
  * @brief Send a high precision CC automation to the synth.
  * @since 1.0.0
  *

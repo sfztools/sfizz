@@ -706,3 +706,43 @@ TEST_CASE("[Keyswitches] sw_default with octave_offset")
         REQUIRE(messageList == expected);
     }
 }
+
+TEST_CASE("[Region activation] Program change")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+
+    SECTION("Default value") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <region> sample=*saw
+        )");
+        REQUIRE(synth.getLayerView(0)->isSwitchedOn());
+        synth.noteOn(0, 51, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(numPlayingVoices(synth) == 1);
+        synth.programChange(0, 45);
+        REQUIRE(synth.getLayerView(0)->isSwitchedOn());
+        synth.noteOn(0, 53, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(numPlayingVoices(synth) == 2);
+    }
+
+    SECTION("Change range") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <region> sample=*saw hiprog=2
+            <region> sample=*sine loprog=1 hiprog=126
+            <region> sample=*tri loprog=-1 hiprog=200
+        )");
+        synth.noteOn(0, 51, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*tri" });
+        synth.programChange(0, 5);
+        synth.noteOn(0, 53, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*tri", "*sine", "*tri" });
+        synth.programChange(0, 127);
+        synth.noteOn(0, 54, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*tri", "*sine", "*tri", "*tri" });
+    }
+}

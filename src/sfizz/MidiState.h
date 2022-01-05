@@ -135,6 +135,20 @@ public:
     float getPolyAftertouch(int noteNumber) const noexcept;
 
     /**
+     * @brief Get the current midi program
+     *
+     * @return int
+     */
+    int getProgram() const noexcept;
+    /**
+     * @brief Register a program change event
+     *
+     * @param delay
+     * @param program
+     */
+    void programChangeEvent(int delay, int program) noexcept;
+
+    /**
      * @brief Register a CC event
      *
      * @param ccNumber
@@ -274,6 +288,11 @@ private:
      * @brief Polyphonic aftertouch status.
      */
     std::array<EventVector, 128> polyAftertouchEvents;
+
+    /**
+     * @brief Current midi program
+     */
+    int currentProgram { 0 };
 
     float sampleRate { config::defaultSampleRate };
     int samplesPerBlock { config::defaultSamplesPerBlock };

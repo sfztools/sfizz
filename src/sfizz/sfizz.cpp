@@ -200,6 +200,11 @@ void sfz::Sfizz::automateHdcc(int delay, int ccNumber, float normValue) noexcept
     synth->synth.automateHdcc(delay, ccNumber, normValue);
 }
 
+void sfz::Sfizz::programChange(int delay, int program) noexcept
+{
+    synth->synth.programChange(delay, program);
+}
+
 void sfz::Sfizz::pitchWheel(int delay, int pitch) noexcept
 {
     synth->synth.pitchWheel(delay, pitch);

@@ -409,6 +409,14 @@ public:
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
     /**
+     * @brief Send a program change event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock().
+     * @param ccNumber the program number
+     */
+    void programChange(int delay, int program) noexcept;
+    /**
      * @brief Send a high precision CC automation to the synth
      *
      * @param delay the delay at which the event occurs; this should be lower

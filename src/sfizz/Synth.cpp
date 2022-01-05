@@ -871,9 +871,10 @@ void Synth::Impl::finalizeSfzLoad()
             region.velCurve = Curve::buildFromVelcurvePoints(
                 region.velocityPoints, Curve::Interpolator::Linear);
 
-        layer.registerPitchWheel(0);
-        layer.registerAftertouch(0);
-        layer.registerTempo(2.0f);
+        layer.registerPitchWheel(midiState.getPitchBend());
+        layer.registerAftertouch(midiState.getChannelAftertouch());
+        layer.registerTempo(static_cast<float>(resources_.getBeatClock().getBeatsPerSecond()));
+        layer.registerProgramChange(midiState.getProgram());
         maxFilters = max(maxFilters, region.filters.size());
         maxEQs = max(maxEQs, region.equalizers.size());
         maxLFOs = max(maxLFOs, region.lfos.size());
@@ -1529,6 +1530,15 @@ void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
 
     impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
+
+void Synth::programChange(int delay, int program) noexcept
+{
+    Impl& impl = *impl_;
+    impl.resources_.getMidiState().programChangeEvent(delay, program);
+    for (const Impl::LayerPtr& layer : impl.layers_)
+        layer->registerProgramChange(program);
+}
+
 
 void Synth::channelAftertouch(int delay, int aftertouch) noexcept
 {

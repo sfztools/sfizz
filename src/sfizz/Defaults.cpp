@@ -62,6 +62,8 @@ FloatSpec loPolyAftertouch { 0, {0, 127}, kNormalizeMidi|kPermissiveBounds };
 FloatSpec hiPolyAftertouch { 127, {0, 127}, kNormalizeMidi|kFillGap|kPermissiveBounds };
 FloatSpec loBend { -8191, {-8192.0f, 8191.0f}, kNormalizeBend|kPermissiveBounds };
 FloatSpec hiBend { 8191, {-8192.0f, 8191.0f}, kNormalizeBend|kFillGap|kPermissiveBounds };
+UInt8Spec loProgram { 0, {0, 127}, 0 };
+UInt8Spec hiProgram { 127, {0, 127}, 0 };
 FloatSpec loNormalized { 0.0f, {0.0f, 1.0f}, kPermissiveBounds };
 FloatSpec hiNormalized { 1.0f, {0.0f, 1.0f}, kPermissiveBounds };
 FloatSpec loBipolar { -1.0f, {-1.0f, 1.0f}, kPermissiveBounds };

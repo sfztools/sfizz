@@ -150,6 +150,10 @@ void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch)
 {
     synth->synth.hdPitchWheel(delay, pitch);
 }
+void sfizz_send_program_change(sfizz_synth_t* synth, int delay, int program)
+{
+    synth->synth.programChange(delay, program);
+}
 void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
     synth->synth.channelAftertouch(delay, aftertouch);

@@ -911,6 +911,11 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                         (int)ev->time.frames,
                         PITCH_BUILD_AND_CENTER(msg[1], msg[2]));
         break;
+    case LV2_MIDI_MSG_PGM_CHANGE:
+        sfizz_send_program_change(self->synth,
+                        (int)ev->time.frames,
+                        msg[1]);
+        break;
     default:
         break;
     }
