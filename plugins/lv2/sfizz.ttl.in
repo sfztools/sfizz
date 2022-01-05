@@ -65,6 +65,11 @@ midnam:update a lv2:Feature .
     "File Scala"@it ;
   rdfs:range atom:Path .
 
+<@LV2PLUGIN_URI@:description>
+  a lv2:Parameter ;
+  rdfs:label "Instrument description" ;
+  rdfs:range atom:String .
+
 <@LV2PLUGIN_URI@>
   a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
 
@@ -96,6 +101,7 @@ midnam:update a lv2:Feature .
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
                  <@LV2PLUGIN_URI@:tuningfile> ;
+  patch:readable <@LV2PLUGIN_URI@:description> ;
 
   pg:mainOutput <@LV2PLUGIN_URI@#stereo_output> ;
 
@@ -471,6 +477,7 @@ midnam:update a lv2:Feature .
 
   patch:writable <@LV2PLUGIN_URI@:sfzfile> ,
                  <@LV2PLUGIN_URI@:tuningfile> ;
+  patch:readable <@LV2PLUGIN_URI@:description> ;
 
   pg:mainOutput <@LV2PLUGIN_URI@#stereo_output> ;
 
