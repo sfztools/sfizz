@@ -788,20 +788,29 @@ TEST_CASE("[Files] Embedded sample data")
     REQUIRE(synth1.getNumPreloadedSamples() == 1);
     REQUIRE(synth2.getNumPreloadedSamples() == 1);
 
-    AudioBuffer<float> buffer1 { 2, 1024 };
-    AudioBuffer<float> buffer2 { 2, 1024 };
+    AudioBuffer<float> buffer1 { 2, 256 };
+    AudioBuffer<float> buffer2 { 2, 256 };
+    std::vector<float> tmp1 (buffer1.getNumFrames());
+    std::vector<float> tmp2 (buffer2.getNumFrames());
+
     synth1.noteOn(0, 60, 100);
     synth2.noteOn(0, 60, 100);
 
     for (unsigned i = 0; i < 100; ++i) {
         synth1.renderBlock(buffer1);
         synth2.renderBlock(buffer2);
-        bool equal = true;
-        for (unsigned j = 0; j < buffer1.getNumFrames(); ++j) {
-            equal &= (buffer1.getSample(0, j) == buffer2.getSample(0, j));
-            equal &= (buffer1.getSample(1, j) == buffer2.getSample(1, j));
-        }
-        REQUIRE(equal);
+
+        const auto left1 = buffer1.getConstSpan(0);
+        const auto left2 = buffer2.getConstSpan(0);
+        std::copy(left1.begin(), left1.end(), tmp1.begin());
+        std::copy(left2.begin(), left2.end(), tmp2.begin());
+        REQUIRE(tmp1 == tmp2);
+
+        const auto right1 = buffer1.getConstSpan(0);
+        const auto right2 = buffer2.getConstSpan(0);
+        std::copy(right1.begin(), right1.end(), tmp1.begin());
+        std::copy(right2.begin(), right2.end(), tmp2.begin());
+        REQUIRE(tmp1 == tmp2);
     }
 }
 
