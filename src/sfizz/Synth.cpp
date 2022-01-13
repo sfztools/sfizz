@@ -2213,6 +2213,11 @@ void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, co
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccStart);
     collectUsedCCsFromCCMap(usedCCs, region.amplitudeEG.ccSustain);
 
+    collectUsedCCsFromCCMap(usedCCs, region.ampVeltrackCC);
+    collectUsedCCsFromCCMap(usedCCs, region.pitchVeltrackCC);
+    for (const auto& filter: region.filters)
+        collectUsedCCsFromCCMap(usedCCs, filter.veltrackCC);
+
     if (region.pitchEG) {
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccAttack);
         collectUsedCCsFromCCMap(usedCCs, region.pitchEG->ccRelease);
