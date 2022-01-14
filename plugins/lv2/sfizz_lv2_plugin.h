@@ -139,6 +139,7 @@ struct sfizz_plugin_t
     // Current CC values in the synth (synchronized by `synth_mutex`)
     // updated by hdcc or file load
     float *cc_current {};
+    volatile bool resync_cc { false };
 
     // Timing data
     int bar {};
