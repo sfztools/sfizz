@@ -363,6 +363,8 @@ public:
     /**
      * @brief Set whether pressing the sustain pedal cancels the release stage
      *
+     * @since 1.2.0
+     *
      * @param value
      */
     void setSustainCancelsRelease(bool value);
@@ -497,7 +499,7 @@ public:
 
     /**
      * @brief Send a program change event to the synth
-     * @since 1.1.2
+     * @since 1.2.0
      *
      * This command should be delay-ordered with all other midi-type events
      * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the

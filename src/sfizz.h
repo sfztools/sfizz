@@ -447,7 +447,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_
 
 /**
  * @brief Send a program change event to the synth.
- * @since 1.1.2
+ * @since 1.2.0
  *
  * This command should be delay-ordered with all other midi-type events
  * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
@@ -852,6 +852,7 @@ SFIZZ_EXPORTED_API void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz
 
 /**
  * @brief Set whether pressing the sustain pedal cancels the release stage
+ * @since 1.2.0
  *
  * @param      synth    The synth.
  * @param value
