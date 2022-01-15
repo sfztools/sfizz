@@ -1266,6 +1266,13 @@ run(LV2_Handle instance, uint32_t sample_count)
         self->midnam->update(self->midnam->handle);
     }
 
+    if (self->resync_cc) {
+        for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc)
+            sfizz_lv2_send_controller(self, self->patch_set_uri, cc, self->cc_current[cc]);
+
+        self->resync_cc = false;
+    }
+
     spin_mutex_unlock(self->synth_mutex);
 
 #if defined(SFIZZ_LV2_UI)
@@ -1418,6 +1425,8 @@ sfizz_lv2_update_sfz_info(sfizz_plugin_t *self)
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             // Update the current CCs
             self->cc_current[cc] = desc.ccValue[cc];
+            self->resync_cc = true;
+
             if (desc.ccLabel[cc].empty())
                 cursor += snprintf(cursor, end - cursor, "- %d\n", cc);
             else
