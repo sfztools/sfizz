@@ -781,7 +781,7 @@ TEST_CASE("[Files] Unused samples are cleared on reloading")
 
 // FIXME: this breaks on Github win32/win64/linux CI "sometimes" but I can't reproduce it reliably
 // Not sure the second test fails too but in doubt...
-#ifdef 0
+#if 0
 TEST_CASE("[Files] Embedded sample data")
 {
     sfz::Synth synth1;
