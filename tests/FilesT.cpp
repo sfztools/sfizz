@@ -779,9 +779,9 @@ TEST_CASE("[Files] Unused samples are cleared on reloading")
     REQUIRE(synth.getNumPreloadedSamples() == 0);
 }
 
-// FIXME: this breaks on Github win32/win64 CI "sometimes" but I can't reproduce it reliably
+// FIXME: this breaks on Github win32/win64/linux CI "sometimes" but I can't reproduce it reliably
 // Not sure the second test fails too but in doubt...
-#ifndef _WIN32
+#ifdef 0
 TEST_CASE("[Files] Embedded sample data")
 {
     sfz::Synth synth1;
