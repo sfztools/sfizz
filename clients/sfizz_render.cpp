@@ -32,7 +32,10 @@ void midiCallback(const fmidi_event_t * event, void * cbdata)
             data->synth.noteOff(data->delay, event->data[1], event->data[2]);
             break;
         case midi::noteOn:
-            data->synth.noteOn(data->delay, event->data[1], event->data[2]);
+            if (event->data[2] == 0)
+                data->synth.noteOff(data->delay, event->data[1], event->data[2]);
+            else
+                data->synth.noteOn(data->delay, event->data[1], event->data[2]);
             break;
         case midi::polyphonicPressure:
             break;
