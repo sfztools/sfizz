@@ -27,9 +27,15 @@ EditRange EditRange::get(EditId id)
     case EditId::StretchTuning:
         return { 0, 0, 1 };
     case EditId::SampleQuality:
-        return { 1, 0, 10 };
+        return { 2, 0, 10 };
     case EditId::OscillatorQuality:
         return { 1, 0, 3 };
+    case EditId::FreewheelingSampleQuality:
+        return { 10, 0, 10 };
+    case EditId::FreewheelingOscillatorQuality:
+        return { 3, 0, 3 };
+    case EditId::SustainCancelsRelease:
+        return { 0, 0, 1 };
     case EditId::UIActivePanel:
         return { 0, 0, 255 };
     }

@@ -498,6 +498,62 @@ TEST_CASE("[Opcode] opcode read (float)")
         REQUIRE( opcode.read(spec) == 10.5f );
     }
 
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1.05e+001" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 10.5f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1.05e+1" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 10.5f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1.05e1" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 10.5f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1e1" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 10.0f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1.5e-001" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 0.15f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1.5e-1" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 0.15f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "1e-1" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 0.1f );
+    }
+
+    SECTION("Exponential notation")
+    {
+        Opcode opcode { "", "6.02385e-009" };
+        OpcodeSpec<float> spec { 0.0f, Range<float>(0.0f, 100.0f), kEnforceLowerBound };
+        REQUIRE( opcode.read(spec) == 6.02385e-9f );
+    }
+
     SECTION("Text before")
     {
         Opcode opcode { "", "garbage10" };

@@ -30,8 +30,10 @@
 #define MAX_PATH_SIZE 1024
 #define ATOM_TEMP_SIZE 8192
 #define OSC_TEMP_SIZE 8192
+#define MULTI_OUTPUT_COUNT 16
 
 #define SFIZZ_URI "http://sfztools.github.io/sfizz"
+#define SFIZZ_MULTI_URI SFIZZ_URI "-multi"
 #define SFIZZ_UI_URI "http://sfztools.github.io/sfizz#ui"
 #define SFIZZ_PREFIX SFIZZ_URI "#"
 #define SFIZZ__sfzFile SFIZZ_URI ":" "sfzfile"
@@ -40,6 +42,7 @@
 #define SFIZZ__preloadSize SFIZZ_URI ":" "preload_size"
 #define SFIZZ__oversampling SFIZZ_URI ":" "oversampling"
 #define SFIZZ__lastKeyswitch SFIZZ_URI ":" "last_keyswitch"
+#define SFIZZ__description SFIZZ_URI ":" "description"
 // These ones are just for the worker
 #define SFIZZ__logStatus SFIZZ_URI ":" "log_status"
 #define SFIZZ__checkModification SFIZZ_URI ":" "check_modification"
@@ -71,6 +74,50 @@ enum
     SFIZZ_NUM_GROUPS = 17,
     SFIZZ_NUM_REGIONS = 18,
     SFIZZ_NUM_SAMPLES = 19,
+    SFIZZ_FREEWHEELING_SAMPLE_QUALITY = 20,
+    SFIZZ_FREEWHEELING_OSCILLATOR_QUALITY = 21,
+    SFIZZ_SUSTAIN_CANCELS_RELEASE = 22,
+};
+
+enum
+{
+    SFIZZ_MULTI_CONTROL = 0,
+    SFIZZ_MULTI_AUTOMATE = 1,
+    SFIZZ_MULTI_OUT1L = 2,
+    SFIZZ_MULTI_OUT1R = 3,
+    SFIZZ_MULTI_OUT2L = 4,
+    SFIZZ_MULTI_OUT2R = 5,
+    SFIZZ_MULTI_OUT3L = 6,
+    SFIZZ_MULTI_OUT3R = 7,
+    SFIZZ_MULTI_OUT4L = 8,
+    SFIZZ_MULTI_OUT4R = 9,
+    SFIZZ_MULTI_OUT5L = 10,
+    SFIZZ_MULTI_OUT5R = 11,
+    SFIZZ_MULTI_OUT6L = 12,
+    SFIZZ_MULTI_OUT6R = 13,
+    SFIZZ_MULTI_OUT7L = 14,
+    SFIZZ_MULTI_OUT7R = 15,
+    SFIZZ_MULTI_OUT8L = 16,
+    SFIZZ_MULTI_OUT8R = 17,
+    SFIZZ_MULTI_VOLUME = 18,
+    SFIZZ_MULTI_POLYPHONY = 19,
+    SFIZZ_MULTI_OVERSAMPLING = 20,
+    SFIZZ_MULTI_PRELOAD = 21,
+    SFIZZ_MULTI_FREEWHEELING = 22,
+    SFIZZ_MULTI_SCALA_ROOT_KEY = 23,
+    SFIZZ_MULTI_TUNING_FREQUENCY = 24,
+    SFIZZ_MULTI_STRETCH_TUNING = 25,
+    SFIZZ_MULTI_SAMPLE_QUALITY = 26,
+    SFIZZ_MULTI_OSCILLATOR_QUALITY = 27,
+    SFIZZ_MULTI_ACTIVE_VOICES = 28,
+    SFIZZ_MULTI_NUM_CURVES = 29,
+    SFIZZ_MULTI_NUM_MASTERS = 30,
+    SFIZZ_MULTI_NUM_GROUPS = 31,
+    SFIZZ_MULTI_NUM_REGIONS = 32,
+    SFIZZ_MULTI_NUM_SAMPLES = 33,
+    SFIZZ_MULTI_FREEWHEELING_SAMPLE_QUALITY = 34,
+    SFIZZ_MULTI_FREEWHEELING_OSCILLATOR_QUALITY = 35,
+    SFIZZ_MULTI_SUSTAIN_CANCELS_RELEASE = 36,
 };
 
 // For use with instance-access
@@ -91,6 +138,14 @@ struct sfizz_plugin_t;
 bool sfizz_lv2_fetch_description(
     sfizz_plugin_t *self, const int *serial,
     uint8_t **descp, uint32_t *sizep, int *serialp);
+
+/**
+ * @brief Returns the number of outputs of the plugin
+ *
+ * @param self
+ * @return int
+ */
+int sfizz_lv2_get_num_outputs(sfizz_plugin_t *self);
 
 #if defined(SFIZZ_LV2_UI)
 void sfizz_lv2_set_ui_active(sfizz_plugin_t *self, bool ui_active);

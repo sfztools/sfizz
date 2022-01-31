@@ -9,7 +9,6 @@
 #include "MidiState.h"
 #include "FilePool.h"
 #include "BufferPool.h"
-#include "Logger.h"
 #include "Wavetables.h"
 #include "Curve.h"
 #include "Tuning.h"
@@ -23,9 +22,8 @@ struct Resources::Impl {
     SynthConfig synthConfig;
     BufferPool bufferPool;
     MidiState midiState;
-    Logger logger;
     CurveSet curves;
-    FilePool filePool { logger };
+    FilePool filePool;
     WavetablePool wavePool;
     Tuning tuning;
     absl::optional<StretchTuning> stretch;
@@ -61,17 +59,22 @@ void Resources::setSamplesPerBlock(int samplesPerBlock)
     impl.beatClock.setSamplesPerBlock(samplesPerBlock);
 }
 
-void Resources::clear()
+void Resources::clearNonState()
 {
     Impl& impl = *impl_;
     impl.curves = CurveSet::createPredefined();
     impl.filePool.clear();
     impl.wavePool.clearFileWaves();
-    impl.logger.clear();
-    impl.midiState.reset();
     impl.modMatrix.clear();
-    impl.beatClock.clear();
     impl.metronome.clear();
+}
+
+void Resources::clearState()
+{
+    Impl& impl = *impl_;
+    impl.midiState.resetNoteStates();
+    impl.midiState.resetEventStates();
+    impl.beatClock.clear();
 }
 
 const SynthConfig& Resources::getSynthConfig() const noexcept
@@ -89,10 +92,6 @@ const MidiState& Resources::getMidiState() const noexcept
     return impl_->midiState;
 }
 
-const Logger& Resources::getLogger() const noexcept
-{
-    return impl_->logger;
-}
 
 const CurveSet& Resources::getCurves() const noexcept
 {

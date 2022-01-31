@@ -8,6 +8,7 @@
 #include <cxxopts.hpp>
 #include <fmidi/fmidi.h>
 #include <iostream>
+#include <fstream>
 
 #define LOG_ERROR(ostream) std::cerr  << ostream << '\n'
 #define LOG_INFO(ostream) if (verbose) { std::cout << ostream << '\n'; }
@@ -31,7 +32,10 @@ void midiCallback(const fmidi_event_t * event, void * cbdata)
             data->synth.noteOff(data->delay, event->data[1], event->data[2]);
             break;
         case midi::noteOn:
-            data->synth.noteOn(data->delay, event->data[1], event->data[2]);
+            if (event->data[2] == 0)
+                data->synth.noteOff(data->delay, event->data[1], event->data[2]);
+            else
+                data->synth.noteOn(data->delay, event->data[1], event->data[2]);
             break;
         case midi::polyphonicPressure:
             break;
@@ -125,8 +129,38 @@ int main(int argc, char** argv)
     synth.setNumVoices(polyphony);
     synth.enableFreeWheeling();
 
-    if (params.count("log") > 0)
-        synth.enableLogging(params["log"].as<std::string>());
+    bool logging = params.count("log") > 0;
+    std::string logFilename {};
+    std::ofstream callbackLogFile {};
+    if (logging) {
+        logFilename = params["log"].as<std::string>();
+        fs::path logPath{ fs::current_path() / logFilename };
+        callbackLogFile.open(logPath.string());
+
+        if (callbackLogFile.is_open()) {
+            callbackLogFile << "Dispatch,RenderMethod,Data,Amplitude,Filters,Panning,Effects,NumVoices,NumSamples" << '\n';
+        } else {
+            logging = false;
+            LOG_INFO("Error opening log file " << logPath.string() << "; logging will be disabled");
+        }
+    }
+
+    auto writeLogLine = [&] {
+        if (!logging)
+            return;
+
+        auto breakdown = synth.getCallbackBreakdown();
+        auto numVoices = synth.getNumActiveVoices();
+        callbackLogFile << breakdown.dispatch << ','
+                        << breakdown.renderMethod << ','
+                        << breakdown.data << ','
+                        << breakdown.amplitude << ','
+                        << breakdown.filters << ','
+                        << breakdown.panning << ','
+                        << breakdown.effects << ','
+                        << numVoices << ','
+                        << blockSize << '\n';
+    };
 
     ERROR_IF(!synth.loadSfzFile(sfzPath), "There was an error loading the SFZ file.");
     LOG_INFO(synth.getNumRegions() << " regions in the SFZ.");
@@ -178,6 +212,7 @@ int main(int argc, char** argv)
         sfz::writeInterleaved(audioBuffer.getConstSpan(0), audioBuffer.getConstSpan(1), absl::MakeSpan(interleavedBuffer));
         drwav_f32_to_s16(interleavedPcm.data(), interleavedBuffer.data(), 2 * blockSize);
         numFramesWritten += drwav_write_pcm_frames(&outputFile, blockSize, interleavedPcm.data());
+        writeLogLine();
     }
 
     if (!useEOT) {
@@ -187,6 +222,7 @@ int main(int argc, char** argv)
             sfz::writeInterleaved(audioBuffer.getConstSpan(0), audioBuffer.getConstSpan(1), absl::MakeSpan(interleavedBuffer));
             drwav_f32_to_s16(interleavedPcm.data(), interleavedBuffer.data(), 2 * blockSize);
             numFramesWritten += drwav_write_pcm_frames(&outputFile, blockSize, interleavedPcm.data());
+            writeLogLine();
             averagePower = sfz::meanSquared<float>(interleavedBuffer);
         }
     }

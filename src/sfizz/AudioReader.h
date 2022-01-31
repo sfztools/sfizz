@@ -14,6 +14,7 @@
 
 namespace sfz {
 struct InstrumentInfo;
+struct WavetableInfo;
 
 /**
  * @brief Designation of a particular kind of audio reader
@@ -39,7 +40,8 @@ public:
     virtual unsigned channels() const = 0;
     virtual unsigned sampleRate() const = 0;
     virtual size_t readNextBlock(float* buffer, size_t frames) = 0;
-    virtual bool getInstrument(InstrumentInfo* instrument) = 0;
+    virtual bool getInstrumentInfo(InstrumentInfo&) { return false; };
+    virtual bool getWavetableInfo(WavetableInfo&) { return false; };
 };
 
 typedef std::unique_ptr<AudioReader> AudioReaderPtr;
@@ -50,8 +52,8 @@ typedef std::unique_ptr<AudioReader> AudioReaderPtr;
 AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, std::error_code* ec = nullptr);
 
 /**
- * @brief Create a file reader of explicit type. (for testing purposes)
+ * @brief Create a memory reader of detected type.
  */
-AudioReaderPtr createExplicitAudioReader(const fs::path& path, AudioReaderType type, std::error_code* ec = nullptr);
+AudioReaderPtr createAudioReaderFromMemory(const void* memory, size_t length, bool reverse, std::error_code* ec = nullptr);
 
 } // namespace sfz

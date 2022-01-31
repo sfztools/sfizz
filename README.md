@@ -18,7 +18,9 @@ and JACK standalone client, please check [our website] for more details.
 
 Sfizz can be used most easily within an LV2 host such as [Carla] or [Ardour].
 It can also be integrated as a library within your own program; check out our [API] bindings for C and C++.
-Our [releases] are an immediate way to get a working library or LV2/VST plugin, although you might prefer to [build from source]!
+Our [releases] are an immediate way to get a working library or LV2/VST plugin for Windows and Mac.
+Linux builds are available over at [OBS].
+On any operating system, you might prefer to [build from source]!
 
 ## Contributing to sfizz
 
@@ -102,7 +104,7 @@ The sfizz library also uses in some subprojects:
 [AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
 [Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
 [Discord Badge Image]:   https://img.shields.io/discord/587748534321807416?label=discord&logo=discord
-
+[OBS]: https://software.opensuse.org//download.html?project=home%3Asfztools%3Asfizz&package=sfizz
 [SFZv1 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz1.svg
 [SFZv2 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz2.svg
 [ARIA Status Image]:     https://sfz.tools/assets/img/sfizz/badge_aria.svg

@@ -8,6 +8,7 @@
 #include "sfizz/Region.h"
 #include "sfizz/Synth.h"
 #include "sfizz/SfzHelpers.h"
+#include "TestHelpers.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
 using namespace sfz::literals;
@@ -21,7 +22,7 @@ TEST_CASE("Region activation", "Region tests")
     SECTION("Basic state")
     {
         sfz::Layer layer { region, midiState };
-        layer.registerCC(4, 0_norm);
+        layer.updateCCState(4, 0_norm);
         REQUIRE(layer.isSwitchedOn());
     }
 
@@ -30,19 +31,19 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "locc4", "56" });
         region.parseOpcode({ "hicc4", "59" });
         sfz::Layer layer { region, midiState };
-        layer.registerCC(4, 0_norm);
+        layer.updateCCState(4, 0_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(4, 57_norm);
+        layer.updateCCState(4, 57_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 56_norm);
+        layer.updateCCState(4, 56_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 59_norm);
+        layer.updateCCState(4, 59_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 43_norm);
+        layer.updateCCState(4, 43_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(4, 65_norm);
+        layer.updateCCState(4, 65_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(6, 57_norm);
+        layer.updateCCState(6, 57_norm);
         REQUIRE(!layer.isSwitchedOn());
     }
 
@@ -53,26 +54,26 @@ TEST_CASE("Region activation", "Region tests")
         region.parseOpcode({ "locc54", "18" });
         region.parseOpcode({ "hicc54", "27" });
         sfz::Layer layer { region, midiState };
-        layer.registerCC(4, 0_norm);
-        layer.registerCC(54, 0_norm);
+        layer.updateCCState(4, 0_norm);
+        layer.updateCCState(54, 0_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(4, 57_norm);
+        layer.updateCCState(4, 57_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(54, 19_norm);
+        layer.updateCCState(54, 19_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(54, 17_norm);
+        layer.updateCCState(54, 17_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(54, 27_norm);
+        layer.updateCCState(54, 27_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 56_norm);
+        layer.updateCCState(4, 56_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 59_norm);
+        layer.updateCCState(4, 59_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(54, 2_norm);
+        layer.updateCCState(54, 2_norm);
         REQUIRE(!layer.isSwitchedOn());
-        layer.registerCC(54, 26_norm);
+        layer.updateCCState(54, 26_norm);
         REQUIRE(layer.isSwitchedOn());
-        layer.registerCC(4, 65_norm);
+        layer.updateCCState(4, 65_norm);
         REQUIRE(!layer.isSwitchedOn());
     }
 
@@ -655,3 +656,93 @@ TEST_CASE("[Region activation] Polyphonic aftertouch")
     }
 }
 
+TEST_CASE("[Keyswitches] sw_default with octave_offset")
+{
+    sfz::Synth synth;
+    std::vector<std::string> messageList;
+    sfz::Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    std::vector<std::string> expected {
+        "/sw/last/current,i : { 59 }",
+    };
+
+    SECTION("In <global>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <global> sw_default=48
+            <region> sample=*sine
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("In <master>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <master> sw_default=48
+            <region> sample=*sine
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("In <group>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <group> sw_default=48
+            <region> sample=*sine
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("In <region>") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <control> octave_offset=1 note_offset=-1
+            <region> sample=*sine sw_default=48
+        )");
+        synth.dispatchMessage(client, 0, "/sw/last/current", "", nullptr);
+        REQUIRE(messageList == expected);
+    }
+}
+
+TEST_CASE("[Region activation] Program change")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+
+    SECTION("Default value") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <region> sample=*saw
+        )");
+        REQUIRE(synth.getLayerView(0)->isSwitchedOn());
+        synth.noteOn(0, 51, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(numPlayingVoices(synth) == 1);
+        synth.programChange(0, 45);
+        REQUIRE(synth.getLayerView(0)->isSwitchedOn());
+        synth.noteOn(0, 53, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(numPlayingVoices(synth) == 2);
+    }
+
+    SECTION("Change range") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+            <region> sample=*saw hiprog=2
+            <region> sample=*sine loprog=1 hiprog=126
+            <region> sample=*tri loprog=-1 hiprog=200
+        )");
+        synth.noteOn(0, 51, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*tri" });
+        synth.programChange(0, 5);
+        synth.noteOn(0, 53, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*tri", "*sine", "*tri" });
+        synth.programChange(0, 127);
+        synth.noteOn(0, 54, 64);
+        synth.renderBlock(buffer);
+        REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*tri", "*sine", "*tri", "*tri" });
+    }
+}

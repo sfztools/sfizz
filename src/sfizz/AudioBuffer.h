@@ -26,7 +26,7 @@ namespace sfz
  * @tparam MaxChannels the maximum number of channels in the buffer
  * @tparam Alignment the alignment for the buffers
  */
-template <class Type, size_t MaxChannels = config::numChannels,
+template <class Type, size_t MaxChannels = config::maxChannels,
           unsigned int Alignment = config::defaultAlignment,
           size_t PaddingLeft_ = 0, size_t PaddingRight_ = 0>
 class AudioBuffer {

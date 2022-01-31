@@ -8,6 +8,7 @@
 #include "FilePool.h"
 #include "Curve.h"
 #include "MidiState.h"
+#include "SynthConfig.h"
 #include "utility/StringViewHelpers.h"
 #include <absl/strings/ascii.h>
 #include <cstring>
@@ -85,6 +86,18 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/num_samples", "") {
             client.receive<'i'>(delay, path, int(impl.resources_.getFilePool().getNumPreloadedSamples()));
+        } break;
+
+        MATCH("/octave_offset", "") {
+            client.receive<'i'>(delay, path, impl.octaveOffset_);
+        } break;
+
+        MATCH("/note_offset", "") {
+            client.receive<'i'>(delay, path, impl.noteOffset_);
+        } break;
+
+        MATCH("/num_outputs", "") {
+            client.receive<'i'>(delay, path, impl.numOutputs_);
         } break;
 
         //----------------------------------------------------------------------
@@ -185,6 +198,22 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             sfizz_blob_t blob { sustainOrSostenuto.data(),
                 static_cast<uint32_t>(sustainOrSostenuto.byte_size()) };
             client.receive<'b'>(delay, path, &blob);
+        } break;
+
+        MATCH("/aftertouch", "") {
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getChannelAftertouch());
+        } break;
+
+        MATCH("/poly_aftertouch/&", "") {
+            if (indices[0] > 127)
+                break;
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPolyAftertouch(indices[0]));
+        } break;
+
+        MATCH("/pitch_bend", "") {
+            // Note: result value is not frame-exact
+            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPitchBend());
         } break;
 
         //----------------------------------------------------------------------
@@ -338,6 +367,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
                 client.receive<'N'>(delay, path, {});
         } break;
 
+        MATCH("/region&/output", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            client.receive<'i'>(delay, path, region.output);
+        } break;
+
         MATCH("/region&/group", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'h'>(delay, path, region.group);
@@ -399,6 +433,14 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             args[0].f = region.bendRange.getStart();
             args[1].f = region.bendRange.getEnd();
             client.receive(delay, path, "ff", args);
+        } break;
+
+        MATCH("/region&/program_range", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            sfizz_arg_t args[2];
+            args[0].i = region.programRange.getStart();
+            args[1].i = region.programRange.getEnd();
+            client.receive(delay, path, "ii", args);
         } break;
 
         MATCH("/region&/cc_range&", "") {
@@ -1522,6 +1564,34 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
         //----------------------------------------------------------------------
         // Setting values
         // Note: all these must be rt-safe within the parseOpcode method in region
+
+        MATCH("/sample_quality", "i") {
+            impl.resources_.getSynthConfig().liveSampleQuality =
+                Opcode::transform(Default::sampleQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/oscillator_quality", "i") {
+            impl.resources_.getSynthConfig().liveOscillatorQuality =
+                Opcode::transform(Default::oscillatorQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/freewheeling_sample_quality", "i") {
+            impl.resources_.getSynthConfig().freeWheelingSampleQuality =
+                Opcode::transform(Default::freewheelingSampleQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/freewheeling_oscillator_quality", "i") {
+            impl.resources_.getSynthConfig().freeWheelingOscillatorQuality =
+                Opcode::transform(Default::freewheelingOscillatorQuality, static_cast<int>(args[0].i));
+        } break;
+
+        MATCH("/sustain_cancels_release", "T") {
+            impl.resources_.getSynthConfig().sustainCancelsRelease = true;
+        } break;
+
+        MATCH("/sustain_cancels_release", "F") {
+            impl.resources_.getSynthConfig().sustainCancelsRelease = false;
+        } break;
 
         #define GET_REGION_OR_BREAK(idx)            \
             if (idx >= impl.layers_.size())         \

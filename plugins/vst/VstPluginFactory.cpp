@@ -12,6 +12,7 @@
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 
 class SfizzVstProcessor;
+class SfizzVstProcessorMulti;
 class SfizzVstController;
 
 BEGIN_FACTORY_DEF(VSTPLUGIN_VENDOR,
@@ -27,6 +28,16 @@ DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstProcessor_cid),
             VSTPLUGIN_VERSION,
             kVstVersionString,
             createInstance<SfizzVstProcessor>)
+
+DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstProcessorMulti_cid),
+            PClassInfo::kManyInstances,
+            kVstAudioEffectClass,
+            VSTPLUGIN_NAME,
+            Vst::kDistributable,
+            Vst::PlugType::kInstrumentSynth,
+            VSTPLUGIN_VERSION,
+            kVstVersionString,
+            createInstance<SfizzVstProcessorMulti>)
 
 DEF_CLASS2 (INLINE_UID_FROM_FUID(SfizzVstController_cid),
             PClassInfo::kManyInstances,

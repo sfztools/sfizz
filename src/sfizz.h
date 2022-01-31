@@ -446,6 +446,23 @@ SFIZZ_EXPORTED_API void sfizz_send_cc(sfizz_synth_t* synth, int delay, int cc_nu
 SFIZZ_EXPORTED_API void sfizz_send_hdcc(sfizz_synth_t* synth, int delay, int cc_number, float norm_value);
 
 /**
+ * @brief Send a program change event to the synth.
+ * @since 1.2.0
+ *
+ * This command should be delay-ordered with all other midi-type events
+ * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+ * synth is undefined.
+ *
+ * @param synth      The synth.
+ * @param delay      The delay of the event in the block, in samples.
+ * @param program    The program number, in domain 0 to 127.
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_send_program_change(sfizz_synth_t* synth, int delay, int program);
+
+/**
  * @brief Send a high precision CC automation to the synth.
  * @since 1.0.0
  *
@@ -699,7 +716,8 @@ SFIZZ_EXPORTED_API void sfizz_send_playback_state(sfizz_synth_t* synth, int dela
  *
  * @param synth         The synth.
  * @param channels      Pointers to the left and right channel of the output.
- * @param num_channels  Should be equal to 2 for the time being.
+ * @param num_channels  Number of output channels; should be a multiple of 2 as
+ *                      sfizz only handles stereo outputs.
  * @param num_frames    Number of frames to fill. This should be less than
  *                      or equal to the expected samples_per_block.
  *
@@ -833,6 +851,15 @@ SFIZZ_EXPORTED_API int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_
 SFIZZ_EXPORTED_API void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality);
 
 /**
+ * @brief Set whether pressing the sustain pedal cancels the release stage
+ * @since 1.2.0
+ *
+ * @param      synth    The synth.
+ * @param value
+*/
+SFIZZ_EXPORTED_API void sfizz_set_sustain_cancels_release(sfizz_synth_t* synth, bool value);
+
+/**
  * @brief Set the global instrument volume.
  * @since 0.2.0
  *
@@ -962,6 +989,7 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @since 0.3.0
  *
  * @note This can produce many outputs so use with caution.
+ *  Deprecated since 1.2.0.
  *
  * @param synth  The synth.
  * @param prefix The prefix.
@@ -969,24 +997,26 @@ SFIZZ_EXPORTED_API bool sfizz_should_reload_scala(sfizz_synth_t* synth);
  * @par Thread-safety constraints
  * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix);
 
 /**
  * @brief Disable logging.
  * @since 0.3.0
  *
  * @param synth  The synth.
+ *  Deprecated since 1.2.0.
  *
  * @par Thread-safety constraints
  * - TBD ?
  */
-SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
+SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_disable_logging(sfizz_synth_t* synth);
 
 /**
  * @brief Enable logging of timings to sidecar CSV files.
  * @since 0.3.2
  *
  * @note This can produce many outputs so use with caution.
+ *  Deprecated since 1.2.0.
  *
  * @param synth  The synth.
  * @param prefix The prefix.
@@ -995,6 +1025,36 @@ SFIZZ_EXPORTED_API void sfizz_disable_logging(sfizz_synth_t* synth);
  * - TBD ?
  */
 SFIZZ_EXPORTED_API SFIZZ_DEPRECATED_API void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix);
+
+/**
+ * @brief The callback breakdown structure.
+ * @note Times are in seconds.
+ */
+typedef struct
+{
+    double dispatch;
+    double renderMethod;
+    double data;
+    double amplitude;
+    double filters;
+    double panning;
+    double effects;
+} sfizz_callback_breakdown_t;
+
+/**
+ * @brief Get the last callback breakdown. Call after a render method.
+ *
+ * @since 1.2.0
+ *
+ * @param synth
+ * @param breakdown
+ *
+ * @return CallbackBreakdown
+ *
+ * @par Thread-safety constraints
+ * - @b RT: the function must be invoked from the Real-time thread
+ */
+SFIZZ_EXPORTED_API void sfizz_get_callback_breakdown(sfizz_synth_t* synth, sfizz_callback_breakdown_t* breakdown);
 
 /**
  * @brief Shuts down the current processing, clear buffers and reset the voices.

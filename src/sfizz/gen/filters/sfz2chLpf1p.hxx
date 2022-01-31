@@ -6,7 +6,7 @@
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Code generated with Faust 2.37.3 (https://faust.grame.fr)
 Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 ------------------------------------------------------------ */
 
@@ -19,6 +19,7 @@ Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <math.h>
 
 
@@ -40,7 +41,6 @@ class faust2chLpf1p : public sfzFilterDsp {
  private:
 	
 	int fSampleRate;
-	double fConst0;
 	double fConst1;
 	double fConst2;
 	FAUSTFLOAT fHslider0;
@@ -66,7 +66,7 @@ class faust2chLpf1p : public sfzFilterDsp {
 	void instanceConstants(int sample_rate) {
 		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
-		fConst0 = double(fSampleRate);
+		double fConst0 = double(fSampleRate);
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
 		fConst2 = (1.0 / fConst0);
 		//[End:instanceConstants]
@@ -120,15 +120,15 @@ class faust2chLpf1p : public sfzFilterDsp {
 		FAUSTFLOAT* output1 = outputs[1];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
 		double fSlow1 = (std::exp((fConst2 * (0.0 - (6.2831853071795862 * std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0))))))) * (1.0 - fSlow0));
-		for (int i = 0; (i < count); i = (i + 1)) {
-			double fTemp0 = double(input0[i]);
-			double fTemp1 = double(input1[i]);
+		for (int i0 = 0; (i0 < count); i0 = (i0 + 1)) {
+			double fTemp0 = double(input0[i0]);
+			double fTemp1 = double(input1[i0]);
 			fRec1[0] = ((fSlow0 * fRec1[1]) + fSlow1);
 			fRec0[0] = (fTemp0 + (fRec1[0] * fRec0[1]));
 			double fTemp2 = (1.0 - fRec1[0]);
-			output0[i] = FAUSTFLOAT((fRec0[0] * fTemp2));
+			output0[i0] = FAUSTFLOAT((fRec0[0] * fTemp2));
 			fRec2[0] = (fTemp1 + (fRec1[0] * fRec2[1]));
-			output1[i] = FAUSTFLOAT((fRec2[0] * fTemp2));
+			output1[i0] = FAUSTFLOAT((fRec2[0] * fTemp2));
 			fRec1[1] = fRec1[0];
 			fRec0[1] = fRec0[0];
 			fRec2[1] = fRec2[0];

@@ -343,16 +343,25 @@ void SfizzVstEditor::updateParameter(Vst::Parameter* parameterToUpdate)
         case kPidOscillatorQuality:
             uiReceiveValue(EditId::OscillatorQuality, range.denormalize(value));
             break;
-        case kPidLeftLevel:
-            uiReceiveValue(EditId::LeftLevel, range.denormalize(value));
+        case kPidFreewheelingSampleQuality:
+            uiReceiveValue(EditId::FreewheelingSampleQuality, range.denormalize(value));
             break;
-        case kPidRightLevel:
-            uiReceiveValue(EditId::RightLevel, range.denormalize(value));
+        case kPidFreewheelingOscillatorQuality:
+            uiReceiveValue(EditId::FreewheelingOscillatorQuality, range.denormalize(value));
+            break;
+        case kPidSustainCancelsRelease:
+            uiReceiveValue(EditId::SustainCancelsRelease, range.denormalize(value));
+            break;
+        case kPidNumOutputs:
+            uiReceiveValue(EditId::PluginOutputs, (int32)range.denormalize(value));
             break;
         default:
             if (id >= kPidCC0 && id <= kPidCCLast) {
                 int cc = int(id - kPidCC0);
                 uiReceiveValue(editIdForCC(cc), range.denormalize(value));
+            } else if (id >= kPidLevel0 && id <= kPidLevelLast) {
+                int levelId = int(id - kPidLevel0);
+                uiReceiveValue(editIdForLevel(levelId), range.denormalize(value));
             }
             break;
         }
@@ -406,7 +415,15 @@ void SfizzVstEditor::uiSendValue(EditId id, const EditValue& v)
         case EditId::OscillatorQuality:
             normalizeAndSet(kPidOscillatorQuality, v.to_float());
             break;
-
+        case EditId::FreewheelingSampleQuality:
+            normalizeAndSet(kPidFreewheelingSampleQuality, v.to_float());
+            break;
+        case EditId::FreewheelingOscillatorQuality:
+            normalizeAndSet(kPidFreewheelingOscillatorQuality, v.to_float());
+            break;
+        case EditId::SustainCancelsRelease:
+            normalizeAndSet(kPidSustainCancelsRelease, v.to_float());
+            break;
         case EditId::UserFilesDir:
             SfizzPaths::setSfzConfigDefaultPath(fs::u8path(v.to_string()));
             break;
@@ -517,6 +534,8 @@ Vst::ParamID SfizzVstEditor::parameterOfEditId(EditId id)
     default:
         if (editIdIsCC(id))
             return kPidCC0 + ccForEditId(id);
+        else if (editIdIsLevel(id))
+            return kPidLevel0 + levelForEditId(id);
         return Vst::kNoParamId;
     }
 }

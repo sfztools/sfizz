@@ -150,6 +150,10 @@ void sfizz_send_hd_pitch_wheel(sfizz_synth_t* synth, int delay, float pitch)
 {
     synth->synth.hdPitchWheel(delay, pitch);
 }
+void sfizz_send_program_change(sfizz_synth_t* synth, int delay, int program)
+{
+    synth->synth.programChange(delay, program);
+}
 void sfizz_send_aftertouch(sfizz_synth_t* synth, int delay, int aftertouch)
 {
     synth->synth.channelAftertouch(delay, aftertouch);
@@ -193,10 +197,8 @@ void sfizz_send_playback_state(sfizz_synth_t* synth, int delay, int playback_sta
 
 void sfizz_render_block(sfizz_synth_t* synth, float** channels, int num_channels, int num_frames)
 {
-    // Only stereo output is supported for now
-    ASSERT(num_channels == 2);
-    UNUSED(num_channels);
-    synth->synth.renderBlock({{channels[0], channels[1]}, static_cast<size_t>(num_frames)});
+    sfz::AudioSpan<float> channelSpan { channels, static_cast<size_t>(num_channels), 0, static_cast<size_t>(num_frames) };
+    synth->synth.renderBlock(channelSpan);
 }
 
 unsigned int sfizz_get_preload_size(sfizz_synth_t* synth)
@@ -236,6 +238,11 @@ int sfizz_get_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode
 void sfizz_set_oscillator_quality(sfizz_synth_t* synth, sfizz_process_mode_t mode, int quality)
 {
     return synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
+}
+
+void sfizz_set_sustain_cancels_release(sfizz_synth_t* synth, bool value)
+{
+    return synth->synth.setSustainCancelsRelease(value);
 }
 
 void sfizz_set_volume(sfizz_synth_t* synth, float volume)
@@ -311,10 +318,8 @@ bool sfizz_should_reload_scala(sfizz_synth_t* synth)
 
 void sfizz_enable_logging(sfizz_synth_t* synth, const char* prefix)
 {
-    if (prefix)
-        synth->synth.enableLogging(prefix);
-    else
-        synth->synth.enableLogging();
+    (void)synth;
+    (void)prefix;
 }
 
 void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
@@ -325,7 +330,19 @@ void sfizz_set_logging_prefix(sfizz_synth_t* synth, const char* prefix)
 
 void sfizz_disable_logging(sfizz_synth_t* synth)
 {
-    synth->synth.disableLogging();
+    (void)synth;
+}
+
+void sfizz_get_callback_breakdown(sfizz_synth_t* synth, sfizz_callback_breakdown_t* breakdown)
+{
+    const auto& bd = synth->synth.getCallbackBreakdown();
+    breakdown->amplitude = bd.amplitude;
+    breakdown->panning = bd.panning;
+    breakdown->renderMethod = bd.renderMethod;
+    breakdown->data = bd.data;
+    breakdown->dispatch = bd.dispatch;
+    breakdown->filters = bd.filters;
+    breakdown->effects = bd.effects;
 }
 
 void sfizz_all_sound_off(sfizz_synth_t* synth)

@@ -6,7 +6,7 @@
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Code generated with Faust 2.37.3 (https://faust.grame.fr)
 Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 ------------------------------------------------------------ */
 
@@ -19,6 +19,7 @@ Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <math.h>
 
 
@@ -40,7 +41,6 @@ class faust2chHpf6p : public sfzFilterDsp {
  private:
 	
 	int fSampleRate;
-	double fConst0;
 	double fConst1;
 	double fConst2;
 	FAUSTFLOAT fHslider0;
@@ -98,7 +98,7 @@ class faust2chHpf6p : public sfzFilterDsp {
 	void instanceConstants(int sample_rate) {
 		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
-		fConst0 = double(fSampleRate);
+		double fConst0 = double(fSampleRate);
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
 		fConst2 = (6.2831853071795862 / fConst0);
 		//[End:instanceConstants]
@@ -254,9 +254,9 @@ class faust2chHpf6p : public sfzFilterDsp {
 		double fSlow7 = ((0.5 * ((fSlow2 + 1.0) / fSlow4)) * fSlow5);
 		double fSlow8 = (((1.0 - fSlow3) / fSlow4) * fSlow5);
 		double fSlow9 = (((0.0 - (2.0 * fSlow2)) / fSlow4) * fSlow5);
-		for (int i = 0; (i < count); i = (i + 1)) {
-			double fTemp0 = double(input0[i]);
-			double fTemp1 = double(input1[i]);
+		for (int i0 = 0; (i0 < count); i0 = (i0 + 1)) {
+			double fTemp0 = double(input0[i0]);
+			double fTemp1 = double(input1[i0]);
 			fRec2[0] = ((fSlow0 * fRec2[1]) + fSlow6);
 			fVec0[0] = (fTemp0 * fRec2[0]);
 			fRec7[0] = ((fSlow0 * fRec7[1]) + fSlow7);
@@ -279,7 +279,7 @@ class faust2chHpf6p : public sfzFilterDsp {
 			fVec8[0] = (fVec7[1] - (fRec8[0] * fRec0[1]));
 			fRec1[0] = ((fVec6[1] + (fTemp4 + fVec8[1])) - (fRec9[0] * fRec1[1]));
 			fRec0[0] = fRec1[0];
-			output0[i] = FAUSTFLOAT(fRec0[0]);
+			output0[i0] = FAUSTFLOAT(fRec0[0]);
 			fVec9[0] = (fTemp1 * fRec2[0]);
 			double fTemp5 = (fTemp1 * fRec7[0]);
 			fVec10[0] = fTemp5;
@@ -298,7 +298,7 @@ class faust2chHpf6p : public sfzFilterDsp {
 			fVec17[0] = (fVec16[1] - (fRec8[0] * fRec10[1]));
 			fRec11[0] = ((fVec15[1] + (fTemp7 + fVec17[1])) - (fRec9[0] * fRec11[1]));
 			fRec10[0] = fRec11[0];
-			output1[i] = FAUSTFLOAT(fRec10[0]);
+			output1[i0] = FAUSTFLOAT(fRec10[0]);
 			fRec2[1] = fRec2[0];
 			fVec0[1] = fVec0[0];
 			fRec7[1] = fRec7[0];

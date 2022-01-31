@@ -10,6 +10,7 @@
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
+#include "GitBuildId.h"
 #include "DlgAbout.h"
 #include "ImageHelpers.h"
 #include "NativeHelpers.h"
@@ -20,6 +21,7 @@
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
 #include <absl/strings/ascii.h>
+#include <absl/strings/str_cat.h>
 #include <absl/strings/numbers.h>
 #include <ghc/fs_std.hpp>
 #include <array>
@@ -58,6 +60,7 @@ struct Editor::Impl : EditorController::Receiver,
     std::string currentThemeName_;
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
+    bool multi_ { false };
 
     int currentKeyswitch_ = -1;
     std::unordered_map<unsigned, std::string> keyswitchNames_;
@@ -95,6 +98,9 @@ struct Editor::Impl : EditorController::Receiver,
         kTagSetStretchedTuning,
         kTagSetSampleQuality,
         kTagSetOscillatorQuality,
+        kTagSetFreewheelingSampleQuality,
+        kTagSetFreewheelingOscillatorQuality,
+        kTagSetSustainCancelsRelease,
         kTagSetCCVolume,
         kTagSetCCPan,
         kTagChooseUserFilesDir,
@@ -119,15 +125,21 @@ struct Editor::Impl : EditorController::Receiver,
     SValueMenu *scalaRootKeySlider_ = nullptr;
     SValueMenu *scalaRootOctaveSlider_ = nullptr;
     CTextLabel* scalaRootKeyLabel_ = nullptr;
-    SValueMenu *tuningFrequencySlider_ = nullptr;
+    SValueMenu* tuningFrequencyDropdown_ = nullptr;
+    CTextEdit* tuningFrequencyEdit_ = nullptr;
+    STextButton *settingsAboutButton_ = nullptr;
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
     SValueMenu *sampleQualitySlider_ = nullptr;
     SValueMenu *oscillatorQualitySlider_ = nullptr;
+    SValueMenu *freewheelingSampleQualitySlider_ = nullptr;
+    SValueMenu *freewheelingOscillatorQualitySlider_ = nullptr;
+    CCheckBox *sustainCancelsReleaseCheckbox_ = nullptr;
     CTextLabel* keyswitchLabel_ = nullptr;
     CTextLabel* keyswitchInactiveLabel_ = nullptr;
     CTextLabel* keyswitchBadge_ = nullptr;
+    CTextLabel* lblHover_ = nullptr;
     COptionMenu* themeMenu_ = nullptr;
     std::unique_ptr<Theme> theme_;
 
@@ -154,13 +166,13 @@ struct Editor::Impl : EditorController::Receiver,
     SKnobCCBox* volumeCCKnob_ = nullptr;
     SKnobCCBox* panCCKnob_ = nullptr;
 
-    SLevelMeter* leftMeter_ = nullptr;
-    SLevelMeter* rightMeter_ = nullptr;
-
+    SLevelMeter* meters_[16] {};
     SAboutDialog* aboutDialog_ = nullptr;
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
+
+    CTextLabel* sfizzVersionLabel_ = nullptr;
 
     SKnobCCBox* getSecondaryCCKnob(unsigned cc)
     {
@@ -183,6 +195,7 @@ struct Editor::Impl : EditorController::Receiver,
     SharedPointer<CVSTGUITimer> oscSendQueueTimer_;
 
     void createFrameContents();
+    SLevelMeter* createVMeter(const CRect& bounds, int, const char*, CHoriTxtAlign, int);
 
     template <class Control>
     void adjustMinMaxToEditRange(Control* c, EditId id)
@@ -219,8 +232,9 @@ struct Editor::Impl : EditorController::Receiver,
     void updateOversamplingLabel(int oversamplingLog2);
     void updatePreloadSizeLabel(int preloadSize);
     void updateScalaRootKeyLabel(int rootKey);
-    void updateTuningFrequencyLabel(float tuningFrequency);
     void updateStretchedTuningLabel(float stretchedTuning);
+    void buttonHoverEnter(CControl* btn, const char* text);
+    void buttonHoverLeave(CControl* btn);
 
     absl::string_view getCurrentKeyswitchName() const;
     void updateKeyswitchNameLabel();
@@ -333,6 +347,16 @@ void Editor::close()
     }
 }
 
+SLevelMeter* Editor::Impl::createVMeter(const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+    SLevelMeter* meter = new SLevelMeter(bounds);
+    Palette* palette = &theme_->invertedPalette;
+    meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+    meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
+    meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
+    meter->setBackColor(palette->knobInactiveTrack);
+    return meter;
+};
+
 void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
 {
     switch (id) {
@@ -400,9 +424,8 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
     case EditId::TuningFrequency:
         {
             const float value = v.to_float();
-            if (tuningFrequencySlider_)
-                tuningFrequencySlider_->setValue(value);
-            updateTuningFrequencyLabel(value);
+            if (tuningFrequencyEdit_)
+                tuningFrequencyEdit_->setValue(value);
         }
         break;
     case EditId::StretchTuning:
@@ -428,6 +451,33 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             if (CControl* slider = oscillatorQualitySlider_) {
                 slider->setValue(float(value));
                 slider->invalid();
+            }
+        }
+        break;
+    case EditId::FreewheelingSampleQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = freewheelingSampleQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
+        }
+        break;
+    case EditId::FreewheelingOscillatorQuality:
+        {
+            const int value = static_cast<int>(v.to_float());
+            if (CControl* slider = freewheelingOscillatorQualitySlider_) {
+                slider->setValue(float(value));
+                slider->invalid();
+            }
+        }
+        break;
+    case EditId::SustainCancelsRelease:
+        {
+            const bool value = v.to_float();
+            if (CControl* checkbox = sustainCancelsReleaseCheckbox_) {
+                checkbox->setValue(value);
+                checkbox->invalid();
             }
         }
         break;
@@ -508,20 +558,51 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateBackgroundImage(value.c_str());
         }
         break;
-    case EditId::LeftLevel:
+    case EditId::PluginOutputs:
         {
-            const float value = v.to_float();
-            if (SLevelMeter* meter = leftMeter_)
-                meter->setValue(value);
+            const int value = static_cast<int>(v.to_float());
+            if (!meters_[0])
+                return;
+
+            const auto firstMeterRect = meters_[0]->getViewSize();
+            const auto minLeft = firstMeterRect.left;
+            auto maxRight = firstMeterRect.right;
+            auto numMeters = 1;
+            for (; numMeters < 16; ++numMeters) {
+                if (!meters_[numMeters])
+                    break;
+
+                maxRight = meters_[numMeters]->getViewSize().right;
+            }
+            const auto meterWidth = std::max(1.0, (maxRight - minLeft - value + 1) / value);
+
+            auto meterParent = meters_[0]->getParentView()->asViewContainer();
+            const auto roundRectRadius = [value] {
+                if (value < 4)
+                    return 5.0;
+                else if (value < 8)
+                    return 3.0;
+                else if (value < 16)
+                    return 1.0;
+                else
+                    return 0.0;
+            }();
+
+            for (int i = 0; i < 16; ++i) {
+                if (meters_[i]) {
+                    meterParent->removeView(meters_[i]);
+                }
+
+                if (i < value) {
+                    double left { minLeft + i * (meterWidth + 1) };
+                    CRect rect { left, firstMeterRect.top, left + meterWidth, firstMeterRect.bottom };
+                    meters_[i] = createVMeter(rect, -1, "", kCenterText, 14);
+                    meters_[i]->setRoundRectRadius(roundRectRadius);
+                    meterParent->addView(meters_[i]);
+                }
+            }
+            break;
         }
-        break;
-    case EditId::RightLevel:
-        {
-            const float value = v.to_float();
-            if (SLevelMeter* meter = rightMeter_)
-                meter->setValue(value);
-        }
-        break;
     default:
         if (editIdIsKey(id)) {
             const int key = keyForEditId(id);
@@ -553,6 +634,11 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
         }
         else if (editIdIsCCLabel(id)) {
             updateCCLabel(ccLabelForEditId(id), v.to_string().c_str());
+        }
+        else if (editIdIsLevel(id)) {
+            const float value = v.to_float();
+            if (SLevelMeter* meter = meters_[levelForEditId(id)])
+                meter->setValue(value);
         }
         break;
     }
@@ -649,6 +735,7 @@ void Editor::Impl::createFrameContents()
             });
             return box;
         };
+#if 0
         auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
@@ -661,6 +748,7 @@ void Editor::Impl::createFrameContents()
             box->setTitleFont(font);
             return box;
         };
+#endif
         auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CKickButton(bounds, this, tag, 0.0f, iconShaded);
         };
@@ -688,11 +776,13 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
-        auto createHLine = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+        auto createHLine = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             int y = static_cast<int>(0.5 * (bounds.top + bounds.bottom));
             CRect lineBounds(bounds.left, y, bounds.right, y + 1);
             CViewContainer* hline = new CViewContainer(lineBounds);
-            hline->setBackgroundColor(CColor(0xff, 0xff, 0xff, 0xff));
+            OnThemeChanged.push_back([hline, palette]() {
+                hline->setBackgroundColor(palette->text);
+            });
             return hline;
         };
         auto createValueLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
@@ -721,25 +811,7 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
-        auto createVMeter = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            SLevelMeter* meter = new SLevelMeter(bounds);
-            meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
-            meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
-            OnThemeChanged.push_back([meter, palette]() {
-                meter->setBackColor(palette->knobInactiveTrack);
-            });
-            return meter;
-        };
-#if 0
-        auto createButton = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
-            CTextButton* button = new CTextButton(bounds, this, tag, label);
-            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
-            button->setFont(font);
-            button->setTextAlignment(align);
-            return button;
-        };
-#endif
+
         auto createClickableLabel = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
             STextButton* button = new STextButton(bounds, this, tag, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
@@ -802,6 +874,19 @@ void Editor::Impl::createFrameContents()
             cb->setRoundRectRadius(5.0);
             return cb;
         };
+        auto createHoverBox = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            OnThemeChanged.push_back([lbl, palette]() {
+                lbl->setFontColor(palette->valueText);
+                lbl->setBackColor(palette->valueBackground);
+                lbl->setFrameColor(palette->valueText);
+            });
+            lbl->setHoriAlign(align);
+            lbl->setFont(font);
+            lbl->setAutosizeFlags(kAutosizeAll);
+            return lbl;
+        };
         auto createGlyphButton = [this, &palette](UTF8StringPtr glyph, const CRect& bounds, int tag, int fontsize) {
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Fluent System F20", fontsize));
@@ -815,18 +900,29 @@ void Editor::Impl::createFrameContents()
             btn->setGradientHighlighted(nullptr);
             return btn;
         };
-        auto createHomeButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
+        auto createHomeButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue1d6", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Home"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
-        auto createInfoButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue1e7", bounds, tag, fontsize);
+        auto createInfoButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue1e7", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Information"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
-        auto createCCButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            // return createGlyphButton(u8"\ue240", bounds, tag, fontsize);
-            return createGlyphButton(u8"\ue253", bounds, tag, fontsize);
+        auto createCCButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue253", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Controls"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
-        auto createSettingsButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
-            return createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
+        auto createSettingsButton = [this, &createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
+            auto* btn = createGlyphButton(u8"\ue2e4", bounds, tag, fontsize);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "Settings"); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
 #if 0
         auto createEditFileButton = [&createGlyphButton](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
@@ -946,10 +1042,39 @@ void Editor::Impl::createFrameContents()
             return panel;
         };
 
+        auto createCheckbox = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int) {
+            auto* checkbox = new CCheckBox(bounds, this, tag, label);
+            return checkbox;
+        };
+
+        auto createTextEdit = [this, &palette] (const CRect& bounds, int tag, const char* label, CHoriTxtAlign align, int fontsize) {
+            auto* edit = new CTextEdit(bounds, this, tag, label, nullptr);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            edit->setFont(font);
+            edit->setHoriAlign(align);
+            edit->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            edit->setStyle(CParamDisplay::kRoundRectStyle);
+            edit->setRoundRectRadius(5.0);
+            OnThemeChanged.push_back([edit, palette]() {
+                edit->setFontColor(palette->valueText);
+                edit->setBackColor(palette->valueBackground);
+            });
+            return edit;
+        };
+
         #include "layout/main.hpp"
 
         OnThemeChanged.push_back([mainView, theme]() {
             mainView->setBackgroundColor(theme->frameBackground);
+        });
+
+        OnThemeChanged.push_back([this, theme]() {
+            for (unsigned i = 0, n = sizeof(meters_)/sizeof(meters_[0]); i < n; ++i ) {
+                Palette& palette = theme->invertedPalette;
+                const auto meter = meters_[i];
+                if (meter)
+                    meter->setBackColor(palette.knobInactiveTrack);
+            }
         });
 
 #if LINUX
@@ -978,6 +1103,11 @@ void Editor::Impl::createFrameContents()
 #endif
 
         mainView_ = owned(mainView);
+    }
+
+    if (CTextLabel* label = sfizzVersionLabel_) {
+        std::string version = GitBuildId[0] ? absl::StrCat(SFIZZ_VERSION ".", GitBuildId) : SFIZZ_VERSION;
+        label->setText(absl::StrCat(u8"sfizz ", version));
     }
 
     ///
@@ -1016,11 +1146,15 @@ void Editor::Impl::createFrameContents()
         scalaRootOctaveSlider_->setDefaultValue(
             static_cast<int>(EditRange::get(EditId::ScalaRootKey).def) / 12);
     }
-    adjustMinMaxToEditRange(tuningFrequencySlider_, EditId::TuningFrequency);
-    tuningFrequencySlider_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
+    adjustMinMaxToEditRange(tuningFrequencyDropdown_, EditId::TuningFrequency);
+    adjustMinMaxToEditRange(tuningFrequencyEdit_, EditId::TuningFrequency);
+    tuningFrequencyEdit_->setWheelInc(0.1f / EditRange::get(EditId::TuningFrequency).extent());
     adjustMinMaxToEditRange(stretchedTuningSlider_, EditId::StretchTuning);
     adjustMinMaxToEditRange(sampleQualitySlider_, EditId::SampleQuality);
     adjustMinMaxToEditRange(oscillatorQualitySlider_, EditId::OscillatorQuality);
+    adjustMinMaxToEditRange(freewheelingSampleQualitySlider_, EditId::FreewheelingSampleQuality);
+    adjustMinMaxToEditRange(freewheelingOscillatorQualitySlider_, EditId::FreewheelingOscillatorQuality);
+    adjustMinMaxToEditRange(sustainCancelsReleaseCheckbox_, EditId::SustainCancelsRelease);
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
@@ -1065,13 +1199,24 @@ void Editor::Impl::createFrameContents()
     };
 
     for (std::pair<float, const char*> value : tuningFrequencies)
-        tuningFrequencySlider_->addEntry(value.second, value.first);
-    tuningFrequencySlider_->setValueToStringFunction(
+        tuningFrequencyDropdown_->addEntry(value.second, value.first);
+
+    tuningFrequencyEdit_->setValueToStringFunction(
         [](float value, char result[256], CParamDisplay*) -> bool
         {
             sprintf(result, "%.1f Hz", value);
             return true;
         });
+
+    tuningFrequencyEdit_->setStringToValueFunction([](UTF8StringPtr txt, float& result, CTextEdit*) -> bool {
+        float value;
+        if (absl::SimpleAtof(txt, &value)) {
+            result = value;
+            return true;
+        }
+
+        return false;
+    });
 
     static const char* notesInOctave[12] = {
         "C", "C#", "D", "D#", "E",
@@ -1101,36 +1246,49 @@ void Editor::Impl::createFrameContents()
         menu->addEntry("Open SFZ folder", kTagOpenSfzFolder);
     }
 
-    if (SValueMenu *menu = sampleQualitySlider_) {
-        static const std::array<const char*, 11> labels {{
-            "Nearest", "Linear", "Polynomial",
-            "Sinc 8", "Sinc 12", "Sinc 16", "Sinc 24",
-            "Sinc 36", "Sinc 48", "Sinc 60", "Sinc 72",
-        }};
-        for (size_t i = 0; i < labels.size(); ++i)
-            menu->addEntry(labels[i], float(i));
-        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
-            int index = int(value);
-            if (index < 0 || unsigned(index) >= labels.size())
-                return false;
-            result = labels[unsigned(index)];
-            return true;
-        });
-    }
-    if (SValueMenu *menu = oscillatorQualitySlider_) {
-        static const std::array<const char*, 4> labels {{
-            "Nearest", "Linear", "High", "Dual-High",
-        }};
-        for (size_t i = 0; i < labels.size(); ++i)
-            menu->addEntry(labels[i], float(i));
-        menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
-            int index = int(value);
-            if (index < 0 || unsigned(index) >= labels.size())
-                return false;
-            result = labels[unsigned(index)];
-            return true;
-        });
-    }
+    static const std::array<const char*, 11> sampleQualityLabels {{
+        "Nearest", "Linear", "Polynomial",
+        "Sinc 8", "Sinc 12", "Sinc 16", "Sinc 24",
+        "Sinc 36", "Sinc 48", "Sinc 60", "Sinc 72",
+    }};
+
+    auto setupSampleQualityMenu = [&] (SValueMenu* menu) {
+        if (menu) {
+            for (size_t i = 0; i < sampleQualityLabels.size(); ++i)
+                menu->addEntry(sampleQualityLabels[i], float(i));
+            menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+                int index = int(value);
+                if (index < 0 || unsigned(index) >= sampleQualityLabels.size())
+                    return false;
+                result = sampleQualityLabels[unsigned(index)];
+                return true;
+            });
+        }
+    };
+
+    setupSampleQualityMenu(sampleQualitySlider_);
+    setupSampleQualityMenu(freewheelingSampleQualitySlider_);
+
+    static const std::array<const char*, 4> oscillatorQualityLabels {{
+        "Nearest", "Linear", "High", "Dual-High",
+    }};
+
+    auto setupOscillatorQualityMenu = [&] (SValueMenu* menu) {
+        if (menu) {
+            for (size_t i = 0; i < oscillatorQualityLabels.size(); ++i)
+                menu->addEntry(oscillatorQualityLabels[i], float(i));
+            menu->setValueToStringFunction2([](float value, std::string& result, CParamDisplay*) -> bool {
+                int index = int(value);
+                if (index < 0 || unsigned(index) >= oscillatorQualityLabels.size())
+                    return false;
+                result = oscillatorQualityLabels[unsigned(index)];
+                return true;
+            });
+        }
+    };
+
+    setupOscillatorQualityMenu(oscillatorQualitySlider_);
+    setupOscillatorQualityMenu(freewheelingOscillatorQualitySlider_);
 
     if (SPiano* piano = piano_) {
         piano->onKeyPressed = [this](unsigned key, float vel) {
@@ -1571,18 +1729,6 @@ void Editor::Impl::updateScalaRootKeyLabel(int rootKey)
     label->setText(noteName(rootKey));
 }
 
-void Editor::Impl::updateTuningFrequencyLabel(float tuningFrequency)
-{
-    CTextLabel* label = tuningFrequencyLabel_;
-    if (!label)
-        return;
-
-    char text[64];
-    sprintf(text, "%.1f", tuningFrequency);
-    text[sizeof(text) - 1] = '\0';
-    label->setText(text);
-}
-
 void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
 {
     CTextLabel* label = stretchedTuningLabel_;
@@ -1593,6 +1739,30 @@ void Editor::Impl::updateStretchedTuningLabel(float stretchedTuning)
     sprintf(text, "%.3f", stretchedTuning);
     text[sizeof(text) - 1] = '\0';
     label->setText(text);
+}
+
+void Editor::Impl::buttonHoverEnter(CControl* btn, const char* text)
+{
+    lblHover_->setText(text);
+    lblHover_->sizeToFit();
+    CRect rect = lblHover_->getViewSize();
+    CRect btnRect = btn->getViewSize();
+    auto height = rect.getHeight();
+    auto width = rect.getWidth();
+    rect.left = btnRect.left;
+    rect.top = btnRect.bottom + 2;
+    rect.setWidth(width + 10);
+    rect.setHeight(height);
+    lblHover_->setViewSize(rect);
+    lblHover_->setVisible(true);
+    lblHover_->invalid();
+}
+
+void Editor::Impl::buttonHoverLeave(CControl* btn)
+{
+    (void)btn;
+    lblHover_->setVisible(false);
+    lblHover_->invalid();
 }
 
 absl::string_view Editor::Impl::getCurrentKeyswitchName() const
@@ -1917,7 +2087,8 @@ void Editor::Impl::valueChanged(CControl* ctl)
 
     case kTagSetTuningFrequency:
         ctrl.uiSendValue(EditId::TuningFrequency, value);
-        updateTuningFrequencyLabel(value);
+        if (tuningFrequencyEdit_)
+            tuningFrequencyEdit_->setValue(value);
         break;
 
     case kTagSetSampleQuality:
@@ -1926,6 +2097,18 @@ void Editor::Impl::valueChanged(CControl* ctl)
 
     case kTagSetOscillatorQuality:
         ctrl.uiSendValue(EditId::OscillatorQuality, value);
+        break;
+
+    case kTagSetFreewheelingSampleQuality:
+        ctrl.uiSendValue(EditId::FreewheelingSampleQuality, value);
+        break;
+
+    case kTagSetFreewheelingOscillatorQuality:
+        ctrl.uiSendValue(EditId::FreewheelingOscillatorQuality, value);
+        break;
+
+    case kTagSetSustainCancelsRelease:
+        ctrl.uiSendValue(EditId::SustainCancelsRelease, value);
         break;
 
     case kTagSetStretchedTuning:
@@ -1944,7 +2127,10 @@ void Editor::Impl::valueChanged(CControl* ctl)
         if (value != 1)
             break;
 
-        Call::later([this]() { aboutDialog_->setVisible(true); });
+        Call::later([this]() {
+            aboutDialog_->setVisible(true);
+            frame_->registerKeyboardHook(aboutDialog_);
+        });
         break;
 
     case kTagThemeMenu:

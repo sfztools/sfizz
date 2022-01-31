@@ -263,6 +263,7 @@ struct Region {
 
     // Instrument settings: voice lifecycle
     int64_t group { Default::group }; // group
+    uint16_t output { Default::output }; // output
     absl::optional<int64_t> offBy {}; // off_by
     OffMode offMode { Default::offMode }; // off_mode
     float offTime { Default::offTime }; // off_mode
@@ -277,6 +278,7 @@ struct Region {
 
     // Region logic: MIDI conditions
     UncheckedRange<float> bendRange { Default::loBend, Default::hiBend }; // hibend and lobend
+    UncheckedRange<uint8_t> programRange { Default::loProgram, Default::hiProgram }; // loprog and hiprog
     CCMap<UncheckedRange<float>> ccConditions {{ Default::loCC, Default::hiCC }};
     absl::optional<uint8_t> lastKeyswitch {}; // sw_last
     absl::optional<UncheckedRange<uint8_t>> lastKeyswitchRange {}; // sw_last

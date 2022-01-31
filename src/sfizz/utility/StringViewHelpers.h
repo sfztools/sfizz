@@ -179,6 +179,17 @@ bool readLeadingFloat(absl::string_view input, F* result, absl::string_view* res
             ++numberEnd;
     }
 
+    if (numberEnd < input.size() && input[numberEnd] == 'e') {
+        ++numberEnd;
+
+        if (numberEnd < input.size() &&
+            (input[numberEnd] == '+' || input[numberEnd] == '-' || absl::ascii_isdigit(input[numberEnd])))
+            ++numberEnd;
+
+        while (numberEnd < input.size() && absl::ascii_isdigit(input[numberEnd]))
+            ++numberEnd;
+    }
+
     if (!readFloat(input.substr(0, numberEnd), result))
         return false;
 

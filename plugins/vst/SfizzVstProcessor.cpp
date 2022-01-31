@@ -92,7 +92,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _scalaUpdate->addDependent(this);
     _automationUpdate->addDependent(this);
 
-    addAudioOutput(STR16("Audio Output"), Vst::SpeakerArr::kStereo);
+    addAudioOutput(STR16("Audio Output 1"), Vst::SpeakerArr::kStereo);
     addEventInput(STR16("Event Input"), 1);
 
     _state = SfizzVstState();
@@ -113,7 +113,7 @@ tresult PLUGIN_API SfizzVstProcessor::initialize(FUnknown* context)
     _synth->setBroadcastCallback(onMessage, this);
 
     _currentStretchedTuning = 0.0;
-    loadSfzFileOrDefault({}, false);
+    loadSfzFileOrDefault({});
 
     _synth->bpmTempo(0, 120);
     _timeSigNumerator = 4;
@@ -143,9 +143,11 @@ tresult PLUGIN_API SfizzVstProcessor::terminate()
 
 tresult PLUGIN_API SfizzVstProcessor::setBusArrangements(Vst::SpeakerArrangement* inputs, int32 numIns, Vst::SpeakerArrangement* outputs, int32 numOuts)
 {
-    bool isStereo = numIns == 0 && numOuts == 1 && outputs[0] == Vst::SpeakerArr::kStereo;
+    bool allStereo { true };
+    for (unsigned o = 0; o < numOuts; ++o)
+        allStereo &= (outputs[o] == Vst::SpeakerArr::kStereo);
 
-    if (!isStereo)
+    if (!allStereo)
         return kResultFalse;
 
     return AudioEffect::setBusArrangements(inputs, numIns, outputs, numOuts);
@@ -218,7 +220,7 @@ void SfizzVstProcessor::syncStateToSynth()
     if (!synth)
         return;
 
-    loadSfzFileOrDefault(_state.sfzFile, true);
+    loadSfzFileOrDefault(_state.sfzFile);
     synth->setVolume(_state.volume);
     synth->setNumVoices(_state.numVoices);
     synth->setOversamplingFactor(1 << _state.oversamplingLog2);
@@ -274,30 +276,45 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     if (data.processMode == Vst::kOffline)
         lock.lock();
     else
-        lock.try_lock();
+        (void)lock.try_lock();
 
     if (data.processContext)
         updateTimeInfo(*data.processContext);
 
     const uint32 numFrames = data.numSamples;
     _canPerformEventsAndParameters = lock.owns_lock();
+    bool editorWasOpen = _editorIsOpen;
     processUnorderedEvents(numFrames, data.inputParameterChanges, data.inputEvents);
 
     if (data.numOutputs < 1)  // flush mode
         return kResultTrue;
 
     constexpr uint32 numChannels = 2;
-    float* outputs[numChannels];
+    constexpr uint32 maxChannels = 16;
+    float* outputs[maxChannels];
+    const auto numMonoChannels = data.numOutputs * numChannels;
 
-    assert(numChannels == data.outputs[0].numChannels);
+    for (unsigned o = 0; o < data.numOutputs; ++o) {
+        assert(data.outputs[o].numChannels == numChannels);
+        for (unsigned c = 0; c < numChannels; ++c)
+            outputs[numChannels * o + c] = data.outputs[o].channelBuffers32[c];
+    }
 
-    for (unsigned c = 0; c < numChannels; ++c)
-        outputs[c] = data.outputs[0].channelBuffers32[c];
+    if (!editorWasOpen && _editorIsOpen) {
+        if (Vst::IParameterChanges* pcs = data.outputParameterChanges) {
+            int32 index;
+            if (Vst::IParamValueQueue* vq = pcs->addParameterData(kPidNumOutputs, index))
+                vq->addPoint(0, SfizzRange::getForParameter(kPidNumOutputs).normalize(numMonoChannels), index);
+        }
+    }
 
     if (!lock.owns_lock()) {
         for (unsigned c = 0; c < numChannels; ++c)
             std::memset(outputs[c], 0, numFrames * sizeof(float));
-        data.outputs[0].silenceFlags = 3;
+
+        for (unsigned o = 0; o < data.numOutputs; ++o)
+            data.outputs[o].silenceFlags = 3;
+
         return kResultTrue;
     }
 
@@ -317,22 +334,24 @@ tresult PLUGIN_API SfizzVstProcessor::process(Vst::ProcessData& data)
     }
     synth.setSampleQuality(sfz::Sfizz::ProcessLive, _state.sampleQuality);
     synth.setOscillatorQuality(sfz::Sfizz::ProcessLive, _state.oscillatorQuality);
+    synth.setSampleQuality(sfz::Sfizz::ProcessFreewheeling, _state.freewheelingSampleQuality);
+    synth.setOscillatorQuality(sfz::Sfizz::ProcessFreewheeling, _state.freewheelingOscillatorQuality);
+    synth.setSustainCancelsRelease(_state.sustainCancelsRelease);
 
-    synth.renderBlock(outputs, numFrames, numChannels);
+    synth.renderBlock(outputs, numFrames, data.numOutputs);
 
     // Update levels, if editor is open, otherwise skip
     RMSFollower& rmsFollower = _rmsFollower;
     if (_editorIsOpen) {
-        rmsFollower.process(outputs[0], outputs[1], numFrames);
-        simde__m128 rms = _rmsFollower.getRMS();
-        float left = reinterpret_cast<float*>(&rms)[0];
-        float right = reinterpret_cast<float*>(&rms)[1];
+        rmsFollower.process((const float**)outputs, numFrames, numMonoChannels);
+        float levels[maxChannels];
+        rmsFollower.getRMS(levels, numMonoChannels);
         if (Vst::IParameterChanges* pcs = data.outputParameterChanges) {
             int32 index;
-            if (Vst::IParamValueQueue* vq = pcs->addParameterData(kPidLeftLevel, index))
-                vq->addPoint(0, left, index);
-            if (Vst::IParamValueQueue* vq = pcs->addParameterData(kPidRightLevel, index))
-                vq->addPoint(0, right, index);
+            for (int c = 0; c < numMonoChannels; ++c) {
+                if (Vst::IParamValueQueue* vq = pcs->addParameterData(kPidLevel0 + c, index))
+                    vq->addPoint(0, levels[c], index);
+            }
         }
     }
     else
@@ -433,6 +452,15 @@ void SfizzVstProcessor::playOrderedParameter(int32 sampleOffset, Vst::ParamID id
         break;
     case kPidOscillatorQuality:
         _state.oscillatorQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidFreewheelingSampleQuality:
+        _state.freewheelingSampleQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidFreewheelingOscillatorQuality:
+        _state.freewheelingOscillatorQuality = static_cast<int32>(range.denormalize(value));
+        break;
+    case kPidSustainCancelsRelease:
+        _state.sustainCancelsRelease = (range.denormalize(value) > 0.0f);
         break;
     case kPidAftertouch:
         synth.hdChannelAftertouch(sampleOffset, value);
@@ -574,7 +602,7 @@ tresult PLUGIN_API SfizzVstProcessor::notify(Vst::IMessage* message)
 
         std::unique_lock<SpinMutex> lock(_processMutex);
         _state.sfzFile.assign(static_cast<const char *>(data), size);
-        loadSfzFileOrDefault(_state.sfzFile, false);
+        loadSfzFileOrDefault(_state.sfzFile);
         lock.unlock();
     }
     else if (!std::strcmp(id, "LoadScala")) {
@@ -689,7 +717,7 @@ void SfizzVstProcessor::receiveOSC(int delay, const char* path, const char* sig,
     }
 }
 
-void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool initParametersFromState)
+void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath)
 {
     sfz::Sfizz& synth = *_synth;
 
@@ -709,16 +737,7 @@ void SfizzVstProcessor::loadSfzFileOrDefault(const std::string& filePath, bool i
         const InstrumentDescription desc = parseDescriptionBlob(descBlob);
         for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
             if (desc.ccUsed.test(cc))
-                newControllers[cc] = desc.ccDefault[cc];
-        }
-        // set CC from existing state
-        if (initParametersFromState) {
-            for (uint32 cc = 0; cc < sfz::config::numCCs; ++cc) {
-                if (absl::optional<float> value = oldControllers[cc]) {
-                    newControllers[cc] = *value;
-                    synth.automateHdcc(0, int(cc), *value);
-                }
-            }
+                newControllers[cc] = desc.ccValue[cc];
         }
         _state.controllers = std::move(newControllers);
     }
@@ -822,7 +841,7 @@ void SfizzVstProcessor::doBackgroundIdle(size_t idleCounter)
         if (_synth->shouldReloadFile()) {
             fprintf(stderr, "[Sfizz] sfz file has changed, reloading\n");
             std::lock_guard<SpinMutex> lock(_processMutex);
-            loadSfzFileOrDefault(_state.sfzFile, false);
+            loadSfzFileOrDefault(_state.sfzFile);
         }
         if (_synth->shouldReloadScala()) {
             fprintf(stderr, "[Sfizz] scala file has changed, reloading\n");
@@ -916,10 +935,39 @@ FUnknown* SfizzVstProcessor::createInstance(void*)
     return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessor);
 }
 
+FUnknown* SfizzVstProcessorMulti::createInstance(void*)
+{
+    return static_cast<Vst::IAudioProcessor*>(new SfizzVstProcessorMulti);
+}
+
 template <>
 FUnknown* createInstance<SfizzVstProcessor>(void* context)
 {
     return SfizzVstProcessor::createInstance(context);
 }
 
+tresult PLUGIN_API SfizzVstProcessorMulti::initialize(FUnknown* context)
+{
+    tresult res = SfizzVstProcessor::initialize(context);
+    if (res != kResultFalse) {
+        addAudioOutput(STR16("Audio Output 2"), Vst::SpeakerArr::kStereo);
+        addAudioOutput(STR16("Audio Output 3"), Vst::SpeakerArr::kStereo);
+        addAudioOutput(STR16("Audio Output 4"), Vst::SpeakerArr::kStereo);
+        addAudioOutput(STR16("Audio Output 5"), Vst::SpeakerArr::kStereo);
+        addAudioOutput(STR16("Audio Output 6"), Vst::SpeakerArr::kStereo);
+        addAudioOutput(STR16("Audio Output 7"), Vst::SpeakerArr::kStereo);
+        addAudioOutput(STR16("Audio Output 8"), Vst::SpeakerArr::kStereo);
+    }
+    _multi = true;
+    _rmsFollower.setNumOutputs(16);
+    return res;
+}
+
+template <>
+FUnknown* createInstance<SfizzVstProcessorMulti>(void* context)
+{
+    return SfizzVstProcessorMulti::createInstance(context);
+}
+
 FUID SfizzVstProcessor::cid = SfizzVstProcessor_cid;
+FUID SfizzVstProcessorMulti::cid = SfizzVstProcessor_cid;

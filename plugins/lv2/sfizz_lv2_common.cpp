@@ -31,6 +31,14 @@ bool sfizz_lv2_fetch_description(
     return true;
 }
 
+int sfizz_lv2_get_num_outputs(sfizz_plugin_t *self)
+{
+    if (self->multi_out)
+        return MULTI_OUTPUT_COUNT;
+
+    return 2;
+}
+
 #if defined(SFIZZ_LV2_UI)
 void sfizz_lv2_set_ui_active(sfizz_plugin_t *self, bool ui_active)
 {

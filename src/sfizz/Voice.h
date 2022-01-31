@@ -10,7 +10,6 @@
 #include "Region.h"
 #include "Resources.h"
 #include "AudioSpan.h"
-#include "Logger.h"
 #include "utility/NumericId.h"
 #include "utility/LeakDetector.h"
 #include <memory>
@@ -26,6 +25,7 @@ struct ExtendedCCValues {
     float bipolar {};
     float noteGate {};
     float alternate {};
+    float keydelta {};
 };
 
 /**
@@ -381,10 +381,10 @@ public:
      */
     int getAge() const noexcept;
 
-    Duration getLastDataDuration() const noexcept;
-    Duration getLastAmplitudeDuration() const noexcept;
-    Duration getLastFilterDuration() const noexcept;
-    Duration getLastPanningDuration() const noexcept;
+    double getLastDataDuration() const noexcept;
+    double getLastAmplitudeDuration() const noexcept;
+    double getLastFilterDuration() const noexcept;
+    double getLastPanningDuration() const noexcept;
 
     /**
      * @brief Get the SFZv1 amplitude LFO, if existing

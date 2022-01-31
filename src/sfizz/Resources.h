@@ -13,7 +13,6 @@ namespace sfz {
 struct SynthConfig;
 class BufferPool;
 class MidiState;
-class Logger;
 class CurveSet;
 class FilePool;
 struct WavetablePool;
@@ -31,7 +30,17 @@ public:
 
     void setSampleRate(float samplerate);
     void setSamplesPerBlock(int samplesPerBlock);
-    void clear();
+    /**
+     * @brief Clear resources that are related to a currently loaded SFZ file
+     *
+     */
+    void clearNonState();
+    /**
+     * @brief Clear resources that are unrelated to the currently loaded SFZ file,
+     *        i.e. midi state and beat clock.
+     *
+     */
+    void clearState();
 
     #define ACCESSOR_RW(Accessor, RetTy) \
         RetTy const& Accessor() const noexcept; \
@@ -40,7 +49,6 @@ public:
     ACCESSOR_RW(getSynthConfig, SynthConfig);
     ACCESSOR_RW(getBufferPool, BufferPool);
     ACCESSOR_RW(getMidiState, MidiState);
-    ACCESSOR_RW(getLogger, Logger);
     ACCESSOR_RW(getCurves, CurveSet);
     ACCESSOR_RW(getFilePool, FilePool);
     ACCESSOR_RW(getWavePool, WavetablePool);

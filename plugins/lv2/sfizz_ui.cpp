@@ -125,6 +125,7 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
 
     int sfz_serial = 0;
     bool valid_sfz_serial = false;
+    bool multi_out = false;
 
 protected:
     void uiSendValue(EditId id, const EditValue& v) override;
@@ -271,6 +272,13 @@ instantiate(const LV2UI_Descriptor *descriptor,
     // LV2 has its own path management mechanism
     self->uiReceiveValue(EditId::CanEditUserFilesDir, 0);
 
+    // Send the number of outputs if necessary
+    int numOutputs = sfizz_lv2_get_num_outputs(self->plugin);
+    if (numOutputs > 2) {
+        self->multi_out = true;
+        self->uiReceiveValue(EditId::PluginOutputs, numOutputs);
+    }
+
     *widget = reinterpret_cast<LV2UI_Widget>(uiFrame->getPlatformFrame()->getPlatformRepresentation());
 
     if (self->resize)
@@ -296,6 +304,132 @@ cleanup(LV2UI_Handle ui)
 }
 
 static void
+port_event_stereo(sfizz_ui_t *self, uint32_t port_index, const void *buffer)
+{
+    const float v = *reinterpret_cast<const float*>(buffer);
+
+    switch (port_index) {
+    case SFIZZ_VOLUME:
+        self->uiReceiveValue(EditId::Volume, v);
+        break;
+    case SFIZZ_POLYPHONY:
+        self->uiReceiveValue(EditId::Polyphony, v);
+        break;
+    case SFIZZ_OVERSAMPLING:
+        self->uiReceiveValue(EditId::Oversampling, v);
+        break;
+    case SFIZZ_PRELOAD:
+        self->uiReceiveValue(EditId::PreloadSize, v);
+        break;
+    case SFIZZ_SCALA_ROOT_KEY:
+        self->uiReceiveValue(EditId::ScalaRootKey, v);
+        break;
+    case SFIZZ_TUNING_FREQUENCY:
+        self->uiReceiveValue(EditId::TuningFrequency, v);
+        break;
+    case SFIZZ_STRETCH_TUNING:
+        self->uiReceiveValue(EditId::StretchTuning, v);
+        break;
+    case SFIZZ_SAMPLE_QUALITY:
+        self->uiReceiveValue(EditId::SampleQuality, v);
+        break;
+    case SFIZZ_OSCILLATOR_QUALITY:
+        self->uiReceiveValue(EditId::OscillatorQuality, v);
+        break;
+    case SFIZZ_ACTIVE_VOICES:
+        self->uiReceiveValue(EditId::UINumActiveVoices, v);
+        break;
+    case SFIZZ_NUM_CURVES:
+        self->uiReceiveValue(EditId::UINumCurves, v);
+        break;
+    case SFIZZ_NUM_MASTERS:
+        self->uiReceiveValue(EditId::UINumMasters, v);
+        break;
+    case SFIZZ_NUM_GROUPS:
+        self->uiReceiveValue(EditId::UINumGroups, v);
+        break;
+    case SFIZZ_NUM_REGIONS:
+        self->uiReceiveValue(EditId::UINumRegions, v);
+        break;
+    case SFIZZ_NUM_SAMPLES:
+        self->uiReceiveValue(EditId::UINumPreloadedSamples, v);
+        break;
+    case SFIZZ_FREEWHEELING_SAMPLE_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingSampleQuality, v);
+        break;
+    case SFIZZ_FREEWHEELING_OSCILLATOR_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingOscillatorQuality, v);
+        break;
+    case SFIZZ_SUSTAIN_CANCELS_RELEASE:
+        self->uiReceiveValue(EditId::SustainCancelsRelease, v);
+        break;
+    }
+}
+
+static void
+port_event_multi(sfizz_ui_t *self, uint32_t port_index, const void *buffer)
+{
+    const float v = *reinterpret_cast<const float*>(buffer);
+
+    switch (port_index) {
+    case SFIZZ_MULTI_VOLUME:
+        self->uiReceiveValue(EditId::Volume, v);
+        break;
+    case SFIZZ_MULTI_POLYPHONY:
+        self->uiReceiveValue(EditId::Polyphony, v);
+        break;
+    case SFIZZ_MULTI_OVERSAMPLING:
+        self->uiReceiveValue(EditId::Oversampling, v);
+        break;
+    case SFIZZ_MULTI_PRELOAD:
+        self->uiReceiveValue(EditId::PreloadSize, v);
+        break;
+    case SFIZZ_MULTI_SCALA_ROOT_KEY:
+        self->uiReceiveValue(EditId::ScalaRootKey, v);
+        break;
+    case SFIZZ_MULTI_TUNING_FREQUENCY:
+        self->uiReceiveValue(EditId::TuningFrequency, v);
+        break;
+    case SFIZZ_MULTI_STRETCH_TUNING:
+        self->uiReceiveValue(EditId::StretchTuning, v);
+        break;
+    case SFIZZ_MULTI_SAMPLE_QUALITY:
+        self->uiReceiveValue(EditId::SampleQuality, v);
+        break;
+    case SFIZZ_MULTI_OSCILLATOR_QUALITY:
+        self->uiReceiveValue(EditId::OscillatorQuality, v);
+        break;
+    case SFIZZ_MULTI_ACTIVE_VOICES:
+        self->uiReceiveValue(EditId::UINumActiveVoices, v);
+        break;
+    case SFIZZ_MULTI_NUM_CURVES:
+        self->uiReceiveValue(EditId::UINumCurves, v);
+        break;
+    case SFIZZ_MULTI_NUM_MASTERS:
+        self->uiReceiveValue(EditId::UINumMasters, v);
+        break;
+    case SFIZZ_MULTI_NUM_GROUPS:
+        self->uiReceiveValue(EditId::UINumGroups, v);
+        break;
+    case SFIZZ_MULTI_NUM_REGIONS:
+        self->uiReceiveValue(EditId::UINumRegions, v);
+        break;
+    case SFIZZ_MULTI_NUM_SAMPLES:
+        self->uiReceiveValue(EditId::UINumPreloadedSamples, v);
+        break;
+    case SFIZZ_MULTI_FREEWHEELING_SAMPLE_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingSampleQuality, v);
+        break;
+    case SFIZZ_MULTI_FREEWHEELING_OSCILLATOR_QUALITY:
+        self->uiReceiveValue(EditId::FreewheelingOscillatorQuality, v);
+        break;
+    case SFIZZ_MULTI_SUSTAIN_CANCELS_RELEASE:
+        self->uiReceiveValue(EditId::SustainCancelsRelease, v);
+        break;
+    }
+}
+
+static void
 port_event(LV2UI_Handle ui,
            uint32_t port_index,
            uint32_t buffer_size,
@@ -303,57 +437,11 @@ port_event(LV2UI_Handle ui,
            const void *buffer)
 {
     sfizz_ui_t *self = (sfizz_ui_t *)ui;
-
     if (format == 0) {
-        const float v = *reinterpret_cast<const float*>(buffer);
-
-        switch (port_index) {
-        case SFIZZ_VOLUME:
-            self->uiReceiveValue(EditId::Volume, v);
-            break;
-        case SFIZZ_POLYPHONY:
-            self->uiReceiveValue(EditId::Polyphony, v);
-            break;
-        case SFIZZ_OVERSAMPLING:
-            self->uiReceiveValue(EditId::Oversampling, v);
-            break;
-        case SFIZZ_PRELOAD:
-            self->uiReceiveValue(EditId::PreloadSize, v);
-            break;
-        case SFIZZ_SCALA_ROOT_KEY:
-            self->uiReceiveValue(EditId::ScalaRootKey, v);
-            break;
-        case SFIZZ_TUNING_FREQUENCY:
-            self->uiReceiveValue(EditId::TuningFrequency, v);
-            break;
-        case SFIZZ_STRETCH_TUNING:
-            self->uiReceiveValue(EditId::StretchTuning, v);
-            break;
-        case SFIZZ_SAMPLE_QUALITY:
-            self->uiReceiveValue(EditId::SampleQuality, v);
-            break;
-        case SFIZZ_OSCILLATOR_QUALITY:
-            self->uiReceiveValue(EditId::OscillatorQuality, v);
-            break;
-        case SFIZZ_ACTIVE_VOICES:
-            self->uiReceiveValue(EditId::UINumActiveVoices, v);
-            break;
-        case SFIZZ_NUM_CURVES:
-            self->uiReceiveValue(EditId::UINumCurves, v);
-            break;
-        case SFIZZ_NUM_MASTERS:
-            self->uiReceiveValue(EditId::UINumMasters, v);
-            break;
-        case SFIZZ_NUM_GROUPS:
-            self->uiReceiveValue(EditId::UINumGroups, v);
-            break;
-        case SFIZZ_NUM_REGIONS:
-            self->uiReceiveValue(EditId::UINumRegions, v);
-            break;
-        case SFIZZ_NUM_SAMPLES:
-            self->uiReceiveValue(EditId::UINumPreloadedSamples, v);
-            break;
-        }
+        if (self->multi_out)
+            port_event_multi(self, port_index, buffer);
+        else
+            port_event_stereo(self, port_index, buffer);
     }
     else if (format == self->atom_event_transfer_uri) {
         auto *atom = reinterpret_cast<const LV2_Atom *>(buffer);
@@ -410,11 +498,8 @@ port_event(LV2UI_Handle ui,
                 const float *levels = reinterpret_cast<const float *>(vec_body);
                 uint32_t count = static_cast<uint32_t>((vec_end - vec_body) / sizeof(float));
 
-                float left = (count > 0) ? levels[0] : 0.0f;
-                float right = (count > 1) ? levels[1] : 0.0f;
-
-                self->uiReceiveValue(EditId::LeftLevel, left);
-                self->uiReceiveValue(EditId::RightLevel, right);
+                for (uint32_t i = 0; i < count; ++i)
+                    self->uiReceiveValue(editIdForLevel(i), levels[i]);
             }
         }
     }
@@ -596,31 +681,76 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
 
     switch (id) {
     case EditId::Volume:
-        sendFloat(SFIZZ_VOLUME, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_VOLUME, v.to_float());
+        else
+            sendFloat(SFIZZ_VOLUME, v.to_float());
         break;
     case EditId::Polyphony:
-        sendFloat(SFIZZ_POLYPHONY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_POLYPHONY, v.to_float());
+        else
+            sendFloat(SFIZZ_POLYPHONY, v.to_float());
         break;
     case EditId::Oversampling:
-        sendFloat(SFIZZ_OVERSAMPLING, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_OVERSAMPLING, v.to_float());
+        else
+            sendFloat(SFIZZ_OVERSAMPLING, v.to_float());
         break;
     case EditId::PreloadSize:
-        sendFloat(SFIZZ_PRELOAD, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_PRELOAD, v.to_float());
+        else
+            sendFloat(SFIZZ_PRELOAD, v.to_float());
         break;
     case EditId::ScalaRootKey:
-        sendFloat(SFIZZ_SCALA_ROOT_KEY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_SCALA_ROOT_KEY, v.to_float());
+        else
+            sendFloat(SFIZZ_SCALA_ROOT_KEY, v.to_float());
         break;
     case EditId::TuningFrequency:
-        sendFloat(SFIZZ_TUNING_FREQUENCY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_TUNING_FREQUENCY, v.to_float());
+        else
+            sendFloat(SFIZZ_TUNING_FREQUENCY, v.to_float());
         break;
     case EditId::StretchTuning:
-        sendFloat(SFIZZ_STRETCH_TUNING, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_STRETCH_TUNING, v.to_float());
+        else
+            sendFloat(SFIZZ_STRETCH_TUNING, v.to_float());
         break;
     case EditId::SampleQuality:
-        sendFloat(SFIZZ_SAMPLE_QUALITY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_SAMPLE_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_SAMPLE_QUALITY, v.to_float());
         break;
     case EditId::OscillatorQuality:
-        sendFloat(SFIZZ_OSCILLATOR_QUALITY, v.to_float());
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_OSCILLATOR_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_OSCILLATOR_QUALITY, v.to_float());
+        break;
+    case EditId::FreewheelingSampleQuality:
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_FREEWHEELING_SAMPLE_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_FREEWHEELING_SAMPLE_QUALITY, v.to_float());
+        break;
+    case EditId::FreewheelingOscillatorQuality:
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_FREEWHEELING_OSCILLATOR_QUALITY, v.to_float());
+        else
+            sendFloat(SFIZZ_FREEWHEELING_OSCILLATOR_QUALITY, v.to_float());
+        break;
+    case EditId::SustainCancelsRelease:
+        if (multi_out)
+            sendFloat(SFIZZ_MULTI_SUSTAIN_CANCELS_RELEASE, v.to_float());
+        else
+            sendFloat(SFIZZ_SUSTAIN_CANCELS_RELEASE, v.to_float());
         break;
     case EditId::SfzFile:
         sendPath(sfizz_sfz_file_uri, v.to_string());
@@ -631,6 +761,17 @@ void sfizz_ui_t::uiSendValue(EditId id, const EditValue& v)
     default:
         if (editIdIsCC(id)) {
             int cc = ccForEditId(id);
+#if defined(SFIZZ_LV2_PSA)
+            if (cc >= 0 && cc < 128) {
+                // Send MIDI message
+                uint8_t msg[3];
+                msg[0] = 0xB0;
+                msg[1] = static_cast<uint8_t>(cc);
+                msg[2] = static_cast<uint8_t>(v.to_float() * 127);
+                uiSendMIDI(msg, 3);
+                break;
+            }
+#endif
             LV2_URID urid = sfizz_lv2_ccmap_map(ccmap.get(), cc);
             sendController(urid, v.to_float());
         }

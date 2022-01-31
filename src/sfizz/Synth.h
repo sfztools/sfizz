@@ -237,9 +237,10 @@ public:
      * You'll need to include "Effects.h" to resolve the forward declaration.
      *
      * @param idx
+     * @param output
      * @return const EffectBus*
      */
-    const EffectBus* getEffectBusView(int idx) const noexcept;
+    const EffectBus* getEffectBusView(int idx, int output = 0) const noexcept;
     /**
      * @brief Get a raw view into a specific set of regions. This is mostly used
      * for testing.
@@ -334,6 +335,12 @@ public:
      */
     void setOscillatorQuality(ProcessMode mode, int quality);
     /**
+     * @brief Set whether pressing the sustain pedal cancels the releases
+     *
+     * @param value
+     */
+    void setSustainCancelsRelease(bool value);
+    /**
      * @brief Get the current value for the volume, in dB.
      *
      * @return float
@@ -401,6 +408,14 @@ public:
      * @param normValue the normalized cc value, in domain 0 to 1
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
+    /**
+     * @brief Send a program change event to the synth
+     *
+     * @param delay the delay at which the event occurs; this should be lower than the size of
+     *              the block in the next call to renderBlock().
+     * @param ccNumber the program number
+     */
+    void programChange(int delay, int program) noexcept;
     /**
      * @brief Send a high precision CC automation to the synth
      *
@@ -627,17 +642,23 @@ public:
      */
     bool shouldReloadScala();
 
+    struct CallbackBreakdown
+    {
+        double dispatch { 0 };
+        double renderMethod { 0 };
+        double data { 0 };
+        double amplitude { 0 };
+        double filters { 0 };
+        double panning { 0 };
+        double effects { 0 };
+    };
     /**
-     * @brief Enable logging of timings to sidecar CSV files. This can produce
-     * many outputs so use with caution.
+     * @brief View the callback breakdown for the last frame.
+     * Call from the real-time thread after a renderBlock call.
      *
+     * @return const CallbackBreakdown&
      */
-    void enableLogging(absl::string_view prefix = "") noexcept;
-    /**
-     * @brief Disable logging;
-     *
-     */
-    void disableLogging() noexcept;
+    const CallbackBreakdown& getCallbackBreakdown() const noexcept;
 
     /**
      * @brief Shuts down the current processing, clear buffers and reset the voices.

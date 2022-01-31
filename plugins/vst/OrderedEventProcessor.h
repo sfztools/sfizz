@@ -21,45 +21,17 @@ public:
     void processUnorderedEvents(int32 numSamples, Vst::IParameterChanges* pcs, Vst::IEventList* evs);
 
 private:
-    void startProcessing(Vst::IEventList* evs, Vst::IParameterChanges* pcs);
-    void processSubdiv(Vst::IEventList* evs, int32 firstOffset, int32 lastOffset);
-
-    void sortSubdiv(int32 firstOffset, int32 lastOffset);
-    void playSubdiv(Vst::IEventList* evs, int32 firstOffset, int32 lastOffset);
-
-    void playRemainder(int32 sampleOffset, Vst::IEventList* evs);
-
-    void playEventsUpTo(Vst::IEventList* evs, int32 sampleOffset);
-
-private:
-    template <class T> struct Cell {
-        Cell<T>* next = nullptr;
-        T value {};
-    };
-
-    struct QueueStatus {
-        Vst::IParamValueQueue* queue = nullptr;
-        int32 pointIndex = 0;
-        int32 pointCount = 0;
-    };
-
-    int32 paramCount_ = 0;
-    int32 subdivSize_ = 0;
-    std::unique_ptr<Cell<QueueStatus>[]> queues_;
-    Cell<QueueStatus>* queueList_ = nullptr;
-
-    struct ParameterAndValue {
+    int32 paramCount_ { 0 };
+    int32 subdivSize_ { 0 };
+    struct SubdivChange {
+        SubdivChange(int32 offset, Vst::ParamID id, Vst::ParamValue value)
+        : offset(offset), id(std::move(id)), value(std::move(value)) {}
+        int32 offset;
         Vst::ParamID id {};
         Vst::ParamValue value {};
     };
-
-    std::unique_ptr<ParameterAndValue[]> pointsBySample_;
-    std::unique_ptr<uint32[]> numPointsBySample_;
-
-    int32 eventIndex_ = 0;
-    int32 eventCount_ = 0;
-    bool haveCurrentEvent_ = false;
-    Vst::Event currentEvent_ {};
+    std::vector<SubdivChange> subdivChanges_;
+    std::vector<int32> queuePositions_;
 };
 
 #include "OrderedEventProcessor.hpp"

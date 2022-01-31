@@ -6,7 +6,7 @@
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Code generated with Faust 2.37.3 (https://faust.grame.fr)
 Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 ------------------------------------------------------------ */
 
@@ -17,13 +17,12 @@ Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 #define FAUSTFLOAT float
 #endif 
 
+/* link with : "" */
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <math.h>
 
-static double faustEqLshelf_faustpower2_f(double value) {
-	return (value * value);
-}
 
 #ifndef FAUSTCLASS 
 #define FAUSTCLASS faustEqLshelf
@@ -43,11 +42,11 @@ class faustEqLshelf : public sfzFilterDsp {
  private:
 	
 	int fSampleRate;
-	double fConst0;
 	double fConst1;
 	FAUSTFLOAT fVslider0;
 	double fConst2;
 	FAUSTFLOAT fHslider0;
+	double fConst3;
 	FAUSTFLOAT fVslider1;
 	double fRec2[2];
 	double fVec0[2];
@@ -78,9 +77,10 @@ class faustEqLshelf : public sfzFilterDsp {
 	void instanceConstants(int sample_rate) {
 		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
-		fConst0 = double(fSampleRate);
+		double fConst0 = double(fSampleRate);
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
 		fConst2 = (6.2831853071795862 / fConst0);
+		fConst3 = (2.1775860903036022 / fConst0);
 		//[End:instanceConstants]
 	}
 	
@@ -153,35 +153,33 @@ class faustEqLshelf : public sfzFilterDsp {
 		FAUSTFLOAT* output0 = outputs[0];
 		double fSlow0 = (fSmoothEnable ? fConst1 : 0.0);
 		double fSlow1 = std::pow(10.0, (0.025000000000000001 * std::min<double>(60.0, std::max<double>(-120.0, double(fVslider0)))));
-		double fSlow2 = (fConst2 * std::max<double>(0.0, std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)))));
-		double fSlow3 = std::cos(fSlow2);
-		double fSlow4 = ((fSlow1 + 1.0) * fSlow3);
-		double fSlow5 = (fSlow1 + -1.0);
-		double fSlow6 = (fSlow5 * fSlow3);
-		double fSlow7 = (faustEqLshelf_faustpower2_f(fSlow1) + 1.0);
-		double fSlow8 = faustEqLshelf_faustpower2_f(fSlow5);
-		double fSlow9 = ((std::sqrt(fSlow1) * std::sin(fSlow2)) / std::max<double>(0.001, (1.0 / std::sqrt((((fSlow1 + (1.0 / fSlow1)) * ((1.0 / std::min<double>(((fSlow7 / fSlow8) + -0.01), std::max<double>(0.01, ((double(fVslider1) * fSlow7) / fSlow8)))) + -1.0)) + 2.0)))));
-		double fSlow10 = (fSlow6 + fSlow9);
-		double fSlow11 = ((fSlow1 + fSlow10) + 1.0);
-		double fSlow12 = (1.0 - fSlow0);
-		double fSlow13 = ((2.0 * ((fSlow1 * (fSlow1 + (-1.0 - fSlow4))) / fSlow11)) * fSlow12);
-		double fSlow14 = (((fSlow1 * ((fSlow1 + fSlow9) + (1.0 - fSlow6))) / fSlow11) * fSlow12);
-		double fSlow15 = (((fSlow1 * (fSlow1 + (1.0 - fSlow10))) / fSlow11) * fSlow12);
-		double fSlow16 = ((((fSlow1 + fSlow6) + (1.0 - fSlow9)) / fSlow11) * fSlow12);
-		double fSlow17 = (((0.0 - (2.0 * ((fSlow1 + fSlow4) + -1.0))) / fSlow11) * fSlow12);
-		for (int i = 0; (i < count); i = (i + 1)) {
-			double fTemp0 = double(input0[i]);
-			fRec2[0] = ((fSlow0 * fRec2[1]) + fSlow13);
+		double fSlow2 = std::min<double>(20000.0, std::max<double>(1.0, double(fHslider0)));
+		double fSlow3 = (fConst2 * std::max<double>(0.0, fSlow2));
+		double fSlow4 = std::cos(fSlow3);
+		double fSlow5 = ((fSlow1 + 1.0) * fSlow4);
+		double fSlow6 = ((fSlow1 + -1.0) * fSlow4);
+		double fSlow7 = ((std::sqrt(fSlow1) * std::sin(fSlow3)) / std::max<double>(0.001, (0.5 / double(sinh(double((fConst3 * ((fSlow2 * std::min<double>(12.0, std::max<double>(0.01, double(fVslider1)))) / std::sin((fConst2 * fSlow2))))))))));
+		double fSlow8 = (fSlow6 + fSlow7);
+		double fSlow9 = ((fSlow1 + fSlow8) + 1.0);
+		double fSlow10 = (1.0 - fSlow0);
+		double fSlow11 = ((2.0 * ((fSlow1 * (fSlow1 + (-1.0 - fSlow5))) / fSlow9)) * fSlow10);
+		double fSlow12 = (((fSlow1 * ((fSlow1 + fSlow7) + (1.0 - fSlow6))) / fSlow9) * fSlow10);
+		double fSlow13 = (((fSlow1 * (fSlow1 + (1.0 - fSlow8))) / fSlow9) * fSlow10);
+		double fSlow14 = ((((fSlow1 + fSlow6) + (1.0 - fSlow7)) / fSlow9) * fSlow10);
+		double fSlow15 = (((0.0 - (2.0 * ((fSlow1 + fSlow5) + -1.0))) / fSlow9) * fSlow10);
+		for (int i0 = 0; (i0 < count); i0 = (i0 + 1)) {
+			double fTemp0 = double(input0[i0]);
+			fRec2[0] = ((fSlow0 * fRec2[1]) + fSlow11);
 			fVec0[0] = (fTemp0 * fRec2[0]);
-			fRec3[0] = ((fSlow0 * fRec3[1]) + fSlow14);
-			fRec4[0] = ((fSlow0 * fRec4[1]) + fSlow15);
+			fRec3[0] = ((fSlow0 * fRec3[1]) + fSlow12);
+			fRec4[0] = ((fSlow0 * fRec4[1]) + fSlow13);
 			fVec1[0] = (fTemp0 * fRec4[0]);
-			fRec5[0] = ((fSlow0 * fRec5[1]) + fSlow16);
+			fRec5[0] = ((fSlow0 * fRec5[1]) + fSlow14);
 			fVec2[0] = (fVec1[1] - (fRec5[0] * fRec0[1]));
-			fRec6[0] = ((fSlow0 * fRec6[1]) + fSlow17);
+			fRec6[0] = ((fSlow0 * fRec6[1]) + fSlow15);
 			fRec1[0] = ((fVec0[1] + ((fTemp0 * fRec3[0]) + fVec2[1])) - (fRec6[0] * fRec1[1]));
 			fRec0[0] = fRec1[0];
-			output0[i] = FAUSTFLOAT(fRec0[0]);
+			output0[i0] = FAUSTFLOAT(fRec0[0]);
 			fRec2[1] = fRec2[0];
 			fVec0[1] = fVec0[0];
 			fRec3[1] = fRec3[0];

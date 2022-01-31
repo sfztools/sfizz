@@ -17,8 +17,8 @@
 	shallow = true
 [submodule "vst/external/VST_SDK/VST3_SDK/vstgui4"]
 	path = plugins/editor/external/vstgui4
-	url = https://github.com/steinbergmedia/vstgui.git
-	shallow = true
+	url = https://github.com/sfztools/vstgui.git
+    branch = vstgui4_10_2-hotfix
 [submodule "external/st_audiofile/thirdparty/dr_libs"]
 	path = external/st_audiofile/thirdparty/dr_libs
 	url = https://github.com/mackron/dr_libs.git

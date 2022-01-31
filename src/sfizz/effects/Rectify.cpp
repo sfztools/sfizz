@@ -100,6 +100,5 @@ namespace fx {
 
         return fx;
     }
-
 } // namespace fx
 } // namespace sfz

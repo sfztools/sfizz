@@ -150,6 +150,11 @@ void sfz::Sfizz::setOscillatorQuality(ProcessMode mode, int quality)
     synth->synth.setOscillatorQuality(static_cast<sfz::Synth::ProcessMode>(mode), quality);
 }
 
+void sfz::Sfizz::setSustainCancelsRelease(bool value)
+{
+    synth->synth.setSustainCancelsRelease(value);
+}
+
 float sfz::Sfizz::getVolume() const noexcept
 {
     return synth->synth.getVolume();
@@ -193,6 +198,11 @@ void sfz::Sfizz::hdcc(int delay, int ccNumber, float normValue) noexcept
 void sfz::Sfizz::automateHdcc(int delay, int ccNumber, float normValue) noexcept
 {
     synth->synth.automateHdcc(delay, ccNumber, normValue);
+}
+
+void sfz::Sfizz::programChange(int delay, int program) noexcept
+{
+    synth->synth.programChange(delay, program);
 }
 
 void sfz::Sfizz::pitchWheel(int delay, int pitch) noexcept
@@ -255,9 +265,10 @@ void sfz::Sfizz::playbackState(int delay, int playbackState)
     synth->synth.playbackState(delay, playbackState);
 }
 
-void sfz::Sfizz::renderBlock(float** buffers, size_t numSamples, int /*numOutputs*/) noexcept
+void sfz::Sfizz::renderBlock(float** buffers, size_t numSamples, int numOutputs) noexcept
 {
-    synth->synth.renderBlock({{buffers[0], buffers[1]}, numSamples});
+    sfz::AudioSpan<float> bufferSpan { buffers, static_cast<size_t>(numOutputs * 2), 0, numSamples };
+    synth->synth.renderBlock(bufferSpan);
 }
 
 int sfz::Sfizz::getNumActiveVoices() const noexcept
@@ -328,12 +339,11 @@ bool sfz::Sfizz::shouldReloadScala()
 
 void sfz::Sfizz::enableLogging() noexcept
 {
-    synth->synth.enableLogging();
 }
 
 void sfz::Sfizz::enableLogging(const std::string& prefix) noexcept
 {
-    synth->synth.enableLogging(prefix);
+    (void)prefix;
 }
 
 void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
@@ -343,7 +353,20 @@ void sfz::Sfizz::setLoggingPrefix(const std::string& prefix) noexcept
 
 void sfz::Sfizz::disableLogging() noexcept
 {
-    synth->synth.disableLogging();
+}
+
+sfz::Sfizz::CallbackBreakdown sfz::Sfizz::getCallbackBreakdown() noexcept
+{
+    CallbackBreakdown breakdown;
+    const auto& bd = synth->synth.getCallbackBreakdown();
+    breakdown.amplitude = bd.amplitude;
+    breakdown.panning = bd.panning;
+    breakdown.renderMethod = bd.renderMethod;
+    breakdown.data = bd.data;
+    breakdown.dispatch = bd.dispatch;
+    breakdown.filters = bd.filters;
+    breakdown.effects = bd.effects;
+    return breakdown;
 }
 
 void sfz::Sfizz::allSoundOff() noexcept

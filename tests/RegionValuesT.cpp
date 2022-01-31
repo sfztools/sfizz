@@ -427,6 +427,64 @@ TEST_CASE("[Values] Loop count")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Values] Output")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("No special outputs") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/num_outputs", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/output,i : { 0 }",
+            "/num_outputs,i : { 1 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("1 output") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav output=1
+            <region> sample=kick.wav output=-1
+        )");
+        synth.dispatchMessage(client, 0, "/region0/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/num_outputs", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/output,i : { 0 }",
+            "/region1/output,i : { 1 }",
+            "/region2/output,i : { 0 }",
+            "/num_outputs,i : { 2 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("More than 1 output") {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+            <region> sample=kick.wav output=1
+            <region> sample=kick.wav output=3
+        )");
+        synth.dispatchMessage(client, 0, "/region0/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region1/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region2/output", "", nullptr);
+        synth.dispatchMessage(client, 0, "/num_outputs", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/output,i : { 0 }",
+            "/region1/output,i : { 1 }",
+            "/region2/output,i : { 3 }",
+            "/num_outputs,i : { 4 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+}
 
 TEST_CASE("[Values] Group")
 {
@@ -578,6 +636,7 @@ TEST_CASE("[Values] Triggers on note")
         <region> sample=kick.wav key=-1
         <region> sample=kick.wav hikey=-1 lokey=12
         <region> sample=kick.wav hikey=-1 lokey=-1
+        <region> sample=kick.wav hikey=0 lokey=12
     )");
     synth.dispatchMessage(client, 0, "/region0/trigger_on_note", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/trigger_on_note", "", nullptr);
@@ -585,12 +644,14 @@ TEST_CASE("[Values] Triggers on note")
     // TODO: Double check with Sforzando/rgc
     synth.dispatchMessage(client, 0, "/region3/trigger_on_note", "", nullptr);
     synth.dispatchMessage(client, 0, "/region4/trigger_on_note", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region5/trigger_on_note", "", nullptr);
     std::vector<std::string> expected {
         "/region0/trigger_on_note,T : {  }",
         "/region1/trigger_on_note,F : {  }",
         "/region2/trigger_on_note,F : {  }",
-        "/region3/trigger_on_note,T : {  }",
+        "/region3/trigger_on_note,F : {  }",
         "/region4/trigger_on_note,F : {  }",
+        "/region5/trigger_on_note,T : {  }",
     };
     REQUIRE(messageList == expected);
 }
@@ -641,6 +702,31 @@ TEST_CASE("[Values] Bend range")
         "/region1/bend_range,ff : { 0.108778, 0.24417 }",
         "/region2/bend_range,ff : { -0.108778, 0.108778 }",
         "/region3/bend_range,ff : { -1, -1.22085 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Values] Program range")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav loprog=1 hiprog=45
+        <region> sample=kick.wav loprog=-1 hiprog=555
+        <region> sample=kick.wav hiprog=-1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/program_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/program_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/program_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region3/program_range", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/program_range,ii : { 0, 127 }",
+        "/region1/program_range,ii : { 1, 45 }",
+        "/region2/program_range,ii : { 0, 127 }",
+        "/region3/program_range,ii : { 0, 127 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -3029,8 +3115,8 @@ TEST_CASE("[Values] Filter types")
         "/region4/filter0/type,s : { bpf_2p }",
         "/region5/filter0/type,s : { brf_2p }",
         "/region6/filter0/type,s : { bpf_1p }",
-        "/region7/filter0/type,s : { brf_1p }",
-        "/region8/filter0/type,s : { apf_1p }",
+        "/region7/filter0/type,s : { brf_2p }", // If we have a 1-pole brf at one point, change it back
+        "/region8/filter0/type,s : { none }", // If the apf 1-pole works, change it back
         "/region9/filter0/type,s : { lpf_2p_sv }",
         "/region10/filter0/type,s : { hpf_2p_sv }",
         "/region11/filter0/type,s : { bpf_2p_sv }",
@@ -3345,7 +3431,7 @@ TEST_CASE("[Values] Flex EGs")
         "/region0/eg0/point0/time,f : { 0.1 }",
         "/region0/eg0/point0/level,f : { 0.5 }",
         "/region0/eg0/point1/time,f : { 0.4 }",
-        "/region0/eg0/point1/level,f : { 2 }",
+        "/region0/eg0/point1/level,f : { 1 }", // Level values in EGs are clamped in Sforzando
         "/region0/eg1/point0/time,f : { 4 }",
         "/region0/eg1/point0/level,f : { 0.1 }",
     };

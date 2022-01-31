@@ -38,12 +38,14 @@ void Layer::initializeActivations()
     pitchSwitched_ = true;
     bpmSwitched_ = true;
     aftertouchSwitched_ = true;
+    programSwitched_ = true;
     ccSwitched_.set();
 }
 
 bool Layer::isSwitchedOn() const noexcept
 {
-    return keySwitched_ && previousKeySwitched_ && sequenceSwitched_ && pitchSwitched_ && bpmSwitched_ && aftertouchSwitched_ && ccSwitched_.all();
+    return keySwitched_ && previousKeySwitched_ && sequenceSwitched_ && pitchSwitched_
+        && programSwitched_ && bpmSwitched_ && aftertouchSwitched_ && ccSwitched_.all();
 }
 
 bool Layer::registerNoteOn(int noteNumber, float velocity, float randValue) noexcept
@@ -129,7 +131,7 @@ bool Layer::registerNoteOff(int noteNumber, float velocity, float randValue) noe
     return false;
 }
 
-bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
+void Layer::updateCCState(int ccNumber, float ccValue) noexcept
 {
     const Region& region = region_;
 
@@ -147,12 +149,27 @@ bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
         sostenutoPressed_ = newState;
     }
 
-    if (region.ccConditions.getWithDefault(ccNumber).containsWithEnd(ccValue))
-        ccSwitched_.set(ccNumber, true);
-    else
-        ccSwitched_.set(ccNumber, false);
+    const auto conditions = region.ccConditions.get(ccNumber);
 
-    if (dontTrigger || !region.triggerOnCC)
+    if (!conditions)
+        return;
+
+    ccSwitched_.set(ccNumber, conditions->containsWithEnd(ccValue));
+}
+
+bool Layer::registerCC(int ccNumber, float ccValue, float randValue) noexcept
+{
+    const Region& region = region_;
+
+    updateCCState(ccNumber, ccValue);
+
+    if (!region.triggerOnCC)
+        return false;
+
+    const bool randOk = region.randRange.contains(randValue)
+        || (randValue >= 1.0f && region.randRange.isValid() && region.randRange.getEnd() >= 1.0f);
+
+    if (!randOk)
         return false;
 
     if (auto triggerRange = region.ccTriggers.get(ccNumber)) {
@@ -161,7 +178,8 @@ bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
 
         sequenceSwitched_ =
             ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
-        if (isSwitchedOn())
+
+        if (isSwitchedOn() && (ccValue != midiState_.getCCValue(ccNumber)))
             return true;
     }
 
@@ -170,30 +188,23 @@ bool Layer::registerCC(int ccNumber, float ccValue, bool dontTrigger) noexcept
 
 void Layer::registerPitchWheel(float pitch) noexcept
 {
-    const Region& region = region_;
-    if (region.bendRange.containsWithEnd(pitch))
-        pitchSwitched_ = true;
-    else
-        pitchSwitched_ = false;
+    pitchSwitched_ = region_.bendRange.containsWithEnd(pitch);
+}
+
+void Layer::registerProgramChange(int program) noexcept
+{
+    programSwitched_ = region_.programRange.containsWithEnd(program);
 }
 
 void Layer::registerAftertouch(float aftertouch) noexcept
 {
-    const Region& region = region_;
-    if (region.aftertouchRange.containsWithEnd(aftertouch))
-        aftertouchSwitched_ = true;
-    else
-        aftertouchSwitched_ = false;
+    aftertouchSwitched_ = region_.aftertouchRange.containsWithEnd(aftertouch);
 }
 
 void Layer::registerTempo(float secondsPerQuarter) noexcept
 {
-    const Region& region = region_;
     const float bpm = 60.0f / secondsPerQuarter;
-    if (region.bpmRange.containsWithEnd(bpm))
-        bpmSwitched_ = true;
-    else
-        bpmSwitched_ = false;
+    bpmSwitched_ = region_.bpmRange.containsWithEnd(bpm);
 }
 
 void Layer::delaySustainRelease(int noteNumber, float velocity) noexcept

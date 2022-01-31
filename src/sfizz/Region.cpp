@@ -182,6 +182,9 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
     case hash("group"): // also polyphony_group
         group = opcode.read(Default::group);
         break;
+    case hash("output"):
+        output = opcode.read(Default::output);
+        break;
     case hash("off_by"): // also offby
         offBy = opcode.readOptional(Default::group);
         break;
@@ -206,12 +209,7 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         break;
     // Region logic: key mapping
     case hash("lokey"):
-        {
-            absl::optional<uint8_t> optValue = opcode.readOptional(Default::loKey);
-            triggerOnNote = optValue != absl::nullopt;
-            uint8_t value = optValue.value_or(Default::loKey);
-            keyRange.setStart(value);
-        }
+        keyRange.setStart(opcode.read(Default::loKey));
         break;
     case hash("hikey"):
         {
@@ -244,6 +242,12 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         break;
     case hash("hibend"):
         bendRange.setEnd(opcode.read(Default::hiBend));
+        break;
+    case hash("loprog"):
+        programRange.setStart(opcode.read(Default::loProgram));
+        break;
+    case hash("hiprog"):
+        programRange.setEnd(opcode.read(Default::hiProgram));
         break;
     case hash("locc&"):
         if (opcode.parameters.back() >= config::numCCs)
@@ -1759,6 +1763,8 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
         case ExtendedCCs::unipolarRandom: // fallthrough
         case ExtendedCCs::bipolarRandom: // fallthrough
         case ExtendedCCs::alternate:
+        case ExtendedCCs::keydelta:
+        case ExtendedCCs::absoluteKeydelta:
             conn->source = ModKey(ModId::PerVoiceController, id, p);
             break;
         default:

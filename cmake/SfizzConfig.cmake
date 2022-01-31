@@ -129,6 +129,9 @@ if(USE_LIBCPP)
     add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
 
+set(SFIZZ_REPOSITORY https://github.com/sfztools/sfizz)
+include(GNUInstallDirs)
+
 # Don't show build information when building a different project
 function(show_build_info_if_needed)
     if(CMAKE_PROJECT_NAME STREQUAL "sfizz")
@@ -156,6 +159,7 @@ Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
+LV2 plugin-side CC automation  ${SFIZZ_LV2_PSA}
 
 Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
 Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}

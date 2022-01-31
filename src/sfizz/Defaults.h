@@ -154,6 +154,7 @@ namespace Default
     extern const OpcodeSpec<float> oscillatorModDepthMod;
     extern const OpcodeSpec<int32_t> oscillatorQuality;
     extern const OpcodeSpec<int64_t> group;
+    extern const OpcodeSpec<uint16_t> output;
     extern const OpcodeSpec<float> offTime;
     extern const OpcodeSpec<uint32_t> polyphony;
     extern const OpcodeSpec<uint32_t> notePolyphony;
@@ -170,6 +171,8 @@ namespace Default
     extern const OpcodeSpec<float> xfinLo;
     extern const OpcodeSpec<float> loBend;
     extern const OpcodeSpec<float> hiBend;
+    extern const OpcodeSpec<uint8_t> loProgram;
+    extern const OpcodeSpec<uint8_t> hiProgram;
     extern const OpcodeSpec<float> loNormalized;
     extern const OpcodeSpec<float> hiNormalized;
     extern const OpcodeSpec<float> loBipolar;
@@ -274,6 +277,8 @@ namespace Default
     extern const OpcodeSpec<float> flexEGPointShape;
     extern const OpcodeSpec<float> flexEGPointShape3;
     extern const OpcodeSpec<int32_t> sampleQuality;
+    extern const OpcodeSpec<int32_t> freewheelingSampleQuality;
+    extern const OpcodeSpec<int32_t> freewheelingOscillatorQuality;
     extern const OpcodeSpec<int32_t> octaveOffset;
     extern const OpcodeSpec<int32_t> noteOffset;
     extern const OpcodeSpec<float> effect;
@@ -335,8 +340,6 @@ namespace Default
 
     // Various defaut values
     // e.g. "additional" or multiple defautl values
-    constexpr int freewheelingSampleQuality { 10 };
-    constexpr int freewheelingOscillatorQuality { 3 };
     constexpr float globalVolume { -7.35f };
     constexpr float defaultEQFreq [numEQs] { 50.0f, 500.0f, 5000.0f };
 } // namespace Default

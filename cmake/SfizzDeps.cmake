@@ -203,10 +203,8 @@ if (SFIZZ_USE_SYSTEM_KISS_FFT)
 else()
     add_library(sfizz_kissfft STATIC
         "src/external/kiss_fft/kiss_fft.c"
-        "src/external/kiss_fft/tools/kiss_fftr.c")
-    target_include_directories(sfizz_kissfft
-        PUBLIC "src/external/kiss_fft"
-        PUBLIC "src/external/kiss_fft/tools")
+        "src/external/kiss_fft/kiss_fftr.c")
+    target_include_directories(sfizz_kissfft PUBLIC "src/external/kiss_fft")
 endif()
 add_library(sfizz::kissfft ALIAS sfizz_kissfft)
 
@@ -246,6 +244,12 @@ else()
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp" "#include <ghc/fs_std_impl.hpp>")
     add_library(sfizz_filesystem_impl STATIC "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp")
     target_include_directories(sfizz_filesystem_impl PUBLIC "external/filesystem/include")
+    # Add the needed linker option for GCC 8
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU"
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+        target_link_libraries(sfizz_filesystem_impl PUBLIC stdc++fs)
+    endif()
     #
     add_library(sfizz_filesystem INTERFACE)
     target_compile_definitions(sfizz_filesystem INTERFACE "GHC_FILESYSTEM_FWD")

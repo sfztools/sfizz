@@ -43,7 +43,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 0.0f);
-        layer.registerCC(64, 0.0f);
+        layer.updateCCState(64, 0.0f);
         REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( layer.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -53,8 +53,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        layer.registerCC(64, 1.0f);
-        REQUIRE( !layer.registerCC(64, 1.0f) );
+        layer.updateCCState(64, 1.0f);
         REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( layer.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -65,7 +64,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 0.0f);
-        layer.registerCC(64, 0.0f);
+        layer.updateCCState(64, 0.0f);
         REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( layer.registerNoteOff(63, 0.5f, 0.0f) );
     }
@@ -76,7 +75,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        layer.registerCC(64, 1.0f);
+        layer.updateCCState(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         REQUIRE( !layer.registerNoteOff(63, 0.5f, 0.0f) );
@@ -93,7 +92,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        layer.registerCC(64, 1.0f);
+        layer.updateCCState(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 64, 0.6f);
@@ -114,7 +113,7 @@ TEST_CASE("[Direct Region Tests] Release and release key")
         Layer layer { region, midiState };
         layer.delayedSustainReleases_.reserve(config::delayedReleaseVoices);
         midiState.ccEvent(0, 64, 1.0f);
-        layer.registerCC(64, 1.0f);
+        layer.updateCCState(64, 1.0f);
         midiState.noteOnEvent(0, 63, 0.5f);
         REQUIRE( !layer.registerNoteOn(63, 0.5f, 0.0f) );
         midiState.noteOnEvent(0, 66, 0.6f);

@@ -361,6 +361,15 @@ public:
     void setOscillatorQuality(ProcessMode mode, int quality);
 
     /**
+     * @brief Set whether pressing the sustain pedal cancels the release stage
+     *
+     * @since 1.2.0
+     *
+     * @param value
+     */
+    void setSustainCancelsRelease(bool value);
+
+    /**
      * @brief Return the current value for the volume, in dB.
      * @since 0.2.0
      */
@@ -487,6 +496,23 @@ public:
      * - @b RT: the function must be invoked from the Real-time thread
      */
     void hdcc(int delay, int ccNumber, float normValue) noexcept;
+
+    /**
+     * @brief Send a program change event to the synth
+     * @since 1.2.0
+     *
+     * This command should be delay-ordered with all other midi-type events
+     * (notes, CCs, aftertouch and pitch-wheel), otherwise the behavior of the
+     * synth is undefined.
+     *
+     * @param delay the delay at which the event occurs; this should be lower
+     *              than the size of the block in the next call to renderBlock().
+     * @param program the cc number, in domain 0 to 127.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void programChange(int delay, int program) noexcept;
 
     /**
      * @brief Send a high precision CC automation to the synth
@@ -903,20 +929,23 @@ public:
      * @since 0.3.2
      *
      * @note This can produce many outputs so use with caution.
+     * Deprecated since 1.2.0
      *
      * @param prefix the file prefix to use for logging.
      *
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void enableLogging(const std::string& prefix) noexcept;
+    SFIZZ_DEPRECATED_API void enableLogging(const std::string& prefix) noexcept;
 
     /**
      * @brief Set the logging prefix.
      *
      * @since 0.3.2
+     * @note Deprecated since 1.2.0
      *
      * @param prefix
+     *
      *
      * @par Thread-safety constraints
      * - TBD ?
@@ -927,11 +956,35 @@ public:
      * @brief Disable logging of timings to sidecar CSV files.
      *
      * @since 0.3.0
+     * @note Deprecated since 1.2.0
      *
      * @par Thread-safety constraints
      * - TBD ?
      */
-    void disableLogging() noexcept;
+    SFIZZ_DEPRECATED_API void disableLogging() noexcept;
+
+    struct CallbackBreakdown
+    {
+        double dispatch;
+        double renderMethod;
+        double data;
+        double amplitude;
+        double filters;
+        double panning;
+        double effects;
+    };
+
+    /**
+     * @brief Get the last callback breakdown. Call after a render method.
+     *
+     * @since 1.2.0
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     *
+     * @return CallbackBreakdown
+     */
+    CallbackBreakdown getCallbackBreakdown() noexcept;
 
     /**
      * @brief Shuts down the current processing, clear buffers and reset the voices.

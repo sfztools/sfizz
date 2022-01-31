@@ -80,6 +80,18 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
         SfizzRange::getForParameter(kPidOscillatorQuality).createParameter(
             Steinberg::String("Oscillator quality"), pid++, nullptr,
             0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidFreewheelingSampleQuality).createParameter(
+            Steinberg::String("Freewheeling sample quality"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidFreewheelingOscillatorQuality).createParameter(
+            Steinberg::String("Freewheeling oscillator quality"), pid++, nullptr,
+            0, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
+    parameters.addParameter(
+        SfizzRange::getForParameter(kPidSustainCancelsRelease).createParameter(
+            Steinberg::String("Sustain cancels release"), pid++, nullptr,
+            1, Vst::ParameterInfo::kNoFlags, Vst::kRootUnitId));
 
     // MIDI special controllers
     parameters.addParameter(
@@ -105,14 +117,15 @@ tresult PLUGIN_API SfizzVstControllerNoUi::initialize(FUnknown* context)
     }
 
     // Volume levels
-    parameters.addParameter(
-        SfizzRange::getForParameter(kPidLeftLevel).createParameter(
-            Steinberg::String("Left level"), pid++, nullptr,
-            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
-    parameters.addParameter(
-        SfizzRange::getForParameter(kPidRightLevel).createParameter(
-            Steinberg::String("Right level"), pid++, nullptr,
-            0, Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+    for (unsigned i = 0; i < 16; ++i) {
+        Steinberg::String title;
+        title.printf("Level %u", i);
+
+        parameters.addParameter(
+            SfizzRange::getForParameter(kPidLevel0 + i).createParameter(
+                title, pid++, nullptr, 0,
+                Vst::ParameterInfo::kIsReadOnly|Vst::ParameterInfo::kIsHidden, Vst::kRootUnitId));
+    }
 
     // Editor status
     parameters.addParameter(
@@ -266,6 +279,9 @@ tresult PLUGIN_API SfizzVstControllerNoUi::setComponentState(IBStream* stream)
     setParam(kPidStretchedTuning, s.stretchedTuning);
     setParam(kPidSampleQuality, s.sampleQuality);
     setParam(kPidOscillatorQuality, s.oscillatorQuality);
+    setParam(kPidFreewheelingSampleQuality, s.freewheelingSampleQuality);
+    setParam(kPidFreewheelingOscillatorQuality, s.freewheelingOscillatorQuality);
+    setParam(kPidSustainCancelsRelease, s.sustainCancelsRelease);
 
     uint32 ccLimit = uint32(std::min(s.controllers.size(), size_t(sfz::config::numCCs)));
     for (uint32 cc = 0; cc < ccLimit; ++cc) {
@@ -300,7 +316,7 @@ tresult SfizzVstControllerNoUi::notify(Vst::IMessage* message)
     ///
     if (!strcmp(id, SfzUpdate::getFClassID())) {
         if (!sfzUpdate_->convertFromMessage(*message)) {
-            assert(false);
+            // assert(false);
             return kResultFalse;
         }
 

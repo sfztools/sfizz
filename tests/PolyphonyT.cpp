@@ -570,3 +570,21 @@ TEST_CASE("[Polyphony] Choke long release tails with note_polyphony")
     REQUIRE( numPlayingVoices(synth) == 1 ); // Not released, attack phase
     REQUIRE( numActiveVoices(synth) == 1 );
 }
+
+TEST_CASE("[Polyphony] Choke same group and note if the region is switched off (e.g. by a CC switch)")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <global> group=1 off_by=1
+        <region> locc1=0 hicc1=63 sample=*saw
+        <region> locc1=64 hicc1=127 sample=*sine
+    )");
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*saw" } );
+    synth.cc(0, 1, 127);
+    synth.noteOn(0, 60, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
+}

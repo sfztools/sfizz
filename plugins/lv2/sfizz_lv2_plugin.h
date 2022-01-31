@@ -33,9 +33,10 @@ struct sfizz_plugin_t
     LV2_Midnam *midnam {};
 
     // Ports
+    bool multi_out { false };
     const LV2_Atom_Sequence *control_port {};
     LV2_Atom_Sequence *automate_port {};
-    float *output_buffers[2] {};
+    float *output_buffers[MULTI_OUTPUT_COUNT] {};
     const float *volume_port {};
     const float *polyphony_port {};
     const float *oversampling_port {};
@@ -46,6 +47,9 @@ struct sfizz_plugin_t
     const float *stretch_tuning_port {};
     const float *sample_quality_port {};
     const float *oscillator_quality_port {};
+    const float *freewheeling_sample_quality_port {};
+    const float *freewheeling_oscillator_quality_port {};
+    const float *sustain_cancels_release_port {};
     float *active_voices_port {};
     float *num_curves_port {};
     float *num_masters_port {};
@@ -83,6 +87,7 @@ struct sfizz_plugin_t
     LV2_URID state_changed_uri {};
     LV2_URID sfizz_sfz_file_uri {};
     LV2_URID sfizz_scala_file_uri {};
+    LV2_URID sfizz_description_uri {};
     LV2_URID sfizz_num_voices_uri {};
     LV2_URID sfizz_preload_size_uri {};
     LV2_URID sfizz_oversampling_uri {};
@@ -128,17 +133,13 @@ struct sfizz_plugin_t
     volatile int sfz_blob_serial {};
     const uint8_t *volatile sfz_blob_data {};
     volatile uint32_t sfz_blob_size {};
-
-    // Sostenuto or sustain
-    char sustain_or_sostenuto[16] {};
+    char text_description[1024];
+    volatile bool resend_description {};
 
     // Current CC values in the synth (synchronized by `synth_mutex`)
     // updated by hdcc or file load
     float *cc_current {};
-
-    // CC queued for automation on next run(). (synchronized by `synth_mutex`)
-    absl::optional<float>* ccauto {};
-    volatile bool have_ccauto {};
+    volatile bool resync_cc { false };
 
     // Timing data
     int bar {};

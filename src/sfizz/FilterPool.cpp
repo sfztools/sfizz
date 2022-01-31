@@ -49,14 +49,13 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
 
     const auto keytrack = description->keytrack * float(noteNumber - description->keycenter);
     baseCutoff *= centsFactor(keytrack);
-    auto veltrack = description->veltrack;
 
+    auto veltrack = description->veltrack;
     for (const auto& mod : description->veltrackCC) {
         const auto& curve = resources.getCurves().getCurve(mod.data.curve);
         const float value = resources.getMidiState().getCCValue(mod.cc);
         veltrack += curve.evalNormalized(value) * mod.data.modifier;
     }
-
     baseCutoff *= centsFactor(veltrack * velocity);
     baseCutoff = Default::filterCutoff.bounds.clamp(baseCutoff);
 

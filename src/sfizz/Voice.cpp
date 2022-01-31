@@ -33,6 +33,7 @@
 #include "BufferPool.h"
 #include "SynthConfig.h"
 #include "utility/Macros.h"
+#include "utility/Timing.h"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
 #include <random>
@@ -218,6 +219,7 @@ struct Voice::Impl
     const NumericId<Voice> id_;
     StateListener* stateListener_ = nullptr;
 
+    const Layer* layer_ { nullptr };
     const Region* region_ { nullptr };
 
     State state_ { State::idle };
@@ -284,10 +286,10 @@ struct Voice::Impl
     float waveLeftGain_[config::oscillatorsPerVoice] {};
     float waveRightGain_[config::oscillatorsPerVoice] {};
 
-    Duration dataDuration_;
-    Duration amplitudeDuration_;
-    Duration panningDuration_;
-    Duration filterDuration_;
+    double dataDuration_;
+    double amplitudeDuration_;
+    double panningDuration_;
+    double filterDuration_;
 
     fast_real_distribution<float> uniformNoiseDist_ { -config::uniformNoiseBounds, config::uniformNoiseBounds };
     fast_gaussian_generator<float> gaussianNoiseDist_ { 0.0f, config::noiseVariance };
@@ -399,6 +401,7 @@ void Voice::Impl::updateExtendedCCValues() noexcept
     extendedCCValues_.bipolar = midiState.getCCValue(ExtendedCCs::bipolarRandom);
     extendedCCValues_.alternate = midiState.getCCValue(ExtendedCCs::alternate);
     extendedCCValues_.noteGate = midiState.getCCValue(ExtendedCCs::keyboardNoteGate);
+    extendedCCValues_.keydelta = midiState.getCCValue(ExtendedCCs::keydelta);
 }
 
 bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
@@ -410,6 +413,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     MidiState& midiState = resources.getMidiState();
     CurveSet& curveSet = resources.getCurves();
 
+    impl.layer_ = layer;
     const Region& region = layer->getRegion();
     impl.region_ = &region;
 
@@ -765,7 +769,7 @@ void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
     impl.powerFollower_.setSamplesPerBlock(samplesPerBlock);
 }
 
-void Voice::renderBlock(AudioSpan<float> buffer) noexcept
+void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
 {
     Impl& impl = *impl_;
     ASSERT(static_cast<int>(buffer.getNumFrames()) <= impl.samplesPerBlock_);
@@ -1665,6 +1669,7 @@ bool Voice::Impl::released() const noexcept
 bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexcept
 {
     Impl& impl = *impl_;
+    const Layer* layer = impl.layer_;
     const Region* region = impl.region_;
     if (region == nullptr || other == nullptr)
         return false;
@@ -1675,7 +1680,7 @@ bool Voice::checkOffGroup(const Region* other, int delay, int noteNumber) noexce
     if ((impl.triggerEvent_.type == TriggerEventType::NoteOn
             ||  impl.triggerEvent_.type == TriggerEventType::CC)
         && region->offBy && *region->offBy == other->group
-        && (region->group != other->group || noteNumber != impl.triggerEvent_.number)) {
+        && (region->group != other->group || !layer->ccSwitched_.all() || noteNumber != impl.triggerEvent_.number)) {
         off(delay);
         return true;
     }
@@ -1687,6 +1692,7 @@ void Voice::reset() noexcept
 {
     Impl& impl = *impl_;
     impl.switchState(State::idle);
+    impl.layer_ = nullptr;
     impl.region_ = nullptr;
     impl.currentPromise_.reset();
     impl.sourcePosition_ = 0;
@@ -2090,25 +2096,25 @@ int Voice::getAge() const noexcept
     return impl.age_;
 }
 
-Duration Voice::getLastDataDuration() const noexcept
+double Voice::getLastDataDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.dataDuration_;
 }
 
-Duration Voice::getLastAmplitudeDuration() const noexcept
+double Voice::getLastAmplitudeDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.amplitudeDuration_;
 }
 
-Duration Voice::getLastFilterDuration() const noexcept
+double Voice::getLastFilterDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.filterDuration_;
 }
 
-Duration Voice::getLastPanningDuration() const noexcept
+double Voice::getLastPanningDuration() const noexcept
 {
     Impl& impl = *impl_;
     return impl.panningDuration_;

@@ -20,15 +20,17 @@ namespace sfz {
 
 enum ExtendedCCs {
     pitchBend = 128,
-    channelAftertouch,
-    polyphonicAftertouch,
-    noteOnVelocity,
-    noteOffVelocity,
-    keyboardNoteNumber,
-    keyboardNoteGate,
-    unipolarRandom,
-    bipolarRandom,
-    alternate
+    channelAftertouch = 129,
+    polyphonicAftertouch = 130,
+    noteOnVelocity = 131,
+    noteOffVelocity = 132,
+    keyboardNoteNumber = 133,
+    keyboardNoteGate = 134,
+    unipolarRandom = 135,
+    bipolarRandom = 136,
+    alternate = 137,
+    keydelta = 140,
+    absoluteKeydelta = 141,
 };
 
 namespace config {
@@ -44,7 +46,7 @@ namespace config {
     constexpr int loggerQueueSize { 256 };
     constexpr int voiceLoggerQueueSize { 256 };
     constexpr bool loggingEnabled { false };
-    constexpr size_t numChannels { 2 };
+    constexpr size_t maxChannels { 32 };
     constexpr int numBackgroundThreads { 4 };
     constexpr unsigned fileClearingPeriod { 5 }; // in seconds
     constexpr int numVoices { 64 };

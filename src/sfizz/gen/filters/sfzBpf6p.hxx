@@ -6,7 +6,7 @@
 author: "Jean Pierre Cimalando"
 license: "BSD-2-Clause"
 name: "sfz_filters"
-Code generated with Faust 2.30.5 (https://faust.grame.fr)
+Code generated with Faust 2.37.3 (https://faust.grame.fr)
 Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 ------------------------------------------------------------ */
 
@@ -19,6 +19,7 @@ Compilation options: -lang cpp -inpl -es 1 -double -ftz 0
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <math.h>
 
 
@@ -40,7 +41,6 @@ class faustBpf6p : public sfzFilterDsp {
  private:
 	
 	int fSampleRate;
-	double fConst0;
 	double fConst1;
 	double fConst2;
 	FAUSTFLOAT fHslider0;
@@ -84,7 +84,7 @@ class faustBpf6p : public sfzFilterDsp {
 	void instanceConstants(int sample_rate) {
 		//[Begin:instanceConstants]
 		fSampleRate = sample_rate;
-		fConst0 = double(fSampleRate);
+		double fConst0 = double(fSampleRate);
 		fConst1 = std::exp((0.0 - (1000.0 / fConst0)));
 		fConst2 = (6.2831853071795862 / fConst0);
 		//[End:instanceConstants]
@@ -198,8 +198,8 @@ class faustBpf6p : public sfzFilterDsp {
 		double fSlow9 = (fSlow6 * fSlow7);
 		double fSlow10 = (((1.0 - fSlow4) / fSlow5) * fSlow7);
 		double fSlow11 = (((0.0 - (2.0 * std::cos(fSlow1))) / fSlow5) * fSlow7);
-		for (int i = 0; (i < count); i = (i + 1)) {
-			double fTemp0 = double(input0[i]);
+		for (int i0 = 0; (i0 < count); i0 = (i0 + 1)) {
+			double fTemp0 = double(input0[i0]);
 			fRec2[0] = ((fSlow0 * fRec2[1]) + fSlow8);
 			fRec7[0] = (fSlow0 * fRec7[1]);
 			fVec0[0] = (fTemp0 * fRec7[0]);
@@ -220,7 +220,7 @@ class faustBpf6p : public sfzFilterDsp {
 			fVec8[0] = (fRec7[0] * fRec3[0]);
 			fRec1[0] = (((fVec7[1] + fVec8[1]) + (fRec8[0] * fRec3[0])) - (fRec10[0] * fRec1[1]));
 			fRec0[0] = fRec1[0];
-			output0[i] = FAUSTFLOAT(fRec0[0]);
+			output0[i0] = FAUSTFLOAT(fRec0[0]);
 			fRec2[1] = fRec2[0];
 			fRec7[1] = fRec7[0];
 			fVec0[1] = fVec0[0];

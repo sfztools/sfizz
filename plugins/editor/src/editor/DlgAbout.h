@@ -13,7 +13,7 @@
 
 using namespace VSTGUI;
 
-class SAboutDialog : public CViewContainer, public IControlListener {
+class SAboutDialog : public CViewContainer, public IControlListener, public IKeyboardHook{
 
     enum {
         kTagButtonSfztools,
@@ -28,6 +28,8 @@ public:
 
     void setPluginFormat(const std::string& pluginFormat);
     void setPluginHost(const std::string& pluginHost);
+    int32_t onKeyDown (const VstKeyCode& code, CFrame* frame) override;
+    int32_t onKeyUp (const VstKeyCode& code, CFrame* frame) override;
 
 protected:
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;

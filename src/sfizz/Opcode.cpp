@@ -414,8 +414,8 @@ absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>, absl::st
     case hash("bpf_2p"): return kFilterBpf2p;
     case hash("brf_2p"): return kFilterBrf2p;
     case hash("bpf_1p"): return kFilterBpf1p;
-    case hash("brf_1p"): return kFilterBrf1p;
-    case hash("apf_1p"): return kFilterApf1p;
+    case hash("brf_1p"): return kFilterBrf2p; // Sforzando does this
+    // case hash("apf_1p"): return kFilterApf1p; // TODO: replace with the delay-less version later
     case hash("lpf_2p_sv"): return kFilterLpf2pSv;
     case hash("hpf_2p_sv"): return kFilterHpf2pSv;
     case hash("bpf_2p_sv"): return kFilterBpf2pSv;
@@ -432,7 +432,7 @@ absl::optional<FilterType> Opcode::readOptional(OpcodeSpec<FilterType>, absl::st
     case hash("peq"): return kFilterPeq;
     }
 
-    DBG("Unknown filter type: " << value);
+    DBG("Unknown/unsupported filter type: " << value);
     return absl::nullopt;
 }
 
