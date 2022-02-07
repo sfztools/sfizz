@@ -760,6 +760,10 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(impl.sampleRate_);
 
     impl.powerFollower_.setSampleRate(impl.sampleRate_);
+    downsampleFilter.setType(FilterType::kFilterLpf6p);
+    downsampleFilter.setChannels(2);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -783,13 +787,35 @@ void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
     auto delayed_buffer = buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
+    AudioBuffer<float> interBuffer(delayed_buffer.getNumChannels(), delayed_buffer.getNumFrames() * impl.resources_.getSynthConfig().OSFactor);
+    AudioSpan<float> upsampled_buffer(interBuffer);
+    upsampled_buffer.fill(0.0f);
+
+    for (int i = 0; i < impl.resources_.getSynthConfig().OSFactor; ++i)
+
     { // Fill buffer with raw data
+        auto sub_buffer = upsampled_buffer.subspan(delayed_buffer.getNumFrames() * i, buffer.getNumFrames());
         ScopedTiming logger { impl.dataDuration_ };
         if (region->isOscillator())
-            impl.fillWithGenerator(delayed_buffer);
+            impl.fillWithGenerator(sub_buffer);
         else
-            impl.fillWithData(delayed_buffer);
+            impl.fillWithData(sub_buffer);
     }
+
+    if (impl.resources_.getSynthConfig().OSFactor > 1)
+	downsampleFilter.process(upsampled_buffer, upsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0, upsampled_buffer.getNumFrames());
+
+    for (size_t i = 0; i < delayed_buffer.getNumChannels(); ++i)
+{
+    for (size_t j = 0; j < delayed_buffer.getNumFrames(); ++j)
+{
+    delayed_buffer[i][j] = upsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor];
+    if (impl.resources_.getSynthConfig().OSFactor > 1)
+    for (int k = 1; k < impl.resources_.getSynthConfig().OSFactor; ++k)
+         delayed_buffer[i][j] += upsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor + k];
+    delayed_buffer[i][j] /= float(impl.resources_.getSynthConfig().OSFactor);
+}
+}
 
     if (region->isStereo()) {
         impl.ampStageStereo(buffer);
@@ -1087,7 +1113,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         absl::Span<float> pitch = *jumps; // temporary
         pitchEnvelope(pitch);
 
-        float baseRatio = pitchRatio_ * speedRatio_;
+        float baseRatio = pitchRatio_ * speedRatio_ /float(resources_.getSynthConfig().OSFactor);
         for (size_t i = 0; i < numSamples; ++i)
             (*jumps)[i] = baseRatio * centsFactor(pitch[i]);
 
@@ -1238,7 +1264,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 	float mod = 1.0;
 
-        if (quality == 0 && pitchRatio_ * speedRatio_ <= 0.5f / float(resources_.getSynthConfig().OSFactor))
+        if (quality == 11 && pitchRatio_ * speedRatio_ <= 0.5f / float(resources_.getSynthConfig().OSFactor))
             mod = 0.5f / (pitchRatio_ * speedRatio_);
 
         fillInterpolatedWithQuality<false>(
@@ -1399,7 +1425,7 @@ void Voice::Impl::fillInterpolatedWithQuality(
     switch (clamp(quality, 0, 10)) {
     case 0:
         {
-            constexpr auto itp = kInterpolatorLoFi;
+            constexpr auto itp = kInterpolatorNearest;
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
@@ -1469,6 +1495,12 @@ void Voice::Impl::fillInterpolatedWithQuality(
             fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
+    case 11:
+        {
+            constexpr auto itp = kInterpolatorLoFi;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+        break;
     }
 }
 
@@ -1520,7 +1552,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         pitchEnvelope(pitch);
 
         const float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
-        const float baseRatio = pitchRatio_ * keycenterFrequency;
+        const float baseRatio = pitchRatio_ * keycenterFrequency / float(resources_.getSynthConfig().OSFactor);
 
         for (size_t i = 0; i < numFrames; ++i)
             (*frequencies)[i] = baseRatio * centsFactor(pitch[i]);
