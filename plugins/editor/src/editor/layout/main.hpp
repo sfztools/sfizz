@@ -9,8 +9,10 @@ auto* const view__2 = createLogicalGroup(CRect(0, 0, 814, 110), -1, "", kCenterT
 view__0->addView(view__2);
 auto* const view__3 = createRoundedGroup(CRect(5, 4, 180, 105), -1, "", kCenterText, 14);
 view__2->addView(view__3);
+#if defined(__APPLE__)
 auto* const view__4 = createAboutButton(CRect(27, 5, 147, 65), kTagAbout, "", kCenterText, 14);
 view__3->addView(view__4);
+#endif
 auto* const view__5 = createInfoButton(CRect(51, 69, 83, 101), kTagFirstChangePanel+kPanelInfo, "", kCenterText, 30);
 panelButtons_[kPanelInfo] = view__5;
 view__3->addView(view__5);
@@ -223,8 +225,10 @@ view__49->addView(view__85);
 auto* const view__86 = createTextEdit(CRect(690, 200, 750, 225), kTagSetTuningFrequency, "", kCenterText, 12);
 tuningFrequencyEdit_ = view__86;
 view__49->addView(view__86);
+#if defined(__APPLE__)
 auto* const view__87 = createValueButton(CRect(605, 95, 720, 120), kTagAbout, "About sfizz", kCenterText, 12);
 settingsAboutButton_ = view__87;
+#endif
 view__49->addView(view__87);
 auto* const view__88 = createLabel(CRect(285, 110, 430, 135), -1, "... when freewheeling", kLeftText, 12);
 view__49->addView(view__88);

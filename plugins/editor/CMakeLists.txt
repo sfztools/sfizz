@@ -102,7 +102,6 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/VSTGUIHelpers.h
     src/editor/VSTGUIHelpers.cpp
     src/editor/layout/main.hpp
-    src/editor/layout/about.hpp
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h
     ${UI_FILES})
