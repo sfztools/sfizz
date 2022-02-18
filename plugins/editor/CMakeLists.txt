@@ -44,6 +44,7 @@ set(UI_FILES layout/main.fl layout/about.fl)
 source_group("Editor UI" FILES ${UI_FILES})
 
 # editor
+if(APPLE)
 add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/EditIds.h
     src/editor/EditIds.cpp
@@ -75,6 +76,37 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h
     ${UI_FILES})
+else()
+add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
+    src/editor/EditIds.h
+    src/editor/EditIds.cpp
+    src/editor/Editor.h
+    src/editor/Editor.cpp
+    src/editor/EditorLibs.h
+    src/editor/EditorLibs.cpp
+    src/editor/EditorController.h
+    src/editor/GUIComponents.h
+    src/editor/GUIComponents.cpp
+    src/editor/GUIHelpers.h
+    src/editor/GUIHelpers.cpp
+    src/editor/GUIPiano.h
+    src/editor/GUIPiano.cpp
+    src/editor/Theme.h
+    src/editor/Theme.cpp
+    src/editor/ColorHelpers.h
+    src/editor/ColorHelpers.cpp
+    src/editor/ImageHelpers.h
+    src/editor/ImageHelpers.cpp
+    src/editor/NativeHelpers.h
+    src/editor/NativeHelpers.cpp
+    src/editor/VSTGUIHelpers.h
+    src/editor/VSTGUIHelpers.cpp
+    src/editor/layout/main.hpp
+    src/editor/layout/about.hpp
+    src/editor/utility/vstgui_after.h
+    src/editor/utility/vstgui_before.h
+    ${UI_FILES})
+endif()
 add_library(sfizz::editor ALIAS sfizz_editor)
 target_include_directories(sfizz_editor PUBLIC "src")
 target_link_libraries(sfizz_editor PUBLIC sfizz::messaging sfizz::plugins-common)

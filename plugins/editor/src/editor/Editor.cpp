@@ -11,7 +11,9 @@
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
 #include "GitBuildId.h"
-#include "DlgAbout.h"
+#if defined(__APPLE__)
+	#include "DlgAbout.h"
+#endif
 #include "ImageHelpers.h"
 #include "NativeHelpers.h"
 #include "VSTGUIHelpers.h"
@@ -167,7 +169,9 @@ struct Editor::Impl : EditorController::Receiver,
     SKnobCCBox* panCCKnob_ = nullptr;
 
     SLevelMeter* meters_[16] {};
+#if defined(__APPLE__)
     SAboutDialog* aboutDialog_ = nullptr;
+#endif
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
@@ -498,12 +502,14 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             fallbackFilesDir_ = v.to_string();
             break;
         }
+#if defined(__APPLE__)
     case EditId::PluginFormat:
         aboutDialog_->setPluginFormat(v.to_string());
         break;
     case EditId::PluginHost:
         aboutDialog_->setPluginHost(v.to_string());
         break;
+#endif
     case EditId::UINumCurves:
         {
             const int value = static_cast<int>(v.to_float());
@@ -749,9 +755,11 @@ void Editor::Impl::createFrameContents()
             return box;
         };
 #endif
+#if defined(__APPLE__)
         auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
             return new CKickButton(bounds, this, tag, 0.0f, iconShaded);
         };
+#endif
         auto createLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
@@ -1115,10 +1123,12 @@ void Editor::Impl::createFrameContents()
     theme->load(currentThemeName_);
 
     ///
+#if defined(__APPLE__)
     SAboutDialog* aboutDialog = new SAboutDialog(mainView->getViewSize());
     mainView->addView(aboutDialog);
     aboutDialog_ = aboutDialog;
     aboutDialog->setVisible(false);
+#endif
 
     ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
@@ -2123,6 +2133,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
         Call::later([this]() { chooseUserFilesDir(); });
         break;
 
+#if defined(__APPLE__)
     case kTagAbout:
         if (value != 1)
             break;
@@ -2132,7 +2143,7 @@ void Editor::Impl::valueChanged(CControl* ctl)
             frame_->registerKeyboardHook(aboutDialog_);
         });
         break;
-
+#endif
     case kTagThemeMenu:
         {
             currentThemeName_ = Theme::getAvailableNames()[int(value)];
