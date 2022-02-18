@@ -112,6 +112,7 @@ TEST_CASE("[Modulations] Filter CC connections")
     const std::string graph = synth.getResources().getModMatrix().toDotGraph();
     REQUIRE(graph == createDefaultGraph({
         R"("Controller 1 {curve=0, smooth=10, step=0}" -> "FilterResonance {0, N=3}")",
+        R"("Controller 2 {curve=2, smooth=0, step=0}" -> "FilterCutoff {0, N=2}")",
         R"("Controller 3 {curve=0, smooth=0, step=0.1}" -> "FilterGain {0, N=1}")",
     }));
 }

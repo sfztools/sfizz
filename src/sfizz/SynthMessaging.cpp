@@ -1363,28 +1363,6 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, filter.cutoff);
         } break;
 
-        MATCH("/region&/filter&/cutoff_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            if (filter.cutoffCC.contains(indices[2])) {
-                const auto& cc = filter.cutoffCC.getWithDefault(indices[2]);
-                client.receive<'f'>(delay, path, cc.modifier);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/filter&/cutoff_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            if (filter.cutoffCC.contains(indices[2])) {
-                const auto& cc = filter.cutoffCC.getWithDefault(indices[2]);
-                client.receive<'i'>(delay, path, cc.curve );
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
         MATCH("/region&/filter&/resonance", "") {
             GET_REGION_OR_BREAK(indices[0])
             GET_FILTER_OR_BREAK(indices[1])

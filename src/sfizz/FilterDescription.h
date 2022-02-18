@@ -15,8 +15,6 @@ namespace sfz
 struct FilterDescription
 {
     float cutoff { Default::filterCutoff };
-    float cutoffMod { Default::filterCutoffMod };
-    CCMap<ModifierCurvePair<float>> cutoffCC { ModifierCurvePair<float>{ Default::filterCutoffMod, Default::curveCC } };
     float resonance { Default::filterCutoff };
     float gain { Default::filterGain };
     float keytrack { Default::filterKeytrack };

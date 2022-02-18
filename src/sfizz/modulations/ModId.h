@@ -89,7 +89,6 @@ enum class ModId : int {
     EGEqGainDepth,
     EGEqFrequencyDepth,
     EGEqBandwidthDepth,
-    EGLFOFreqDepth,
 
     _TargetsEnd,
     // [/targets] --------------------------------------------------------------

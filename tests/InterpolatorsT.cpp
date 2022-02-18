@@ -15,11 +15,11 @@ TEST_CASE("[Interpolators] Sample at points")
     std::array<float, 32> values;
     std::iota(values.begin(), values.end(), 0.0f);
     for (unsigned i = 2; i < values.size() - 2; ++i) {
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorLinear>(&values[i], 0.0f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorLinear>(&values[i], 0.0f)
             == Approx(values[i]).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&values[i], 0.0f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&values[i], 0.0f)
             == Approx(values[i]).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&values[i], 0.0f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&values[i], 0.0f)
             == Approx(values[i]).margin(1e-2));
     }
 }
@@ -29,11 +29,11 @@ TEST_CASE("[Interpolators] Sample next")
     std::array<float, 32> values;
     std::iota(values.begin(), values.end(), 0.0f);
     for (unsigned i = 2; i < values.size() - 2; ++i) {
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorLinear>(&values[i], 1.0f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorLinear>(&values[i], 1.0f)
             == Approx(values[i + 1]).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&values[i], 1.0f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&values[i], 1.0f)
             == Approx(values[i + 1]).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&values[i], 1.0f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&values[i], 1.0f)
             == Approx(values[i + 1]).margin(1e-2));
     }
 }
@@ -43,11 +43,11 @@ TEST_CASE("[Interpolators] Straight line")
     std::array<float, 32> values;
     std::iota(values.begin(), values.end(), 0.0f);
     for (unsigned i = 2; i < values.size() - 2; ++i) {
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorLinear>(&values[i], 0.5f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorLinear>(&values[i], 0.5f)
             == Approx(values[i] + 0.5f).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&values[i], 0.5f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&values[i], 0.5f)
             == Approx(values[i] + 0.5f).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&values[i], 0.5f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&values[i], 0.5f)
             == Approx(values[i] + 0.5f).margin(1e-2));
     }
 }
@@ -64,9 +64,9 @@ TEST_CASE("[Interpolators] Squares")
     for (unsigned i = 2; i < x.size() - 2; ++i) {
         const auto half_x = x[i] + 0.5f / static_cast<float>(x.size());
         const auto expected = (half_x) * (half_x);
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&y[i], 0.5f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorHermite3>(&y[i], 0.5f)
             == Approx(expected).margin(1e-2));
-        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&y[i], 0.5f, 1.0f)
+        REQUIRE(sfz::interpolate<sfz::InterpolatorModel::kInterpolatorBspline3>(&y[i], 0.5f)
             == Approx(expected).margin(1e-2));
     }
 }

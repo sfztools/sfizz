@@ -579,30 +579,13 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
             filters[filterIndex].resonance = opcode.read(Default::filterResonance);
         }
         break;
-    case hash("cutoff&_cc&"): case hash("cutoff&_oncc&"):
+    case_any_ccN("cutoff&"): // also cutoff_oncc&, cutoff_cc&, cutoff&_cc&
         {
-            const auto filterIndex = opcode.parameters.empty() ? 0 : (opcode.parameters.front() - 1);
+            const auto filterIndex = opcode.parameters.front() - 1;
             if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
                 return false;
 
-            const auto cc = opcode.parameters.back();
-            if (cc >= config::numCCs)
-                return false;
-
-            filters[filterIndex].cutoffCC[cc].modifier = opcode.read(Default::filterCutoffMod);
-        }
-        break;
-    case hash("cutoff&_curvecc&"):
-        {
-            const auto filterIndex = opcode.parameters.empty() ? 0 : (opcode.parameters.front() - 1);
-            if (!extendIfNecessary(filters, filterIndex + 1, Default::numFilters))
-                return false;
-
-            const auto cc = opcode.parameters.back();
-            if (cc >= config::numCCs)
-                return false;
-
-            filters[filterIndex].cutoffCC[cc].curve = opcode.read(Default::curveCC);
+            processGenericCc(opcode, Default::filterCutoffMod, ModKey::createNXYZ(ModId::FilCutoff, id, filterIndex));
         }
         break;
     case_any_ccN("resonance&"): // also resonance_oncc&, resonance_cc&, resonance&_cc&
@@ -1113,15 +1096,6 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         break;
     case_any_eg("veltosustain"): // also vel2sustain
         eg.vel2sustain = opcode.read(Default::egPercentMod);
-        break;
-    case_any_eg("attack_shape"):
-        eg.attack_shape = opcode.read(Default::flexEGPointShape);
-        break;
-    case_any_eg("decay_shape"):
-        eg.decay_shape = opcode.read(Default::flexEGPointShape3);
-        break;
-    case_any_eg("release_shape"):
-        eg.release_shape = opcode.read(Default::flexEGPointShape3);
         break;
     case_any_eg("attack_oncc&"): // also attackcc&
         if (opcode.parameters.back() >= config::numCCs)
@@ -1682,18 +1656,6 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
         }
         break;
     }
-
-    case hash("eg&_freq_lfo&"):
-        if (lfos.size() < opcode.parameters[1] - 1)
-            return false;
-        EG_target(ModKey::createNXYZ(ModId::LFOFrequency, id, opcode.parameters[1] - 1), Default::lfoFreqMod);
-        break;
-
-    case_any_ccN("eg&_freq_lfo&"):
-        if (lfos.size() < opcode.parameters[1] - 1)
-            return false;
-        EG_target_cc(ModKey::createNXYZ(ModId::LFOFrequency, id, opcode.parameters[1] - 1), Default::lfoFreqMod);
-        break;
 
     default:
         return false;
