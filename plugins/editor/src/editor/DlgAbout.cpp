@@ -223,7 +223,6 @@ CMouseEventResult SAboutDialog::onMouseDown(CPoint& where, const CButtonState& b
     return result;
 }
 
-#if defined(__APPLE__)
 int32_t SAboutDialog::onKeyDown (const VstKeyCode& keyCode, CFrame* frame)
 {
     if (keyCode.virt == VKEY_ESCAPE) {
@@ -241,7 +240,6 @@ int32_t SAboutDialog::onKeyUp (const VstKeyCode& keyCode, CFrame* frame)
     (void)frame;
     return -1;
 }
-#endif
 
 void SAboutDialog::valueChanged(CControl *ctl)
 {

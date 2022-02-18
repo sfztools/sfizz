@@ -1115,12 +1115,10 @@ void Editor::Impl::createFrameContents()
     theme->load(currentThemeName_);
 
     ///
-#if defined(__APPLE__)
     SAboutDialog* aboutDialog = new SAboutDialog(mainView->getViewSize());
     mainView->addView(aboutDialog);
     aboutDialog_ = aboutDialog;
     aboutDialog->setVisible(false);
-#endif
 
     ///
     SharedPointer<SFileDropTarget> fileDropTarget = owned(new SFileDropTarget);
@@ -2128,12 +2126,11 @@ void Editor::Impl::valueChanged(CControl* ctl)
     case kTagAbout:
         if (value != 1)
             break;
-#if defined(__APPLE__)
+
         Call::later([this]() {
             aboutDialog_->setVisible(true);
             frame_->registerKeyboardHook(aboutDialog_);
         });
-#endif
         break;
 
     case kTagThemeMenu:
