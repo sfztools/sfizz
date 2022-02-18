@@ -28,8 +28,10 @@ public:
 
     void setPluginFormat(const std::string& pluginFormat);
     void setPluginHost(const std::string& pluginHost);
+#if defined(__APPLE__)
     int32_t onKeyDown (const VstKeyCode& code, CFrame* frame) override;
     int32_t onKeyUp (const VstKeyCode& code, CFrame* frame) override;
+#endif
 
 protected:
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
