@@ -860,10 +860,10 @@ TEST_CASE("[Synth] Release (Different sostenuto CC)")
         synth.noteOff(3, 62, 85);
         synth.noteOff(3, 64, 85);
         synth.renderBlock(buffer);
-        REQUIRE( synth.getNumActiveVoices() == 3 );
+        REQUIRE( synth.getNumActiveVoices() == 2 );
         synth.cc(4, 54, 0);
         synth.renderBlock(buffer);
-        REQUIRE( synth.getNumActiveVoices() == 4 );
+        REQUIRE( synth.getNumActiveVoices() == 3 );
     }
 }
 
@@ -1155,7 +1155,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
     synth.renderBlock(buffer);
     auto velocities = activeVelocities(synth);
     absl::c_sort(velocities);
-    REQUIRE( velocities == std::vector<float> { 34_norm, 34_norm, 78_norm, 78_norm, 85_norm, 85_norm } );
+    REQUIRE( velocities == std::vector<float> { 34_norm, 78_norm, 85_norm } );
     REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
@@ -1181,7 +1181,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
     synth.renderBlock(buffer);
     auto velocities = activeVelocities(synth);
     absl::c_sort(velocities);
-    REQUIRE( velocities == std::vector<float> { 34_norm, 34_norm, 78_norm, 78_norm, 85_norm, 85_norm } );
+    REQUIRE( velocities == std::vector<float> { 34_norm, 78_norm, 85_norm } );
     REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
@@ -1205,7 +1205,7 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
     synth.renderBlock(buffer);
     auto velocities = activeVelocities(synth);
     absl::c_sort(velocities);
-    REQUIRE( velocities == std::vector<float> { 78_norm, 78_norm, 85_norm, 85_norm } );
+    REQUIRE( velocities == std::vector<float> { 78_norm, 85_norm } );
     REQUIRE( synth.getLayerView(1)->delayedSustainReleases_.empty() );
 }
 
@@ -1519,18 +1519,18 @@ TEST_CASE("[Synth] ampeg_sustain = 0 puts the ampeg envelope in free-running mod
 
     synth.noteOn(0, 60, 85);
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
     synth.noteOn(0, 61, 85);
     synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     // Render a bit; this does not kill the voice
     for (unsigned i = 0; i < 5; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 1 );
+    REQUIRE( synth.getNumActiveVoices() == 2 );
     // Render about half a second
     for (unsigned i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
-    REQUIRE( synth.getNumActiveVoices() == 0 );
+    REQUIRE( synth.getNumActiveVoices() == 1 );
 }
 
 TEST_CASE("[Synth] Off by standard")

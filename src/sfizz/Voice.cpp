@@ -787,20 +787,19 @@ void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
     auto delayed_buffer = buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
-    AudioBuffer<float> interBuffer(delayed_buffer.getNumChannels(), delayed_buffer.getNumFrames() * impl.resources_.getSynthConfig().OSFactor);
+    AudioBuffer<float> interBuffer(delayed_buffer.getNumChannels(), delayed_buffer.getNumFrames());
     AudioSpan<float> upsampled_buffer(interBuffer);
+
+    for (int h = 0; h < impl.resources_.getSynthConfig().OSFactor; ++h)
+    {
     upsampled_buffer.fill(0.0f);
 
-    for (int i = 0; i < impl.resources_.getSynthConfig().OSFactor; ++i)
-
-    { // Fill buffer with raw data
-        auto sub_buffer = upsampled_buffer.subspan(delayed_buffer.getNumFrames() * i, buffer.getNumFrames());
+// Fill buffer with raw data
         ScopedTiming logger { impl.dataDuration_ };
         if (region->isOscillator())
-            impl.fillWithGenerator(sub_buffer);
+            impl.fillWithGenerator(upsampled_buffer);
         else
-            impl.fillWithData(sub_buffer);
-    }
+            impl.fillWithData(upsampled_buffer);
 
     if (impl.resources_.getSynthConfig().OSFactor > 1)
 	downsampleFilter.process(upsampled_buffer, upsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0, upsampled_buffer.getNumFrames());
@@ -809,13 +808,10 @@ void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
 {
     for (size_t j = 0; j < delayed_buffer.getNumFrames(); ++j)
 {
-    delayed_buffer[i][j] = upsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor];
-    if (impl.resources_.getSynthConfig().OSFactor > 1)
-    for (int k = 1; k < impl.resources_.getSynthConfig().OSFactor; ++k)
-         delayed_buffer[i][j] += upsampled_buffer[i][j * impl.resources_.getSynthConfig().OSFactor + k];
-    delayed_buffer[i][j] /= float(impl.resources_.getSynthConfig().OSFactor);
+    delayed_buffer[i][int(j / impl.resources_.getSynthConfig().OSFactor) + int(delayed_buffer.getNumFrames() / impl.resources_.getSynthConfig().OSFactor * h)] += upsampled_buffer[i][j] / float(impl.resources_.getSynthConfig().OSFactor);
 }
 }
+    }
 
     if (region->isStereo()) {
         impl.ampStageStereo(buffer);
