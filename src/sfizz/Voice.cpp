@@ -511,7 +511,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_);
+    impl.initialDelay_ = (delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_)) * impl.resources_.getSynthConfig().OSFactor;
     impl.baseFrequency_ = tuning.getFrequencyOfKey(impl.triggerEvent_.number);
     impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
