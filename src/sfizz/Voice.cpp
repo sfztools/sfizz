@@ -519,7 +519,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend()));
 
     ModMatrix& modMatrix = resources.getModMatrix();
-    modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
+    modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_ / impl.resources_.getSynthConfig().OSFactor);
     impl.saveModulationTargets(&region);
 
     if (region.checkSustain) {
@@ -783,15 +783,14 @@ void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
     if (region == nullptr || region->disabled())
         return;
 
+    for (int h = 0; h < impl.resources_.getSynthConfig().OSFactor; ++h)
+    {
     const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
     AudioBuffer<float> interBuffer(delayed_buffer.getNumChannels(), delayed_buffer.getNumFrames());
     AudioSpan<float> upsampled_buffer(interBuffer);
-
-    for (int h = 0; h < impl.resources_.getSynthConfig().OSFactor; ++h)
-    {
     upsampled_buffer.fill(0.0f);
 
 // Fill buffer with raw data
