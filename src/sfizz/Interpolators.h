@@ -11,8 +11,6 @@ namespace sfz {
 enum InterpolatorModel : int {
     // a nearest interpolator
     kInterpolatorNearest,
-    // a lo-fi interpolator
-    kInterpolatorLoFi,
     // a linear interpolator
     kInterpolatorLinear,
     // a Hermite 3rd order interpolator
@@ -63,7 +61,7 @@ void initializeInterpolators();
  * @return R
  */
 template <InterpolatorModel M, class R>
-R interpolate(const R* values, R coeff, float mod);
+R interpolate(const R* values, R coeff);
 
 } // namespace sfz
 
