@@ -735,31 +735,31 @@ void Voice::setSampleRate(float sampleRate) noexcept
 {
     Impl& impl = *impl_;
     impl.sampleRate_ = sampleRate;
-    impl.gainSmoother_.setSmoothing(config::gainSmoothing, impl.sampleRate_);
-    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, impl.sampleRate_);
+    impl.gainSmoother_.setSmoothing(config::gainSmoothing, sampleRate);
+    impl.xfadeSmoother_.setSmoothing(config::xfadeSmoothing, sampleRate);
 
     for (WavetableOscillator& osc : impl.waveOscillators_)
-        osc.init(impl.sampleRate_);
+        osc.init(sampleRate);
 
     for (auto& eg : impl.flexEGs_)
         eg->setSampleRate(sampleRate);
 
     for (auto& lfo : impl.lfos_)
-        lfo->setSampleRate(impl.sampleRate_);
+        lfo->setSampleRate(sampleRate);
     if (auto* lfo = impl.lfoAmplitude_.get())
-        lfo->setSampleRate(impl.sampleRate_);
+        lfo->setSampleRate(sampleRate);
     if (auto* lfo = impl.lfoPitch_.get())
-        lfo->setSampleRate(impl.sampleRate_);
+        lfo->setSampleRate(sampleRate);
     if (auto* lfo = impl.lfoFilter_.get())
-        lfo->setSampleRate(impl.sampleRate_);
+        lfo->setSampleRate(sampleRate);
 
     for (auto& filter : impl.filters_)
-        filter.setSampleRate(impl.sampleRate_);
+        filter.setSampleRate(sampleRate);
 
     for (auto& eq : impl.equalizers_)
-        eq.setSampleRate(impl.sampleRate_);
+        eq.setSampleRate(sampleRate);
 
-    impl.powerFollower_.setSampleRate(impl.sampleRate_);
+    impl.powerFollower_.setSampleRate(sampleRate);
     downsampleFilter.setType(FilterType::kFilterLpf6p);
     downsampleFilter.setChannels(2);
     downsampleFilter.init(sampleRate);
