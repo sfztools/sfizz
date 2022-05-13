@@ -98,6 +98,29 @@ jobs:
         name: Linux tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
+  build_for_macos:
+    runs-on: macos-10.15
+    steps:
+    - name: Set install name
+      run: |
+        echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
+        echo "install_name=sfizz-${GITHUB_REF##*/}-linux" >> "$GITHUB_ENV"
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Build mac universal
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make
+        cd ..
+    - uses: actions/upload-artifact@v2
+      with:
+        name: MacOS build
+        path: |
+          build/sfizz.*
+
   build_for_mod:
     runs-on: ubuntu-18.04
     container:
