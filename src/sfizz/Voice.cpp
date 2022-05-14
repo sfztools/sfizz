@@ -607,6 +607,7 @@ void Voice::Impl::off(int delay, bool fast) noexcept
         } else if (region_->offMode == OffMode::time) {
             egAmplitude_.setReleaseTime(region_->offTime);
         }
+        egAmplitude_.stopDynamicUpdates();
     }
     else {
         // TODO(jpc): Flex AmpEG

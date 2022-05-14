@@ -81,6 +81,13 @@ struct VoiceManager final : public Voice::StateListener
     const PolyphonyGroup* getPolyphonyGroupView(int idx) noexcept;
 
     /**
+     * @brief Get the actives voices as a view
+     *
+     * @return std::vector<const Voice*>
+     */
+    std::vector<const Voice*> getActiveVoices() const noexcept;
+
+    /**
      * @brief Clear all voices and polyphony groups.
      * Also resets the stealing algorithm to default.
      */
@@ -134,7 +141,6 @@ struct VoiceManager final : public Voice::StateListener
 
 private:
     int numRequiredVoices_ { config::numVoices };
-    int getNumEffectiveVoices() const noexcept { return config::calculateActualVoices(numRequiredVoices_); }
     std::vector<Voice> list_;
     std::vector<Voice*> activeVoices_;
     std::vector<Voice*> temp_;
