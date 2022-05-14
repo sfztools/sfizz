@@ -449,7 +449,7 @@ midnam:update a lv2:Feature .
 <@LV2PLUGIN_URI@-multi>
   a doap:Project, lv2:Plugin, lv2:InstrumentPlugin ;
 
-  doap:name "@LV2PLUGIN_NAME@" ;
+  doap:name "@LV2PLUGIN_NAME@-multi" ;
   doap:license <https://spdx.org/licenses/@LV2PLUGIN_SPDX_LICENSE_ID@> ;
   doap:maintainer [
     foaf:name     "@LV2PLUGIN_AUTHOR@" ;
