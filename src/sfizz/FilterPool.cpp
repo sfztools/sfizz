@@ -36,6 +36,17 @@ void sfz::FilterHolder::setup(const Region& region, unsigned filterId, int noteN
         fast_real_distribution<float> dist { 0.0f, description->random };
         baseCutoff *= centsFactor(dist(Random::randomGenerator));
     }
+
+    auto cutoffMod = description->cutoffMod;
+    for (const auto& mod : description->cutoffCC) {
+        const auto& curve = resources.getCurves().getCurve(mod.data.curve);
+        const float value = resources.getMidiState().getCCValue(mod.cc);
+        cutoffMod += curve.evalNormalized(value) * mod.data.modifier;
+    }
+
+    baseCutoff *= centsFactor(cutoffMod);
+    baseCutoff = Default::filterCutoff.bounds.clamp(baseCutoff);
+
     const auto keytrack = description->keytrack * float(noteNumber - description->keycenter);
     baseCutoff *= centsFactor(keytrack);
 

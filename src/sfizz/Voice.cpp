@@ -511,7 +511,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     }
 
     impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_);
+    impl.initialDelay_ = (delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_)) * impl.resources_.getSynthConfig().OSFactor;
     impl.baseFrequency_ = tuning.getFrequencyOfKey(impl.triggerEvent_.number);
     impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
@@ -519,7 +519,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend()));
 
     ModMatrix& modMatrix = resources.getModMatrix();
-    modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
+    modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_ / impl.resources_.getSynthConfig().OSFactor);
     impl.saveModulationTargets(&region);
 
     if (region.checkSustain) {
@@ -760,6 +760,10 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
+    downsampleFilter.setType(FilterType::kFilterLpf6p);
+    downsampleFilter.setChannels(2);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -779,16 +783,33 @@ void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
     if (region == nullptr || region->disabled())
         return;
 
+    for (int h = 0; h < impl.resources_.getSynthConfig().OSFactor; ++h)
+    {
     const auto delay = min(static_cast<size_t>(impl.initialDelay_), buffer.getNumFrames());
     auto delayed_buffer = buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
-    { // Fill buffer with raw data
+    AudioBuffer<float> interBuffer(delayed_buffer.getNumChannels(), delayed_buffer.getNumFrames());
+    AudioSpan<float> upsampled_buffer(interBuffer);
+    upsampled_buffer.fill(0.0f);
+
+// Fill buffer with raw data
         ScopedTiming logger { impl.dataDuration_ };
         if (region->isOscillator())
-            impl.fillWithGenerator(delayed_buffer);
+            impl.fillWithGenerator(upsampled_buffer);
         else
-            impl.fillWithData(delayed_buffer);
+            impl.fillWithData(upsampled_buffer);
+
+    if (impl.resources_.getSynthConfig().OSFactor > 1)
+	downsampleFilter.process(upsampled_buffer, upsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0, upsampled_buffer.getNumFrames());
+
+    for (size_t i = 0; i < delayed_buffer.getNumChannels(); ++i)
+{
+    for (size_t j = 0; j < delayed_buffer.getNumFrames(); ++j)
+{
+    delayed_buffer[i][int(j / impl.resources_.getSynthConfig().OSFactor) + int(delayed_buffer.getNumFrames() / impl.resources_.getSynthConfig().OSFactor * h)] += upsampled_buffer[i][j] / float(impl.resources_.getSynthConfig().OSFactor);
+}
+}
     }
 
     if (region->isStereo()) {
@@ -1087,7 +1108,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         absl::Span<float> pitch = *jumps; // temporary
         pitchEnvelope(pitch);
 
-        float baseRatio = pitchRatio_ * speedRatio_;
+        float baseRatio = pitchRatio_ * speedRatio_ /float(resources_.getSynthConfig().OSFactor);
         for (size_t i = 0; i < numSamples; ++i)
             (*jumps)[i] = baseRatio * centsFactor(pitch[i]);
 
@@ -1235,7 +1256,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         // partition spans
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
-        absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+        absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
 
         fillInterpolatedWithQuality<false>(
             source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
@@ -1516,7 +1537,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         pitchEnvelope(pitch);
 
         const float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
-        const float baseRatio = pitchRatio_ * keycenterFrequency;
+        const float baseRatio = pitchRatio_ * keycenterFrequency / float(resources_.getSynthConfig().OSFactor);
 
         for (size_t i = 0; i < numFrames; ++i)
             (*frequencies)[i] = baseRatio * centsFactor(pitch[i]);
@@ -1656,7 +1677,6 @@ bool Voice::Impl::released() const noexcept
     if (!region_ || state_ != State::playing)
         return true;
 
-
     if (!region_->flexAmpEG)
         return egAmplitude_.isReleased();
     else
@@ -1709,6 +1729,7 @@ void Voice::reset() noexcept
 
     for (auto& eq : impl.equalizers_)
         eq.reset();
+    downsampleFilter.clear();
 
     removeVoiceFromRing();
 }
