@@ -104,22 +104,51 @@ jobs:
     - name: Set install name
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-        echo "install_name=sfizz-${GITHUB_REF##*/}-linux" >> "$GITHUB_ENV"
+        echo "install_name=sfizz-${GITHUB_REF##*/}-macos" >> "$GITHUB_ENV"
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: Build mac universal
+    - name: Create Build Environment
+      shell: bash
+      working-directory: ${{runner.workspace}}
+      run: cmake -E make_directory build
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
       run: |
-        mkdir build
-        cd build
-        cmake ..
-        make
-        cd ..
+        cmake "$GITHUB_WORKSPACE" \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DSFIZZ_AU=ON \
+          -DSFIZZ_LV2=ON \
+          -DSFIZZ_LV2_UI=ON \
+          -DSFIZZ_VST=ON \
+          -DSFIZZ_JACK=OFF \
+          -DSFIZZ_TESTS=OFF \
+          -DSFIZZ_SHARED=OFF \
+          -DSFIZZ_STATIC_DEPENDENCIES=OFF
+    - name: Build plugins
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "Release" -j 2
+    - name: Package OSX bundles
+      shell: bash
+      working-directory: ${{runner.workspace}}
+      run: ./sfizz/scripts/package-osx-bundles.sh
+    - name: Create OSX installer
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        productbuild \
+          --distribution $GITHUB_WORKSPACE/scripts/plugin.pkg/package.xml \
+          --identifier "sfz.tools.sfizz" \
+          --package-path "${{runner.workspace}}/build" \
+          --version 0 \
+          ${{env.install_name}}.pkg
     - uses: actions/upload-artifact@v2
       with:
-        name: MacOS build
+        name: MacOS installer
         path: |
-          build/sfizz.*
+          ${{runner.workspace}}/build/${{env.install_name}}.pkg
 
   build_for_mod:
     runs-on: ubuntu-18.04
