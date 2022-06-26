@@ -555,6 +555,14 @@ public:
      * @return int
      */
     int getNumActiveVoices() const noexcept;
+
+    /**
+     * @brief Get the active voices as a view
+     *
+     * @return std::vector<const Voice*>
+     */
+    std::vector<const Voice*> getActiveVoices() const noexcept;
+
     /**
      * @brief Get the total number of voices in the synth (the polyphony)
      *

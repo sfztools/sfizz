@@ -1042,6 +1042,12 @@ int Synth::getNumActiveVoices() const noexcept
         std::min(impl.numVoices_, activeVoices) : activeVoices;
 }
 
+std::vector<const Voice*> Synth::getActiveVoices() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.voiceManager_.getActiveVoices();
+}
+
 void Synth::setSamplesPerBlock(int samplesPerBlock) noexcept
 {
     Impl& impl = *impl_;
@@ -1295,7 +1301,6 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
     if (selectedVoice == nullptr)
         return;
 
-    ASSERT(selectedVoice->isFree());
     if (selectedVoice->startVoice(layer, delay, triggerEvent))
         ring.addVoiceToRing(selectedVoice);
 }

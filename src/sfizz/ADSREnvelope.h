@@ -76,6 +76,12 @@ public:
      */
     int getRemainingDelay() const noexcept { return delay; }
 
+    /**
+     * @brief Stop dynamic updates of the EG values.
+     *
+     */
+    void stopDynamicUpdates() { dynamic_ = false; }
+
 private:
     float sampleRate { config::defaultSampleRate };
     int secondsToSamples(Float timeInSeconds) const noexcept;
@@ -99,6 +105,7 @@ private:
     const EGDescription* desc_ { nullptr };
     const MidiState& midiState_;
     float triggerVelocity_ { 0.0f };
+    bool dynamic_ { false };
     int delay { 0 };
     Float attackStep { 0 };
     Float decayRate { 0 };

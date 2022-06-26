@@ -153,17 +153,12 @@ namespace config {
      */
     static constexpr float overflowVoiceMultiplier { 1.5f };
     static_assert(overflowVoiceMultiplier >= 1.0f, "This needs to add voices");
-
     /**
-     * @brief Calculate the effective voice number for the polyphony setting,
-     * accounting for the overflow factor.
+     * @brief Minimum number of overflow voices to add
+     *
      */
-    inline constexpr int calculateActualVoices(int polyphony)
-    {
-        return
-            (int(polyphony * config::overflowVoiceMultiplier) < int(config::maxVoices)) ?
-            int(polyphony * config::overflowVoiceMultiplier) : int(config::maxVoices);
-    }
+    static constexpr int minOverflowVoices { 4 };
+
     /**
      * @brief The smoothing time constant per "smooth" steps
      */

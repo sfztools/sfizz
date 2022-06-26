@@ -34,7 +34,7 @@ Float ADSREnvelope::secondsToExpRate(Float timeInSeconds) const noexcept
     if (timeInSeconds <= 0)
         return Float(0.0);
 
-    timeInSeconds = std::max(Float(25e-3), timeInSeconds);
+    timeInSeconds = std::max(Float(Default::offTime), timeInSeconds);
     return std::exp(Float(-9.0) / (timeInSeconds * sampleRate));
 };
 
@@ -42,6 +42,7 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
 {
     this->sampleRate = sampleRate;
     desc_ = &desc;
+    dynamic_ = desc.dynamic;
     triggerVelocity_ = velocity;
     currentState = State::Delay; // Has to be before the update
     updateValues(delay);
@@ -58,7 +59,6 @@ void ADSREnvelope::updateValues(int delay) noexcept
 {
     if (currentState == State::Delay)
         this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, triggerVelocity_, delay));
-
     this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, triggerVelocity_, delay));
     this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, triggerVelocity_, delay));
     this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, triggerVelocity_, delay));
@@ -70,7 +70,7 @@ void ADSREnvelope::updateValues(int delay) noexcept
 
 void ADSREnvelope::getBlock(absl::Span<Float> output) noexcept
 {
-    if (desc_ && desc_->dynamic) {
+    if (dynamic_) {
         int processed = 0;
         int remaining = static_cast<int>(output.size());
         while(remaining > 0) {

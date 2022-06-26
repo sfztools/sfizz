@@ -104,6 +104,14 @@ const PolyphonyGroup* VoiceManager::getPolyphonyGroupView(int idx) noexcept
     return &polyphonyGroups_[idx];
 }
 
+std::vector<const Voice*> VoiceManager::getActiveVoices() const noexcept
+{
+    std::vector<const Voice*> returned;
+    std::copy(activeVoices_.begin(), activeVoices_.end(), std::back_inserter(returned));
+    return returned;
+}
+
+
 void VoiceManager::clear()
 {
     for (auto& pg : polyphonyGroups_)
@@ -147,12 +155,21 @@ void VoiceManager::checkPolyphony(const Region* region, int delay, const Trigger
 
 Voice* VoiceManager::findFreeVoice() noexcept
 {
-    auto freeVoice = absl::c_find_if(list_, [](const Voice& voice) {
-        return voice.isFree();
-    });
+    Voice* freeVoice = nullptr;
+    for (auto& v: list_) {
+        if (v.isFree()) {
+            freeVoice = &v;
+            break;
+        }
 
-    if (freeVoice != list_.end())
-        return &*freeVoice;
+        if (v.offedOrFree()) {
+            if (freeVoice == nullptr || v.getAge() > freeVoice->getAge())
+                freeVoice = &v;
+        }
+    };
+
+    if (freeVoice != nullptr)
+        return freeVoice;
 
     DBG("Engine hard polyphony reached");
     return {};
@@ -161,7 +178,8 @@ Voice* VoiceManager::findFreeVoice() noexcept
 void VoiceManager::requireNumVoices(int numVoices, Resources& resources)
 {
     numRequiredVoices_ = numVoices;
-    const int numEffectiveVoices = getNumEffectiveVoices();
+    const int numEffectiveVoices = std::min(int(config::maxVoices), numVoices +
+            std::max(int(numVoices * config::overflowVoiceMultiplier), config::minOverflowVoices));
 
     clear();
     list_.reserve(numEffectiveVoices);
@@ -249,7 +267,7 @@ void VoiceManager::checkEnginePolyphony(int delay) noexcept
 {
     Voice* candidate = stealer_->checkPolyphony(
         absl::MakeSpan(activeVoices_), numRequiredVoices_);
-    SisterVoiceRing::offAllSisters(candidate, delay);
+    SisterVoiceRing::offAllSisters(candidate, delay, true);
 }
 
 } // namespace sfz

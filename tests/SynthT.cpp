@@ -989,11 +989,11 @@ TEST_CASE("[Synth] Sustain threshold")
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*sine" } );
     synth.noteOn(0, 62, 85);
     synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*silence", "*sine", "*sine" } );
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine", "*sine", "*silence" } );
     synth.cc(0, 64, 64);
     synth.noteOff(0, 62, 85);
     synth.renderBlock(buffer);
-    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*silence", "*sine", "*sine" } );
+    REQUIRE( playingSamples(synth) == std::vector<std::string> {"*sine", "*sine",  "*silence" } );
 }
 
 TEST_CASE("[Synth] Sustain")
@@ -2139,4 +2139,24 @@ TEST_CASE("[Synth] Reloading a file ignores the `set_ccN` opcodes")
     };
 
     REQUIRE(messageList == expected);
+}
+
+TEST_CASE("[Synth] Reuse offed voices in the last case scenario for new notes")
+{
+    sfz::Synth synth;
+    synth.setNumVoices(2);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> sample=*sine ampeg_release=10
+    )");
+    synth.noteOn(0, 60, 63);
+    synth.renderBlock(buffer);
+    REQUIRE( playingNotes(synth) == std::vector<int> { 60 } );
+    for (int i = 61; i < 80; ++i) {
+        synth.noteOn(0, i, 63);
+        synth.renderBlock(buffer);
+        auto notes = playingNotes(synth);
+        std::sort(notes.begin(), notes.end());
+        REQUIRE( notes == std::vector<int> { i - 1, i } );
+    }
 }
