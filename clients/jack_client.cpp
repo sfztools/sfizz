@@ -393,5 +393,6 @@ int main(int argc, char** argv)
 
     std::cout << "Closing..." << '\n';
     jack_client_close(client);
+    cli_thread.join();
     return 0;
 }
