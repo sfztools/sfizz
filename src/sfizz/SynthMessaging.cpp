@@ -1363,6 +1363,34 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'f'>(delay, path, filter.cutoff);
         } break;
 
+        MATCH("/region&/filter&/cutoff_cc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            const auto depth = region.ccModDepth(indices[2], ModId::FilCutoff, indices[1]);
+            if (depth)
+                client.receive<'f'>(delay, path, *depth);
+        } break;
+
+        MATCH("/region&/filter&/cutoff_curvecc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            const auto params = region.ccModParameters(indices[2], ModId::FilCutoff, indices[1]);
+            if (params)
+                client.receive<'i'>(delay, path, params->curve);
+        } break;
+
+        MATCH("/region&/filter&/cutoff_stepcc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            const auto params = region.ccModParameters(indices[2], ModId::FilCutoff, indices[1]);
+            if (params)
+                client.receive<'i'>(delay, path, params->step);
+        } break;
+
+        MATCH("/region&/filter&/cutoff_smoothcc&", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            const auto params = region.ccModParameters(indices[2], ModId::FilCutoff, indices[1]);
+            if (params)
+                client.receive<'i'>(delay, path, params->smooth);
+        } break;
+
         MATCH("/region&/filter&/resonance", "") {
             GET_REGION_OR_BREAK(indices[0])
             GET_FILTER_OR_BREAK(indices[1])

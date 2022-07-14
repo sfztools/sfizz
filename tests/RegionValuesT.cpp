@@ -3051,6 +3051,43 @@ TEST_CASE("[Values] Filter stacking and cutoffs")
     }
 }
 
+TEST_CASE("[Values] Cutoff modifiers")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav cutoff_cc2=1000 cutoff_stepcc2=10 cutoff_smoothcc2=2 cutoff_curvecc2=4
+        <region> sample=kick.wav cutoff2_cc3=100 cutoff2_stepcc3=1 cutoff2_smoothcc3=20 cutoff2_curvecc3=3
+    )");
+
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_cc1", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_stepcc1", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_smoothcc1", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_curvecc1", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_cc2", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_stepcc2", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_smoothcc2", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/filter0/cutoff_curvecc2", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/filter1/cutoff_cc3", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/filter1/cutoff_stepcc3", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/filter1/cutoff_smoothcc3", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/filter1/cutoff_curvecc3", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/filter0/cutoff_cc2,f : { 1000 }",
+        "/region0/filter0/cutoff_stepcc2,i : { 10 }",
+        "/region0/filter0/cutoff_smoothcc2,i : { 2 }",
+        "/region0/filter0/cutoff_curvecc2,i : { 4 }",
+        "/region1/filter1/cutoff_cc3,f : { 100 }",
+        "/region1/filter1/cutoff_stepcc3,i : { 1 }",
+        "/region1/filter1/cutoff_smoothcc3,i : { 20 }",
+        "/region1/filter1/cutoff_curvecc3,i : { 3 }",
+    };
+    REQUIRE(messageList == expected);
+}
+
 TEST_CASE("[Values] Filter types")
 {
     Synth synth;
