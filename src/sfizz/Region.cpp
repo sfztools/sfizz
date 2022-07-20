@@ -1657,6 +1657,19 @@ bool sfz::Region::parseEGOpcodeV2(const Opcode& opcode)
         break;
     }
 
+    case hash("eg&_freq_lfo&"):
+        if (lfos.size() < opcode.parameters[1] - 1)
+            return false;
+        EG_target(ModKey::createNXYZ(ModId::LFOFrequency, id, opcode.parameters[1] - 1), Default::lfoFreqMod);
+        break;
+
+    case_any_ccN("eg&_freq_lfo&"):
+        if (lfos.size() < opcode.parameters[1] - 1)
+            return false;
+        EG_target_cc(ModKey::createNXYZ(ModId::LFOFrequency, id, opcode.parameters[1] - 1), Default::lfoFreqMod);
+        break;
+
+
     default:
         return false;
     }

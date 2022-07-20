@@ -220,6 +220,8 @@ std::string ModKey::toString() const
         return absl::StrCat("EGEqFrequencyDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
     case ModId::EGEqBandwidthDepth:
         return absl::StrCat("EGEqBandwidthDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
+    case ModId::EGLFOFreqDepth:
+        return absl::StrCat("EGLFOFreqDepth {", region_.number(), ", N=", 1 + params_.N, ", X=", 1 + params_.X, "}");
 
     default:
         return {};
@@ -334,6 +336,8 @@ ModKey ModKey::getSourceDepthKey(ModKey source, ModKey target)
             return ModKey::createNXYZ(ModId::EGEqFrequencyDepth, region, tp.N, tp.X);
         case ModId::EqBandwidth:
             return ModKey::createNXYZ(ModId::EGEqBandwidthDepth, region, tp.N, tp.X);
+        case ModId:: LFOFrequency:
+            return ModKey::createNXYZ(ModId::EGLFOFreqDepth, region, tp.N, tp.X);
         default:
             break;
         }
