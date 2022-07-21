@@ -28,8 +28,7 @@ public:
 
     void setPluginFormat(const std::string& pluginFormat);
     void setPluginHost(const std::string& pluginHost);
-    int32_t onKeyDown (const VstKeyCode& code, CFrame* frame) override;
-    int32_t onKeyUp (const VstKeyCode& code, CFrame* frame) override;
+    void onKeyboardEvent (KeyboardEvent& event, CFrame* frame) override;
 
 protected:
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;
