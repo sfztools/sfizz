@@ -20,9 +20,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Set up dependencies
       run: |
         sudo apt-get update && \
@@ -117,9 +114,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Fix up MOD environment
       shell: bash
       run: ln -sf /home/builder/mod-workdir ~/mod-workdir
