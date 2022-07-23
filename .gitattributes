@@ -2,14 +2,12 @@
 .*/** export-ignore
 appveyor.yml export-ignore
 /scripts/appveyor/** export-ignore
-
 /vst/external/VST_SDK/VST3_SDK/**/CMakeLists.txt export-ignore
 /vst/external/VST_SDK/VST3_SDK/public.sdk/samples export-ignore
 /vst/external/VST_SDK/VST3_SDK/public.sdk/source/vst/*wrapper/** export-ignore
 /vst/external/VST_SDK/VST3_SDK/public.sdk/source/vst/interappaudio/** export-ignore
 /vst/external/VST_SDK/VST3_SDK/public.sdk/source/vst/testsuite/** export-ignore
 /vst/external/VST_SDK/VST3_SDK/public.sdk/source/vst/utility/test/** export-ignore
-
 /editor/external/vstgui4/**/CMakeLists.txt export-ignore
 /editor/external/vstgui4/vstgui/Documentation/** export-ignore
 /editor/external/vstgui4/vstgui/doxygen/** export-ignore
@@ -20,19 +18,17 @@ appveyor.yml export-ignore
 /editor/external/vstgui4/vstgui/uidescription/icontroller.h -export-ignore
 /editor/external/vstgui4/vstgui/vstgui_standalone* export-ignore
 /editor/external/vstgui4/vstgui/vstgui_uidescription* export-ignore
-
 /external/st_audiofile/thirdparty/dr_libs/old/** export-ignore
 /external/st_audiofile/thirdparty/dr_libs/tests/** export-ignore
-
 /external/filesystem/test/** export-ignore
-
 /external/abseil-cpp/conanfile.py export-ignore
 /external/abseil-cpp/**/BUILD.bazel export-ignore
 /external/abseil-cpp/ci/** export-ignore
-
 /external/simde/docker/** export-ignore
 /external/simde/test/** export-ignore
 /external/simde/meson* export-ignore
 /external/simde/*.py export-ignore
 /external/simde/*.yml export-ignore
 /external/simde/*.toml export-ignore
+**/*.wav filter=lfs diff=lfs merge=lfs -text
+**/*.flac filter=lfs diff=lfs merge=lfs -text
