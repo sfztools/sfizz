@@ -21,7 +21,7 @@ mv sfizz.vst3 vst3/
 
 pkgbuild \
   --identifier "sfz.tools.sfizz.au.bundle" \
-  --install-location "/Library/Audio/Plug-Ins/Component/" \
+  --install-location "/Library/Audio/Plug-Ins/Components/" \
   --root "${PWD}/au/" \
   sfz-tools-sfizz-au-bundle.pkg
 

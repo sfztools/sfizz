@@ -244,7 +244,7 @@ elseif(SFIZZ_AU)
     set(SFIZZ_AU_BUNDLE_IDENTIFIER "tools.sfz.sfizz.au")
     set(SFIZZ_AU_BUNDLE_TYPE "aumu")
     set(SFIZZ_AU_BUNDLE_SUBTYPE "samp")
-    set(SFIZZ_AU_BUNDLE_MANUFACTURER "Sfzt")
+    set(SFIZZ_AU_BUNDLE_MANUFACTURER "Paul Ferrand")
     math(EXPR SFIZZ_AU_DECIMAL_VERSION
         "${PROJECT_VERSION_MAJOR}*10000 + ${PROJECT_VERSION_MINOR}*100 + ${PROJECT_VERSION_PATCH}")
     execute_process(
