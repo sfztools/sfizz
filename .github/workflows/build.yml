@@ -80,9 +80,12 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "$BUILD_TYPE" -j 2 --target sfizz_tests
-    - name: Test
+    - name: Run tests
       shell: bash
       run: ${{runner.workspace}}/build/tests/sfizz_tests
+      # Reenable with newer cmakes
+      # working-directory: ${{runner.workspace}}/build
+      # run: ctest -j 2 -C "$BUILD_TYPE" --output-on-failure
     - name: Build all
       shell: bash
       working-directory: ${{runner.workspace}}/build
@@ -117,19 +120,30 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
         cmake "$GITHUB_WORKSPACE" \
-          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DSFIZZ_AU=ON \
           -DSFIZZ_LV2=ON \
           -DSFIZZ_LV2_UI=ON \
           -DSFIZZ_VST=ON \
           -DSFIZZ_JACK=OFF \
-          -DSFIZZ_TESTS=OFF \
+          -DSFIZZ_TESTS=ON \
           -DSFIZZ_SHARED=OFF \
           -DSFIZZ_STATIC_DEPENDENCIES=OFF
+    - name: Build tests
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake --build . --config "$BUILD_TYPE" -j 2 --target sfizz_tests
+    - name: Run tests
+      shell: bash
+      run: ${{runner.workspace}}/build/tests/sfizz_tests
+      # Reenable with newer cmakes
+      # working-directory: ${{runner.workspace}}/build
+      # run: ctest -j 2 -C "$BUILD_TYPE" --output-on-failure
     - name: Build plugins
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "Release" -j 2
+      run: cmake --build . --config "$BUILD_TYPE" -j 2
     - name: Package OSX bundles
       shell: bash
       working-directory: ${{runner.workspace}}
