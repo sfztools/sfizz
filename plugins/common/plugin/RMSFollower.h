@@ -40,6 +40,8 @@ public:
         memSize_ = numOutputs % 4 == 0 ? numOutputs * sizeof(float) : (numOutputs / 4 + 1) * 4 * sizeof(float);
 #ifdef _WIN32
         mem_ = (float *)_aligned_malloc(memSize_, 4 * sizeof(float));
+#elif __APPLE__
+        mem_ = (float *)malloc(memSize_); // Should be 16 aligned
 #else
         mem_ = (float *)aligned_alloc(4 * sizeof(float), memSize_);
 #endif

@@ -655,44 +655,44 @@ bool SfizzVstProcessor::processUpdate(FUnknown* changedUnknown, int32 message)
     }
 
     if (OSCUpdate* update = FCast<OSCUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 
     if (PlayStateUpdate* update = FCast<PlayStateUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 
     if (NoteUpdate* update = FCast<NoteUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 
     if (SfzUpdate* update = FCast<SfzUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 
     if (SfzDescriptionUpdate* update = FCast<SfzDescriptionUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 
     if (ScalaUpdate* update = FCast<ScalaUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 
     if (AutomationUpdate* update = FCast<AutomationUpdate>(changedUnknown)) {
-        if (IPtr<Vst::IMessage> message = update->convertToMessage(this))
-            sendMessage(message);
+        if (IPtr<Vst::IMessage> msg = update->convertToMessage(this))
+            sendMessage(msg);
         return true;
     }
 

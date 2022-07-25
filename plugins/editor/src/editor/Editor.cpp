@@ -1042,7 +1042,7 @@ void Editor::Impl::createFrameContents()
             return panel;
         };
 
-        auto createCheckbox = [this, &palette](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int) {
+        auto createCheckbox = [this](const CRect& bounds, int tag, const char* label, CHoriTxtAlign, int) {
             auto* checkbox = new CCheckBox(bounds, this, tag, label);
             return checkbox;
         };

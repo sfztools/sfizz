@@ -108,7 +108,7 @@ void gainSSE(const float* gain, const float* input, float* output, unsigned size
 
 #if SFIZZ_HAVE_SSE2
     const auto* lastAligned = prevAligned<ByteAlignment>(sentinel);
-    while (unaligned<ByteAlignment>(input, output) && output < lastAligned)
+    while (unaligned<ByteAlignment>(input, output, gain) && output < lastAligned)
         *output++ = (*gain++) * (*input++);
 
     while (output < lastAligned) {

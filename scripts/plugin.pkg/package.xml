@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <title>sfizz</title>
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    <options customize="always" hostArchitectures="x86_64" require-scripts="false" rootVolumeOnly="true"/>
+    <pkg-ref id="sfz.tools.sfizz"/>
+    <welcome file="welcome.txt" mime-type="text/plain"/>
+    <choice id="sfz.tools.sfizz.au" title="AU" description="Install AU plugin" visible="true">
+        <pkg-ref id="sfz.tools.sfizz.au.bundle" version="0">sfz-tools-sfizz-au-bundle.pkg</pkg-ref>
+    </choice>
+    <choice id="sfz.tools.sfizz.lv2" title="LV2" description="Install LV2 plugins" visible="true">
+        <pkg-ref id="sfz.tools.sfizz.lv2.bundle" version="0">sfz-tools-sfizz-lv2-bundle.pkg</pkg-ref>
+    </choice>
+    <choice id="sfz.tools.sfizz.vst3" title="VST3" description="Install VST3 plugins" visible="true">
+        <pkg-ref id="sfz.tools.sfizz.vst3.bundle" version="0">sfz-tools-sfizz-vst3-bundle.pkg</pkg-ref>
+    </choice>
+    <choices-outline>
+        <line choice="sfz.tools.sfizz.au"/>
+        <line choice="sfz.tools.sfizz.lv2"/>
+        <line choice="sfz.tools.sfizz.vst3"/>
+    </choices-outline>
+</installer-gui-script>

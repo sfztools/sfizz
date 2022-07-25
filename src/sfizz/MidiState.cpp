@@ -300,6 +300,7 @@ int sfz::MidiState::getProgram() const noexcept
 
 void sfz::MidiState::programChangeEvent(int delay, int program) noexcept
 {
+    UNUSED(delay);
     ASSERT(program >= 0 && program <= 127);
     currentProgram = program;
 }
