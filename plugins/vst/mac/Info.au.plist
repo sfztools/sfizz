@@ -30,7 +30,7 @@
             <key>manufacturer</key>
             <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@</string>
             <key>name</key>
-            <string>@SFIZZ_AU_BUNDLE_MANUFACTURER@: @PROJECT_NAME@</string>
+            <string>@SFIZZ_AU_BUNDLE_AUTHOR@: @PROJECT_NAME@</string>
             <key>sandboxSafe</key>
             <true/>
             <key>type</key>
