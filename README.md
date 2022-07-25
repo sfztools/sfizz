@@ -1,7 +1,6 @@
 # sfizz
 
-[![Travis Build Status]](https://travis-ci.com/sfztools/sfizz)
-[![AppVeyor Build Status]](https://ci.appveyor.com/project/sfztools/sfizz)
+![build](https://github.com/sfztools/sfizz/actions/workflows/build.yml/badge.svg)
 
 [![Discord Badge Image]](https://discord.gg/3ArE9Mw)
 [![SFZv1 Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=1)
