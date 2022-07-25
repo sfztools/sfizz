@@ -293,7 +293,7 @@ void Parser::processOpcode()
     // If we're parsing a base64 data field, ignore comments and process until the next header/directive
     if (nameExpanded == "base64data") {
         std::string valueRaw;
-        reader.extractWhile(&valueRaw, [&reader](char c) {
+        reader.extractWhile(&valueRaw, [&](char c) {
             if (c == '<' || c == '#')
                 return false;
 

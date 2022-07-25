@@ -25,10 +25,10 @@ protected:
     void onKeyboardEvent(KeyboardEvent& event, CFrame* frame) override;
     void onMouseEvent(MouseEvent& event, CFrame* frame) override;
 #else
-    int32_t onKeyDown(const VstKeyCode&, CFrame*) { return enabled_ ? -1 : 1; }
-    int32_t onKeyUp(const VstKeyCode&, CFrame*) { return enabled_ ? -1 : 1; }
-    CMouseEventResult onMouseMoved(CFrame*, const CPoint&, const CButtonState&) { return enabled_ ? kMouseEventNotHandled : kMouseEventHandled; }
-    CMouseEventResult onMouseDown(CFrame*, const CPoint&, const CButtonState&) { return enabled_ ? kMouseEventNotHandled : kMouseEventHandled; }
+    int32_t onKeyDown(const VstKeyCode&, CFrame*) override { return enabled_ ? -1 : 1; }
+    int32_t onKeyUp(const VstKeyCode&, CFrame*) override { return enabled_ ? -1 : 1; }
+    CMouseEventResult onMouseMoved(CFrame*, const CPoint&, const CButtonState&) override { return enabled_ ? kMouseEventNotHandled : kMouseEventHandled; }
+    CMouseEventResult onMouseDown(CFrame*, const CPoint&, const CButtonState&) override { return enabled_ ? kMouseEventNotHandled : kMouseEventHandled; }
 #endif
 
 private:
