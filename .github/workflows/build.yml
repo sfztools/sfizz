@@ -40,9 +40,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Set up dependencies
       run: |
         sudo apt-get update && \
@@ -114,9 +111,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Create Build Environment
       shell: bash
       working-directory: ${{runner.workspace}}
@@ -233,9 +227,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Create Build Environment
       working-directory: ${{runner.workspace}}
       run: cmake -E make_directory build
@@ -348,9 +339,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Build with GNU make
       shell: bash
       run: make -C "$GITHUB_WORKSPACE" -f generic.mk -j2
@@ -386,9 +374,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Set up dependencies
       run: |
         sudo apt-get update && \
