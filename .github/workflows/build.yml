@@ -3,7 +3,8 @@ name: build
 on:
   push:
     branches:
-      - '*'
+      - 'develop'
+      - 'master'
     tags:
       - '[0-9]*'
       - 'v[0-9]*'
@@ -40,9 +41,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Set up dependencies
       run: |
         sudo apt-get update && \
@@ -105,7 +103,7 @@ jobs:
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
   build_for_macos:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
     - name: Set install name
       run: |
@@ -114,9 +112,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Create Build Environment
       shell: bash
       working-directory: ${{runner.workspace}}
@@ -233,9 +228,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Create Build Environment
       working-directory: ${{runner.workspace}}
       run: cmake -E make_directory build
@@ -348,9 +340,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Build with GNU make
       shell: bash
       run: make -C "$GITHUB_WORKSPACE" -f generic.mk -j2
@@ -386,9 +375,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        lfs: true
-    - name: Fetch LFS objects
-      run: git lfs checkout
     - name: Set up dependencies
       run: |
         sudo apt-get update && \
