@@ -3,7 +3,8 @@ name: build
 on:
   push:
     branches:
-      - '*'
+      - 'develop'
+      - 'master'
     tags:
       - '[0-9]*'
       - 'v[0-9]*'
