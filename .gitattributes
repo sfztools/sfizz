@@ -30,5 +30,3 @@ appveyor.yml export-ignore
 /external/simde/*.py export-ignore
 /external/simde/*.yml export-ignore
 /external/simde/*.toml export-ignore
-**/*.wav filter=lfs diff=lfs merge=lfs -text
-**/*.flac filter=lfs diff=lfs merge=lfs -text
