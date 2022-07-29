@@ -86,6 +86,7 @@ if(WIN32)
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/direct2d/d2dgraphicspath.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32datapackage.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32dragging.cpp"
+        "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32directcomposition.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32factory.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32frame.cpp"
         "${VSTGUI_BASEDIR}/vstgui/lib/platform/win32/win32openglview.cpp"

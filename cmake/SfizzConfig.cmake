@@ -41,9 +41,9 @@ if(MSVC)
     add_compile_options("/utf-8")
 endif()
 
-# Set Windows compatibility level to 7
+# Set Windows compatibility level to 8.1
 if(WIN32)
-    add_compile_definitions(_WIN32_WINNT=0x601)
+    add_compile_definitions(_WIN32_WINNT=0x603)
 endif()
 
 # Define the math constants everywhere
