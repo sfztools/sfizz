@@ -102,6 +102,49 @@ jobs:
         name: Linux tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
+  build_with_libsndfile:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Set install name
+      run: |
+        echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
+        echo "install_name=sfizz-${GITHUB_REF##*/}-linux" >> "$GITHUB_ENV"
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Set up dependencies
+      run: |
+        sudo apt-get update && \
+        sudo apt-get install \
+          ninja-build \
+          libsndfile1-dev
+    - name: Create Build Environment
+      shell: bash
+      working-directory: ${{runner.workspace}}
+      run: cmake -E make_directory build
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake "$GITHUB_WORKSPACE" -G Ninja \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+          -DSFIZZ_JACK=OFF \
+          -DSFIZZ_VST=OFF \
+          -DSFIZZ_LV2_UI=OFF \
+          -DSFIZZ_PUREDATA=OFF \
+          -DSFIZZ_USE_SNDFILE=ON \
+          -DSFIZZ_TESTS=ON \
+          -DSFIZZ_SHARED=OFF \
+          -DSFIZZ_STATIC_DEPENDENCIES=OFF \
+          -DSFIZZ_LV2=OFF
+    - name: Build tests
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config "$BUILD_TYPE" -j 2 --target sfizz_tests
+    - name: Run tests
+      shell: bash
+      run: ${{runner.workspace}}/build/tests/sfizz_tests
+
   build_for_macos:
     runs-on: macos-11
     steps:

@@ -68,9 +68,9 @@ bool BasicSndfileReader::getWavetableInfo(WavetableInfo& wt)
 
 bool BasicSndfileReader::getInstrumentInfo(InstrumentInfo& instrument)
 {
-#if defined(SFIZZ_USE_SNDFILE)
+#if 0 // Our metadata reader is more general, e.g. for FLAC
     SNDFILE* sndfile = reinterpret_cast<SNDFILE*>(handle_.get_sndfile_handle());
-    SF_INSTRUMENT* sfins = instrument;
+    SF_INSTRUMENT* sfins = &instrument;
     if (sf_command(sndfile, SFC_GET_INSTRUMENT, sfins, sizeof(SF_INSTRUMENT)) == SF_TRUE)
         return true;
 #else

@@ -17,7 +17,91 @@
 struct st_audio_file {
     SNDFILE* snd;
     SF_INFO info;
+    // Virtual IO data
+    const void* data;
+    sf_count_t offset;
+    sf_count_t size;
 };
+
+static sf_count_t sndfile_vio_get_filelen(void *user_data)
+{
+	const struct st_audio_file* af = user_data;
+	return af->size;
+}
+
+static sf_count_t sndfile_vio_seek(sf_count_t offset, int whence, void *user_data)
+{
+	struct st_audio_file* af = user_data;
+
+    sf_count_t new_offset = af->offset;
+	switch(whence) {
+        case SEEK_SET:
+            new_offset = offset;
+            break;
+        case SEEK_CUR:
+            new_offset += offset;
+            break;
+        case SEEK_END:
+            new_offset = af->size + offset;
+            break;
+	}
+
+	if( ( new_offset >= 0 ) && ( new_offset < af->size ) ) {
+		af->offset = new_offset;
+	} else {
+		return 1;
+	}
+
+	return 0;
+}
+
+static sf_count_t sndfile_vio_read(void *ptr, sf_count_t count, void *user_data)
+{
+	struct st_audio_file* af = user_data;
+    sf_count_t remaining = af->size - af->offset;
+    sf_count_t to_read = remaining > count ? count : remaining;
+    memcpy(ptr, af->data + af->offset, to_read);
+    af->offset += to_read;
+	return to_read;
+}
+
+static sf_count_t sndfile_vio_write(const void *ptr, sf_count_t count, void *user_data)
+{
+	(void)ptr;
+	(void)count;
+	(void)user_data;
+	return -1;
+}
+
+static sf_count_t sndfile_vio_tell(void *user_data)
+{
+	const struct st_audio_file* af = user_data;
+	return af->offset;
+}
+
+
+st_audio_file* st_open_memory(const void* memory, size_t length)
+{
+    st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
+    if (!af)
+        return NULL;
+
+    memset(&af->info, 0, sizeof(SF_INFO));
+    af->data = memory;
+    af->size = length;
+    af->offset = 0;
+
+    SF_VIRTUAL_IO virtual_io = {
+        .get_filelen = sndfile_vio_get_filelen,
+        .seek = sndfile_vio_seek,
+        .read = sndfile_vio_read,
+        .write = sndfile_vio_write,
+        .tell = sndfile_vio_tell
+    };
+
+    af->snd = sf_open_virtual(&virtual_io, SFM_READ, &af->info, af);
+    return af;
+}
 
 st_audio_file* st_open_file(const char* filename)
 {
