@@ -899,6 +899,7 @@ sfizz_lv2_process_midi_event(sfizz_plugin_t *self, const LV2_Atom_Event *ev)
                                         (int)ev->time.frames,
                                         (int)cc,
                                         value);
+                    self->cc_current[cc] = value;
                 }
                 break;
             case LV2_MIDI_CTL_ALL_NOTES_OFF:
@@ -1682,7 +1683,6 @@ save(LV2_Handle instance,
             self->atom_int_uri,
             LV2_STATE_IS_POD);
     }
-
     for (unsigned cc = 0; cc < sfz::config::numCCs; ++cc) {
         if (desc.ccUsed.test(cc) && !desc.sustainOrSostenuto.test(cc)) {
             LV2_URID urid = sfizz_lv2_ccmap_map(self->ccmap, int(cc));
