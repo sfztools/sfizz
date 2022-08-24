@@ -8,7 +8,7 @@ if(SFIZZ_JACK)
     install(TARGETS sfizz_jack DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT "jack" OPTIONAL)
     install(FILES ${PROJECT_BINARY_DIR}/clients/sfizz_jack.man DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
-        RENAME sfizz_jack COMPONENT "jack" OPTIONAL)
+        RENAME sfizz_jack.1 COMPONENT "jack" OPTIONAL)
 endif()
 
 if(SFIZZ_RENDER)
@@ -18,5 +18,5 @@ if(SFIZZ_RENDER)
     configure_file(sfizz_render.man.in sfizz_render.man @ONLY)
     install(TARGETS sfizz_render DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT "render" OPTIONAL)
     install(FILES ${PROJECT_BINARY_DIR}/clients/sfizz_render.man DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
-        RENAME sfizz_render COMPONENT "render" OPTIONAL)
+        RENAME sfizz_render.1 COMPONENT "render" OPTIONAL)
 endif()
