@@ -19,6 +19,8 @@
 #include <wchar.h>
 #endif
 
+#define WAVPACK_MEMORY_ASSUMED_VERSION 5
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +33,7 @@ typedef enum st_audio_file_type {
     st_audio_file_aiff,
     st_audio_file_ogg,
     st_audio_file_mp3,
+    st_audio_file_wv,
     st_audio_file_other,
 } st_audio_file_type;
 

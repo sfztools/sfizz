@@ -32,6 +32,9 @@ const char* st_type_string(int type)
     case st_audio_file_mp3:
         type_string = "MP3";
         break;
+    case st_audio_file_wv:
+        type_string = "WV";
+        break;
     case st_audio_file_other:
         type_string = "other";
         break;

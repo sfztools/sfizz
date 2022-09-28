@@ -15,6 +15,7 @@
 #endif
 #include "stb_vorbis.c"
 #include "libaiff/libaiff.h"
+#include "wavpack.h"
 
 #if defined(_WIN32)
 #include <wchar.h>
