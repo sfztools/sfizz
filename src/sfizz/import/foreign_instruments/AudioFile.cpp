@@ -14,7 +14,7 @@
 namespace sfz {
 
 static const char* kRecognizedAudioExtensions[] = {
-    ".wav", ".flac", ".ogg", ".mp3", ".aif", ".aiff", ".aifc",
+    ".wav", ".flac", ".ogg", ".mp3", ".aif", ".aiff", ".aifc", ".wv",
 };
 
 ///
