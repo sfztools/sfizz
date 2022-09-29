@@ -498,11 +498,12 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
         break;
     case st_audio_file_wv:
         {
-            int32_t* buf_i32 = (int32_t*)malloc(4 * count);
+            uint32_t channels = af->cache.wv.channels;
+            int32_t* buf_i32 = (int32_t*)malloc(4 * channels * count);
             if (!buf_i32) {
                 return 0;
             }
-            count = WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
             if (af->cache.wv.mode & MODE_FLOAT) {
                 drwav_f32_to_s16((drwav_int16*)buffer, (float*)buf_i32, (size_t)count);
             } else {
@@ -544,15 +545,23 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
         count = drmp3_read_pcm_frames_f32(af->mp3, count, buffer);
         break;
     case st_audio_file_wv:
-        count = WavpackUnpackSamples(af->wv, (int32_t*)buffer, (uint32_t)count);
-        if (!(af->cache.wv.mode & MODE_FLOAT)) {
-            if (af->cache.wv.bitrate < 32) {
-                int d = 32 - af->cache.wv.bitrate;
-                for (uint64_t i = 0; i < count; i++) {
-                    ((int32_t*)buffer)[i] <<= d;
-                }
+        {
+            uint32_t channels = af->cache.wv.channels;
+            int32_t* buf_i32 = (int32_t*)malloc(4 * channels * count);
+            if (!buf_i32) {
+                return 0;
             }
-            drwav_s32_to_f32(buffer, (drwav_int32*)buffer, (size_t)count);
+            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            if (!(af->cache.wv.mode & MODE_FLOAT)) {
+                if (af->cache.wv.bitrate < 32) {
+                    int d = 32 - af->cache.wv.bitrate;
+                    for (uint64_t i = 0; i < count; i++) {
+                        buf_i32[i] <<= d;
+                    }
+                }
+                drwav_s32_to_f32(buffer, (drwav_int32*)buf_i32, (size_t)count);
+            }
+            free(buf_i32);
         }
         break;
     }
