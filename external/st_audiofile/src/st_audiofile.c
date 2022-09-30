@@ -545,7 +545,9 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
         count = drmp3_read_pcm_frames_f32(af->mp3, count, buffer);
         break;
     case st_audio_file_wv:
-        {
+        if (af->cache.wv.mode & MODE_FLOAT) {
+            count = WavpackUnpackSamples(af->wv, (int32_t*)buffer, (uint32_t)count);
+        } else {
             uint32_t channels = af->cache.wv.channels;
             int32_t* buf_i32 = (int32_t*)malloc(4 * channels * count);
             if (!buf_i32) {
