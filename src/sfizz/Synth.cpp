@@ -1262,7 +1262,10 @@ void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexce
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.getMidiState().noteOnEvent(delay, noteNumber, normalizedVelocity);
+
+    if (impl.lastKeyswitchLists_[noteNumber].empty())
+        impl.resources_.getMidiState().noteOnEvent(delay, noteNumber, normalizedVelocity);
+
     impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
 }
 
@@ -1283,7 +1286,10 @@ void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexc
     // way in sfz to specify that a release trigger should NOT use the note-on velocity?
     // auto replacedVelocity = (velocity == 0 ? getNoteVelocity(noteNumber) : velocity);
     MidiState& midiState = impl.resources_.getMidiState();
-    midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
+
+    if (impl.lastKeyswitchLists_[noteNumber].empty())
+        midiState.noteOffEvent(delay, noteNumber, normalizedVelocity);
+
     const auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : impl.voiceManager_)
