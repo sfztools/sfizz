@@ -1,4 +1,11 @@
-set(VSTGUI_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/vstgui4")
+if(SFIZZ_USE_SYSTEM_VST3SDK)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(VST3SDK "vst3sdk" REQUIRED)
+    set(VSTGUI_BASEDIR "${VST3SDK_INCLUDE_DIRS}/vstgui4")
+else()
+    set(VSTGUI_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/vstgui4")
+endif()
+
 include("cmake/Vstgui.cmake")
 
 set(EDITOR_RESOURCES

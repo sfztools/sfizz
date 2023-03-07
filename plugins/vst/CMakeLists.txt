@@ -1,4 +1,11 @@
-set(VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
+if(SFIZZ_USE_SYSTEM_VST3SDK)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(VST3SDK "vst3sdk" REQUIRED)
+    set(VST3SDK_BASEDIR "${VST3SDK_INCLUDE_DIRS}")
+else()
+    set(VST3SDK_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/VST_SDK/VST3_SDK")
+endif()
+
 #set(AUWRAPPER_BASEDIR "${VST3SDK_BASEDIR}/public.sdk/source/vst/auwrapper")
 set(AUWRAPPER_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}/external/sfzt_auwrapper")
 

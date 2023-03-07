@@ -11,9 +11,21 @@
 #include "utility/vstgui_after.h"
 #include <string>
 
+#define VSTGUI_MORE_THAN_4_10 ((VSTGUI_VERSION_MAJOR > 4) \
+    || (VSTGUI_VERSION_MAJOR == 4 && VSTGUI_VERSION_MINOR > 10))
+
+#if VSTGUI_MORE_THAN_4_10
+    #define OVERRIDE override
+    // FIXME: Use KeyboardEvent instead
+    #define IKEYBOARDHOOK OldKeyboardHookAdapter
+#else
+    #define OVERRIDE
+    #define IKEYBOARDHOOK IKeyboardHook
+#endif
+
 using namespace VSTGUI;
 
-class SAboutDialog : public CViewContainer, public IControlListener, public IKeyboardHook{
+class SAboutDialog : public CViewContainer, public IControlListener, public IKEYBOARDHOOK {
 
     enum {
         kTagButtonSfztools,
@@ -28,8 +40,8 @@ public:
 
     void setPluginFormat(const std::string& pluginFormat);
     void setPluginHost(const std::string& pluginHost);
-    int32_t onKeyDown (const VstKeyCode& code, CFrame* frame) override;
-    int32_t onKeyUp (const VstKeyCode& code, CFrame* frame) override;
+    int32_t onKeyDown(const VstKeyCode& code, CFrame* frame) OVERRIDE;
+    int32_t onKeyUp(const VstKeyCode& code, CFrame* frame) OVERRIDE;
 
 protected:
     CMouseEventResult onMouseDown(CPoint& where, const CButtonState& buttons) override;

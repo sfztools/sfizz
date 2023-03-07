@@ -4,6 +4,8 @@ include(CheckCXXCompilerFlag)
 include(CheckCXXSourceCompiles)
 include(GNUWarnings)
 
+# FIXME: The current Abseil LTS version requires at least C++14, see
+#        https://github.com/abseil/abseil-cpp/releases/tag/20230125.1
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard to be used")
 set(CMAKE_C_STANDARD 99 CACHE STRING "C standard to be used")
 

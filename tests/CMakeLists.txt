@@ -1,7 +1,14 @@
 ###############################
 # Test application
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/catch2")
+if(SFIZZ_USE_SYSTEM_CATCH)
+    find_package(Catch2 REQUIRED)
+    if(Catch2_FOUND)
+        message(STATUS "Found system Catch2 CMake modules in ${Catch2_DIR}")
+    endif()
+else()
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/catch2")
+endif()
 
 include(CTest)
 include(Catch)
