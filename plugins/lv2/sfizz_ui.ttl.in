@@ -1,4 +1,5 @@
 @prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix opts: <http://lv2plug.in/ns/ext/options#> .
 @prefix ui:   <http://lv2plug.in/ns/extensions/ui#> .
 @prefix urid: <http://lv2plug.in/ns/ext/urid#> .
 
@@ -10,6 +11,7 @@
     lv2:optionalFeature ui:resize ;
     lv2:optionalFeature ui:parent ;
     lv2:optionalFeature ui:touch ;
+    opts:supportedOption ui:scaleFactor ;
     lv2:requiredFeature urid:map ;
     lv2:requiredFeature urid:unmap ;
     lv2:requiredFeature <http://lv2plug.in/ns/ext/instance-access>  .

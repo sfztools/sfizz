@@ -51,6 +51,7 @@ enum class EditId : int {
     UINumPreloadedSamples,
     UINumActiveVoices,
     UIActivePanel,
+    UIZoom,
     //
     BackgroundImage,
     //

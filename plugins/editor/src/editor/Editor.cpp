@@ -18,6 +18,7 @@
 #include "BitArray.h"
 #include "Theme.h"
 #include "plugin/MessageUtils.h"
+#include "plugin/SfizzSettings.h"
 #include <absl/strings/string_view.h>
 #include <absl/strings/match.h>
 #include <absl/strings/ascii.h>
@@ -29,6 +30,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <functional>
+#include <iterator>
 #include <type_traits>
 #include <system_error>
 #include <fstream>
@@ -61,6 +63,8 @@ struct Editor::Impl : EditorController::Receiver,
     std::string userFilesDir_;
     std::string fallbackFilesDir_;
     bool multi_ { false };
+
+    float zoom_ = 1.0f;
 
     int currentKeyswitch_ = -1;
     std::unordered_map<unsigned, std::string> keyswitchNames_;
@@ -106,6 +110,8 @@ struct Editor::Impl : EditorController::Receiver,
         kTagChooseUserFilesDir,
         kTagAbout,
         kTagThemeMenu,
+        kTagZoomMenu,
+        kTagSetDefaultZoom,
         kTagFirstChangePanel,
         kTagLastChangePanel = kTagFirstChangePanel + kNumPanels - 1,
     };
@@ -140,6 +146,8 @@ struct Editor::Impl : EditorController::Receiver,
     CTextLabel* keyswitchBadge_ = nullptr;
     CTextLabel* lblHover_ = nullptr;
     COptionMenu* themeMenu_ = nullptr;
+    COptionMenu* zoomMenu_ = nullptr;
+    STextButton* defaultZoomButton_ = nullptr;
     std::unique_ptr<Theme> theme_;
 
     STitleContainer* userFilesGroup_ = nullptr;
@@ -272,6 +280,9 @@ struct Editor::Impl : EditorController::Receiver,
     void onThemeChanged() override;
     std::vector<std::function<void()>> OnThemeChanged;
 
+    // Zoom
+    void setZoom(int zoom);
+
     // Misc
     static std::string getUnicodeNoteName(unsigned key)
     {
@@ -315,7 +326,13 @@ void Editor::open(CFrame& frame)
             getResourceBasePath().u8string().c_str());
 
     impl.frame_ = &frame;
+
     frame.addView(impl.mainView_.get());
+
+    SfizzSettings settings;
+    int zoom = atoi(settings.load_or("default_zoom", "100").c_str());
+    impl.setZoom(zoom);
+    fprintf(stderr, "[sfizz] zoom factor: %f\n", impl.frame_->getZoom());
 
     impl.frameDisabler_ = makeOwned<SFrameDisabler>(&frame);
 
@@ -1167,6 +1184,7 @@ void Editor::Impl::createFrameContents()
     adjustMinMaxToEditRange(freewheelingSampleQualitySlider_, EditId::FreewheelingSampleQuality);
     adjustMinMaxToEditRange(freewheelingOscillatorQualitySlider_, EditId::FreewheelingOscillatorQuality);
     adjustMinMaxToEditRange(sustainCancelsReleaseCheckbox_, EditId::SustainCancelsRelease);
+    adjustMinMaxToEditRange(zoomMenu_, EditId::UIZoom);
 
     for (int value : {1, 2, 4, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256})
         numVoicesSlider_->addEntry(std::to_string(value), value);
@@ -1175,10 +1193,22 @@ void Editor::Impl::createFrameContents()
         int value = 1 << log2value;
         oversamplingSlider_->addEntry(std::to_string(value) + "x", log2value);
     }
+
     oversamplingSlider_->setValueToStringFunction2(
         [](float value, std::string& result, CParamDisplay*) -> bool
         {
             result = std::to_string(1 << static_cast<int32_t>(value)) + "x";
+            return true;
+        });
+
+    for (int value : { 100, 125, 150, 175, 200, 225, 250, 275, 300 }) {
+        zoomMenu_->addEntry(std::to_string(value) + "%", value);
+    }
+
+    zoomMenu_->setValueToStringFunction2(
+        [](float value, std::string& result, CParamDisplay*) -> bool
+        {
+            result = std::to_string(static_cast<int>(value) * 100) + "%";
             return true;
         });
 
@@ -1978,6 +2008,29 @@ void Editor::Impl::setActivePanel(unsigned panelId)
     }
 }
 
+void Editor::Impl::setZoom(int zoom)
+{
+    if (!zoomMenu_)
+        return;
+
+    float zoomFactor = static_cast<float>(zoom) / 100;
+
+    std::vector<int> values =
+        { 100, 125, 150, 175, 200, 225, 250, 275, 300 };
+
+    size_t pos = std::distance(values.cbegin(),
+        find(values.cbegin(), values.cend(), zoom));
+
+    if (pos < values.size()) {
+        zoom_ = zoomFactor;
+        zoomMenu_->setCurrent(pos);
+        frame_->setZoom(zoom_);
+    } else {
+        zoom_ = 1.0f;
+        zoomMenu_->setCurrent(0);
+    }
+}
+
 void Editor::Impl::formatLabel(CTextLabel* label, const char* fmt, ...)
 {
     va_list ap;
@@ -2159,6 +2212,26 @@ void Editor::Impl::valueChanged(CControl* ctl)
         }
         break;
 
+    case kTagZoomMenu: {
+        std::vector<float> values =
+            { 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0 };
+
+        auto zoom = values.at(value);
+        zoom_ = zoom;
+#if 0
+        fprintf(stderr, "[sfizz] valueChanged: %f\n", zoom_);
+        // TODO: Recreate frame with the new size
+        frame_->setZoom(zoom_);
+#endif
+    } break;
+
+    case kTagSetDefaultZoom: {
+        SfizzSettings settings;
+        char zoom[64];
+        sprintf(zoom, "%i", static_cast<int>(zoom_ * 100));
+        zoom[sizeof(zoom) - 1] = '\0';
+        settings.store("default_zoom", zoom);
+    } break;
     default:
         if (tag >= kTagFirstChangePanel && tag <= kTagLastChangePanel) {
             int panelId = tag - kTagFirstChangePanel;
