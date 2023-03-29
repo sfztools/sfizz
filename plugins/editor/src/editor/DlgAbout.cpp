@@ -223,6 +223,18 @@ CMouseEventResult SAboutDialog::onMouseDown(CPoint& where, const CButtonState& b
     return result;
 }
 
+#if VSTGUI_MORE_THAN_4_10
+void SAboutDialog::onKeyboardEvent (KeyboardEvent& event, CFrame* frame)
+{
+    auto vstKeyCode = toVstKeyCode (event);
+    if (event.type == EventType::KeyDown && vstKeyCode.virt == VKEY_ESCAPE)
+    {
+        setVisible(false);
+        frame->unregisterKeyboardHook(this);
+        event.consumed = true;
+    }
+}
+#else
 int32_t SAboutDialog::onKeyDown (const VstKeyCode& keyCode, CFrame* frame)
 {
     if (keyCode.virt == VKEY_ESCAPE) {
@@ -240,6 +252,7 @@ int32_t SAboutDialog::onKeyUp (const VstKeyCode& keyCode, CFrame* frame)
     (void)frame;
     return -1;
 }
+#endif
 
 void SAboutDialog::valueChanged(CControl *ctl)
 {

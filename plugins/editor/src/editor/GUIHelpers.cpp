@@ -64,13 +64,13 @@ void SFrameDisabler::disable()
 }
 
 #if VSTGUI_MORE_THAN_4_10
-void SFrameDisabler::KeyAndMouseHook::onKeyboardEvent(KeyboardEvent& event, CFrame* frame)
+void SFrameDisabler::KeyAndMouseHook::onKeyboardEvent(KeyboardEvent& event, CFrame*)
 {
     if (!enabled_)
         event.consumed = true;
 }
 
-void SFrameDisabler::KeyAndMouseHook::onMouseEvent(MouseEvent& event, CFrame* frame)
+void SFrameDisabler::KeyAndMouseHook::onMouseEvent(MouseEvent& event, CFrame*)
 {
     if (!enabled_)
         event.consumed = true;
