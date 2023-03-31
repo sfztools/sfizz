@@ -306,10 +306,11 @@ if(SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT)
 endif()
 sfizz_enable_fast_math(sfizz_internal)
 
+# TODO: sfz::config::numCCs generated with CMake
 # Check that sfizz and cmake-side definitions are matching
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp" "
 #include \"Config.h\"
-static_assert(sfz::config::numCCs == ${SFIZZ_NUM_CCS}, \"SFIZZ_NUM_CCS did not match\");
+static_assert(sfz::config::numCCs == ${MIDI_CC_MAX}, \"MIDI_CC_MAX did not match\");
 ")
 add_library(sfizz_match_definitions STATIC "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp")
 target_link_libraries(sfizz_match_definitions PRIVATE sfizz::internal)
@@ -436,12 +437,6 @@ target_sources(sfizz_internal PRIVATE
     "sfizz/effects/gen/fverb.hxx"
     "sfizz/effects/gen/gate.hxx"
     "sfizz/effects/gen/limiter.hxx")
-
-# Windows installer
-if(WIN32)
-    include(VSTConfig)
-    configure_file(${PROJECT_SOURCE_DIR}/scripts/innosetup.iss.in ${PROJECT_BINARY_DIR}/innosetup.iss @ONLY)
-endif()
 
 # Doxygen
 configure_file(${PROJECT_SOURCE_DIR}/scripts/doxygen/Doxyfile.in ${PROJECT_SOURCE_DIR}/Doxyfile @ONLY)

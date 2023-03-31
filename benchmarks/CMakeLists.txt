@@ -75,7 +75,7 @@ target_link_libraries(bm_filterStereoMono PRIVATE sfizz::sndfile)
 sfizz_add_benchmark(bm_stringResonator BM_stringResonator.cpp)
 target_link_libraries(bm_stringResonator PRIVATE sfizz::sndfile)
 
-if(SFIZZ_SYSTEM_PROCESSOR MATCHES "armv7l")
+if(PROJECT_SYSTEM_PROCESSOR MATCHES "armv7l")
     sfizz_add_benchmark(bm_pan_arm BM_pan_arm.cpp ../src/sfizz/Panning.cpp)
     target_link_libraries(bm_pan_arm PRIVATE sfizz::jsl)
 endif()

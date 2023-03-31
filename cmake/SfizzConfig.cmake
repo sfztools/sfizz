@@ -4,8 +4,9 @@ include(CheckCXXCompilerFlag)
 include(CheckCXXSourceCompiles)
 include(GNUWarnings)
 
-# FIXME: The current Abseil LTS version requires at least C++14, see
-#        https://github.com/abseil/abseil-cpp/releases/tag/20230125.1
+# TODO:
+# C++14 is the minimum standard version required by Abseil LTS 20230125.1 and later, see
+# https://github.com/abseil/abseil-cpp/releases/tag/20230125.1
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard to be used")
 set(CMAKE_C_STANDARD 99 CACHE STRING "C standard to be used")
 
@@ -20,9 +21,6 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 # Set C++ compatibility level
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" AND CMAKE_CXX_STANDARD LESS 17)
-    set(CMAKE_CXX_STANDARD 17)
-elseif((SFIZZ_LV2_UI OR SFIZZ_VST OR SFIZZ_AU OR SFIZZ_VST2) AND CMAKE_CXX_STANDARD LESS 17)
-    # if the UI is part of the build, make it 17
     set(CMAKE_CXX_STANDARD 17)
 endif()
 
@@ -88,21 +86,20 @@ endif()
 
 # The variable CMAKE_SYSTEM_PROCESSOR is incorrect on Visual studio...
 # see https://gitlab.kitware.com/cmake/cmake/issues/15170
-
-if(NOT SFIZZ_SYSTEM_PROCESSOR)
+if(NOT PROJECT_SYSTEM_PROCESSOR)
     if(MSVC)
-        set(SFIZZ_SYSTEM_PROCESSOR "${MSVC_CXX_ARCHITECTURE_ID}")
+        set(PROJECT_SYSTEM_PROCESSOR "${MSVC_CXX_ARCHITECTURE_ID}" CACHE STRING "" FORCE)
     else()
-        set(SFIZZ_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+        set(PROJECT_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}" CACHE STRING "" FORCE)
     endif()
 endif()
 
 # Add required flags for the builds
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     gw_warn(-Wall -Wextra -Wno-multichar -Werror=return-type)
-    if(SFIZZ_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
+    if(PROJECT_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
         add_compile_options(-msse2)
-    elseif(SFIZZ_SYSTEM_PROCESSOR MATCHES "^(arm.*)$")
+    elseif(PROJECT_SYSTEM_PROCESSOR MATCHES "^(arm.*)$")
         add_compile_options(-mfpu=neon)
         if(NOT ANDROID)
             add_compile_options(-mfloat-abi=hard)
@@ -134,21 +131,24 @@ endif()
 set(SFIZZ_REPOSITORY https://github.com/sfztools/sfizz)
 include(GNUInstallDirs)
 
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(PROJECT_IS_MAIN TRUE)
+else()
+    set(PROJECT_IS_MAIN FALSE)
+endif()
+
 # Don't show build information when building a different project
 function(show_build_info_if_needed)
-    if(CMAKE_PROJECT_NAME STREQUAL "sfizz")
+    if(PROJECT_IS_MAIN)
         message(STATUS "
 Project name:                  ${PROJECT_NAME}
+CMAKE_CXX_STANDARD:            ${CMAKE_CXX_STANDARD}
 Build type:                    ${CMAKE_BUILD_TYPE}
-Build processor:               ${SFIZZ_SYSTEM_PROCESSOR}
+Build processor:               ${PROJECT_SYSTEM_PROCESSOR}
 Build using LTO:               ${ENABLE_LTO}
 Build as shared library:       ${SFIZZ_SHARED}
 Build JACK stand-alone client: ${SFIZZ_JACK}
 Build render client:           ${SFIZZ_RENDER}
-Build LV2 plug-in:             ${SFIZZ_LV2}
-Build LV2 user interface:      ${SFIZZ_LV2_UI}
-Build VST plug-in:             ${SFIZZ_VST}
-Build AU plug-in:              ${SFIZZ_AU}
 Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Build demos:                   ${SFIZZ_DEMOS}
@@ -159,9 +159,29 @@ Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
-Install prefix:                ${CMAKE_INSTALL_PREFIX}
-LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
+Use system abseil-cpp:         ${SFIZZ_USE_SYSTEM_ABSEIL}
+Use system catch:              ${SFIZZ_USE_SYSTEM_CATCH}
+Use system cxxopts:            ${SFIZZ_USE_SYSTEM_CXXOPTS}
+Use system ghc-filesystem:     ${SFIZZ_USE_SYSTEM_GHC_FS}
+Use system kiss-fft:           ${SFIZZ_USE_SYSTEM_KISS_FFT}
+Use system pugixml:            ${SFIZZ_USE_SYSTEM_PUGIXML}
+Use system simde:              ${SFIZZ_USE_SYSTEM_SIMDE}")
+        if(CMAKE_PROJECT_NAME STREQUAL "sfizz")
+                message(STATUS "
+Build AU plug-in:              ${SFIZZ_AU}
+Build LV2 plug-in:             ${SFIZZ_LV2}
+Build LV2 user interface:      ${SFIZZ_LV2_UI}
+Build VST plug-in:             ${SFIZZ_VST}
+
+Use system lv2:                ${SFIZZ_USE_SYSTEM_LV2}
+Use system vst3sdk sources:    ${SFIZZ_USE_SYSTEM_VST3SDK}
+
 LV2 plugin-side CC automation  ${SFIZZ_LV2_PSA}
+LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
+VST destination directory:     ${VSTPLUGIN_INSTALL_DIR}")
+        endif()
+        message(STATUS "
+Install prefix:                ${CMAKE_INSTALL_PREFIX}
 
 Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
 Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}

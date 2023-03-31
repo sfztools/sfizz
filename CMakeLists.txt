@@ -8,7 +8,7 @@ else()
     endif()
 endif()
 
-project (sfizz VERSION 1.2.2 LANGUAGES CXX C)
+project (libsfizz VERSION 1.2.2 LANGUAGES CXX C)
 set (PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 
 # External configuration CMake scripts
@@ -23,12 +23,6 @@ set (BUILD_TESTING OFF CACHE BOOL "Disable Abseil's tests [default: OFF]")
 option_ex (ENABLE_LTO              "Enable Link Time Optimization" ON)
 option_ex (SFIZZ_JACK              "Enable JACK stand-alone build" CMAKE_SYSTEM_NAME STREQUAL "Linux")
 option_ex (SFIZZ_RENDER            "Enable renderer of SMF files" ON)
-option_ex (SFIZZ_LV2               "Enable LV2 plug-in build" ON)
-option_ex (SFIZZ_LV2_UI            "Enable LV2 plug-in user interface" ON)
-option_ex (SFIZZ_VST               "Enable VST plug-in build" ON)
-option_ex (SFIZZ_AU                "Enable AU plug-in build" APPLE)
-option_ex (SFIZZ_VST2              "Enable VST2 plug-in build (unsupported)" OFF)
-option_ex (SFIZZ_PUREDATA          "Enable Puredata plug-in build" OFF)
 option_ex (SFIZZ_BENCHMARKS        "Enable benchmarks build" OFF)
 option_ex (SFIZZ_TESTS             "Enable tests build" OFF)
 option_ex (SFIZZ_DEMOS             "Enable feature demos build" OFF)
@@ -42,15 +36,13 @@ option_ex (SFIZZ_USE_SYSTEM_SIMDE  "Use SIMDe libraries preinstalled on system" 
 option_ex (SFIZZ_USE_SYSTEM_KISS_FFT "Use KISS FFT libraries preinstalled on system" OFF)
 option_ex (SFIZZ_USE_SYSTEM_PUGIXML "Use pugixml libraries preinstalled on system" OFF)
 option_ex (SFIZZ_USE_SYSTEM_CXXOPTS "Use CXXOPTS libraries preinstalled on system" OFF)
-option_ex (SFIZZ_USE_SYSTEM_LV2     "Use LV2 headers preinstalled on system" OFF)
-option_ex (SFIZZ_USE_SYSTEM_VST3SDK "Use VST3SDK source files preinstalled on system" OFF)
 option_ex (SFIZZ_USE_SYSTEM_CATCH   "Use Catch libraries preinstalled on system" OFF)
 option_ex (SFIZZ_STATIC_DEPENDENCIES "Link dependencies statically" OFF)
 option_ex (SFIZZ_RELEASE_ASSERTS   "Forced assertions in release builds" OFF)
 option_ex (SFIZZ_PROFILE_BUILD     "Profile the build time" OFF)
 
 # The fixed number of controller parameters
-set(SFIZZ_NUM_CCS 512)
+set(MIDI_CC_MAX 512 CACHE STRING "Maximum amount of Control Change Messages")
 
 include (SfizzConfig)
 include (SfizzDeps)
@@ -59,15 +51,11 @@ include (SfizzFaust)
 # Don't use IPO in non Release builds
 include (CheckIPO)
 
-# Dylib bunder for macOS
-include (BundleDylibs)
-
 # Add the static library targets and sources
 add_subdirectory (src)
 
 # Optional targets
 add_subdirectory (clients)
-add_subdirectory (plugins)
 
 if (SFIZZ_BENCHMARKS)
     add_subdirectory (benchmarks)
@@ -84,11 +72,6 @@ endif()
 
 if (SFIZZ_DEVTOOLS)
     add_subdirectory (devtools)
-endif()
-
-# Put it at the end so that the vst/lv2 directories are registered
-if (NOT MSVC)
-    include(SfizzUninstall)
 endif()
 
 show_build_info_if_needed()

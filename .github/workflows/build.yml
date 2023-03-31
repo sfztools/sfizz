@@ -7,7 +7,6 @@ on:
       - 'master'
     tags:
       - '[0-9]*'
-      - 'v[0-9]*'
   pull_request:
     branches:
       - '*'
@@ -47,18 +46,7 @@ jobs:
         sudo apt-get update && \
         sudo apt-get install \
           ninja-build \
-          libjack-jackd2-dev \
-          libsndfile1-dev \
-          libcairo2-dev \
-          libpango1.0-dev \
-          libfontconfig1-dev \
-          libx11-xcb-dev \
-          libxcb-util-dev \
-          libxcb-cursor-dev \
-          libxcb-xkb-dev \
-          libxkbcommon-dev \
-          libxkbcommon-x11-dev \
-          libxcb-keysyms1-dev
+          libjack-jackd2-dev
     - name: Create Build Environment
       shell: bash
       working-directory: ${{runner.workspace}}
@@ -70,13 +58,9 @@ jobs:
         cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DSFIZZ_JACK=ON \
-          -DSFIZZ_VST=ON \
-          -DSFIZZ_LV2_UI=ON \
-          -DSFIZZ_PUREDATA=ON \
           -DSFIZZ_TESTS=ON \
           -DSFIZZ_SHARED=OFF \
           -DSFIZZ_STATIC_DEPENDENCIES=OFF \
-          -DSFIZZ_LV2=ON \
           -DCMAKE_CXX_STANDARD=17
     - name: Build tests
       shell: bash
@@ -130,14 +114,10 @@ jobs:
         cmake "$GITHUB_WORKSPACE" -G Ninja \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
           -DSFIZZ_JACK=OFF \
-          -DSFIZZ_VST=OFF \
-          -DSFIZZ_LV2_UI=OFF \
-          -DSFIZZ_PUREDATA=OFF \
           -DSFIZZ_USE_SNDFILE=ON \
           -DSFIZZ_TESTS=ON \
           -DSFIZZ_SHARED=OFF \
-          -DSFIZZ_STATIC_DEPENDENCIES=OFF \
-          -DSFIZZ_LV2=OFF
+          -DSFIZZ_STATIC_DEPENDENCIES=OFF
     - name: Build tests
       shell: bash
       working-directory: ${{runner.workspace}}/build
@@ -166,10 +146,6 @@ jobs:
       run: |
         cmake "$GITHUB_WORKSPACE" \
           -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-          -DSFIZZ_AU=ON \
-          -DSFIZZ_LV2=ON \
-          -DSFIZZ_LV2_UI=ON \
-          -DSFIZZ_VST=ON \
           -DSFIZZ_JACK=OFF \
           -DSFIZZ_TESTS=ON \
           -DSFIZZ_SHARED=OFF \
@@ -185,71 +161,23 @@ jobs:
       # Reenable with newer cmakes
       # working-directory: ${{runner.workspace}}/build
       # run: ctest -j 2 -C "$BUILD_TYPE" --output-on-failure
-    - name: Build plugins
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config "$BUILD_TYPE" -j 2
-    - name: Package OSX bundles
-      shell: bash
-      working-directory: ${{runner.workspace}}
-      run: ./sfizz/scripts/package-osx-bundles.sh
-    - name: Create OSX installer
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: |
-        productbuild \
-          --distribution $GITHUB_WORKSPACE/scripts/plugin.pkg/package.xml \
-          --identifier "sfz.tools.sfizz" \
-          --package-path "${{runner.workspace}}/build" \
-          --version 0 \
-          ${{env.install_name}}.pkg
-    - uses: actions/upload-artifact@v3
-      with:
-        name: MacOS installer
-        path: |
-          ${{runner.workspace}}/build/${{env.install_name}}.pkg
-
-  build_for_mod:
-    runs-on: ubuntu-20.04
-    container:
-      image: jpcima/mod-plugin-builder
-      options: --user 0
-    steps:
-    - name: Set install name
-      run: |
-        echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-        echo "install_name=sfizz-${GITHUB_REF##*/}-moddevices" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    - name: Fix up MOD environment
-      shell: bash
-      run: ln -sf /home/builder/mod-workdir ~/mod-workdir
-    - name: Create Build Environment
-      shell: bash
-      working-directory: ${{runner.workspace}}
-      run: mod-plugin-builder /usr/local/bin/cmake -E make_directory build
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: |
-        mod-plugin-builder /usr/local/bin/cmake "$GITHUB_WORKSPACE" \
-         -DSFIZZ_SYSTEM_PROCESSOR=armv7-a \
-         -DCMAKE_BUILD_TYPE=Release -DSFIZZ_JACK=OFF -DSFIZZ_VST=OFF -DSFIZZ_LV2_UI=OFF
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: mod-plugin-builder /usr/local/bin/cmake --build . --config "$BUILD_TYPE" -- -j 2
+      run: cmake --build . --config "$BUILD_TYPE" -j 2
     - name: Install
-      working-directory: ${{runner.workspace}}/build
       shell: bash
+      working-directory: ${{runner.workspace}}/build
       run: |
-        DESTDIR="$(pwd)/$install_name" mod-plugin-builder /usr/local/bin/cmake --build . --config "$BUILD_TYPE" --target install
+        DESTDIR="$(pwd)/$install_name" cmake --build . --config "$BUILD_TYPE" --target install
         tar czvf "$install_name".tar.gz "$install_name"
     - uses: actions/upload-artifact@v3
       with:
-        name: MOD devices tarball
-        path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
+        name: macOS tarball
+        path: |
+          ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
+
+# build_for_mod: MOVED in plugins repository
 
   build_for_windows:
     runs-on: windows-2019
@@ -278,7 +206,7 @@ jobs:
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${{matrix.release_arch}}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON -DSFIZZ_VST=ON -DSFIZZ_LV2=ON -DSFIZZ_PUREDATA=ON
+        cmake "${Env:GITHUB_WORKSPACE}" -G"Visual Studio 16 2019" -A"${{matrix.release_arch}}" -DCMAKE_BUILD_TYPE="${Env:BUILD_TYPE}" -DCMAKE_CXX_STANDARD=17 -DSFIZZ_TESTS=ON
     - name: Build tests
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2 --target sfizz_tests
@@ -287,96 +215,77 @@ jobs:
     - name: Build all
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config "${Env:BUILD_TYPE}" -j 2
-    - name: Install pluginval
-      if: ${{ matrix.platform == 'x64' }}
+
+  build_for_mingw:
+    if: ${{ false }} # DISABLED TEMPORARILY
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+        - platform: i686
+          pkg_platform: Win32
+          bits: 32
+        - platform: x86_64
+          pkg_platform: Win64
+          bits: 64
+    container:
+      image: archlinux
+    steps:
+    - name: Set install name
       run: |
-        Invoke-WebRequest https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_Windows.zip -OutFile pluginval.zip
-        Expand-Archive pluginval.zip -DestinationPath pluginval
-        echo "$(Get-Location)\pluginval" | Out-File -FilePath ${Env:GITHUB_PATH} -Encoding utf8 -Append
-        pluginval\pluginval --version
-    - name: Validate VST3
-      if: ${{ matrix.platform == 'x64' }}
+        echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
+        echo "install_name=sfizz-${GITHUB_REF##*/}-mingw${{matrix.bits}}" >> "$GITHUB_ENV"
+    - name: Configure pacman repositories
+      shell: bash
+      run: |
+        cat >>/etc/pacman.conf <<EOF
+        [multilib]
+        Include = /etc/pacman.d/mirrorlist
+        [mingw-w64]
+        SigLevel = Optional TrustAll
+        Server = https://github.com/sfztools/arch-mingw-w64/releases/download/repo.\$arch/
+        EOF
+    - name: Set up dependencies
+      shell: bash
+      run: |
+        pacman -Sqyu --noconfirm
+        pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Fix MinGW headers
+      shell: bash
+      run: |
+        cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
+            /usr/${{matrix.platform}}-w64-mingw32/include/dwrite_3.h
+    - name: Create Build Environment
+      shell: bash
+      working-directory: ${{runner.workspace}}
+      run: cmake -E make_directory build
+    - name: Configure CMake
+      shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: pluginval --validate-in-process --validate sfizz.vst3
-    - name: Create installer
+      run: |
+        ${{matrix.platform}}-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+          -DENABLE_LTO=OFF \
+          -DSFIZZ_JACK=OFF \
+          -DSFIZZ_STATIC_DEPENDENCIES=ON \
+          -DCMAKE_CXX_STANDARD=17
+    - name: Build
+      shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: iscc /O"." /F"${Env:install_name}" /dARCH="${{matrix.platform}}" innosetup.iss
+      run: ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" -j 2
+    - name: Install
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: |
+        DESTDIR="$(pwd)/$install_name" ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" --target install
+        tar czvf "$install_name".tar.gz "$install_name"
     - uses: actions/upload-artifact@v3
       with:
-        name: ${{matrix.pkg_platform}} installer
-        path: ${{runner.workspace}}/build/${{env.install_name}}.exe
-
-  # build_for_mingw:
-  #   runs-on: ubuntu-20.04
-  #   strategy:
-  #     matrix:
-  #       include:
-  #       - platform: i686
-  #         pkg_platform: Win32
-  #         bits: 32
-  #       - platform: x86_64
-  #         pkg_platform: Win64
-  #         bits: 64
-  #   container:
-  #     image: archlinux
-  #   steps:
-  #   - name: Set install name
-  #     run: |
-  #       echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-  #       echo "install_name=sfizz-${GITHUB_REF##*/}-mingw${{matrix.bits}}" >> "$GITHUB_ENV"
-  #   - name: Configure pacman repositories
-  #     shell: bash
-  #     run: |
-  #       cat >>/etc/pacman.conf <<EOF
-  #       [multilib]
-  #       Include = /etc/pacman.d/mirrorlist
-  #       [mingw-w64]
-  #       SigLevel = Optional TrustAll
-  #       Server = https://github.com/jpcima/arch-mingw-w64/releases/download/repo.\$arch/
-  #       EOF
-  #   - name: Set up dependencies
-  #     shell: bash
-  #     run: |
-  #       pacman -Sqyu --noconfirm
-  #       pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
-  #   - uses: actions/checkout@v3
-  #     with:
-  #       submodules: recursive
-  #   - name: Fix MinGW headers
-  #     shell: bash
-  #     run: |
-  #       cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
-  #           /usr/${{matrix.platform}}-w64-mingw32/include/dwrite_3.h
-  #   - name: Create Build Environment
-  #     shell: bash
-  #     working-directory: ${{runner.workspace}}
-  #     run: cmake -E make_directory build
-  #   - name: Configure CMake
-  #     shell: bash
-  #     working-directory: ${{runner.workspace}}/build
-  #     run: |
-  #       ${{matrix.platform}}-w64-mingw32-cmake "$GITHUB_WORKSPACE" -G Ninja \
-  #         -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-  #         -DENABLE_LTO=OFF \
-  #         -DSFIZZ_JACK=OFF \
-  #         -DSFIZZ_VST=ON \
-  #         -DSFIZZ_PUREDATA=ON \
-  #         -DSFIZZ_STATIC_DEPENDENCIES=ON \
-  #         -DCMAKE_CXX_STANDARD=17
-  #   - name: Build
-  #     shell: bash
-  #     working-directory: ${{runner.workspace}}/build
-  #     run: ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" -j 2
-  #   - name: Install
-  #     working-directory: ${{runner.workspace}}/build
-  #     shell: bash
-  #     run: |
-  #       DESTDIR="$(pwd)/$install_name" ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" --target install
-  #       tar czvf "$install_name".tar.gz "$install_name"
-  #   - uses: actions/upload-artifact@v3
-  #     with:
-  #       name: ${{matrix.pkg_platform}} MinGW tarball
-  #       path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
+        name: ${{matrix.pkg_platform}} MinGW tarball
+        path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
   build_with_makefile:
     runs-on: ubuntu-20.04
@@ -440,30 +349,34 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build_for_linux
-      - build_for_mod
       # - build_for_mingw
-      - build_for_windows
+      # - build_for_windows
       - archive_source_code
     steps:
       - name: Set install name
         run: |
           echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: Linux tarball
+      - if: ${{ false }} # DISABLED: Use distro packages
+        uses: actions/download-artifact@v3
+        with:
+          name: Linux tarball
       - uses: actions/download-artifact@v3
         with:
-          name: MOD devices tarball
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: Win32 MinGW tarball
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: Win64 MinGW tarball
-      - uses: actions/download-artifact@v3
+          name: macOS tarball
+      - if: ${{ false }} # DISABLED: MinGW 32 build temporarily disabled
+        uses: actions/download-artifact@v3
+        with:
+          name: Win32 MinGW tarball
+      - if: ${{ false }} # DISABLED: MinGW 64 build temporarily disabled
+        uses: actions/download-artifact@v3
+        with:
+          name: Win64 MinGW tarball
+      - if: ${{ false }} # DISABLED: Innosetup 32 in plugins repo
+        uses: actions/download-artifact@v3
         with:
           name: Win32 installer
-      - uses: actions/download-artifact@v3
+      - if: ${{ false }} # DISABLED: Innosetup 64 in plugins repo
+        uses: actions/download-artifact@v3
         with:
           name: Win64 installer
       - uses: actions/download-artifact@v3
