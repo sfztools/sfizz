@@ -23,10 +23,10 @@ inline std::vector<char> decodeBase64(absl::string_view input)
     std::size_t padding { 0 };
     auto length = input.length();
 
-    if (length >= 1 and input[length - 1] == '=')
+    if (length >= 1 && input[length - 1] == '=')
         padding++;
 
-    if (length >= 2 and input[length - 2] == '=')
+    if (length >= 2 && input[length - 2] == '=')
         padding++;
 
     input.remove_suffix(padding);
