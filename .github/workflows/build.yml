@@ -210,6 +210,7 @@ jobs:
           ${{runner.workspace}}/build/${{env.install_name}}.pkg
 
   build_for_mod:
+    if: ${{ false }} # FIXME
     runs-on: ubuntu-20.04
     container:
       image: jpcima/mod-plugin-builder
