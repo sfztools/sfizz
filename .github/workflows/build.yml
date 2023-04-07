@@ -18,7 +18,7 @@ jobs:
   clang_tidy:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up dependencies
@@ -32,13 +32,13 @@ jobs:
       run: cd "$GITHUB_WORKSPACE" && scripts/run_clang_tidy.sh
 
   build_for_linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Set install name
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
         echo "install_name=sfizz-${GITHUB_REF##*/}-linux" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up dependencies
@@ -97,19 +97,19 @@ jobs:
       run: |
         DESTDIR="$(pwd)/$install_name" cmake --build . --config "$BUILD_TYPE" --target install
         tar czvf "$install_name".tar.gz "$install_name"
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Linux tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
   build_with_libsndfile:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Set install name
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
         echo "install_name=sfizz-${GITHUB_REF##*/}-linux" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up dependencies
@@ -152,7 +152,7 @@ jobs:
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
         echo "install_name=sfizz-${GITHUB_REF##*/}-macos" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Create Build Environment
@@ -202,14 +202,14 @@ jobs:
           --package-path "${{runner.workspace}}/build" \
           --version 0 \
           ${{env.install_name}}.pkg
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: MacOS installer
         path: |
           ${{runner.workspace}}/build/${{env.install_name}}.pkg
 
   build_for_mod:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container:
       image: jpcima/mod-plugin-builder
       options: --user 0
@@ -218,7 +218,7 @@ jobs:
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
         echo "install_name=sfizz-${GITHUB_REF##*/}-moddevices" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Fix up MOD environment
@@ -245,7 +245,7 @@ jobs:
       run: |
         DESTDIR="$(pwd)/$install_name" mod-plugin-builder /usr/local/bin/cmake --build . --config "$BUILD_TYPE" --target install
         tar czvf "$install_name".tar.gz "$install_name"
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: MOD devices tarball
         path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
@@ -268,7 +268,7 @@ jobs:
       run: |
         echo "install_ref=$(${Env:GITHUB_REF}.split('/')[-1])" >> "${Env:GITHUB_ENV}"
         echo "install_name=sfizz-$(${Env:GITHUB_REF}.split('/')[-1])-win${{matrix.bits}}" >> "${Env:GITHUB_ENV}"
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Create Build Environment
@@ -300,13 +300,13 @@ jobs:
     - name: Create installer
       working-directory: ${{runner.workspace}}/build
       run: iscc /O"." /F"${Env:install_name}" /dARCH="${{matrix.platform}}" innosetup.iss
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: ${{matrix.pkg_platform}} installer
         path: ${{runner.workspace}}/build/${{env.install_name}}.exe
 
   # build_for_mingw:
-  #   runs-on: ubuntu-18.04
+  #   runs-on: ubuntu-20.04
   #   strategy:
   #     matrix:
   #       include:
@@ -338,7 +338,7 @@ jobs:
   #     run: |
   #       pacman -Sqyu --noconfirm
   #       pacman -Sq --needed --noconfirm base-devel git wget ninja mingw-w64-cmake mingw-w64-gcc mingw-w64-pkg-config mingw-w64-libsndfile
-  #   - uses: actions/checkout@v2
+  #   - uses: actions/checkout@v3
   #     with:
   #       submodules: recursive
   #   - name: Fix MinGW headers
@@ -372,15 +372,15 @@ jobs:
   #     run: |
   #       DESTDIR="$(pwd)/$install_name" ${{matrix.platform}}-w64-mingw32-cmake --build . --config "$BUILD_TYPE" --target install
   #       tar czvf "$install_name".tar.gz "$install_name"
-  #   - uses: actions/upload-artifact@v2
+  #   - uses: actions/upload-artifact@v3
   #     with:
   #       name: ${{matrix.pkg_platform}} MinGW tarball
   #       path: ${{runner.workspace}}/build/${{env.install_name}}.tar.gz
 
   build_with_makefile:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Build with GNU make
@@ -408,14 +408,14 @@ jobs:
         make -C "$GITHUB_WORKSPACE" -f simple.mk
 
   archive_source_code:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     if: startsWith(github.ref, 'refs/tags/')
     steps:
     - name: Set install name
       run: |
         echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
         echo "install_name=sfizz-${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up dependencies
@@ -429,13 +429,13 @@ jobs:
       run: |
         cd "$GITHUB_WORKSPACE" && \
         git-archive-all --prefix="${install_name}/" -9 "${{runner.workspace}}/${install_name}.tar.gz"
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Source code tarball
         path: ${{runner.workspace}}/${{env.install_name}}.tar.gz
 
   deploy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build_for_linux
@@ -447,33 +447,30 @@ jobs:
       - name: Set install name
         run: |
           echo "install_ref=${GITHUB_REF##*/}" >> "$GITHUB_ENV"
-      # - uses: actions/download-artifact@v2
+      # - uses: actions/download-artifact@v3
       #   with:
       #     name: Linux tarball
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: MOD devices tarball
-      # - uses: actions/download-artifact@v2
+      # - uses: actions/download-artifact@v3
       #   with:
       #     name: Win32 MinGW tarball
-      # - uses: actions/download-artifact@v2
+      # - uses: actions/download-artifact@v3
       #   with:
       #     name: Win64 MinGW tarball
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: Win32 installer
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: Win64 installer
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: Source code tarball
       - name: Display file information
         shell: bash
         run: ls -lR
-      ## Note: not using `actions/create-release@v1`
-      ##       because it cannot update an existing release
-      ##       see https://github.com/actions/create-release/issues/29
       - uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
