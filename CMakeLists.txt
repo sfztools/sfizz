@@ -2,10 +2,8 @@ if (WIN32)
     cmake_minimum_required (VERSION 3.15)
     cmake_policy(SET CMP0091 NEW)
 else()
-    cmake_minimum_required (VERSION 3.5)
-    if (POLICY CMP0069)
-        cmake_policy(SET CMP0069 NEW)
-    endif()
+    # Minimum required by Abseil
+    cmake_minimum_required (VERSION 3.10)
 endif()
 
 project (sfizz VERSION 1.2.0 LANGUAGES CXX C)
