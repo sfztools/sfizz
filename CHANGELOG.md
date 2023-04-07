@@ -6,11 +6,72 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [Unreleased]
 
+## [1.2.1] - 2023-04-15
+
+### Globally
+
+#### Added
+
+- Mac OS Installer (#93 #1087)
+- This file from Release-Notes.md in wiki.
+
+#### Changed
+
+- Updated bundled dependencies and added more options to use those
+  preinstalled in system (#1104 #1117 #1143 #1145 #1149)
+- CI: Various updates and fixes for GitHub Actions; removed Travis and Appveyor
+
+### Library
+
+#### Added
+
+- Add LFO frequency as an EG target (#1103)
+- New `image_controls` opcode to add a background image on UI' Controls tab (#1156)
+
+#### Fixed
+
+- Disabled temporarily the embedded sample test
+- Parse 0-valued note ons as note offs (#1072 #1073)
+- Correct a bug with dynamic updates on offed EGs (#2 #1088)
+- jack: Wait for CLI thread to finish on quit (#1097)
+- Fix libsndfile build and add CI (#1112 #1090)
+- Last keyswitches don't change the midi state (#1113 #1074)
+- Add section suffix to man pages (#1124)
+
+### UI
+
+#### Added
+
+- HiDPI: Added a Zoom menu in Settings to apply an user' zoom ratio preference
+  (#1123 #1153)
+
+#### Changed
+
+- Colored logo button on mouse hover (#1151)
+- Centered, full-size background images container (#1152)
+- XP style tooltips (#1156)
+- Window size has been changed to be compatible with ARIA banks
+  (775x335 for image backgrounds) (#1140 #1156)
+- The CC knobs rotator and title label have a white color
+  on a semi-transparent background in the controls tab (#1156)
+- The info tab becomes a dark and semi-transparent overlay dialog above the
+  Home tab; both will display the same background image when available (#1156)
+
+### Plugins
+
+#### Added
+
+- Handle LV2 scaleFactor supportedOption (#1153)
+
+#### Fixed
+
+- Added suffix "-multi" to LV2 and VST3. (#1084)
+- Fix LV2 manifest when using PSA (#1114)
+- Fix 2 bugs in LV2 and VST3 for loads and stores (#1115 #1098)
+
 ## [1.2.0] - 2022-02-15
 
-### Added
-
-#### Major improvements
+### Major improvements
 
 - The sfizz engine now handles multiple stereo outputs,
   through the `output` opcode. The VST3 and LV2 plugins both have
@@ -22,7 +83,9 @@ This project tries to adhere to [Semantic Versioning][2].
   with source code at https://github.com/sfztools/sfizz-webaudio.
 - sfizz can now parse embedded samples in base64 data (#1041)
 
-#### Library
+### Library
+
+#### Added
 
 - Added `sfizz_send_program_change` and its C++ counterpart.
 - Added `sfizz_set_sustain_cancels_release` and its C++ counterpart.
@@ -31,12 +94,53 @@ This project tries to adhere to [Semantic Versioning][2].
   and not simply preloaded (#1031)
 - Added support for `loprog/hiprog` (#1058)
 
-#### UI
+#### Changed
+
+- The internal midi state is not reset when loading/reloading.
+  This means in particular that controls changed on an instrument
+  will be kept if you edit the underlying SFZ file (#1002)
+- Updated dependent libraries (#1018)
+- Negative values for lokey will not disable the region anymore (#1019)
+- Choke groups now act through CC switches (#1024)
+- `sw_last` is now properly affected by `octave_offset` and `note_offset` (#1039)
+- sfizz is now clamping flex EG levels (#1037)
+
+#### Fixed
+
+- Corrected a bug when reloading some files (#1028)
+- Corrected mistakes in the shelving filters (#1027)
+- Properly read exponential notation in floats (#1036)
+- Corrected a bug where long-tailed effects would be cut off (#1050)
+- Corrected a bug in the band rejection filters (#1052).
+  The `apf_1p` filter still misbehaves and is disabled for now.
+
+#### Deprecated
+
+- `sfizz_enable_logging` and `sfizz_disable_logging`
+  (and their C++ counterparts) are deprecated,
+  replaced by `sfizz_get_callback_breakdown` which needs to be called
+  at the end of a callback by the host (#1034).
+  All file writing is handled by the host for logging.
+
+### UI
+
+#### Added
 
 - Added support in the plugin GUI/parameters for the "sustain cancels release"
   behavior of LinuxSampler.
 
-#### Plugins
+#### Changed
+
+- Updated the GUI option panel for the plugins (#1022)
+  and some hints on the tab buttons (#1057)
+
+#### Fixed
+
+- Numpad input is now properly handled (#1053)
+
+### Plugins
+
+#### Added
 
 - In the LV2 plugin, plugin-side automation is now enabled by default
   (which means all SFZ control changes are naturally bound
@@ -47,45 +151,9 @@ This project tries to adhere to [Semantic Versioning][2].
 - The LV2 plugin now has a string output parameter
   with the CC used by the instrument (#1060)
 
-### Changed
-
-- The internal midi state is not reset when loading/reloading.
-  This means in particular that controls changed on an instrument
-  will be kept if you edit the underlying SFZ file (#1002)
-- Updated dependent libraries (#1018)
-- Negative values for lokey will not disable the region anymore (#1019)
-- Updated the GUI option panel for the plugins (#1022)
-  and some hints on the tab buttons (#1057)
-- Choke groups now act through CC switches (#1024)
-- `sw_last` is now properly affected by `octave_offset` and `note_offset` (#1039)
-- sfizz is now clamping flex EG levels (#1037)
-
-### Fixed
-
-#### Library
-
-- Corrected a bug when reloading some files (#1028)
-- Corrected mistakes in the shelving filters (#1027)
-- Properly read exponential notation in floats (#1036)
-- Corrected a bug where long-tailed effects would be cut off (#1050)
-- Corrected a bug in the band rejection filters (#1052).
-  The `apf_1p` filter still misbehaves and is disabled for now.
-
-#### UI
-
-- Numpad input is now properly handled (#1053)
-
-#### Plugins
+#### Fixed
 
 - Corrected a crash in some VST3 hosts (#1035)
-
-### Deprecated
-
-- `sfizz_enable_logging` and `sfizz_disable_logging`
-  (and their C++ counterparts) are deprecated,
-  replaced by `sfizz_get_callback_breakdown` which needs to be called
-  at the end of a callback by the host (#1034).
-  All file writing is handled by the host for logging.
 
 ## [1.1.1] - 2021-11-08 [YANKED]
 
@@ -95,9 +163,9 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [1.1.0] - 2021-10-23
 
-### Added
+### Library
 
-#### Library
+#### Added
 
 - Added support for `hint_sustain_cancels_release`, which when activated
   reproduces a LinuxSampler behavior by sustaining already released notes (#898).
@@ -112,21 +180,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Added a polyphony option to `sfizz_render` (#992)
 - Added a text interface to `sfizz_jack` (#973)
 
-#### UI
-
-- Added a GUI volume meter (#859)
-- It is now possible to enter values for CCs on the plugin GUI
-  by double clicking on the CC knob (#945).
-  A high-resolution input option is also available on a right click.
-
-#### Plugins
-
-- Added a Puredata plugin (#869 #873 #874)
-- Implement support for VST3 keyswitch and midi note names (#877 #876)
-
-### Changed
-
-#### Library
+#### Changed
 
 - Filter resonance can now be negative (#919)
 - The JACK and PureData clients can use custom importers (#926)
@@ -135,9 +189,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Since the default build of the LV2 plugin is not statically linked against
   libsndfile, the distribution license is changed to the ISC license (#943)
 
-### Fixed
-
-#### Library
+#### Fixed
 
 - Fixed a bug which could prevent parameters to be automated in Ardour (#893)
 - Fixed a bug where high definition CC,
@@ -157,11 +209,27 @@ This project tries to adhere to [Semantic Versioning][2].
 - Various build system improvements for different platforms
   (#957 #958 #964 #967 #968 #989 #978 #942 #921 #920 #902 #849 #850 #856 #1001)
 
-#### UI
+### UI
+
+#### Added
+
+- Added a GUI volume meter (#859)
+- It is now possible to enter values for CCs on the plugin GUI
+  by double clicking on the CC knob (#945).
+  A high-resolution input option is also available on a right click.
+
+#### Fixed
 
 - Respect the editor set for sfz files on MacOS (#925)
 
-#### Plugins
+### Plugins
+
+#### Added
+
+- Added a Puredata plugin (#869 #873 #874)
+- Implement support for VST3 keyswitch and midi note names (#877 #876)
+
+#### Fixed
 
 - Corrected a bug for the LV2 plugin when used in the Ardour DAW (#924)
 - Even when plugin-side automation is disabled (through `SFIZZ_LV2_PSA`),
@@ -192,9 +260,9 @@ This project tries to adhere to [Semantic Versioning][2].
   into the currently loaded file, the state of CCs/keyswitches,
   and also set some parameters for loaded regions.
 
-### Added
+### Library
 
-#### Library
+#### Added
 
 - Added documentation in the API calls to make clear
   that sample-accurate triggering of voice requires
@@ -225,22 +293,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Add an alternative to libsndfile (#482 #534 #535 #536)
 - Support disjoint keyswitch ranges, as well as `sw_lolast` and `sw_hilast` (#526)
 
-#### Plugins
-
-- Added the option to build a VST2 version of sfizz
-  if you have the SDK available (#708)
-
-#### UI
-
-- UI improvements and tweaks, adding themability in particular (#826 #824 #822
-  #821 #819 #818 #816 #812 #799 #743 #691 #674 #673 #672 #670 #662 #661 #656)
-- Show the current keyswitch on the editor and the virtual keybnoard (#665 #657)
-- Added a button to reset the scala file to default (#660)
-- The plugins now display an image through the `image` opcode (#770)
-
-### Changed
-
-#### Library
+#### Changed
 
 - The ABI is broken, leading to a major version change.
 - Thread-safety now has to be handled externally.
@@ -273,22 +326,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Improve the Hermite interpolation (#597)
 - Enable fast-math on MSVC (#567)
 
-#### UI
-
-- Improve font handling (#669 #622)
-- Improve file handling in the UI (#645 #659 #658)
-  and enable the use of a "default user directory" or environment variable.
-  This also allows the plugin to "find" missing sfz files
-  in a different environment (#644 #581 #572 #532)
-- Update VST to 3.7.2 (#798)
-
-#### Plugins
-
-- Order VST events (#810 #803)
-
-### Fixed
-
-#### Library
+#### Fixed
 
 - Fix an error where sample indices could wrap for massive pitch modulations
   (#825 #751)
@@ -316,7 +354,37 @@ This project tries to adhere to [Semantic Versioning][2].
 - Properly pad and align the wav files upon reading (#538)
 - Handle gracefully having a different `sw_default` in a region (#531)
 
-#### Plugins
+### UI
+
+#### Added
+
+- UI improvements and tweaks, adding themability in particular (#826 #824 #822
+  #821 #819 #818 #816 #812 #799 #743 #691 #674 #673 #672 #670 #662 #661 #656)
+- Show the current keyswitch on the editor and the virtual keybnoard (#665 #657)
+- Added a button to reset the scala file to default (#660)
+- The plugins now display an image through the `image` opcode (#770)
+
+#### Changed
+
+- Improve font handling (#669 #622)
+- Improve file handling in the UI (#645 #659 #658)
+  and enable the use of a "default user directory" or environment variable.
+  This also allows the plugin to "find" missing sfz files
+  in a different environment (#644 #581 #572 #532)
+- Update VST to 3.7.2 (#798)
+
+### Plugins
+
+#### Added
+
+- Added the option to build a VST2 version of sfizz
+  if you have the SDK available (#708)
+
+#### Changed
+
+- Order VST events (#810 #803)
+
+#### Fixed
 
 - Fix corruptions and crashes that happened in the LV2 plugin (#794 #668 #557)
 - The internal controllers of sfizz are now presented as parameters
@@ -327,9 +395,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Enable checking if file changed even when the transport is not running (#712 #689)
 - The Mac builds are now signed (#550 #552)
 
-### Removed
-
-#### Plugins
+#### Removed
 
 - Remove automation from un-automatable parameters in the VST plugin (#814)
 
@@ -351,9 +417,9 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [0.5.0] - 2020-10-15
 
-### Added
+### Major improvements
 
-#### Major improvements
+#### Added
 
 - Added basic support for Flex EGs (#388) as modulation sources (targets to come)
 - Added basic support for LFOs (#338)  as modulation sources (targets to come)
@@ -364,7 +430,9 @@ This project tries to adhere to [Semantic Versioning][2].
 - Provided build systems to use sfizz with the VCV-Rack SDK
   and the DISTRHO Plugin Framework
 
-#### Library
+### Library
+
+#### Added
 
 - Added API support for setting the playback state,
   time position and signature (#354)
@@ -387,17 +455,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Support for `loop_crossfade` (#464)
 - Improve the filter shortcut path (#336)
 
-#### UI
-
-- The file dialog initial directory is now the root of the current loaded file (#428)
-
-#### Plugins
-
-- A new output port for active voices has been added in the LV2 plugin (#321)
-
-### Changed
-
-#### Library
+#### Changed
 
 - The voice stealing is now configurable using `hint_stealing`,
   with possible values as `first`, `oldest` (default), and `envelope_and_age`.
@@ -416,9 +474,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Improved the release logic in many cases (#324 #414 #413)
 - Set the level of the `*noise` generator to match ARIA's (#429)
 
-### Fixed
-
-#### Library
+#### Fixed
 
 - CC 7, 10 and 11 are now linked by default to pan, volume and expression (#475)
 - All phase-related opcodes in sfizz now use the 0->1 convention,
@@ -453,15 +509,27 @@ This project tries to adhere to [Semantic Versioning][2].
 - Fix various performance regressions and improved performance
   especially on ARM builds (#410 #412 #415 #426)
 
-#### Plugins
+### UI
+
+#### Added
+
+- The file dialog initial directory is now the root of the current loaded file (#428)
+
+### Plugins
+
+#### Added
+
+- A new output port for active voices has been added in the LV2 plugin (#321)
+
+#### Fixed
 
 - Support for `atom:Blank` atoms in the LV2 plugin (#363)
 
 ## [0.4.0] - 2020-07-24
 
-### Added
+### Major improvements
 
-#### Major improvements
+#### Added
 
 - Added support for polynomial resamples and `sample_quality` opcodes (#238 #267).
   The engine now defaults to a value of `2` for this opcode,
@@ -473,7 +541,9 @@ This project tries to adhere to [Semantic Versioning][2].
 - Added support and API for Scala tuning files in the engine and the plugins
   (#253 #268 #282)
 
-#### Library
+### Library
+
+#### Added
 
 - Added API calls to set `$variable` define values prior to loading an SFZ file
   (#168 #119 #130)
@@ -503,17 +573,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Add headers and group sources in the CMake project for integration with e.g. Qt (#312)
 - Support flat notes parsed as string values (#291 #289)
 
-#### Plugins
-
-- Added an AudioUnit target (#224)
-- Support the `mapPath` feature of the LV2 specifications,
-  for tentatively better portability in plugin states (#303)
-- New instances of the sfizz LV2 plugin will now load a default
-  `*sine` instrument (#283)
-
-### Fixed
-
-#### Library
+#### Fixed
 
 - Solved some issues with DSmolken's drumkits related to the ampeg envelope (#172)
 - An exception problem was thrown if an sfz file was deleted (#182 #184)
@@ -542,7 +602,17 @@ This project tries to adhere to [Semantic Versioning][2].
 - Corrected a parsing issue when `$variables` were part of an opcode name (#328)
 - Various other plumbing changes
 
-#### Plugins
+### Plugins
+
+#### Added
+
+- Added an AudioUnit target (#224)
+- Support the `mapPath` feature of the LV2 specifications,
+  for tentatively better portability in plugin states (#303)
+- New instances of the sfizz LV2 plugin will now load a default
+  `*sine` instrument (#283)
+
+#### Fixed
 
 - Properly bundle the `dylib` for macOS (#188)
 - Corrected a stack smashing bug in the LV2 plugin (#226)
@@ -688,7 +758,8 @@ becoming a library to be used in other projects, plus a LV2 plugin.
 [1]: https://keepachangelog.com/en/1.0.0/
 [2]: https://semver.org/spec/v2.0.0.html
 
-[Unreleased]: https://github.com/sfztools/sfizz/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/sfztools/sfizz/compare/1.2.1...HEAD
+[1.2.1]:  https://github.com/sfztools/sfizz/compare/1.2.0...1.2.1
 [1.2.0]:  https://github.com/sfztools/sfizz/compare/1.1.1...1.2.0
 [1.1.1]:  https://github.com/sfztools/sfizz/compare/1.1.0...1.1.1
 [1.1.0]:  https://github.com/sfztools/sfizz/compare/1.0.0...1.1.0
