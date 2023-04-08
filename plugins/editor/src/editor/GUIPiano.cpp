@@ -29,8 +29,9 @@ struct SPiano::Impl {
     CCoord spacingY_ = 4.0;
 
     CColor backgroundFill_ { 0xca, 0xca, 0xca, 0xff };
+#if 0
     float backgroundRadius_ = 5.0;
-
+#endif
     float keyUsedHue_ = 0.55;
     float keySwitchHue_ = 0.0;
     float whiteKeyChroma_ = 0.9;
@@ -170,7 +171,9 @@ void SPiano::draw(CDrawContext* dc)
     if (impl.backgroundFill_.alpha > 0) {
         SharedPointer<CGraphicsPath> path;
         path = owned(dc->createGraphicsPath());
+#if 0
         path->addRoundRect(dim.bounds, impl.backgroundRadius_);
+#endif
         dc->setFillColor(impl.backgroundFill_);
         dc->drawGraphicsPath(path, CDrawContext::kPathFilled);
     }

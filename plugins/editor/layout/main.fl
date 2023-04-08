@@ -7,7 +7,7 @@ widget_class mainView {open
   class LogicalGroup visible
 } {
   Fl_Box imageContainer_ {
-    image {../resources/background.png} xywh {90 110 790 285}
+    image {../resources/background.png} xywh {0 110 800 300}
     class Background
   }
   Fl_Group {} {
@@ -162,11 +162,11 @@ widget_class mainView {open
     }
   }
   Fl_Group {subPanels_[kPanelInfo]} {
-    xywh {5 110 790 285} hide
+    xywh {5 110 790 300} hide
     class LogicalGroup
   } {
     Fl_Group {} {
-      xywh {5 110 790 285} box ROUNDED_BOX
+      xywh {5 110 790 300} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Box {} {
@@ -222,15 +222,15 @@ widget_class mainView {open
     }
   }
   Fl_Group {subPanels_[kPanelControls]} {
-    xywh {5 110 790 285} hide
+    xywh {5 110 790 300} hide
     class LogicalGroup
   } {
     Fl_Group {} {
-      xywh {5 110 790 285} box ROUNDED_BOX
+      xywh {5 110 790 300} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Group controlsPanel_ {
-        xywh {5 110 790 285} box THIN_DOWN_FRAME labelsize 12
+        xywh {5 110 790 300} box THIN_DOWN_FRAME labelsize 12
         class ControlsPanel
       } {}
     }
@@ -240,7 +240,7 @@ widget_class mainView {open
     class LogicalGroup
   } {
     Fl_Group {} {open
-      xywh {5 110 790 285} box ROUNDED_BOX
+      xywh {5 110 790 300} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Spinner oversamplingSlider_ {
@@ -443,11 +443,11 @@ widget_class mainView {open
     }
   }
   Fl_Box piano_ {
-    xywh {5 400 790 70} labelsize 12
+    xywh {0 410 800 70} labelsize 16
     class Piano
   }
   Fl_Group {subPanels_[kPanelGeneral]} {
-    xywh {5 110 790 285} hide
+    xywh {5 110 790 300} hide
     class LogicalGroup
   } {}
   Fl_Box lblHover_ {
