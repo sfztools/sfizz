@@ -46,6 +46,11 @@
 #include <lv2/patch/patch.h>
 #include <lv2/urid/urid.h>
 #include <lv2/instance-access/instance-access.h>
+
+#ifndef LV2_UI__scaleFactor
+#define LV2_UI__scaleFactor LV2_UI_PREFIX "scaleFactor"
+#endif
+
 #include <ghc/fs_std.hpp>
 #include <string>
 #include <memory>
@@ -113,6 +118,10 @@ struct sfizz_ui_t : EditorController, VSTGUIEditorInterface {
     LV2_URID patch_set_uri;
     LV2_URID patch_property_uri;
     LV2_URID patch_value_uri;
+#if !defined(__APPLE__)
+    LV2_URID opt_scalefactor_uri;
+    float scale_factor = 0.0f;
+#endif
     LV2_URID sfizz_sfz_file_uri;
     LV2_URID sfizz_scala_file_uri;
     LV2_URID sfizz_osc_blob_uri;
@@ -180,6 +189,7 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     LV2_URID_Map *map = nullptr;
     LV2_URID_Unmap *unmap = nullptr;
+    const LV2_Options_Option* options = nullptr;
 
     for (const LV2_Feature *const *f = features; *f; f++)
     {
@@ -195,6 +205,8 @@ instantiate(const LV2UI_Descriptor *descriptor,
             parentWindowId = (**f).data;
         else if (!strcmp((**f).URI, LV2_INSTANCE_ACCESS_URI))
             self->plugin = (sfizz_plugin_t *)(**f).data;
+        else if (!strcmp((**f).URI, LV2_OPTIONS__options))
+            options = (const LV2_Options_Option*)(**f).data; // scaleFactor only ATM
     }
 
     // The map feature is required
@@ -213,6 +225,9 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->atom_path_uri = map->map(map->handle, LV2_ATOM__Path);
     self->atom_urid_uri = map->map(map->handle, LV2_ATOM__URID);
     self->midi_event_uri = map->map(map->handle, LV2_MIDI__MidiEvent);
+#if !defined(__APPLE__)
+    self->opt_scalefactor_uri = map->map(map->handle, LV2_UI__scaleFactor);
+#endif
     self->patch_get_uri = map->map(map->handle, LV2_PATCH__Get);
     self->patch_set_uri = map->map(map->handle, LV2_PATCH__Set);
     self->patch_property_uri = map->map(map->handle, LV2_PATCH__property);
@@ -223,6 +238,22 @@ instantiate(const LV2UI_Descriptor *descriptor,
     self->sfizz_notify_uri = map->map(map->handle, SFIZZ__Notify);
     self->sfizz_audio_level_uri = map->map(map->handle, SFIZZ__AudioLevel);
     self->ccmap.reset(sfizz_lv2_ccmap_create(map));
+
+#if !defined(__APPLE__)
+    if (options != nullptr) {
+        for (int i=0; options[i].key != 0; ++i)
+        {
+            if (options[i].key == self->opt_scalefactor_uri) {
+                if (options[i].type == self->atom_float_uri) {
+                    self->scale_factor = *(const float*)options[i].value;
+                    fprintf(stderr, "[sfizz] scale factor: %f\n", self->scale_factor);
+                } else {
+                    fprintf(stderr, "[sfizz] Host provides UI scale factor but has wrong value type\n");
+                }
+            }
+        }
+    }
+#endif
 
     // set up the resource path
     // * on Linux, this is determined by going 2 folders back from the SO path
@@ -281,8 +312,19 @@ instantiate(const LV2UI_Descriptor *descriptor,
 
     *widget = reinterpret_cast<LV2UI_Widget>(uiFrame->getPlatformFrame()->getPlatformRepresentation());
 
+#if !defined (__APPLE__)
+    float scaleFactor = uiFrame->getZoom() * self->scale_factor;
+    uiFrame->setZoom(scaleFactor);
+    fprintf(stderr, "[sfizz] zoom factor: %f\n", scaleFactor);
+
+    int width = Editor::viewWidth * scaleFactor;
+    int height = Editor::viewHeight * scaleFactor;
+#else
+    int width = Editor::viewWidth;
+    int height = Editor::viewHeight;
+#endif
     if (self->resize)
-        self->resize->ui_resize(self->resize->handle, Editor::viewWidth, Editor::viewHeight);
+        self->resize->ui_resize(self->resize->handle, width, height);
 
     // send a request to receive all parameters
     uint8_t buffer[256];

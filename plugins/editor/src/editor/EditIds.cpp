@@ -38,5 +38,7 @@ EditRange EditRange::get(EditId id)
         return { 0, 0, 1 };
     case EditId::UIActivePanel:
         return { 0, 0, 255 };
+    case EditId::UIZoom:
+        return { 100, 100, 300 };
     }
 }

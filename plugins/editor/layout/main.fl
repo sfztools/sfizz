@@ -440,6 +440,22 @@ widget_class mainView {open
         xywh {435 220 80 25} labelsize 14 textsize 14
         class ValueMenu
       }
+      Fl_Box {} {
+        label Zoom
+        xywh {555 195 95 25} labelsize 12 align 20
+        class Label
+      }
+      Fl_Spinner zoomMenu_ {
+        comment {tag=kTagZoomMenu}
+        xywh {680 195 100 25} labelsize 12 textsize 12
+        class OptionMenu
+      }
+      Fl_Button defaultZoomButton_ {
+        label {Set Default}
+        comment {tag=kTagSetDefaultZoom}
+        xywh {680 220 100 25} labelsize 12
+        class ValueButton
+      }
     }
   }
   Fl_Box piano_ {
