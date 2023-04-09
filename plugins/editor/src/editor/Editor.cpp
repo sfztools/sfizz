@@ -737,6 +737,13 @@ void Editor::Impl::createFrameContents()
             return box;
         };
 #if 0
+        auto createSquaredGroup = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            auto* box =  new SBoxContainer(bounds);
+            OnThemeChanged.push_back([box, palette]() {
+                box->setBackgroundColor(palette->boxBackground);
+            });
+            return box;
+        };
         auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
@@ -1909,6 +1916,12 @@ void Editor::Impl::applyBackgroundForCurrentPanel()
         bitmap = defaultBackgroundBitmap_;
 
     downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
+
+    // Centered image
+    CCoord xoffset =
+        (imageContainer_->getViewSize().getWidth() - bitmap->getWidth()) / 2;
+
+    imageContainer_->setBackgroundOffset(CPoint(-xoffset, 0));
     imageContainer_->setBackground(bitmap);
 }
 
