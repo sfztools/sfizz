@@ -1,33 +1,24 @@
-/*
-  Copyright 2011-2016 David Robillard <http://drobilla.net>
+// Copyright 2011-2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+#ifndef LV2_TIME_H
+#define LV2_TIME_H
 
 /**
    @defgroup time Time
+   @ingroup lv2
 
-   Properties for describing time, see <http://lv2plug.in/ns/ext/time> for
-   details.
+   Properties for describing time.
 
    Note the time extension is purely data, this header merely defines URIs for
    convenience.
 
+   See <http://lv2plug.in/ns/ext/time> for details.
+
    @{
 */
 
-#ifndef LV2_TIME_H
-#define LV2_TIME_H
+// clang-format off
 
 #define LV2_TIME_URI    "http://lv2plug.in/ns/ext/time"  ///< http://lv2plug.in/ns/ext/time
 #define LV2_TIME_PREFIX LV2_TIME_URI "#"                 ///< http://lv2plug.in/ns/ext/time#
@@ -46,8 +37,10 @@
 #define LV2_TIME__framesPerSecond LV2_TIME_PREFIX "framesPerSecond"  ///< http://lv2plug.in/ns/ext/time#framesPerSecond
 #define LV2_TIME__speed           LV2_TIME_PREFIX "speed"            ///< http://lv2plug.in/ns/ext/time#speed
 
+// clang-format on
+
 /**
    @}
 */
 
-#endif  /* LV2_TIME_H */
+#endif /* LV2_TIME_H */

@@ -1,33 +1,23 @@
-/*
-  Copyright 2008-2016 David Robillard <http://drobilla.net>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-
-/**
-   @defgroup atom Atom
-
-   A generic value container and several data types, see
-   <http://lv2plug.in/ns/ext/atom> for details.
-
-   @{
-*/
+// Copyright 2008-2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
 #ifndef LV2_ATOM_H
 #define LV2_ATOM_H
 
-#include <stddef.h>
+/**
+   @defgroup atom Atom
+   @ingroup lv2
+
+   A generic value container and several data types.
+
+   See <http://lv2plug.in/ns/ext/atom> for details.
+
+   @{
+*/
+
 #include <stdint.h>
+
+// clang-format off
 
 #define LV2_ATOM_URI    "http://lv2plug.in/ns/ext/atom"  ///< http://lv2plug.in/ns/ext/atom
 #define LV2_ATOM_PREFIX LV2_ATOM_URI "#"                 ///< http://lv2plug.in/ns/ext/atom#
@@ -64,7 +54,9 @@
 #define LV2_ATOM__supports      LV2_ATOM_PREFIX "supports"       ///< http://lv2plug.in/ns/ext/atom#supports
 #define LV2_ATOM__timeUnit      LV2_ATOM_PREFIX "timeUnit"       ///< http://lv2plug.in/ns/ext/atom#timeUnit
 
-#define LV2_ATOM_REFERENCE_TYPE 0  ///< The special type for a reference atom
+// clang-format on
+
+#define LV2_ATOM_REFERENCE_TYPE 0 ///< The special type for a reference atom
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,24 +64,23 @@ extern "C" {
 
 /** @cond */
 /** This expression will fail to compile if double does not fit in 64 bits. */
-typedef char lv2_atom_assert_double_fits_in_64_bits[
-	((sizeof(double) <= sizeof(uint64_t)) * 2) - 1];
+typedef char lv2_atom_assert_double_fits_in_64_bits
+  [((sizeof(double) <= sizeof(uint64_t)) * 2) - 1];
 /** @endcond */
 
 /**
    Return a pointer to the contents of an Atom.  The "contents" of an atom
    is the data past the complete type-specific header.
-   @param type The type of the atom, e.g. LV2_Atom_String.
+   @param type The type of the atom, for example LV2_Atom_String.
    @param atom A variable-sized atom.
 */
-#define LV2_ATOM_CONTENTS(type, atom) \
-	((void*)((uint8_t*)(atom) + sizeof(type)))
+#define LV2_ATOM_CONTENTS(type, atom) ((void*)((uint8_t*)(atom) + sizeof(type)))
 
 /**
    Const version of LV2_ATOM_CONTENTS.
 */
 #define LV2_ATOM_CONTENTS_CONST(type, atom) \
-	((const void*)((const uint8_t*)(atom) + sizeof(type)))
+  ((const void*)((const uint8_t*)(atom) + sizeof(type)))
 
 /**
    Return a pointer to the body of an Atom.  The "body" of an atom is the
@@ -104,32 +95,32 @@ typedef char lv2_atom_assert_double_fits_in_64_bits[
 
 /** The header of an atom:Atom. */
 typedef struct {
-	uint32_t size;  /**< Size in bytes, not including type and size. */
-	uint32_t type;  /**< Type of this atom (mapped URI). */
+  uint32_t size; /**< Size in bytes, not including type and size. */
+  uint32_t type; /**< Type of this atom (mapped URI). */
 } LV2_Atom;
 
 /** An atom:Int or atom:Bool.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	int32_t  body;  /**< Integer value. */
+  LV2_Atom atom; /**< Atom header. */
+  int32_t  body; /**< Integer value. */
 } LV2_Atom_Int;
 
 /** An atom:Long.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	int64_t  body;  /**< Integer value. */
+  LV2_Atom atom; /**< Atom header. */
+  int64_t  body; /**< Integer value. */
 } LV2_Atom_Long;
 
 /** An atom:Float.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	float    body;  /**< Floating point value. */
+  LV2_Atom atom; /**< Atom header. */
+  float    body; /**< Floating point value. */
 } LV2_Atom_Float;
 
 /** An atom:Double.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	double   body;  /**< Floating point value. */
+  LV2_Atom atom; /**< Atom header. */
+  double   body; /**< Floating point value. */
 } LV2_Atom_Double;
 
 /** An atom:Bool.  May be cast to LV2_Atom. */
@@ -137,84 +128,84 @@ typedef LV2_Atom_Int LV2_Atom_Bool;
 
 /** An atom:URID.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	uint32_t body;  /**< URID. */
+  LV2_Atom atom; /**< Atom header. */
+  uint32_t body; /**< URID. */
 } LV2_Atom_URID;
 
 /** An atom:String.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	/* Contents (a null-terminated UTF-8 string) follow here. */
+  LV2_Atom atom; /**< Atom header. */
+                 /* Contents (a null-terminated UTF-8 string) follow here. */
 } LV2_Atom_String;
 
 /** The body of an atom:Literal. */
 typedef struct {
-	uint32_t datatype;  /**< Datatype URID. */
-	uint32_t lang;      /**< Language URID. */
-	/* Contents (a null-terminated UTF-8 string) follow here. */
+  uint32_t datatype; /**< Datatype URID. */
+  uint32_t lang;     /**< Language URID. */
+  /* Contents (a null-terminated UTF-8 string) follow here. */
 } LV2_Atom_Literal_Body;
 
 /** An atom:Literal.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom              atom;  /**< Atom header. */
-	LV2_Atom_Literal_Body body;  /**< Body. */
+  LV2_Atom              atom; /**< Atom header. */
+  LV2_Atom_Literal_Body body; /**< Body. */
 } LV2_Atom_Literal;
 
 /** An atom:Tuple.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom atom;  /**< Atom header. */
-	/* Contents (a series of complete atoms) follow here. */
+  LV2_Atom atom; /**< Atom header. */
+                 /* Contents (a series of complete atoms) follow here. */
 } LV2_Atom_Tuple;
 
 /** The body of an atom:Vector. */
 typedef struct {
-	uint32_t child_size;  /**< The size of each element in the vector. */
-	uint32_t child_type;  /**< The type of each element in the vector. */
-	/* Contents (a series of packed atom bodies) follow here. */
+  uint32_t child_size; /**< The size of each element in the vector. */
+  uint32_t child_type; /**< The type of each element in the vector. */
+  /* Contents (a series of packed atom bodies) follow here. */
 } LV2_Atom_Vector_Body;
 
 /** An atom:Vector.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom             atom;  /**< Atom header. */
-	LV2_Atom_Vector_Body body;  /**< Body. */
+  LV2_Atom             atom; /**< Atom header. */
+  LV2_Atom_Vector_Body body; /**< Body. */
 } LV2_Atom_Vector;
 
-/** The body of an atom:Property (e.g. in an atom:Object). */
+/** The body of an atom:Property (typically in an atom:Object). */
 typedef struct {
-	uint32_t key;      /**< Key (predicate) (mapped URI). */
-	uint32_t context;  /**< Context URID (may be, and generally is, 0). */
-	LV2_Atom value;    /**< Value atom header. */
-	/* Value atom body follows here. */
+  uint32_t key;     /**< Key (predicate) (mapped URI). */
+  uint32_t context; /**< Context URID (may be, and generally is, 0). */
+  LV2_Atom value;   /**< Value atom header. */
+                    /* Value atom body follows here. */
 } LV2_Atom_Property_Body;
 
 /** An atom:Property.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom               atom;  /**< Atom header. */
-	LV2_Atom_Property_Body body;  /**< Body. */
+  LV2_Atom               atom; /**< Atom header. */
+  LV2_Atom_Property_Body body; /**< Body. */
 } LV2_Atom_Property;
 
 /** The body of an atom:Object. May be cast to LV2_Atom. */
 typedef struct {
-	uint32_t id;     /**< URID, or 0 for blank. */
-	uint32_t otype;  /**< Type URID (same as rdf:type, for fast dispatch). */
-	/* Contents (a series of property bodies) follow here. */
+  uint32_t id;    /**< URID, or 0 for blank. */
+  uint32_t otype; /**< Type URID (same as rdf:type, for fast dispatch). */
+                  /* Contents (a series of property bodies) follow here. */
 } LV2_Atom_Object_Body;
 
 /** An atom:Object.  May be cast to LV2_Atom. */
 typedef struct {
-	LV2_Atom             atom;  /**< Atom header. */
-	LV2_Atom_Object_Body body;  /**< Body. */
+  LV2_Atom             atom; /**< Atom header. */
+  LV2_Atom_Object_Body body; /**< Body. */
 } LV2_Atom_Object;
 
 /** The header of an atom:Event.  Note this type is NOT an LV2_Atom. */
 typedef struct {
-	/** Time stamp.  Which type is valid is determined by context. */
-	union {
-		int64_t frames;  /**< Time in audio frames. */
-		double  beats;   /**< Time in beats. */
-	} time;
-	LV2_Atom body;  /**< Event body atom header. */
-	/* Body atom contents follow here. */
+  /** Time stamp.  Which type is valid is determined by context. */
+  union {
+    int64_t frames; /**< Time in audio frames. */
+    double  beats;  /**< Time in beats. */
+  } time;
+  LV2_Atom body; /**< Event body atom header. */
+                 /* Body atom contents follow here. */
 } LV2_Atom_Event;
 
 /**
@@ -225,32 +216,32 @@ typedef struct {
    LV2_Descriptor::run(), the default stamp type is audio frames.
 
    The contents of a sequence is a series of LV2_Atom_Event, each aligned
-   to 64-bits, e.g.:
+   to 64-bits, for example:
    <pre>
    | Event 1 (size 6)                              | Event 2
    |       |       |       |       |       |       |       |       |
    | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
-   |FRAMES |SUBFRMS|TYPE   |SIZE   |DATADATADATAPAD|FRAMES |SUBFRMS|...
+   |FRAMES         |TYPE   |SIZE   |DATADATADATAPAD|FRAMES         |...
    </pre>
 */
 typedef struct {
-	uint32_t unit;  /**< URID of unit of event time stamps. */
-	uint32_t pad;   /**< Currently unused. */
-	/* Contents (a series of events) follow here. */
+  uint32_t unit; /**< URID of unit of event time stamps. */
+  uint32_t pad;  /**< Currently unused. */
+                 /* Contents (a series of events) follow here. */
 } LV2_Atom_Sequence_Body;
 
 /** An atom:Sequence. */
 typedef struct {
-	LV2_Atom               atom;  /**< Atom header. */
-	LV2_Atom_Sequence_Body body;  /**< Body. */
+  LV2_Atom               atom; /**< Atom header. */
+  LV2_Atom_Sequence_Body body; /**< Body. */
 } LV2_Atom_Sequence;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 /**
    @}
 */
 
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
-
-#endif  /* LV2_ATOM_H */
+#endif /* LV2_ATOM_H */
