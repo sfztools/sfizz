@@ -127,7 +127,6 @@ struct Editor::Impl : EditorController::Receiver,
     CTextLabel* scalaRootKeyLabel_ = nullptr;
     SValueMenu* tuningFrequencyDropdown_ = nullptr;
     CTextEdit* tuningFrequencyEdit_ = nullptr;
-    STextButton *settingsAboutButton_ = nullptr;
     CTextLabel* tuningFrequencyLabel_ = nullptr;
     CControl *stretchedTuningSlider_ = nullptr;
     CTextLabel* stretchedTuningLabel_ = nullptr;
@@ -701,9 +700,11 @@ void Editor::Impl::createFrameContents()
     CViewContainer* mainView;
     Theme* theme;
 
-    SharedPointer<CBitmap> iconShaded = owned(new CBitmap("logo_text_shaded.png"));
+    SharedPointer<CBitmap> backgroundAbout = owned(new CBitmap("background_button_about.png"));
     SharedPointer<CBitmap> background = owned(new CBitmap("background.png"));
     SharedPointer<CBitmap> knob48 = owned(new CBitmap("knob48.png"));
+
+    // TODO: is this used somewhere?
     SharedPointer<CBitmap> logoText = owned(new CBitmap("logo_text.png"));
 
     defaultBackgroundBitmap_ = background;
@@ -749,8 +750,12 @@ void Editor::Impl::createFrameContents()
             return box;
         };
 #endif
-        auto createAboutButton = [this, &iconShaded](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
-            return new CKickButton(bounds, this, tag, 0.0f, iconShaded);
+        auto createAboutButton = [this, &backgroundAbout](
+                const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
+            SHoverButton* btn = new SHoverButton(bounds, this, tag, backgroundAbout);
+            btn->OnHoverEnter = [this, btn]() { buttonHoverEnter(btn, "About sfizz..."); };
+            btn->OnHoverLeave = [this, btn]() { buttonHoverLeave(btn); };
+            return btn;
         };
         auto createLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);

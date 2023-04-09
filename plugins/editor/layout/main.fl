@@ -430,12 +430,6 @@ widget_class mainView {open
         xywh {695 310 60 25} labelsize 12
         class TextEdit
       }
-      Fl_Button settingsAboutButton_ {
-        label {About sfizz}
-        comment {tag=kTagAbout}
-        xywh {610 205 115 25} labelsize 12
-        class ValueButton
-      }
       Fl_Box {} {
         label {... when freewheeling}
         xywh {290 220 145 25} labelsize 12 align 20
