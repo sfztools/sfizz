@@ -1,30 +1,21 @@
-/*
-  Copyright 2012-2016 David Robillard <http://drobilla.net>
+// Copyright 2012-2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+#ifndef LV2_UNITS_H
+#define LV2_UNITS_H
 
 /**
    @defgroup units Units
+   @ingroup lv2
 
-   Units for LV2 values, see <http://lv2plug.in/ns/extensions/units> for
-   details.
+   Units for LV2 values.
+
+   See <http://lv2plug.in/ns/extensions/units> for details.
 
    @{
 */
 
-#ifndef LV2_UNITS_H
-#define LV2_UNITS_H
+// clang-format off
 
 #define LV2_UNITS_URI    "http://lv2plug.in/ns/extensions/units"  ///< http://lv2plug.in/ns/extensions/units
 #define LV2_UNITS_PREFIX LV2_UNITS_URI "#"                        ///< http://lv2plug.in/ns/extensions/units#
@@ -62,8 +53,10 @@
 #define LV2_UNITS__symbol           LV2_UNITS_PREFIX "symbol"            ///< http://lv2plug.in/ns/extensions/units#symbol
 #define LV2_UNITS__unit             LV2_UNITS_PREFIX "unit"              ///< http://lv2plug.in/ns/extensions/units#unit
 
-#endif  /* LV2_UNITS_H */
+// clang-format on
 
 /**
    @}
 */
+
+#endif /* LV2_UNITS_H */

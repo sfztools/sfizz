@@ -1,38 +1,30 @@
-/*
-  Dynamic manifest specification for LV2
-  Copyright 2008-2011 Stefano D'Angelo <zanga.mail@gmail.com>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-
-/**
-   @defgroup dynmanifest Dynamic Manifest
-
-   Support for dynamic data generation, see
-   <http://lv2plug.in/ns/ext/dynmanifest> for details.
-
-   @{
-*/
+// Copyright 2008-2011 Stefano D'Angelo <zanga.mail@gmail.com>
+// SPDX-License-Identifier: ISC
 
 #ifndef LV2_DYN_MANIFEST_H_INCLUDED
 #define LV2_DYN_MANIFEST_H_INCLUDED
+
+/**
+   @defgroup dynmanifest Dynamic Manifest
+   @ingroup lv2
+
+   Support for dynamic data generation.
+
+   See <http://lv2plug.in/ns/ext/dynmanifest> for details.
+
+   @{
+*/
 
 #include "lv2/core/lv2.h"
 
 #include <stdio.h>
 
+// clang-format off
+
 #define LV2_DYN_MANIFEST_URI    "http://lv2plug.in/ns/ext/dynmanifest"  ///< http://lv2plug.in/ns/ext/dynmanifest
 #define LV2_DYN_MANIFEST_PREFIX LV2_DYN_MANIFEST_URI "#"                ///< http://lv2plug.in/ns/ext/dynmanifest#
+
+// clang-format on
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +38,7 @@ extern "C" {
    NOT even valid to compare this to NULL. The dynamic manifest generator MAY
    use it to reference internal data.
 */
-typedef void * LV2_Dyn_Manifest_Handle;
+typedef void* LV2_Dyn_Manifest_Handle;
 
 /**
    Generate the dynamic manifest.
@@ -64,8 +56,9 @@ typedef void * LV2_Dyn_Manifest_Handle;
    evaluate the result of the operation by examining the returned value and
    MUST NOT try to interpret the value of handle.
 */
-int lv2_dyn_manifest_open(LV2_Dyn_Manifest_Handle *  handle,
-                          const LV2_Feature *const * features);
+int
+lv2_dyn_manifest_open(LV2_Dyn_Manifest_Handle*  handle,
+                      const LV2_Feature* const* features);
 
 /**
    Fetch a "list" of subject URIs described in the dynamic manifest.
@@ -77,7 +70,7 @@ int lv2_dyn_manifest_open(LV2_Dyn_Manifest_Handle *  handle,
 
    <http://example.org/plugin> a lv2:Plugin .
 
-   The objects that are elegible for exposure are those that would need to be
+   The objects that are eligible for exposure are those that would need to be
    represented by a subject node in a static manifest.
 
    @param handle Dynamic manifest generator handle.
@@ -85,13 +78,13 @@ int lv2_dyn_manifest_open(LV2_Dyn_Manifest_Handle *  handle,
    @param fp FILE * identifying the resource the host has to set up for the
    dynamic manifest generator. The host MUST pass a writable, empty resource to
    this function, and the dynamic manifest generator MUST ONLY perform write
-   operations on it at the end of the stream (e.g., using only fprintf(),
-   fwrite() and similar).
+   operations on it at the end of the stream (for example, using only
+   fprintf(), fwrite() and similar).
 
    @return 0 on success, otherwise a non-zero error code.
 */
-int lv2_dyn_manifest_get_subjects(LV2_Dyn_Manifest_Handle handle,
-                                  FILE *                  fp);
+int
+lv2_dyn_manifest_get_subjects(LV2_Dyn_Manifest_Handle handle, FILE* fp);
 
 /**
    Function that fetches data related to a specific URI.
@@ -115,17 +108,18 @@ int lv2_dyn_manifest_get_subjects(LV2_Dyn_Manifest_Handle handle,
    @param fp FILE * identifying the resource the host has to set up for the
    dynamic manifest generator. The host MUST pass a writable resource to this
    function, and the dynamic manifest generator MUST ONLY perform write
-   operations on it at the current position of the stream (e.g. using only
-   fprintf(), fwrite() and similar).
+   operations on it at the current position of the stream (for example, using
+   only fprintf(), fwrite() and similar).
 
    @param uri URI to get data about (in the "plain" form, i.e., absolute URI
    without Turtle prefixes).
 
    @return 0 on success, otherwise a non-zero error code.
 */
-int lv2_dyn_manifest_get_data(LV2_Dyn_Manifest_Handle handle,
-                              FILE *                  fp,
-                              const char *            uri);
+int
+lv2_dyn_manifest_get_data(LV2_Dyn_Manifest_Handle handle,
+                          FILE*                   fp,
+                          const char*             uri);
 
 /**
    Function that ends the operations on the dynamic manifest generator.
@@ -138,14 +132,15 @@ int lv2_dyn_manifest_get_data(LV2_Dyn_Manifest_Handle handle,
 
    @param handle Dynamic manifest generator handle.
 */
-void lv2_dyn_manifest_close(LV2_Dyn_Manifest_Handle handle);
+void
+lv2_dyn_manifest_close(LV2_Dyn_Manifest_Handle handle);
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
-
-#endif /* LV2_DYN_MANIFEST_H_INCLUDED */
 
 /**
    @}
 */
+
+#endif /* LV2_DYN_MANIFEST_H_INCLUDED */

@@ -1,18 +1,5 @@
-/*
-  Copyright 2016 David Robillard <http://drobilla.net>
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted, provided that the above
-  copyright notice and this permission notice appear in all copies.
-
-  THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+// Copyright 2016 David Robillard <d@drobilla.net>
+// SPDX-License-Identifier: ISC
 
 /**
    @defgroup util Utilities
@@ -38,17 +25,16 @@ extern "C" {
    present but have NULL data.
 */
 static inline void*
-lv2_features_data(const LV2_Feature*const* features,
-                  const char* const        uri)
+lv2_features_data(const LV2_Feature* const* features, const char* const uri)
 {
-	if (features) {
-		for (const LV2_Feature*const* f = features; *f; ++f) {
-			if (!strcmp(uri, (*f)->URI)) {
-				return (*f)->data;
-			}
-		}
-	}
-	return NULL;
+  if (features) {
+    for (const LV2_Feature* const* f = features; *f; ++f) {
+      if (!strcmp(uri, (*f)->URI)) {
+        return (*f)->data;
+      }
+    }
+  }
+  return NULL;
 }
 
 /**
@@ -76,28 +62,29 @@ lv2_features_data(const LV2_Feature*const* features,
 static inline const char*
 lv2_features_query(const LV2_Feature* const* features, ...)
 {
-	va_list args;
-	va_start(args, features);
+  va_list args;
+  va_start(args, features);
 
-	const char* uri = NULL;
-	while ((uri = va_arg(args, const char*))) {
-		void** data     = va_arg(args, void**);
-		bool   required = va_arg(args, int);
+  const char* uri = NULL;
+  while ((uri = va_arg(args, const char*))) {
+    void** data     = va_arg(args, void**);
+    bool   required = (bool)va_arg(args, int);
 
-		*data = lv2_features_data(features, uri);
-		if (required && !*data) {
-			return uri;
-		}
-	}
+    *data = lv2_features_data(features, uri);
+    if (required && !*data) {
+      va_end(args);
+      return uri;
+    }
+  }
 
-	return NULL;
+  va_end(args);
+  return NULL;
 }
 
 #ifdef __cplusplus
-}  /* extern "C" */
+} /* extern "C" */
 #endif
 
 /**
-   @}
    @}
 */
