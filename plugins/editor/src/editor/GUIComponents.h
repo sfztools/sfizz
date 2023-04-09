@@ -183,6 +183,29 @@ private:
 };
 
 ///
+class SHoverButton : public CKickButton {
+public:
+    SHoverButton(
+        const CRect& size,
+        IControlListener* listener,
+        int32_t tag,
+        CBitmap* background,
+        const CPoint& offset = CPoint (0, 0))
+    : CKickButton(size, listener, tag, background, offset)
+    {}
+
+    CMouseEventResult onMouseEntered(CPoint&, const CButtonState&) override;
+    CMouseEventResult onMouseExited(CPoint&, const CButtonState&) override;
+    void draw(CDrawContext*) override;
+
+    std::function<void()> OnHoverEnter;
+    std::function<void()> OnHoverLeave;
+
+private:
+    bool hovered_ { false };
+};
+
+///
 class STextButton: public CTextButton {
 public:
     STextButton(const CRect& size, IControlListener* listener = nullptr, int32_t tag = -1, UTF8StringPtr title = nullptr)

@@ -19,6 +19,8 @@ set(EDITOR_RESOURCES
     logo_text_shaded@2x.png
     background.png
     background@2x.png
+    background_button_about.png
+    background_button_about@2x.png
     icon_white.png
     icon_white@2x.png
     knob48.png

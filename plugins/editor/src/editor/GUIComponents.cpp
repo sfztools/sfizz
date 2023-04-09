@@ -416,6 +416,33 @@ void SActionMenu::onItemClicked(int32_t index)
 }
 
 ///
+CMouseEventResult SHoverButton::onMouseEntered(CPoint& where, const CButtonState& buttons) {
+    hovered_ = true;
+    if (OnHoverEnter)
+        OnHoverEnter();
+    invalid();
+    return CKickButton::onMouseEntered(where, buttons);
+}
+
+CMouseEventResult SHoverButton::onMouseExited(CPoint& where, const CButtonState& buttons) {
+    hovered_ = false;
+    if (OnHoverLeave)
+        OnHoverLeave();
+    invalid();
+    return CKickButton::onMouseExited(where, buttons);
+}
+
+void SHoverButton::draw(CDrawContext* dc) {
+    CPoint where(offset.x, offset.y);
+    bounceValue();
+    if (hovered_)
+        where.y += heightOfOneImage;
+    if (getDrawBackground())
+        getDrawBackground()->draw(dc, getViewSize(), where);
+    setDirty(false);
+}
+
+///
 void STextButton::setHighlightColor(const CColor& color)
 {
     highlightColor_ = color;
