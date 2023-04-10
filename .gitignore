@@ -13,6 +13,7 @@ compile_commands.json
 *.a
 *.user*
 *.autosave
+*.diff
 /Doxyfile
 .DS_Store
 .cache/
