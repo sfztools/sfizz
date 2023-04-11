@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #pragma once
+#include "GUIDefs.h"
 #include <bitset>
 #include <vector>
 #include <memory>
@@ -248,6 +249,9 @@ public:
     const CColor& getLineIndicatorColor() const { return lineIndicatorColor_; }
     void setLineIndicatorColor(const CColor& color);
 
+    const CColor& getRotatorColor() const { return rotatorColor_; }
+    void setRotatorColor(const CColor& color);
+
     void setFont(CFontRef font);
     CFontRef getFont() const { return font_; }
 
@@ -268,6 +272,7 @@ private:
     CColor activeTrackColor_;
     CColor inactiveTrackColor_;
     CColor lineIndicatorColor_;
+    CColor rotatorColor_ { gui::kColorTransparent };
     bool hideValue_ { false };
 
     SharedPointer<CFontDesc> font_ = kNormalFont;
@@ -315,6 +320,9 @@ public:
     void setNameLabelFontColor(CColor color) { label_->setFontColor(color); label_->invalid(); }
     CColor getNameLabelFontColor() const { return label_->getFontColor(); }
 
+    void setNameLabelBackColor(CColor color) { label_->setBackColor(color); label_->invalid(); }
+    CColor getNameLabelBackColor() const { return label_->getBackColor(); }
+
     void setValueEditFont(CFontRef font);
     CFontRef getValueEditFont() const { return label_->getFont(); }
 
@@ -344,6 +352,9 @@ public:
 
     void setKnobLineIndicatorColor(CColor color) { knob_->setLineIndicatorColor(color); knob_->invalid(); }
     CColor getKnobLineIndicatorColor() const { return knob_->getLineIndicatorColor(); }
+
+    void setKnobRotatorColor(CColor color) { knob_->setRotatorColor(color); knob_->invalid(); }
+    CColor getKnobRotatorColor() const { return knob_->getRotatorColor(); }
 
     void setKnobFont(CFontRef font) { knob_->setFont(font); knob_->invalid(); }
     CFontRef getKnobFont() const { return knob_->getFont(); }
@@ -403,6 +414,7 @@ public:
 
     void setNameLabelFont(CFontRef font);
     void setNameLabelFontColor(CColor color);
+    void setNameLabelBackColor(CColor color);
     void setCCLabelFont(CFontRef font);
     void setCCLabelBackColor(CColor color);
     void setCCLabelFontColor(CColor color);
@@ -412,6 +424,7 @@ public:
     void setKnobActiveTrackColor(CColor color);
     void setKnobInactiveTrackColor(CColor color);
     void setKnobLineIndicatorColor(CColor color);
+    void setKnobRotatorColor(CColor color);
     void setKnobFont(CFontRef font);
     void setKnobFontColor(CColor color);
 

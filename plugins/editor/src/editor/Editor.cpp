@@ -47,8 +47,8 @@
 using namespace VSTGUI;
 using namespace gui;
 
-const int Editor::viewWidth { 800 };
-const int Editor::viewHeight { 475 };
+const int Editor::viewWidth { 775 };
+const int Editor::viewHeight { 515 };
 
 struct Editor::Impl : EditorController::Receiver,
                       public IControlListener,
@@ -755,14 +755,19 @@ void Editor::Impl::createFrameContents()
             });
             return box;
         };
-#if 0
         auto createSquaredGroup = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            auto* box =  new SBoxContainer(bounds);
+            auto* box =  new CViewContainer(bounds);
             OnThemeChanged.push_back([box, palette]() {
                 box->setBackgroundColor(palette->boxBackground);
             });
             return box;
         };
+        auto createSquaredTransparentGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            auto* box =  new CViewContainer(bounds);
+            box->setBackgroundColor(kColorSemiTransparent);
+            return box;
+        };
+#if 0
         auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
@@ -795,6 +800,16 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
+         auto createInfoLabel = [](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
+            lbl->setFontColor(kWhiteCColor);
+            lbl->setHoriAlign(align);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            lbl->setFont(font);
+            return lbl;
+         };
         auto createInactiveLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             lbl->setFrameColor(kColorTransparent);
@@ -1063,19 +1078,21 @@ void Editor::Impl::createFrameContents()
         auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             auto* panel = new SControlsPanel(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
-            panel->setNameLabelFont(font);
-            panel->setKnobFont(font);
             panel->setCCLabelFont(font);
+            panel->setKnobFont(font);
+            panel->setKnobFontColor(kWhiteCColor);
+            panel->setKnobLineIndicatorColor(kWhiteCColor);
+            panel->setKnobRotatorColor(kColorSemiTransparent);
+            panel->setNameLabelFont(font);
+            panel->setNameLabelFontColor(kWhiteCColor);
+            panel->setNameLabelBackColor(kColorSemiTransparent);
             OnThemeChanged.push_back([panel, palette]() {
-                panel->setNameLabelFontColor(palette->knobText);
                 panel->setValueEditFontColor(palette->knobText);
                 auto shadingColor = palette->knobText;
                 shadingColor.alpha = 70;
                 panel->setShadingRectangleColor(shadingColor);
                 panel->setCCLabelFontColor(palette->knobLabelText);
                 panel->setCCLabelBackColor(palette->knobLabelBackground);
-                panel->setKnobFontColor(palette->knobText);
-                panel->setKnobLineIndicatorColor(palette->knobLineIndicator);
                 panel->setKnobActiveTrackColor(palette->knobActiveTrack);
                 panel->setKnobInactiveTrackColor(palette->knobInactiveTrack);
             });
@@ -1951,7 +1968,7 @@ void Editor::Impl::setupCurrentPanel()
 void Editor::Impl::applyBackgroundForCurrentPanel()
 {
     CBitmap* bitmap;
-    if (activePanel_ == kPanelGeneral)
+    if (activePanel_ == kPanelGeneral || activePanel_ == kPanelInfo)
         bitmap = backgroundBitmap_;
     else
         bitmap = defaultBackgroundBitmap_;

@@ -19,7 +19,7 @@ namespace gui {
     const CColor kColorOrange { CColor(0xfd, 0x98, 0x00, 0xff) };
 
     const CColor kColorControlsScroller { CColor(0x00, 0x00, 0x00, 0x80) };
-    const CColor kColorMeterDanger { CColor(0x00, 0xaa, 0x11) };
-    const CColor kColorMeterNormal { CColor(0xaa, 0x00, 0x00) };
+    const CColor kColorMeterDanger { CColor(0xaa, 0x00, 0x00) };
+    const CColor kColorMeterNormal { CColor(0x00, 0xaa, 0x11) };
     const CColor kColorTooltipBackground { CColor(0xff, 0xff, 0xd2, 0xff) };
 }

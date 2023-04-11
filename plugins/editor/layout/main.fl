@@ -3,16 +3,16 @@ version 1.0304
 header_name {.h}
 code_name {.cxx}
 widget_class mainView {open
-  xywh {624 612 800 475} type Double
+  xywh {624 564 775 515} type Double
   class LogicalGroup visible
 } {
   Fl_Box imageContainer_ {
-    image {../resources/background.png} xywh {0 110 800 300}
+    image {../resources/background.png} xywh {0 110 775 335}
     class Background
   }
   Fl_Group {} {
     comment {palette=invertedPalette} open
-    xywh {0 0 814 110}
+    xywh {0 0 775 110}
     class LogicalGroup
   } {
     Fl_Group {} {
@@ -45,28 +45,28 @@ widget_class mainView {open
         class HomeButton
       }
     }
-    Fl_Group {} {
-      xywh {185 5 390 100} box ROUNDED_BOX
+    Fl_Group {} {open
+      xywh {185 5 365 100} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Box {} {
         label {Separator 1}
-        xywh {195 41 370 5} box BORDER_BOX labeltype NO_LABEL
+        xywh {195 40 345 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box {} {
         label {Separator 2}
-        xywh {195 73 370 5} box BORDER_BOX labeltype NO_LABEL
+        xywh {195 75 345 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box sfzFileLabel_ {
         label {DefaultInstrument.sfz}
         comment {tag=kTagLoadSfzFile}
-        xywh {195 13 320 30} labelsize 20 align 20
+        xywh {195 10 270 30} labelsize 20 align 20
         class ClickableLabel
       }
       Fl_Box keyswitchLabel_ {
-        xywh {265 45 310 35} labelsize 20 align 20
+        xywh {255 45 285 30} labelsize 20 align 20
         class Label
       }
       Fl_Box keyswitchBadge_ {
@@ -75,59 +75,59 @@ widget_class mainView {open
       }
       Fl_Box keyswitchInactiveLabel_ {
         label {No key switch}
-        xywh {195 45 360 30} labelsize 20 align 20 hide
+        xywh {195 45 345 30} labelsize 20 align 20 hide
         class InactiveLabel
       }
       Fl_Box {} {
         label {Voices:}
-        xywh {195 78 60 25} labelsize 14 align 24
+        xywh {195 78 60 25} align 24
         class Label
       }
       Fl_Button {} {
         comment {tag=kTagPreviousSfzFile}
-        xywh {488 18 25 25} labelsize 24
+        xywh {465 15 25 25} labelsize 24
         class PreviousFileButton
       }
       Fl_Button {} {
         comment {tag=kTagNextSfzFile}
-        xywh {513 18 25 25} labelsize 24
+        xywh {490 15 25 25} labelsize 24
         class NextFileButton
       }
       Fl_Button fileOperationsMenu_ {
         comment {tag=kTagFileOperations}
-        xywh {538 18 25 25} labelsize 24
+        xywh {515 15 25 25} labelsize 24
         class ChevronDropDown
       }
       Fl_Box infoVoicesLabel_ {
-        xywh {260 78 40 25} labelsize 14 align 16
+        xywh {255 78 40 25} align 16
         class Label
       }
       Fl_Box {} {
         label {Max:}
-        xywh {322 78 40 25} labelsize 14 align 24
+        xywh {315 78 40 25} align 24
         class Label
       }
       Fl_Box numVoicesLabel_ {
-        xywh {378 78 35 25} labelsize 14 align 16
+        xywh {355 78 35 25} align 16
         class Label
       }
       Fl_Box {} {
         label {Memory:}
-        xywh {456 78 60 25} labelsize 14 align 24
+        xywh {430 78 60 25} align 24
         class Label
       }
       Fl_Box memoryLabel_ {
-        xywh {522 78 50 25} labelsize 14 align 16
+        xywh {490 78 50 25} align 16
         class Label
       }
       Fl_Button numVoicesSlider_ {
         comment {tag=kTagSetNumVoices}
-        xywh {420 82 20 20} labelsize 16
+        xywh {390 82 20 20} labelsize 16
         class ChevronValueDropDown
       }
     }
     Fl_Group {} {
-      xywh {580 5 215 100} box ROUNDED_BOX
+      xywh {555 5 215 100} box ROUNDED_BOX
       class RoundedGroup
     } {
       Fl_Dial {} {
@@ -136,339 +136,329 @@ widget_class mainView {open
       }
       Fl_Box {} {
         label Center
-        xywh {582 70 60 5} labelsize 14 hide
+        xywh {582 70 60 5} hide
         class ValueLabel
       }
       Fl_Box volumeCCKnob_ {
         label Volume
         comment {tag=kTagSetCCVolume}
-        xywh {586 10 70 90} box BORDER_BOX labelsize 14 align 17
+        xywh {560 10 70 90} box BORDER_BOX align 17
         class KnobCCBox
       }
       Fl_Box panCCKnob_ {
         label Pan
         comment {tag=kTagSetCCPan}
-        xywh {663 10 70 90} box BORDER_BOX labelsize 14 align 17
+        xywh {635 10 70 90} box BORDER_BOX align 17
         class KnobCCBox
       }
       Fl_Box {meters_[0]} {
-        xywh {739 10 23 90} box BORDER_BOX
+        xywh {710 10 23 90} box BORDER_BOX
         class VMeter
       }
       Fl_Box {meters_[1]} {
-        xywh {763 10 23 90} box BORDER_BOX
+        xywh {740 10 23 90} box BORDER_BOX
         class VMeter
       }
     }
   }
   Fl_Group {subPanels_[kPanelInfo]} {
-    xywh {5 110 790 300} hide
+    xywh {0 110 775 335} hide
     class LogicalGroup
   } {
     Fl_Group {} {
-      xywh {5 110 790 300} box ROUNDED_BOX
-      class RoundedGroup
+      xywh {0 110 775 335} box BORDER_BOX
+      class SquaredTransparentGroup
     } {
       Fl_Box {} {
         label {Curves:}
         xywh {20 120 60 25} align 20
-        class Label
+        class InfoLabel
       }
       Fl_Box {} {
         label {Masters:}
         xywh {20 145 60 25} align 20
-        class Label
+        class InfoLabel
       }
       Fl_Box {} {
         label {Groups:}
         xywh {20 170 60 25} align 20
-        class Label
+        class InfoLabel
       }
       Fl_Box {} {
         label {Regions:}
         xywh {20 195 60 25} align 20
-        class Label
+        class InfoLabel
       }
       Fl_Box {} {
         label {Samples:}
         xywh {20 220 60 25} align 20
-        class Label
+        class InfoLabel
       }
       Fl_Box infoCurvesLabel_ {
         label 0
         xywh {120 120 40 25} align 16
-        class Label
+        class InfoLabel
       }
       Fl_Box infoMastersLabel_ {
         label 0
         xywh {120 145 40 25} align 16
-        class Label
+        class InfoLabel
       }
       Fl_Box infoGroupsLabel_ {
         label 0
         xywh {120 170 40 25} align 16
-        class Label
+        class InfoLabel
       }
       Fl_Box infoRegionsLabel_ {
         label 0
         xywh {120 195 40 25} align 16
-        class Label
+        class InfoLabel
       }
       Fl_Box infoSamplesLabel_ {
         label 0
         xywh {120 220 40 25} align 16
-        class Label
+        class InfoLabel
       }
     }
   }
   Fl_Group {subPanels_[kPanelControls]} {
-    xywh {5 110 790 300} hide
+    xywh {0 110 775 335} hide
     class LogicalGroup
   } {
-    Fl_Group {} {
-      xywh {5 110 790 300} box ROUNDED_BOX
-      class RoundedGroup
-    } {
-      Fl_Group controlsPanel_ {
-        xywh {5 110 790 300} box THIN_DOWN_FRAME labelsize 14
-        class ControlsPanel
-      } {}
-    }
+    Fl_Group controlsPanel_ {
+      xywh {0 110 775 335} box BORDER_BOX
+      class ControlsPanel
+    } {}
   }
   Fl_Group {subPanels_[kPanelSettings]} {
-    xywh {0 110 825 360}
+    xywh {0 110 775 335}
     class LogicalGroup
   } {
     Fl_Group {} {open
-      xywh {5 110 790 300} box ROUNDED_BOX
-      class RoundedGroup
+      xywh {0 110 775 335} box BORDER_BOX
+      class SquaredGroup
     } {
       Fl_Spinner oversamplingSlider_ {
         comment {tag=kTagSetOversampling}
-        xywh {175 195 70 25} labelsize 14 textsize 14
+        xywh {180 195 70 25}
         class ValueMenu
       }
       Fl_Box {} {
         label Oversampling
-        xywh {20 195 85 25} labelsize 14 align 20
+        xywh {10 195 85 25} align 20
         class Label
       }
       Fl_Box {} {
         label {Preload size}
-        xywh {20 170 75 25} labelsize 14 align 20
+        xywh {10 170 75 25} align 20
         class Label
       }
       Fl_Spinner preloadSizeSlider_ {
         comment {tag=kTagSetPreloadSize}
-        xywh {175 170 70 25} labelsize 14 textsize 14
+        xywh {180 170 70 25}
         class ValueMenu
       }
       Fl_Spinner sampleQualitySlider_ {
         comment {tag=kTagSetSampleQuality}
-        xywh {435 145 80 25} labelsize 14 textsize 14
+        xywh {430 145 80 25}
         class ValueMenu
       }
       Fl_Box {} {
         label Sample
-        xywh {290 145 50 25} labelsize 14 align 20
+        xywh {270 145 50 25} align 20
         class Label
       }
       Fl_Box {} {
         label Oscillator
-        xywh {290 195 60 25} labelsize 14 align 20
+        xywh {270 195 60 25} align 20
         class Label
       }
       Fl_Spinner oscillatorQualitySlider_ {
         comment {tag=kTagSetOscillatorQuality}
-        xywh {435 195 80 25} labelsize 14 textsize 14
+        xywh {430 195 80 25}
         class ValueMenu
       }
       Fl_Spinner themeMenu_ {
         comment {tag=kTagThemeMenu}
-        xywh {680 145 100 25} labelsize 14 textsize 14
+        xywh {665 145 100 25}
         class OptionMenu
       }
       Fl_Box {} {
         label Theme
-        xywh {555 145 45 25} labelsize 14 align 20
+        xywh {525 145 45 25} align 20
         class Label
       }
       Fl_Box {} {
         label {User SFZ folder}
-        xywh {555 170 95 25} labelsize 14 align 20
+        xywh {525 170 95 25} align 20
         class Label
       }
       Fl_Button userFilesDirButton_ {
         label DefaultPath
         comment {tag=kTagChooseUserFilesDir}
-        xywh {680 170 100 25} labelsize 14
+        xywh {665 170 100 25}
         class ValueButton
       }
       Fl_Box {} {
         label {Root key}
-        xywh {555 285 60 25} labelsize 14 align 20
+        xywh {525 310 60 25} align 20
         class Label
       }
       Fl_Box {} {
         label Frequency
-        xywh {555 310 70 25} labelsize 14 align 20
+        xywh {525 335 70 25} align 20
         class Label
       }
       Fl_Dial stretchedTuningSlider_ {
         comment {tag=kTagSetStretchedTuning}
-        xywh {720 337 48 48} value 0.5
+        xywh {700 360 48 48} value 0.5
         class StyledKnob
       }
       Fl_Box {} {
         label Stretch
-        xywh {555 345 50 25} labelsize 14 align 20
+        xywh {525 370 50 25} align 20
         class Label
       }
       Fl_Box {} {
         label {Scala file}
-        xywh {555 260 60 25} labelsize 14 align 20
+        xywh {525 285 60 25} align 20
         class Label
       }
       Fl_Button scalaFileButton_ {
         label DefaultScale
         comment {tag=kTagLoadScalaFile}
-        xywh {655 260 100 25} labelsize 14
+        xywh {624 285 100 25}
         class ValueButton
       }
       Fl_Spinner scalaRootKeySlider_ {
         comment {tag=kTagSetScalaRootKey}
-        xywh {715 285 35 25} labelsize 14 textsize 14
+        xywh {685 310 35 25}
         class ValueMenu
       }
       Fl_Spinner scalaRootOctaveSlider_ {
         comment {tag=kTagSetScalaRootKey}
-        xywh {750 285 30 25} labelsize 14 textsize 14
+        xywh {720 310 30 25}
         class ValueMenu
       }
       Fl_Button scalaResetButton_ {
         comment {tag=kTagResetScalaFile}
-        xywh {755 260 25 25} labelsize 14
+        xywh {725 285 25 25}
         class ResetSomethingButton
       }
       Fl_Box {} {
-        label {... when freewheeling}
-        xywh {290 170 145 25} labelsize 14 align 20
+        label {when freewheeling}
+        xywh {270 170 145 25} align 20
         class Label
       }
       Fl_Spinner freewheelingSampleQualitySlider_ {
         comment {tag=kTagSetFreewheelingSampleQuality}
-        xywh {435 170 80 25} labelsize 14 textsize 14
+        xywh {430 170 80 25}
         class ValueMenu
       }
       Fl_Box {} {
         label {Sustain cancels release}
-        xywh {20 220 145 25} labelsize 14 align 20
+        xywh {10 220 145 25} align 20
         class Label
       }
       Fl_Check_Button sustainCancelsReleaseCheckbox_ {
         comment {tag=kTagSetSustainCancelsRelease}
-        xywh {200 220 25 25} down_box DOWN_BOX
+        xywh {180 220 25 25} down_box DOWN_BOX
         class Checkbox
       }
       Fl_Box sfizzVersionLabel_ {
         label SFIZZ_VERSION
-        xywh {20 145 225 20} labelsize 14
+        xywh {10 145 225 20}
         class Label
       }
       Fl_Box {} {
         label {Rendering quality}
-        xywh {290 115 110 25} labelsize 14 align 20
+        xywh {270 115 110 25} align 20
         class Label
       }
       Fl_Box {} {
         label {Separator 2}
-        xywh {20 135 225 5} box BORDER_BOX labeltype NO_LABEL
+        xywh {10 135 240 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box {} {
         label {Engine options}
-        xywh {20 115 95 25} labelsize 14 align 20
+        xywh {10 115 95 25} align 20
         class Label
       }
       Fl_Box {} {
-        label {Separator 2}
-        xywh {580 135 185 5} box BORDER_BOX labeltype NO_LABEL
-        class HLine
-      }
-      Fl_Box {} {
         label Other
-        xywh {555 115 40 25} labelsize 14 align 20
+        xywh {525 115 40 25} align 20
         class Label
       }
       Fl_Box {} {
         label Tuning
-        xywh {555 230 225 25} labelsize 14 align 20
+        xywh {525 255 225 25} align 20
         class Label
       }
       Fl_Box {} {
-        label {Separator 2}
-        xywh {290 135 225 5} box BORDER_BOX labeltype NO_LABEL
+        label {Separator Rendering}
+        xywh {270 135 239 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box {} {
-        label {Separator 2}
-        xywh {555 135 225 5} box BORDER_BOX labeltype NO_LABEL
+        label {Separator Other}
+        xywh {525 135 240 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Box {} {
-        label {Separator 2}
-        xywh {555 250 225 5} box BORDER_BOX labeltype NO_LABEL
+        label {Separator Tuning}
+        xywh {525 275 225 5} box BORDER_BOX labeltype NO_LABEL
         class HLine
       }
       Fl_Button tuningFrequencyDropdown_ {
         comment {tag=kTagSetTuningFrequency}
-        xywh {755 310 25 25} labelsize 24
+        xywh {725 335 25 25} labelsize 24
         class ChevronValueDropDown
       }
       Fl_Text_Editor tuningFrequencyEdit_ {
         comment {tag=kTagSetTuningFrequency}
-        xywh {695 310 60 25} labelsize 14
+        xywh {665 335 60 25}
         class TextEdit
       }
       Fl_Box {} {
-        label {... when freewheeling}
-        xywh {290 220 145 25} labelsize 14 align 20
+        label {when freewheeling}
+        xywh {270 220 145 25} align 20
         class Label
       }
       Fl_Spinner freewheelingOscillatorQualitySlider_ {
         comment {tag=kTagSetFreewheelingOscillatorQuality}
-        xywh {435 220 80 25} labelsize 14 textsize 14
+        xywh {430 220 80 25}
         class ValueMenu
       }
       Fl_Box {} {
         label Zoom
-        xywh {555 195 95 25} labelsize 12 align 20
+        xywh {525 195 95 25} align 20
         class Label
       }
       Fl_Spinner zoomMenu_ {
         comment {tag=kTagZoomMenu}
-        xywh {680 195 100 25} labelsize 12 textsize 12
+        xywh {665 195 100 25}
         class OptionMenu
       }
       Fl_Button defaultZoomButton_ {
         label {Set Default}
         comment {tag=kTagSetDefaultZoom}
-        xywh {680 220 100 25} labelsize 12
+        xywh {665 220 100 25}
         class ValueButton
       }
     }
   }
   Fl_Box piano_ {
-    xywh {0 410 800 70} labelsize 16
+    xywh {0 445 775 70} labelsize 16
     class Piano
   }
   Fl_Group {subPanels_[kPanelGeneral]} {
-    xywh {5 110 790 300} hide
+    xywh {0 110 775 335} hide
     class LogicalGroup
   } {}
   Fl_Box lblHover_ {
-    comment {palette=invertedPalette} selected
-    xywh {5 105 170 25} labelsize 14 hide
+    comment {palette=invertedPalette}
+    xywh {5 105 170 25} hide
     class HoverBox
   }
 }

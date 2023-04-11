@@ -532,6 +532,14 @@ void SStyledKnob::setLineIndicatorColor(const CColor& color)
     invalid();
 }
 
+void SStyledKnob::setRotatorColor(const CColor &color)
+{
+    if (rotatorColor_ == color)
+        return;
+    rotatorColor_ = color;
+    invalid();
+}
+
 void SStyledKnob::setFont(CFontRef font)
 {
     if (font_ == font)
@@ -573,7 +581,18 @@ void SStyledKnob::draw(CDrawContext* dc)
     rect.centerInside(bounds);
     rect.extend(-lineWidth, -lineWidth);
 
+    CRect knobRect(rect);
+    knobRect.centerInside(bounds);
+    knobRect.extend(-lineWidth, -lineWidth);
+
     SharedPointer<CGraphicsPath> path;
+
+    // rotator
+    path = owned(dc->createGraphicsPath());
+    path->addEllipse(knobRect);
+
+    dc->setFillColor(rotatorColor_);
+    dc->drawGraphicsPath(path, CDrawContext::kPathFilled);
 
     // inactive track
     path = owned(dc->createGraphicsPath());
@@ -653,6 +672,8 @@ SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t ta
     label_->setBackColor(kColorTransparent);
     label_->setFrameColor(kColorTransparent);
     label_->setFontColor(kBlackCColor);
+    label_->setStyle(CParamDisplay::kRoundRectStyle);
+    label_->setRoundRectRadius(5.0);
 
     knob_->setLineIndicatorColor(kBlackCColor);
 
@@ -985,6 +1006,13 @@ void SControlsPanel::setNameLabelFontColor(CColor color)
     syncAllSlotStyles();
 }
 
+void SControlsPanel::setNameLabelBackColor(CColor color)
+{
+    slots_[0]->box->setNameLabelBackColor(color);
+    slots_[0]->box->setValueEditBackColor(color);
+    syncAllSlotStyles();
+}
+
 void SControlsPanel::setCCLabelFont(CFontRef font)
 {
     slots_[0]->box->setCCLabelFont(font);
@@ -1036,6 +1064,12 @@ void SControlsPanel::setKnobInactiveTrackColor(CColor color)
 void SControlsPanel::setKnobLineIndicatorColor(CColor color)
 {
     slots_[0]->box->setKnobLineIndicatorColor(color);
+    syncAllSlotStyles();
+}
+
+void SControlsPanel::setKnobRotatorColor(CColor color)
+{
+    slots_[0]->box->setKnobRotatorColor(color);
     syncAllSlotStyles();
 }
 
@@ -1152,6 +1186,7 @@ void SControlsPanel::syncSlotStyle(uint32_t index)
     if (cur != ref) {
         cur->setNameLabelFont(ref->getNameLabelFont());
         cur->setNameLabelFontColor(ref->getNameLabelFontColor());
+        cur->setNameLabelBackColor(ref->getNameLabelBackColor());
 
         cur->setValueEditFont(ref->getValueEditFont());
         cur->setValueEditFontColor(ref->getValueEditFontColor());
@@ -1165,6 +1200,7 @@ void SControlsPanel::syncSlotStyle(uint32_t index)
         cur->setKnobActiveTrackColor(ref->getKnobActiveTrackColor());
         cur->setKnobInactiveTrackColor(ref->getKnobInactiveTrackColor());
         cur->setKnobLineIndicatorColor(ref->getKnobLineIndicatorColor());
+        cur->setKnobRotatorColor(ref->getKnobRotatorColor());
         cur->setKnobFont(ref->getKnobFont());
         cur->setKnobFontColor(ref->getKnobFontColor());
     }
