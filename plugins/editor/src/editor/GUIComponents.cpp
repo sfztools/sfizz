@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "GUIDefs.h"
 #include "GUIComponents.h"
 #include "ColorHelpers.h"
 #include <complex>
@@ -17,11 +18,13 @@
 #include "utility/vstgui_after.h"
 #include "absl/strings/numbers.h"
 
+using namespace gui;
+
 ///
 SBoxContainer::SBoxContainer(const CRect& size)
     : CViewContainer(size)
 {
-    CViewContainer::setBackgroundColor(CColor(0, 0, 0, 0));
+    CViewContainer::setBackgroundColor(kColorTransparent);
 }
 
 void SBoxContainer::setCornerRadius(CCoord radius)
@@ -644,24 +647,24 @@ SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t ta
       menuEntry_(makeOwned<CMenuItem>("Use HDCC", tag)),
       menuListener_(owned(new MenuListener(*this)))
 {
-    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+    setBackgroundColor(kColorTransparent);
 
     label_->setText("Parameter");
-    label_->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-    label_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    label_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
+    label_->setBackColor(kColorTransparent);
+    label_->setFrameColor(kColorTransparent);
+    label_->setFontColor(kBlackCColor);
 
-    knob_->setLineIndicatorColor(CColor(0x00, 0x00, 0x00, 0xff));
+    knob_->setLineIndicatorColor(kBlackCColor);
 
     ccLabel_->setText("CC 1");
     ccLabel_->setStyle(CParamDisplay::kRoundRectStyle);
     ccLabel_->setRoundRectRadius(5.0);
-    ccLabel_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    ccLabel_->setFontColor(CColor(0xff, 0xff, 0xff));
+    ccLabel_->setFrameColor(kColorTransparent);
+    ccLabel_->setFontColor(kWhiteCColor);
 
-    valueEdit_->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-    valueEdit_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    valueEdit_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
+    valueEdit_->setBackColor(kColorTransparent);
+    valueEdit_->setFrameColor(kColorTransparent);
+    valueEdit_->setFontColor(kBlackCColor);
     valueEdit_->registerViewListener(this);
     setHDMode(false);
     valueEdit_->setVisible(false);
@@ -882,7 +885,7 @@ SControlsPanel::SControlsPanel(const CRect& size)
     // slot 0 always exists, keep the default style on the views there
     getOrCreateSlot(0);
 
-    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+    setBackgroundColor(kColorTransparent);
 
     setScrollbarWidth(10.0);
 
@@ -1055,9 +1058,9 @@ void SControlsPanel::recalculateSubViews()
     // maybe the operation just created the scroll bar
     if (CScrollbar* vsb = getVerticalScrollbar()) {
         // update scrollbar style
-        vsb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        vsb->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
-        vsb->setScrollerColor(CColor(0x00, 0x00, 0x00, 0x80));
+        vsb->setFrameColor(kColorTransparent);
+        vsb->setBackgroundColor(kColorTransparent);
+        vsb->setScrollerColor(kColorControlsScroller);
     }
 }
 
