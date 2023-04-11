@@ -908,11 +908,20 @@ void Editor::Impl::createFrameContents()
         auto createHoverBox = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+#if 0
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setFontColor(palette->valueText);
                 lbl->setBackColor(palette->valueBackground);
                 lbl->setFrameColor(palette->valueText);
             });
+#else
+            // XP-style tooltips: Theme-based tooltips are nearly unreadable
+            lbl->setFontColor(kBlackCColor);
+            lbl->setBackColor(kColorTooltipBackground);
+            lbl->setFrameColor(kBlackCColor);
+            lbl->setStyle(CParamDisplay::kRoundRectStyle);
+            lbl->setRoundRectRadius(5.0);
+#endif
             lbl->setHoriAlign(align);
             lbl->setFont(font);
             lbl->setAutosizeFlags(kAutosizeAll);
