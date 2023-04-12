@@ -180,6 +180,7 @@ struct Editor::Impl : EditorController::Receiver,
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
+    SharedPointer<CBitmap> controlsBitmap_;
 
     CTextLabel* sfizzVersionLabel_ = nullptr;
 
@@ -258,6 +259,7 @@ struct Editor::Impl : EditorController::Receiver,
     void updateSWLastCurrent(int sw);
     void updateSWLastLabel(unsigned sw, const char* label);
     void updateBackgroundImage(const char* filepath);
+    void updateControlsImage(const char* filepath);
     void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
@@ -576,6 +578,12 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateBackgroundImage(value.c_str());
         }
         break;
+    case EditId::ControlsImage:
+        {
+            const std::string& value = v.to_string();
+            updateControlsImage(value.c_str());
+        }
+        break;
     case EditId::PluginOutputs:
         {
             const int value = static_cast<int>(v.to_float());
@@ -728,6 +736,7 @@ void Editor::Impl::createFrameContents()
 
     defaultBackgroundBitmap_ = background;
     backgroundBitmap_ = background;
+    controlsBitmap_ = nullptr;
 
     {
         theme = new Theme;
@@ -764,7 +773,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createSquaredTransparentGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             auto* box =  new CViewContainer(bounds);
-            box->setBackgroundColor(kColorSemiTransparent);
+            box->setBackgroundColor(kColorInfoTransparency);
             return box;
         };
 #if 0
@@ -1082,10 +1091,10 @@ void Editor::Impl::createFrameContents()
             panel->setKnobFont(font);
             panel->setKnobFontColor(kWhiteCColor);
             panel->setKnobLineIndicatorColor(kWhiteCColor);
-            panel->setKnobRotatorColor(kColorSemiTransparent);
+            panel->setKnobRotatorColor(kColorControlsTransparency);
             panel->setNameLabelFont(font);
             panel->setNameLabelFontColor(kWhiteCColor);
-            panel->setNameLabelBackColor(kColorSemiTransparent);
+            panel->setNameLabelBackColor(kColorControlsTransparency);
             OnThemeChanged.push_back([panel, palette]() {
                 panel->setValueEditFontColor(palette->knobText);
                 auto shadingColor = palette->knobText;
@@ -1955,6 +1964,17 @@ void Editor::Impl::updateBackgroundImage(const char* filepath)
     applyBackgroundForCurrentPanel();
 }
 
+void Editor::Impl::updateControlsImage(const char* filepath)
+{
+    controlsBitmap_ = loadAnyFormatImage(filepath);
+
+    if (!controlsBitmap_) {
+        return;
+    }
+
+    applyBackgroundForCurrentPanel();
+}
+
 void Editor::Impl::setupCurrentPanel()
 {
     for (unsigned i = 0; i < kNumPanels; ++i) {
@@ -1968,10 +1988,19 @@ void Editor::Impl::setupCurrentPanel()
 void Editor::Impl::applyBackgroundForCurrentPanel()
 {
     CBitmap* bitmap;
-    if (activePanel_ == kPanelGeneral || activePanel_ == kPanelInfo)
+    imageContainer_->setBackgroundColor(theme_->frameBackground);
+
+    if (activePanel_ == kPanelGeneral || activePanel_ == kPanelInfo) {
         bitmap = backgroundBitmap_;
-    else
-        bitmap = defaultBackgroundBitmap_;
+    } else if (activePanel_ == kPanelControls) {
+        bitmap = controlsBitmap_;
+        if (!controlsBitmap_) {
+            imageContainer_->setBackground(nullptr);
+            return;
+        }
+    } else {
+        return;
+    }
 
     downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
 

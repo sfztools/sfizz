@@ -14,13 +14,14 @@ using VSTGUI::CColor;
 
 namespace gui {
 
-    extern const CColor kColorSemiTransparent;
     extern const CColor kColorTransparent;
     extern const CColor kColorTransparentDark;
 
     extern const CColor kColorOrange;
 
-    extern const CColor kColorControlsScroller;
+    extern const CColor kColorControlsScrollerTransparency;
+    extern const CColor kColorControlsTransparency;
+    extern const CColor kColorInfoTransparency;
     extern const CColor kColorMeterDanger;
     extern const CColor kColorMeterNormal;
     extern const CColor kColorTooltipBackground;

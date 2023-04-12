@@ -125,6 +125,10 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             client.receive<'s'>(delay, path, impl.image_.c_str());
         } break;
 
+        MATCH("/image_controls", "") {
+            client.receive<'s'>(delay, path, impl.image_controls_.c_str());
+        } break;
+
         //----------------------------------------------------------------------
 
         MATCH("/sw/last/slots", "") {

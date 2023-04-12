@@ -24,6 +24,7 @@ struct InstrumentDescription {
     uint32_t numSamples {};
     std::string rootPath;
     std::string image;
+    std::string image_controls;
     BitArray<128> keyUsed {};
     BitArray<128> keyswitchUsed {};
     BitArray<128> sustainOrSostenuto {};

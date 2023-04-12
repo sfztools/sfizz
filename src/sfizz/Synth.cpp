@@ -429,6 +429,9 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("image"):
             image_ = absl::StrCat(defaultPath_, absl::StrReplaceAll(trim(member.value), { { "\\", "/" } }));
             break;
+        case hash("image_controls"):
+            image_controls_ = absl::StrCat(defaultPath_, absl::StrReplaceAll(trim(member.value), { { "\\", "/" } }));
+            break;
         case hash("note_offset"):
             noteOffset_ = member.read(Default::noteOffset);
             break;

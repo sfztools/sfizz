@@ -1094,7 +1094,7 @@ void SControlsPanel::recalculateSubViews()
         // update scrollbar style
         vsb->setFrameColor(kColorTransparent);
         vsb->setBackgroundColor(kColorTransparent);
-        vsb->setScrollerColor(kColorControlsScroller);
+        vsb->setScrollerColor(kColorControlsScrollerTransparency);
     }
 }
 

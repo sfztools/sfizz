@@ -560,7 +560,9 @@ sfizz_ui_update_description(sfizz_ui_t *self, const InstrumentDescription& desc)
 
     const fs::path rootPath = fs::u8path(desc.rootPath);
     const fs::path imagePath = rootPath / fs::u8path(desc.image);
+    const fs::path imageCtrlPath = rootPath / fs::u8path(desc.image_controls);
     self->uiReceiveValue(EditId::BackgroundImage, imagePath.u8string());
+    self->uiReceiveValue(EditId::ControlsImage, imageCtrlPath.u8string());
 
     for (unsigned key = 0; key < 128; ++key) {
         bool keyUsed = desc.keyUsed.test(key);

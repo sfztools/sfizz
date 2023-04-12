@@ -22,7 +22,7 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
     : CViewContainer(bounds)
 {
     SharedPointer<CBitmap> logo = owned(new CBitmap("logo_orange.png"));
-    setBackgroundColor(kColorControlsScroller);
+    setBackgroundColor(kColorControlsScrollerTransparency);
 
     CView* aboutView = nullptr;
     {
