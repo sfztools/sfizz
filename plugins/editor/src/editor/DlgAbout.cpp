@@ -6,6 +6,7 @@
 
 #include "DlgAbout.h"
 #include "GUIComponents.h"
+#include "GUIDefs.h"
 #include "GitBuildId.h"
 #include "NativeHelpers.h"
 
@@ -15,23 +16,25 @@
 
 #include <absl/strings/str_cat.h>
 
+using namespace gui;
+
 SAboutDialog::SAboutDialog(const CRect& bounds)
     : CViewContainer(bounds)
 {
     SharedPointer<CBitmap> logo = owned(new CBitmap("logo_orange.png"));
-    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0xc0));
+    setBackgroundColor(kColorControlsScrollerTransparency);
 
     CView* aboutView = nullptr;
     {
         auto createaboutView = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
-            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+            container->setBackgroundColor(kColorTransparent);
             return container;
         };
 
         auto createLogo = [&logo](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
-            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+            container->setBackgroundColor(kColorTransparent);
             container->setBackground(logo);
             return container;
         };
@@ -40,9 +43,9 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             CMultiLineTextLabel* lbl = new CMultiLineTextLabel(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
-            lbl->setFontColor(CColor(0xff, 0xff, 0xff, 0xff));
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(kWhiteCColor);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             lbl->setHoriAlign(align);
 
             const char* version = SFIZZ_VERSION;
@@ -62,9 +65,9 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             CMultiLineTextLabel* lbl = new CMultiLineTextLabel(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
-            lbl->setFontColor(CColor(0xff, 0xff, 0xff, 0xff));
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(kWhiteCColor);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             lbl->setHoriAlign(align);
             lbl->setText(absl::StrCat(
                 u8"Maintainers: Paul Ferrand, Jean-Pierre Cimalando\n"
@@ -77,9 +80,9 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
         auto createHoverBox = [](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
-            lbl->setFontColor(CColor(0xfd, 0x98, 0x00, 0xff));
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(kColorOrange);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             lbl->setHoriAlign(align);
             lbl->setFont(font);
             return lbl;
@@ -89,9 +92,9 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             CMultiLineTextLabel* lbl = new CMultiLineTextLabel(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize, kBoldFace);
             lbl->setFont(font);
-            lbl->setFontColor(CColor(0xfd, 0x98, 0x00, 0xff));
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(kColorOrange);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             lbl->setHoriAlign(align);
             lbl->setText(label);
             return lbl;
@@ -101,9 +104,9 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             CMultiLineTextLabel* lbl = new CMultiLineTextLabel(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             lbl->setFont(font);
-            lbl->setFontColor(CColor(0xff, 0xff, 0xff, 0xff));
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFontColor(kWhiteCColor);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             lbl->setHoriAlign(align);
             lbl->setText(label);
             return lbl;
@@ -113,9 +116,9 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
             STextButton* btn = new STextButton(bounds, this, tag, glyph);
             btn->setFont(makeOwned<CFontDesc>("Sfizz Misc Icons", fontsize));
             btn->setTextColor(kWhiteCColor);
-            btn->setHighlightColor(CColor(0xfd, 0x98, 0x00, 0xff));
-            btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
+            btn->setHighlightColor(kColorOrange);
+            btn->setFrameColor(kColorTransparent);
+            btn->setFrameColorHighlighted(kColorTransparent);
             btn->setGradient(nullptr);
             btn->setGradientHighlighted(nullptr);
             return btn;

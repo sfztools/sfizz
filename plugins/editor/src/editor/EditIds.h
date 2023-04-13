@@ -54,6 +54,7 @@ enum class EditId : int {
     UIZoom,
     //
     BackgroundImage,
+    ControlsImage,
     //
     PluginFormat,
     PluginHost,

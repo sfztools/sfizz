@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "GUIDefs.h"
 #include "GUIComponents.h"
 #include "ColorHelpers.h"
 #include <complex>
@@ -17,11 +18,13 @@
 #include "utility/vstgui_after.h"
 #include "absl/strings/numbers.h"
 
+using namespace gui;
+
 ///
 SBoxContainer::SBoxContainer(const CRect& size)
     : CViewContainer(size)
 {
-    CViewContainer::setBackgroundColor(CColor(0, 0, 0, 0));
+    CViewContainer::setBackgroundColor(kColorTransparent);
 }
 
 void SBoxContainer::setCornerRadius(CCoord radius)
@@ -529,6 +532,14 @@ void SStyledKnob::setLineIndicatorColor(const CColor& color)
     invalid();
 }
 
+void SStyledKnob::setRotatorColor(const CColor &color)
+{
+    if (rotatorColor_ == color)
+        return;
+    rotatorColor_ = color;
+    invalid();
+}
+
 void SStyledKnob::setFont(CFontRef font)
 {
     if (font_ == font)
@@ -570,7 +581,18 @@ void SStyledKnob::draw(CDrawContext* dc)
     rect.centerInside(bounds);
     rect.extend(-lineWidth, -lineWidth);
 
+    CRect knobRect(rect);
+    knobRect.centerInside(bounds);
+    knobRect.extend(-lineWidth, -lineWidth);
+
     SharedPointer<CGraphicsPath> path;
+
+    // rotator
+    path = owned(dc->createGraphicsPath());
+    path->addEllipse(knobRect);
+
+    dc->setFillColor(rotatorColor_);
+    dc->drawGraphicsPath(path, CDrawContext::kPathFilled);
 
     // inactive track
     path = owned(dc->createGraphicsPath());
@@ -644,24 +666,26 @@ SKnobCCBox::SKnobCCBox(const CRect& size, IControlListener* listener, int32_t ta
       menuEntry_(makeOwned<CMenuItem>("Use HDCC", tag)),
       menuListener_(owned(new MenuListener(*this)))
 {
-    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+    setBackgroundColor(kColorTransparent);
 
     label_->setText("Parameter");
-    label_->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-    label_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    label_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
+    label_->setBackColor(kColorTransparent);
+    label_->setFrameColor(kColorTransparent);
+    label_->setFontColor(kBlackCColor);
+    label_->setStyle(CParamDisplay::kRoundRectStyle);
+    label_->setRoundRectRadius(5.0);
 
-    knob_->setLineIndicatorColor(CColor(0x00, 0x00, 0x00, 0xff));
+    knob_->setLineIndicatorColor(kBlackCColor);
 
     ccLabel_->setText("CC 1");
     ccLabel_->setStyle(CParamDisplay::kRoundRectStyle);
     ccLabel_->setRoundRectRadius(5.0);
-    ccLabel_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    ccLabel_->setFontColor(CColor(0xff, 0xff, 0xff));
+    ccLabel_->setFrameColor(kColorTransparent);
+    ccLabel_->setFontColor(kWhiteCColor);
 
-    valueEdit_->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
-    valueEdit_->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    valueEdit_->setFontColor(CColor(0x00, 0x00, 0x00, 0xff));
+    valueEdit_->setBackColor(kColorTransparent);
+    valueEdit_->setFrameColor(kColorTransparent);
+    valueEdit_->setFontColor(kBlackCColor);
     valueEdit_->registerViewListener(this);
     setHDMode(false);
     valueEdit_->setVisible(false);
@@ -882,7 +906,7 @@ SControlsPanel::SControlsPanel(const CRect& size)
     // slot 0 always exists, keep the default style on the views there
     getOrCreateSlot(0);
 
-    setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+    setBackgroundColor(kColorTransparent);
 
     setScrollbarWidth(10.0);
 
@@ -982,6 +1006,13 @@ void SControlsPanel::setNameLabelFontColor(CColor color)
     syncAllSlotStyles();
 }
 
+void SControlsPanel::setNameLabelBackColor(CColor color)
+{
+    slots_[0]->box->setNameLabelBackColor(color);
+    slots_[0]->box->setValueEditBackColor(color);
+    syncAllSlotStyles();
+}
+
 void SControlsPanel::setCCLabelFont(CFontRef font)
 {
     slots_[0]->box->setCCLabelFont(font);
@@ -1036,6 +1067,12 @@ void SControlsPanel::setKnobLineIndicatorColor(CColor color)
     syncAllSlotStyles();
 }
 
+void SControlsPanel::setKnobRotatorColor(CColor color)
+{
+    slots_[0]->box->setKnobRotatorColor(color);
+    syncAllSlotStyles();
+}
+
 void SControlsPanel::setKnobFont(CFontRef font)
 {
     slots_[0]->box->setKnobFont(font);
@@ -1055,9 +1092,9 @@ void SControlsPanel::recalculateSubViews()
     // maybe the operation just created the scroll bar
     if (CScrollbar* vsb = getVerticalScrollbar()) {
         // update scrollbar style
-        vsb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-        vsb->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
-        vsb->setScrollerColor(CColor(0x00, 0x00, 0x00, 0x80));
+        vsb->setFrameColor(kColorTransparent);
+        vsb->setBackgroundColor(kColorTransparent);
+        vsb->setScrollerColor(kColorControlsScrollerTransparency);
     }
 }
 
@@ -1149,6 +1186,7 @@ void SControlsPanel::syncSlotStyle(uint32_t index)
     if (cur != ref) {
         cur->setNameLabelFont(ref->getNameLabelFont());
         cur->setNameLabelFontColor(ref->getNameLabelFontColor());
+        cur->setNameLabelBackColor(ref->getNameLabelBackColor());
 
         cur->setValueEditFont(ref->getValueEditFont());
         cur->setValueEditFontColor(ref->getValueEditFontColor());
@@ -1162,6 +1200,7 @@ void SControlsPanel::syncSlotStyle(uint32_t index)
         cur->setKnobActiveTrackColor(ref->getKnobActiveTrackColor());
         cur->setKnobInactiveTrackColor(ref->getKnobInactiveTrackColor());
         cur->setKnobLineIndicatorColor(ref->getKnobLineIndicatorColor());
+        cur->setKnobRotatorColor(ref->getKnobRotatorColor());
         cur->setKnobFont(ref->getKnobFont());
         cur->setKnobFontColor(ref->getKnobFontColor());
     }

@@ -7,6 +7,7 @@
 #include "Editor.h"
 #include "EditorController.h"
 #include "EditIds.h"
+#include "GUIDefs.h"
 #include "GUIComponents.h"
 #include "GUIHelpers.h"
 #include "GUIPiano.h"
@@ -44,9 +45,10 @@
 #include "utility/vstgui_after.h"
 
 using namespace VSTGUI;
+using namespace gui;
 
-const int Editor::viewWidth { 800 };
-const int Editor::viewHeight { 475 };
+const int Editor::viewWidth { 775 };
+const int Editor::viewHeight { 515 };
 
 struct Editor::Impl : EditorController::Receiver,
                       public IControlListener,
@@ -178,6 +180,7 @@ struct Editor::Impl : EditorController::Receiver,
 
     SharedPointer<CBitmap> backgroundBitmap_;
     SharedPointer<CBitmap> defaultBackgroundBitmap_;
+    SharedPointer<CBitmap> controlsBitmap_;
 
     CTextLabel* sfizzVersionLabel_ = nullptr;
 
@@ -256,6 +259,7 @@ struct Editor::Impl : EditorController::Receiver,
     void updateSWLastCurrent(int sw);
     void updateSWLastLabel(unsigned sw, const char* label);
     void updateBackgroundImage(const char* filepath);
+    void updateControlsImage(const char* filepath);
     void updateMemoryUsed(uint64_t mem);
 
     // edition of CC by UI
@@ -366,9 +370,9 @@ void Editor::close()
 SLevelMeter* Editor::Impl::createVMeter(const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
     SLevelMeter* meter = new SLevelMeter(bounds);
     Palette* palette = &theme_->invertedPalette;
-    meter->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-    meter->setNormalFillColor(CColor(0x00, 0xaa, 0x11));
-    meter->setDangerFillColor(CColor(0xaa, 0x00, 0x00));
+    meter->setFrameColor(kColorTransparent);
+    meter->setNormalFillColor(kColorMeterNormal);
+    meter->setDangerFillColor(kColorMeterDanger);
     meter->setBackColor(palette->knobInactiveTrack);
     return meter;
 };
@@ -574,6 +578,12 @@ void Editor::Impl::uiReceiveValue(EditId id, const EditValue& v)
             updateBackgroundImage(value.c_str());
         }
         break;
+    case EditId::ControlsImage:
+        {
+            const std::string& value = v.to_string();
+            updateControlsImage(value.c_str());
+        }
+        break;
     case EditId::PluginOutputs:
         {
             const int value = static_cast<int>(v.to_float());
@@ -726,6 +736,7 @@ void Editor::Impl::createFrameContents()
 
     defaultBackgroundBitmap_ = background;
     backgroundBitmap_ = background;
+    controlsBitmap_ = nullptr;
 
     {
         theme = new Theme;
@@ -742,7 +753,7 @@ void Editor::Impl::createFrameContents()
 
         auto createLogicalGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
             CViewContainer* container = new CViewContainer(bounds);
-            container->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0x00));
+            container->setBackgroundColor(kColorTransparent);
             return container;
         };
         auto createRoundedGroup = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
@@ -753,14 +764,19 @@ void Editor::Impl::createFrameContents()
             });
             return box;
         };
-#if 0
         auto createSquaredGroup = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
-            auto* box =  new SBoxContainer(bounds);
+            auto* box =  new CViewContainer(bounds);
             OnThemeChanged.push_back([box, palette]() {
                 box->setBackgroundColor(palette->boxBackground);
             });
             return box;
         };
+        auto createSquaredTransparentGroup = [](const CRect& bounds, int, const char*, CHoriTxtAlign, int) {
+            auto* box =  new CViewContainer(bounds);
+            box->setBackgroundColor(kColorInfoTransparency);
+            return box;
+        };
+#if 0
         auto createTitleGroup = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign, int fontsize) {
             auto* box =  new STitleContainer(bounds, label);
             box->setCornerRadius(10.0);
@@ -783,8 +799,8 @@ void Editor::Impl::createFrameContents()
         };
         auto createLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setFontColor(palette->text);
             });
@@ -793,10 +809,20 @@ void Editor::Impl::createFrameContents()
             lbl->setFont(font);
             return lbl;
         };
+         auto createInfoLabel = [](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
+            CTextLabel* lbl = new CTextLabel(bounds, label);
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
+            lbl->setFontColor(kWhiteCColor);
+            lbl->setHoriAlign(align);
+            auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+            lbl->setFont(font);
+            return lbl;
+         };
         auto createInactiveLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setFontColor(palette->inactiveText);
             });
@@ -816,8 +842,8 @@ void Editor::Impl::createFrameContents()
         };
         auto createValueLabel = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            lbl->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFrameColor(kColorTransparent);
+            lbl->setBackColor(kColorTransparent);
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setFontColor(palette->text);
             });
@@ -828,7 +854,7 @@ void Editor::Impl::createFrameContents()
         };
         auto createBadge = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
-            lbl->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            lbl->setFrameColor(kColorTransparent);
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setBackColor(palette->valueBackground);
                 lbl->setFontColor(palette->valueText);
@@ -851,9 +877,9 @@ void Editor::Impl::createFrameContents()
                 button->setInactiveColor(palette->inactiveText);
                 button->setHighlightColor(palette->highlightedText);
             });
-            button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
-            SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, CColor(0x00, 0x00, 0x00, 0x00), CColor(0x00, 0x00, 0x00, 0x00)));
+            button->setFrameColor(kColorTransparent);
+            button->setFrameColorHighlighted(kColorTransparent);
+            SharedPointer<CGradient> gradient = owned(CGradient::create(0.0, 1.0, kColorTransparent, kColorTransparent));
             button->setGradient(gradient);
             button->setGradientHighlighted(gradient);
             return button;
@@ -871,8 +897,8 @@ void Editor::Impl::createFrameContents()
                 button->setGradient(gradient);
                 button->setGradientHighlighted(gradient);
             });
-            button->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            button->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
+            button->setFrameColor(kColorTransparent);
+            button->setFrameColorHighlighted(kColorTransparent);
             return button;
         };
         auto createValueMenu = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign align, int fontsize) {
@@ -884,7 +910,7 @@ void Editor::Impl::createFrameContents()
                 vm->setFontColor(palette->valueText);
                 vm->setBackColor(palette->valueBackground);
             });
-            vm->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            vm->setFrameColor(kColorTransparent);
             vm->setStyle(CParamDisplay::kRoundRectStyle);
             vm->setRoundRectRadius(5.0);
             return vm;
@@ -898,7 +924,7 @@ void Editor::Impl::createFrameContents()
                 cb->setFontColor(palette->valueText);
                 cb->setBackColor(palette->valueBackground);
             });
-            cb->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            cb->setFrameColor(kColorTransparent);
             cb->setStyle(CParamDisplay::kRoundRectStyle);
             cb->setRoundRectRadius(5.0);
             return cb;
@@ -906,11 +932,20 @@ void Editor::Impl::createFrameContents()
         auto createHoverBox = [this, &palette](const CRect& bounds, int, const char* label, CHoriTxtAlign align, int fontsize) {
             CTextLabel* lbl = new CTextLabel(bounds, label);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
+#if 0
             OnThemeChanged.push_back([lbl, palette]() {
                 lbl->setFontColor(palette->valueText);
                 lbl->setBackColor(palette->valueBackground);
                 lbl->setFrameColor(palette->valueText);
             });
+#else
+            // XP-style tooltips: Theme-based tooltips are nearly unreadable
+            lbl->setFontColor(kBlackCColor);
+            lbl->setBackColor(kColorTooltipBackground);
+            lbl->setFrameColor(kBlackCColor);
+            lbl->setStyle(CParamDisplay::kRoundRectStyle);
+            lbl->setRoundRectRadius(5.0);
+#endif
             lbl->setHoriAlign(align);
             lbl->setFont(font);
             lbl->setAutosizeFlags(kAutosizeAll);
@@ -923,8 +958,8 @@ void Editor::Impl::createFrameContents()
                 btn->setTextColor(palette->icon);
                 btn->setHighlightColor(palette->iconHighlight);
             });
-            btn->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            btn->setFrameColorHighlighted(CColor(0x00, 0x00, 0x00, 0x00));
+            btn->setFrameColor(kColorTransparent);
+            btn->setFrameColorHighlighted(kColorTransparent);
             btn->setGradient(nullptr);
             btn->setGradientHighlighted(nullptr);
             return btn;
@@ -990,8 +1025,8 @@ void Editor::Impl::createFrameContents()
                 menu->setFontColor(palette->icon);
                 menu->setHoverColor(palette->iconHighlight);
             });
-            menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            menu->setFrameColor(kColorTransparent);
+            menu->setBackColor(kColorTransparent);
             return menu;
         };
         auto createChevronValueDropDown = [this, &palette](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int fontsize) {
@@ -1005,8 +1040,8 @@ void Editor::Impl::createFrameContents()
                 menu->setFontColor(palette->icon);
                 menu->setHoverColor(palette->iconHighlight);
             });
-            menu->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
-            menu->setBackColor(CColor(0x00, 0x00, 0x00, 0x00));
+            menu->setFrameColor(kColorTransparent);
+            menu->setBackColor(kColorTransparent);
             return menu;
         };
         auto createKnob48 = [this, &knob48](const CRect& bounds, int tag, const char*, CHoriTxtAlign, int) {
@@ -1052,19 +1087,21 @@ void Editor::Impl::createFrameContents()
         auto createControlsPanel = [this, &palette](const CRect& bounds, int, const char*, CHoriTxtAlign, int fontsize) {
             auto* panel = new SControlsPanel(bounds);
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
-            panel->setNameLabelFont(font);
-            panel->setKnobFont(font);
             panel->setCCLabelFont(font);
+            panel->setKnobFont(font);
+            panel->setKnobFontColor(kWhiteCColor);
+            panel->setKnobLineIndicatorColor(kWhiteCColor);
+            panel->setKnobRotatorColor(kColorControlsTransparency);
+            panel->setNameLabelFont(font);
+            panel->setNameLabelFontColor(kWhiteCColor);
+            panel->setNameLabelBackColor(kColorControlsTransparency);
             OnThemeChanged.push_back([panel, palette]() {
-                panel->setNameLabelFontColor(palette->knobText);
                 panel->setValueEditFontColor(palette->knobText);
                 auto shadingColor = palette->knobText;
                 shadingColor.alpha = 70;
                 panel->setShadingRectangleColor(shadingColor);
                 panel->setCCLabelFontColor(palette->knobLabelText);
                 panel->setCCLabelBackColor(palette->knobLabelBackground);
-                panel->setKnobFontColor(palette->knobText);
-                panel->setKnobLineIndicatorColor(palette->knobLineIndicator);
                 panel->setKnobActiveTrackColor(palette->knobActiveTrack);
                 panel->setKnobInactiveTrackColor(palette->knobInactiveTrack);
             });
@@ -1081,7 +1118,7 @@ void Editor::Impl::createFrameContents()
             auto font = makeOwned<CFontDesc>("Roboto", fontsize);
             edit->setFont(font);
             edit->setHoriAlign(align);
-            edit->setFrameColor(CColor(0x00, 0x00, 0x00, 0x00));
+            edit->setFrameColor(kColorTransparent);
             edit->setStyle(CParamDisplay::kRoundRectStyle);
             edit->setRoundRectRadius(5.0);
             OnThemeChanged.push_back([edit, palette]() {
@@ -1112,7 +1149,7 @@ void Editor::Impl::createFrameContents()
 
             CViewContainer* box = new CViewContainer(bounds);
             mainView->addView(box);
-            box->setBackgroundColor(CColor(0x00, 0x00, 0x00, 0xc0));
+            box->setBackgroundColor(kColorTransparentDark);
 
             CRect textSize = CRect(0, 0, 400, 80).centerInside(bounds);
             CMultiLineTextLabel* textLabel = new CMultiLineTextLabel(textSize);
@@ -1927,6 +1964,17 @@ void Editor::Impl::updateBackgroundImage(const char* filepath)
     applyBackgroundForCurrentPanel();
 }
 
+void Editor::Impl::updateControlsImage(const char* filepath)
+{
+    controlsBitmap_ = loadAnyFormatImage(filepath);
+
+    if (!controlsBitmap_) {
+        return;
+    }
+
+    applyBackgroundForCurrentPanel();
+}
+
 void Editor::Impl::setupCurrentPanel()
 {
     for (unsigned i = 0; i < kNumPanels; ++i) {
@@ -1940,10 +1988,19 @@ void Editor::Impl::setupCurrentPanel()
 void Editor::Impl::applyBackgroundForCurrentPanel()
 {
     CBitmap* bitmap;
-    if (activePanel_ == kPanelGeneral)
+    imageContainer_->setBackgroundColor(theme_->frameBackground);
+
+    if (activePanel_ == kPanelGeneral || activePanel_ == kPanelInfo) {
         bitmap = backgroundBitmap_;
-    else
-        bitmap = defaultBackgroundBitmap_;
+    } else if (activePanel_ == kPanelControls) {
+        bitmap = controlsBitmap_;
+        if (!controlsBitmap_) {
+            imageContainer_->setBackground(nullptr);
+            return;
+        }
+    } else {
+        return;
+    }
 
     downscaleToWidthAndHeight(bitmap, imageContainer_->getViewSize().getSize());
 

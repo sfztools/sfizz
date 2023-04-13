@@ -31,8 +31,12 @@ set(EDITOR_RESOURCES
     Fonts/Roboto-Regular.ttf
     Themes/Default/theme.xml
     Themes/Dark/theme.xml
-    PARENT_SCOPE)
-
+    PARENT_SCOPE
+)
+set(UI_RESOURCES
+    resources/Themes/Default/theme.xml
+    resources/Themes/Dark/theme.xml
+)
 function(copy_editor_resources TARGET SOURCE_DIR DESTINATION_DIR)
     set(_deps)
     foreach(res ${EDITOR_RESOURCES})
@@ -51,6 +55,7 @@ endfunction()
 
 set(UI_FILES layout/main.fl layout/about.fl)
 source_group("Editor UI" FILES ${UI_FILES})
+source_group("Editor Resources" FILES ${UI_RESOURCES})
 
 # editor
 add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
@@ -63,6 +68,8 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/EditorController.h
     src/editor/GUIComponents.h
     src/editor/GUIComponents.cpp
+    src/editor/GUIDefs.h
+    src/editor/GUIDefs.cpp
     src/editor/GUIHelpers.h
     src/editor/GUIHelpers.cpp
     src/editor/GUIPiano.h
@@ -83,7 +90,9 @@ add_library(sfizz_editor STATIC EXCLUDE_FROM_ALL
     src/editor/layout/about.hpp
     src/editor/utility/vstgui_after.h
     src/editor/utility/vstgui_before.h
-    ${UI_FILES})
+    ${UI_FILES}
+    ${UI_RESOURCES}
+)
 add_library(sfizz::editor ALIAS sfizz_editor)
 target_include_directories(sfizz_editor PUBLIC "src")
 target_link_libraries(sfizz_editor PUBLIC sfizz::messaging sfizz::plugins-common)

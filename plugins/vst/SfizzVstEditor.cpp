@@ -238,6 +238,9 @@ bool SfizzVstEditor::processUpdate(FUnknown* changedUnknown, int32 message)
         const fs::path imagePath = rootPath / fs::u8path(desc.image);
         uiReceiveValue(EditId::BackgroundImage, imagePath.u8string());
 
+        const fs::path ctrlImagePath = rootPath / fs::u8path(desc.image_controls);
+        uiReceiveValue(EditId::ControlsImage, ctrlImagePath.u8string());
+
         for (unsigned key = 0; key < 128; ++key) {
             bool keyUsed = desc.keyUsed.test(key);
             bool keyswitchUsed = desc.keyswitchUsed.test(key);

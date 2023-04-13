@@ -334,6 +334,7 @@ struct Synth::Impl final: public Parser::Listener {
     // Control opcodes
     std::string defaultPath_ { "" };
     std::string image_ { "" };
+    std::string image_controls_ { "" };
     int noteOffset_ { Default::noteOffset };
     int octaveOffset_ { Default::octaveOffset };
 
