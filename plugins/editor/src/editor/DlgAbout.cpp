@@ -15,7 +15,10 @@
 #include "utility/vstgui_after.h"
 
 #include <absl/strings/str_cat.h>
-
+#if 0
+#include <absl/time/clock.h>
+#include <absl/time/time.h>
+#endif
 using namespace gui;
 
 SAboutDialog::SAboutDialog(const CRect& bounds)
@@ -54,9 +57,15 @@ SAboutDialog::SAboutDialog(const CRect& bounds)
                 versionBuf = absl::StrCat(SFIZZ_VERSION ".", GitBuildId);
                 version = versionBuf.c_str();
             }
+#if 0
+            absl::TimeZone utc = absl::UTCTimeZone();
+            absl::Time time = absl::Now();
+            absl::CivilYear date = absl::ToCivilYear(time, utc);
+            // u8"Copyright 2019-", date.year(), u8" by SFZTools Team,\n"
+#endif
             lbl->setText(absl::StrCat(
                 u8"Version ", version, u8"\n"
-                u8"Copyright 2019-2021 by SFZTools Team,\n"
+                u8"Copyright 2019-2023 by SFZTools Team,\n"
                 u8"licensed under BSD 2-clause license."));
             return lbl;
         };
