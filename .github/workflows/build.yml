@@ -423,7 +423,7 @@ jobs:
       run: |
         sudo apt-get update && \
         sudo apt-get install \
-          python-pip
+          python3-pip
         sudo pip install git-archive-all
     - name: Archive source code
       shell: bash
