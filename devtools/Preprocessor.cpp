@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     std::unique_ptr<cxxopts::ParseResult> resultPtr;
     try {
         resultPtr = absl::make_unique<cxxopts::ParseResult>(options.parse(argc, argv));
-    } catch (cxxopts::OptionException& ex) {
+    } catch (cxxopts::exceptions::option_has_no_value& ex) {
         std::cerr << ex.what() << "\n";
         return 1;
     }
