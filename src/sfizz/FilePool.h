@@ -26,13 +26,11 @@
 #pragma once
 #include "Config.h"
 #include "Defaults.h"
-#include "RTSemaphore.h"
 #include "AudioBuffer.h"
 #include "AudioSpan.h"
 #include "FileId.h"
 #include "FileMetadata.h"
 #include "SIMDHelpers.h"
-#include "SpinMutex.h"
 #include "utility/Timing.h"
 #include "utility/LeakDetector.h"
 #include "utility/MemoryHelpers.h"
@@ -40,12 +38,8 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/types/optional.h>
 #include <absl/strings/string_view.h>
-#include <atomic_queue/atomic_queue.h>
 #include <chrono>
-#include <thread>
-#include <future>
 #include <memory>
-class ThreadPool;
 
 namespace sfz {
 using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
@@ -169,18 +163,7 @@ private:
  * as well as functions to request new file data and collect the file handles to
  * close after they are read.
  *
- * This object caches the file data that was already preloaded in case it is
- * asked again by a region using the same sample. In this situation, both
- * regions have a handle on the same preloaded data.
- *
- * The file request is immediately served using the preloaded data. A promise is
- * then provided to the voice that requested the file, and the file loading
- * happens in the background. File reads happen on whole samples but
- * oversampling is done in chunks, and the promise contains a counter for the
- * frames that are loaded. When the voice dies it releases its handle on the
- * promise, which should decrease the  reference count to 1. A garbage
- * collection thread then runs regularly to clear the memory of all file handles
- * with a reference count of 1.
+ * In this case, it works by loading all in RAM.
  */
 
 
@@ -188,9 +171,6 @@ class FilePool {
 public:
     /**
      * @brief Construct a new File Pool object.
-     *
-     * This creates the background threads based on config::numBackgroundThreads
-     * as well as the garbage collection thread.
      */
     FilePool();
 
@@ -206,7 +186,7 @@ public:
      *
      * @return size_t
      */
-    size_t getNumPreloadedSamples() const noexcept { return preloadedFiles.size() + loadedFiles.size(); }
+    size_t getNumPreloadedSamples() const noexcept { return loadedFiles.size(); }
 
     /**
      * @brief Get metadata information about a file.
@@ -288,8 +268,7 @@ public:
      */
     FileDataHolder getFilePromise(const std::shared_ptr<FileId>& fileId) noexcept;
     /**
-     * @brief Change the preloading size. This will trigger a full
-     * reload of all samples, so don't call it on the audio thread.
+     * @brief Change the preloading size. (ineffective here)
      *
      * @param preloadSize
      */
@@ -302,8 +281,7 @@ public:
     uint32_t getPreloadSize() const noexcept;
     /**
      * @brief Empty the file loading queues without actually loading
-     * the files. All promises will be unfulfilled. Don't call this
-     * method on the audio thread as it will spinlock.
+     * the files.
      *
      */
     void emptyFileLoadingQueues() noexcept
@@ -316,11 +294,6 @@ public:
      * in the queue.
      */
     void waitForBackgroundLoading() noexcept;
-    /**
-     * @brief Assign the current thread a priority which is appropriate
-     * for background sample file processing.
-     */
-    static void raiseCurrentThreadPriority() noexcept;
     /**
      * @brief Change whether all samples are loaded in ram.
      * This will trigger a purge and reloading.
@@ -339,44 +312,9 @@ private:
     absl::optional<sfz::FileInformation> checkExistingFileInformation(const FileId& fileId) noexcept;
     fs::path rootDirectory;
 
-    bool loadInRam { config::loadInRam };
     uint32_t preloadSize { config::preloadSize };
 
-    // Signals
-    volatile bool dispatchFlag { true };
-    volatile bool garbageFlag { true };
-    RTSemaphore dispatchBarrier;
-    RTSemaphore semGarbageBarrier;
-
-    // Structures for the background loaders
-    struct QueuedFileData
-    {
-        QueuedFileData() noexcept {}
-        QueuedFileData(std::weak_ptr<FileId> id, FileData* data) noexcept
-        : id(id), data(data) {}
-        std::weak_ptr<FileId> id;
-        FileData* data { nullptr };
-    };
-
-    using FileQueue = atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices>;
-    aligned_unique_ptr<FileQueue> filesToLoad;
-
-    void dispatchingJob() noexcept;
-    void garbageJob() noexcept;
-    void loadingJob(const QueuedFileData& data) noexcept;
-    std::mutex loadingJobsMutex;
-    std::vector<std::future<void>> loadingJobs;
-    std::thread dispatchThread { &FilePool::dispatchingJob, this };
-    std::thread garbageThread { &FilePool::garbageJob, this };
-
-    SpinMutex garbageAndLastUsedMutex;
-    std::vector<FileId> lastUsedFiles;
-    std::vector<FileAudioBuffer> garbageToCollect;
-
-    std::shared_ptr<ThreadPool> threadPool;
-
     // Preloaded data
-    absl::flat_hash_map<FileId, FileData> preloadedFiles;
     absl::flat_hash_map<FileId, FileData> loadedFiles;
     LEAK_DETECTOR(FilePool);
 };
