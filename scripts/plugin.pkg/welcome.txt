@@ -1,3 +1,0 @@
-OSX installer for sfizz
-
-sfizz is a sample-based musical synthesizer.

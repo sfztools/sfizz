@@ -29,9 +29,6 @@ Note that we aim at implementing the sfz spec as a whole, and possibly some exte
 Sfizz is liberally licensed and you can freely use it in any project under the term of its license and its dependencies.
 We provide a somewhat simple C and C++ API that covers our use cases within plugins mostly, and should be useful.
 The API is documented over at the [api] page.
-You can find example of using the C API in the `lv2` directory which contains sfizz's LV2 plugin.
-You can find example of using the C++ API in the `vst3` directory which contains sfizz's VST3 plugin.
-In both cases sfizz is built in the plugins as a static library.
 The project [sfizz-render] illustrates how one might use sfizz as a shared library through a `make`- and `pkg-config`-based process.
 Other projects that bundle or use sfizz are:
 
@@ -50,12 +47,13 @@ If you want to add things we encourage you to ask around through an issue, on Di
 
 ### Handling the repository and its submodules
 
-Sfizz uses a number of submodules, namely abseil and the VST sdk.
+Sfizz uses a number of submodules, namely abseil, ghc::filesystem and simde.
 These submodules are purely consumed by sfizz, and the maintainers will manage updating them when needed.
 As such, they should *not* pose too much issues.
 They are all pinned to specific branches or commits in their original repository.
 
 To clone the sfizz repository, the recommended way is to do
+
 ```bash
 git clone https://github.com/sfztools/sfizz.git --recursive
 # Other possibility
@@ -65,6 +63,7 @@ git submodule update --init
 ```
 
 If after some time you happen to see something like this:
+
 ```
 ❯ git status
 On branch develop
@@ -78,15 +77,18 @@ Changes not staged for commit:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 ```
+
 Then it means that the abseil submodule *on your disk* differs from the one expected by sfizz.
 This usually happens if i) you modified one of abseil's files, in which case the repository will be dirty, or ii) sfizz updated abseil's and pinned it to another commit.
 Assuming you were not adding relevant changes to abseil in order to push them upstream, you can usually resolve this issue through
+
 ```bash
 git submodule update
 ```
+
 **All changes in the submodule will be lost**.
+
 If you were in fact modifying abseil for some reason, then consider either pushing your changes upstream or find an alternative.
-Same goes for the VST SDK.
 
 ### Building sfizz from source
 
@@ -111,6 +113,7 @@ Obviously, light technical questions can be asked freely in private, but the goa
 
 To start contributing, we encourage you to fork the main sfizz repository on your personal account and clone it locally on your machine
 In the clone of your fork, and add the `sfztools` repository as a remote as follows
+
 ```bash
 # Clone your own fork in a specific directory
 git clone https://github.com/MY_GITHUB_NAME/sfizz.git sfizz-fork
@@ -118,6 +121,7 @@ cd sfizz-fork
 # Add the upstream sfztools remote
 git remote add upstream https://github.com/sfztools/sfizz.git
 ```
+
 Once done, the contribution process is as follows:
 
 1. Fetch the latest changes from the `upstream` remote, in particular the `develop` branch.
@@ -127,6 +131,7 @@ Once done, the contribution process is as follows:
 5. Go back to Github web interface and create a pull request
 
 In command language, this translates to
+
 ```bash
 # Fetch the latest status from upstrea
 git fetch upstream
@@ -186,10 +191,13 @@ If you write anything testable however, we encourage you to write the tests.
 We use the [Catch] library for testing, and you can check out the files in `tests/` for examples on how to add some.
 
 To actually try your changes, you can use the `clients/sfizz_jack` client to instantiate a JACK application, or use `jalv` for a similar purpose by launching from your build directory
+
 ```bash
 env LV2_PATH=$PWD jalv.gtk3 http://sfztools.github.io/sfizz
 ```
+
 Similarly, you can launch e.g. Ardour with suitable reference to your version of the sfizz LV2 plugin with
+
 ```bash
 env LV2_PATH=$PWD Ardour6
 ```
@@ -200,9 +208,11 @@ For micro-optimization purposes we have a number of benchmarks written in `bench
 If you wonder about the performance of something, feel free to write some too and add them to the build system.
 We tend to name the benchmarks with the `bm_` prefix.
 It can be as simple as adding a line
+
 ```cmake
 sfizz_add_benchmark(bm_wavfile BM_wavfile.cpp)
 ```
+
 to the `benchmarks/CMakeLists.txt` file but you might need to link to other libraries depending on what you are benchmarking.
 The `CMakeLists.txt` file contains example that you can copy and try.
 
@@ -212,6 +222,7 @@ We have logging facilities for the processing inside of sfizz, that we use to tr
 For now the usage is a bit hand-made, as it requires the [sfizz-render] program and manually pre-loading the development `.so` library.
 The logger outputs CSV files for the rendering and file-loading processes.
 The file `scripts/performance_report.py` is made to process and produce a nice interactive report from this data.
+
 
 [build]: https://sfz.tools/sfizz/development/build/
 [benchmark]: https://github.com/google/benchmark

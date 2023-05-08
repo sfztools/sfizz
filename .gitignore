@@ -22,12 +22,6 @@ compile_commands.json
 clients/sfizz_jack
 clients/sfzprint
 
-/plugins/vst/download/
-/plugins/vst/external/vstsdk2.4/
-/plugins/vst/external/CoreAudioUtilityClasses/
-
-/plugins/editor/external/fluentui-system-icons/
-
 *.sublime-*
 *.code-*
 .kak.tags.namecache

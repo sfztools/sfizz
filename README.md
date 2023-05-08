@@ -8,23 +8,34 @@
 [![ARIA Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=aria)
 [![Cakewalk Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=cakewalk)
 
-SFZ parser and synth c++ library, providing AU / LV2 / VST3 plugins
-and JACK standalone client, please check [our website] for more details.
+SFZ parser and synth c++ library and JACK standalone client,
+please check [our website] for more details.
 
-![Screenshot](screenshot.png)
+## Repository reorganization
+
+> **Warning**
+>
+> On 2023/05/08 the project was divided into 2 repositories:
+> this contains only the library required by third-party applications,
+> and [sfizz-ui] for plugins (and a future possible graphics standalone).
+
+[sfizz-ui]: https://github.com/sfztools/sfizz-ui
+
+So if you are looking for plugins, you can get both by looking for the `sfizz-ui`
+repository instead, which contains also this one in the `library` subdirectory.
 
 ## Using sfizz
 
 Sfizz can be used most easily within an LV2 host such as [Carla] or [Ardour].
 It can also be integrated as a library within your own program; check out our [API] bindings for C and C++.
-Our [releases] are an immediate way to get a working library or LV2/VST plugin for Windows and Mac.
+Our [releases] are an immediate way to get a working library for Windows and Mac.
 Linux builds are available over at [OBS].
 On any operating system, you might prefer to [build from source]!
 
 ## Contributing to sfizz
 
 There is actually many things anyone can do, programming-related or music-related.
-Please check out the [CONTRIBUTING](CONTRIBUTING.md) document for information about filing bug reports or feature requests, and helping the development of sfizz
+Please check out the [CONTRIBUTING] document for information about filing bug reports or feature requests, and helping the development of sfizz
 
 ## Donating to sfizz
 
@@ -33,11 +44,11 @@ We firmly believe in the honesty and goodwill of users as a whole, and we want t
 
 No financial returns is explicitely required from using sfizz in any shape.
 However, if you feel that sfizz produces value for you or your products, and if you find that your financial situation allows for it, we put together ways to donate to the project.
-You are never compelled to do so, the [CONTRIBUTING](CONTRIBUTING.md) file contains different ways to contribute.
+You are never compelled to do so, the [CONTRIBUTING] file contains different ways to contribute.
 
 In all of sfizz's governance model, we strive to live in the open.
 Finances are no different, and we put in place a process so that the use of donations is as transparent as possible through our [Open Collective].
-We invite you to check out the [GOVERNANCE](GOVERNANCE.md) file to see how the organization is governed and how are donations handled.
+We invite you to check out the [GOVERNANCE] file to see how the organization is governed and how are donations handled.
 
 ## Dependencies and licenses
 
@@ -64,14 +75,14 @@ The sfizz library also uses in some subprojects:
 
 - [Catch2], licensed under the Boost Software License 1.0
 - [benchmark], licensed under the Apache License 2.0
-- [LV2], licensed under the ISC license
 - [JACK], licensed under the GNU Lesser General Public License v2.1
 - [cxxopts] by Jarryd Beck, licensed under the MIT license
 - [fmidi] by Jean Pierre Cimalando, licensed under the Boost Software License 1.0
 - [libsamplerate], licensed under the BSD 2-Clause license
-- [GLSL-Color-Spaces] by tobspr, licensed under the MIT license
-- [stb_image] by Sean Barrett, licensed as public domain or MIT license
 
+
+[CONTRIBUTING]: CONTRIBUTING.md
+[GOVERNANCE]:   GOVERNANCE.md
 [Abseil]:       https://abseil.io/
 [atomic_queue]: https://github.com/max0x7ba/atomic_queue
 [benchmark]:    https://github.com/google/benchmark
@@ -90,9 +101,6 @@ The sfizz library also uses in some subprojects:
 [fmidi]:        https://github.com/jpcima/fmidi
 [libsamplerate]: http://www.mega-nerd.com/SRC/
 [libsndfile]:   http://www.mega-nerd.com/libsndfile/
-[LV2]:          https://lv2plug.in/
-[GLSL-Color-Spaces]: https://github.com/tobspr/GLSL-Color-Spaces
-[stb_image]:    https://github.com/nothings/stb
 [our website]:  https://sfz.tools/sfizz
 [releases]:     https://github.com/sfztools/sfizz/releases
 [Carla]:     https://kx.studio/Applications:Carla
@@ -100,11 +108,12 @@ The sfizz library also uses in some subprojects:
 [API]:     https://sfz.tools/sfizz/api/
 [Open Collective]:     https://opencollective.com/sfztools
 [build from source]:     https://sfz.tools/sfizz/development/build/
-[AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
-[Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
 [Discord Badge Image]:   https://img.shields.io/discord/587748534321807416?label=discord&logo=discord
 [OBS]: https://software.opensuse.org//download.html?project=home%3Asfztools%3Asfizz&package=sfizz
 [SFZv1 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz1.svg
 [SFZv2 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz2.svg
 [ARIA Status Image]:     https://sfz.tools/assets/img/sfizz/badge_aria.svg
 [Cakewalk Status Image]: https://sfz.tools/assets/img/sfizz/badge_cakewalk.svg
+
+[AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
+[Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis
