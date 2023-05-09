@@ -12,16 +12,21 @@
 #if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
 #include <simde/x86/sse.h>
 #include <simde/arm/neon/addv.h>
-#include <simde/arm/neon/ld1.h>
+
+#if defined(SIMDE_ARM_NEON_A32V7_NATIVE)
+    #define simde__m128_to_simde_float32x4(a) simde__m128_to_neon_f32((a))
+#elif defined(SIMDE_X86_SSE_NATIVE)
+    #define simde__m128_to_simde_float32x4(a) simde_float32x4_from_m128(simde__m128_to_private((a)).n)
+#elif defined(SIMDE_STATEMENT_EXPR_)
+    #define simde__m128_to_simde_float32x4(a) SIMDE_STATEMENT_EXPR_(({ \
+        simde__m128_private a_ = simde__m128_to_private((a)); \
+        simde_float32x4_private r_; \
+        r_.values = a_.f32; \
+        simde_float32x4_from_private(r_); \
+    }))
 #endif
 
-#if defined(SIMDE_X86_SSE_NATIVE)
-    #define simde__m128_to_simde_float32x4(a) simde_float32x4_from_m128(simde__m128_to_private((a)).n)
-#elif defined(SIMDE_ARM_NEON_A32V7_NATIVE)
-    #define simde__m128_to_simde_float32x4(a) simde__m128_to_neon_f32((a))
-#else
-    #define simde__m128_to_simde_float32x4(a) simde_vld1q_f32(& (simde__m128_to_private((a)).f32))
-#endif
+#endif /* SIMDE_NATURAL_VECTOR_SIZE_GE(128) */
 
 
 namespace sfz {
