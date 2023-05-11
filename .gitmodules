@@ -4,9 +4,6 @@
 [submodule "external/st_audiofile/thirdparty/dr_libs"]
 	path = external/st_audiofile/thirdparty/dr_libs
 	url = https://github.com/mackron/dr_libs.git
-[submodule "external/st_audiofile/thirdparty/stb_vorbis"]
-	path = external/st_audiofile/thirdparty/stb_vorbis
-	url = https://github.com/sfztools/stb_vorbis.git
 [submodule "external/st_audiofile/thirdparty/libaiff"]
 	path = external/st_audiofile/thirdparty/libaiff
 	url = https://github.com/sfztools/libaiff.git
