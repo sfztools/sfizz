@@ -45,7 +45,8 @@ void init_cpuinfo(cpuinfo::impl& info)
     if (maximum_eax >= 7U)
     {
         __cpuidex(registers, 7, 0);
-        extract_x86_extended_flags(info, registers[1]);
+        extract_x86_extended_flags(info, registers[1], registers[2],
+                                   registers[3]);
     }
 }
 }

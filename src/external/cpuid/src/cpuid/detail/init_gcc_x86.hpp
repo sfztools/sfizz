@@ -66,7 +66,7 @@ void init_cpuinfo(cpuinfo::impl& info)
     if (maximum_index >= 7U)
     {
         run_cpuid(7, 0, output);
-        extract_x86_extended_flags(info, output[1]);
+        extract_x86_extended_flags(info, output[1], output[2], output[3]);
     }
 }
 }
