@@ -11,6 +11,11 @@ set(FAUST_FILES
     sfizz/effects/dsp/fverb.dsp)
 source_group("Faust Files" FILES ${FAUST_FILES})
 
+# Generate Config.h
+# Currently required only to customize the MIDI_CC_COUNT
+configure_file("${PROJECT_SOURCE_DIR}/src/Config.h.in"
+    "${PROJECT_SOURCE_DIR}/src/sfizz/Config.h" @ONLY)
+
 set(SFIZZ_HEADERS
     sfizz/ADSREnvelope.h
     sfizz/AudioBuffer.h
