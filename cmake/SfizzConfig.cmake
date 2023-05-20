@@ -161,7 +161,7 @@ Use system kiss-fft:           ${SFIZZ_USE_SYSTEM_KISS_FFT}
 Use system pugixml:            ${SFIZZ_USE_SYSTEM_PUGIXML}
 Use system simde:              ${SFIZZ_USE_SYSTEM_SIMDE}")
         if(CMAKE_PROJECT_NAME STREQUAL "sfizz")
-                message(STATUS "
+            message(STATUS "
 Use system lv2:                ${SFIZZ_USE_SYSTEM_LV2}
 Use system vst3sdk sources:    ${SFIZZ_USE_SYSTEM_VST3SDK}
 
@@ -170,12 +170,12 @@ Build LV2 plug-in:             ${PLUGIN_LV2}
 Build LV2 user interface:      ${PLUGIN_LV2_UI}
 LV2 plugin-side CC automation  ${PLUGIN_LV2_PSA}
 Build Pure Data plug-in:       ${PLUGIN_PUREDATA}
-Build VST plug-in:             ${PLUGIN_VST}
+Build VST3 plug-in:            ${PLUGIN_VST3}
 
-AU  destination directory:     ${AU_PLUGIN_INSTALL_DIR}
-LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
-Pd  destination directory:     ${PD_PLUGIN_INSTALL_DIR}
-VST destination directory:     ${VSTPLUGIN_INSTALL_DIR}")
+AU   destination directory:    ${AU_PLUGIN_INSTALL_DIR}
+LV2  destination directory:    ${LV2_PLUGIN_INSTALL_DIR}
+Pd   destination directory:    ${PD_PLUGIN_INSTALL_DIR}
+VST3 destination directory:    ${VST3_PLUGIN_INSTALL_DIR}")
         endif()
         message(STATUS "
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
