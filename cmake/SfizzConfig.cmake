@@ -129,6 +129,10 @@ if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(PROJECT_IS_MAIN TRUE)
 endif()
 
+# Generate Config.h
+configure_file("${PROJECT_SOURCE_DIR}/src/Config.h.in"
+    "${PROJECT_SOURCE_DIR}/src/sfizz/Config.h" @ONLY)
+
 # Don't show build information when building a different project
 function(show_build_info_if_needed)
     if(PROJECT_IS_MAIN)
