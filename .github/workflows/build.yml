@@ -308,7 +308,7 @@ jobs:
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
           -D CMAKE_CXX_STANDARD=17
           -D ENABLE_LTO=OFF
-          -D SFIZZ_STATIC_DEPENDENCIES=ON
+          -D SFIZZ_SNDFILE_STATIC=ON
           -D SFIZZ_JACK=OFF
         )
         ${{ matrix.platform }}-w64-mingw32-cmake "${options[@]}"

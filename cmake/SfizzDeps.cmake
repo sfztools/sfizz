@@ -26,8 +26,8 @@ if(OPENMP_FOUND)
         $<$<COMPILE_LANGUAGE:CXX>:${SFIZZ_OpenMP_CXX_OPTIONS}>)
 endif()
 
+# FIXME: remove UI libs which was used by plugins only
 # Find macOS system libraries
-# TODO: remove UI libs which was used by plugins only
 if(APPLE)
     find_library(APPLE_COREFOUNDATION_LIBRARY "CoreFoundation")
     find_library(APPLE_FOUNDATION_LIBRARY "Foundation")
@@ -122,7 +122,7 @@ if(SFIZZ_USE_SNDFILE OR SFIZZ_DEMOS OR SFIZZ_DEVTOOLS OR SFIZZ_BENCHMARKS)
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(SNDFILE "sndfile" REQUIRED)
         target_include_directories(sfizz_sndfile INTERFACE ${SNDFILE_INCLUDE_DIRS})
-        if(SFIZZ_STATIC_DEPENDENCIES)
+        if(SFIZZ_SNDFILE_STATIC)
             target_link_libraries(sfizz_sndfile INTERFACE ${SNDFILE_STATIC_LIBRARIES})
         else()
             target_link_libraries(sfizz_sndfile INTERFACE ${SNDFILE_LIBRARIES})
@@ -212,7 +212,7 @@ add_library(sfizz::hiir_polyphase_iir2designer ALIAS sfizz_hiir_polyphase_iir2de
 target_link_libraries(sfizz_hiir_polyphase_iir2designer PUBLIC sfizz::hiir)
 
 # The kissfft library
-if (SFIZZ_USE_SYSTEM_KISS_FFT)
+if(SFIZZ_USE_SYSTEM_KISS_FFT)
     find_path(KISSFFT_INCLUDE_DIR "kiss_fft.h" PATH_SUFFIXES "kissfft")
     find_path(KISSFFTR_INCLUDE_DIR "kiss_fftr.h" PATH_SUFFIXES "kissfft")
     find_library(KISSFFT_FFTR_LIBRARY "kiss_fftr_float" KISSFFTR_INCLUDE_DIR)
@@ -284,7 +284,7 @@ else()
     add_library(sfizz_filesystem_impl STATIC "${CMAKE_CURRENT_BINARY_DIR}/fs_std_impl.cpp")
     target_include_directories(sfizz_filesystem_impl PUBLIC ${SFIZZ_FILESYSTEM_INCLUDE_DIR})
     # Add the needed linker option for GCC 8
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU"
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU"
         AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0
         AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
         target_link_libraries(sfizz_filesystem_impl PUBLIC stdc++fs)

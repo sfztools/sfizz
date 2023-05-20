@@ -310,7 +310,7 @@ sfizz_enable_fast_math(sfizz_internal)
 # Check that sfizz and cmake-side definitions are matching
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp" "
 #include \"Config.h\"
-static_assert(sfz::config::numCCs == ${MIDI_CC_MAX}, \"MIDI_CC_MAX did not match\");
+static_assert(sfz::config::numCCs == ${MIDI_CC_COUNT}, \"MIDI_CC_COUNT did not match\");
 ")
 add_library(sfizz_match_definitions STATIC "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp")
 target_link_libraries(sfizz_match_definitions PRIVATE sfizz::internal)

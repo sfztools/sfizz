@@ -32,6 +32,6 @@ Quit
 .SH SEE ALSO
 sfizz_render(1)
 .SH BUGS
-See the main repository at @SFIZZ_REPOSITORY@.
+See the main repository at @PROJECT_REPOSITORY@.
 .SH AUTHOR
-Contributors can be seen on the main repository at @SFIZZ_REPOSITORY@.
+Contributors can be seen on the main repository at @PROJECT_REPOSITORY@.
