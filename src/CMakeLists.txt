@@ -306,15 +306,6 @@ if(SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT)
 endif()
 sfizz_enable_fast_math(sfizz_internal)
 
-# TODO: sfz::config::numCCs generated with CMake
-# Check that sfizz and cmake-side definitions are matching
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp" "
-#include \"Config.h\"
-static_assert(sfz::config::numCCs == ${MIDI_CC_MAX}, \"MIDI_CC_MAX did not match\");
-")
-add_library(sfizz_match_definitions STATIC "${CMAKE_CURRENT_BINARY_DIR}/sfizz_match_definitions.cpp")
-target_link_libraries(sfizz_match_definitions PRIVATE sfizz::internal)
-
 # Sfizz static library
 add_library(sfizz_static STATIC sfizz/sfizz_wrapper.cpp sfizz/sfizz.cpp sfizz/sfizz_private.hpp)
 add_library(sfizz::static ALIAS sfizz_static)

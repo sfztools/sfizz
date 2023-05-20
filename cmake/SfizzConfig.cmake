@@ -123,21 +123,22 @@ if(USE_LIBCPP)
     add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
 endif()
 
-set(SFIZZ_REPOSITORY https://github.com/sfztools/sfizz)
 include(GNUInstallDirs)
 
 if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(PROJECT_IS_MAIN TRUE)
-else()
-    set(PROJECT_IS_MAIN FALSE)
 endif()
+
+# Generate Config.h
+configure_file("${PROJECT_SOURCE_DIR}/src/Config.h.in"
+    "${PROJECT_SOURCE_DIR}/src/sfizz/Config.h" @ONLY)
 
 # Don't show build information when building a different project
 function(show_build_info_if_needed)
     if(PROJECT_IS_MAIN)
         message(STATUS "
 Project name:                  ${PROJECT_NAME}
-CMAKE_CXX_STANDARD:            ${CMAKE_CXX_STANDARD}
+C++ standard version:          ${CMAKE_CXX_STANDARD}
 Build type:                    ${CMAKE_BUILD_TYPE}
 Build processor:               ${PROJECT_SYSTEM_PROCESSOR}
 Build using LTO:               ${ENABLE_LTO}
@@ -148,9 +149,11 @@ Build benchmarks:              ${SFIZZ_BENCHMARKS}
 Build tests:                   ${SFIZZ_TESTS}
 Build demos:                   ${SFIZZ_DEMOS}
 Build devtools:                ${SFIZZ_DEVTOOLS}
+
 Use sndfile:                   ${SFIZZ_USE_SNDFILE}
+Statically link sndfile:       ${SFIZZ_SNDFILE_STATIC}
+
 Use vcpkg:                     ${SFIZZ_USE_VCPKG}
-Statically link dependencies:  ${SFIZZ_STATIC_DEPENDENCIES}
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
@@ -163,24 +166,28 @@ Use system pugixml:            ${SFIZZ_USE_SYSTEM_PUGIXML}
 Use system simde:              ${SFIZZ_USE_SYSTEM_SIMDE}")
         if(CMAKE_PROJECT_NAME STREQUAL "sfizz")
                 message(STATUS "
-Build AU plug-in:              ${SFIZZ_AU}
-Build LV2 plug-in:             ${SFIZZ_LV2}
-Build LV2 user interface:      ${SFIZZ_LV2_UI}
-Build VST plug-in:             ${SFIZZ_VST}
-
 Use system lv2:                ${SFIZZ_USE_SYSTEM_LV2}
 Use system vst3sdk sources:    ${SFIZZ_USE_SYSTEM_VST3SDK}
 
-LV2 plugin-side CC automation  ${SFIZZ_LV2_PSA}
+Build AU plug-in:              ${PLUGIN_AU}
+Build LV2 plug-in:             ${PLUGIN_LV2}
+Build LV2 user interface:      ${PLUGIN_LV2_UI}
+LV2 plugin-side CC automation  ${PLUGIN_LV2_PSA}
+Build Pure Data plug-in:       ${PLUGIN_PUREDATA}
+Build VST plug-in:             ${PLUGIN_VST}
+
+AU  destination directory:     ${AU_PLUGIN_INSTALL_DIR}
 LV2 destination directory:     ${LV2PLUGIN_INSTALL_DIR}
+Pd  destination directory:     ${PD_PLUGIN_INSTALL_DIR}
 VST destination directory:     ${VSTPLUGIN_INSTALL_DIR}")
         endif()
         message(STATUS "
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
 
-Compiler CXX debug flags:      ${CMAKE_CXX_FLAGS_DEBUG}
-Compiler CXX release flags:    ${CMAKE_CXX_FLAGS_RELEASE}
-Compiler CXX min size flags:   ${CMAKE_CXX_FLAGS_MINSIZEREL}
+CXX Debug flags:               ${CMAKE_CXX_FLAGS_DEBUG}
+CXX Release flags:             ${CMAKE_CXX_FLAGS_RELEASE}
+CXX MinSize flags:             ${CMAKE_CXX_FLAGS_MINSIZEREL}
+CXX RelWithDebInfo flags:      ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
 ")
     endif()
 endfunction()
