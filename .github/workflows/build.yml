@@ -16,6 +16,9 @@ on:
 env:
   build_type: Release
 
+# defaults:
+# shell: pwsh on windows, bash all the rest
+# working-directory: ${{ github.workspace }}
 jobs:
   clang_tidy:
   # if: ${{ false }}
@@ -29,12 +32,12 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install clang-tidy
     - name: Run
-      run: cd "$GITHUB_WORKSPACE" && scripts/run_clang_tidy.sh
+      run: ./scripts/run_clang_tidy.sh
 
   build_for_linux:
   # if: ${{ false }}
-    name: Linux Ubuntu 20.04
-    runs-on: ubuntu-20.04
+    name: Linux Ubuntu 22.04
+    runs-on: ubuntu-22.04 # abseil (libabsl) is not available in 20.04 repository
     env:
       install_name: sfizz-${{ github.ref_name }}-linux
     steps:
@@ -47,14 +50,18 @@ jobs:
         sudo apt-get update && sudo apt-get install \
           ninja-build \
           libjack-jackd2-dev
+    - name: Install abseil
+      if: ${{ github.ref_type == 'branch' }}
+      run: |
+        sudo apt-get install \
+          libabsl-dev \
+          libabsl20210324
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
         options=(
           -G Ninja
           -B build
-          -S "$GITHUB_WORKSPACE"
+          -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
           -D CMAKE_CXX_STANDARD=17
           -D SFIZZ_JACK=ON
@@ -62,31 +69,48 @@ jobs:
           -D SFIZZ_SHARED=ON
           -D SFIZZ_TESTS=ON
         )
+        if [[ ${{ github.ref_type }} == 'branch' ]]; then
+          options=(
+            ${options[@]}
+            -D SFIZZ_USE_SYSTEM_ABSEIL=ON
+          )
+        fi
         cmake "${options[@]}"
+        echo "-- github.workspace: ${{ github.workspace }}"
+        echo "-- runner.workspace: ${{ runner.workspace }}"
     - name: Build tests
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
-        cmake \
-          --build build \
-          --config ${{ env.build_type }} \
-          --target sfizz_tests \
-          --verbose \
-          -j 2
+        options=(
+          --build build
+          --config ${{ env.build_type }}
+          --parallel 2
+          --target sfizz_tests
+          --verbose
+        )
+        cmake "${options[@]}"
     - name: Run tests
-      shell: bash
-      run: ${{ runner.workspace }}/build/tests/sfizz_tests
-    - name: CTest
-      working-directory: ${{ runner.workspace }}/build
-      run: ctest -j 2 -C ${{ env.build_type }} --output-on-failure
-    - name: Build
-      shell: bash
-      working-directory: ${{ runner.workspace }}
-      run: cmake --build build --config ${{ env.build_type }} --verbose -j 2
+      run: |
+        ./build/tests/sfizz_tests
+        options=(
+          --build-config ${{ env.build_type }}
+          --debug
+          --extra-verbose
+          --output-on-failure
+          --parallel 2
+          --test-dir build
+        )
+        ctest "${options[@]}"
+    - name: Build all
+      run: |
+        options=(
+          --build build
+          --config ${{ env.build_type }}
+          --parallel 2
+          --verbose
+        )
+        cmake "${options[@]}"
     - name: Create tarball
       if: ${{ github.ref_type == 'tag' }}
-      working-directory: ${{ runner.workspace }}
-      shell: bash
       run: |
         DESTDIR="$(pwd)/${{ env.install_name }}" \
           cmake --build build --config ${{ env.build_type }} --target install
@@ -96,7 +120,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Linux tarball
-        path: "${{ runner.workspace }}/${{ env.install_name }}.tar.gz"
+        path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_for_macos:
   # if: ${{ false }}
@@ -113,12 +137,10 @@ jobs:
       if: ${{ github.ref_type == 'branch' }}
       run: brew install abseil
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
         options=(
           -B build
-          -S "$GITHUB_WORKSPACE"
+          -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
           -D SFIZZ_JACK=OFF
           -D SFIZZ_SHARED=ON
@@ -131,30 +153,41 @@ jobs:
           )
         fi
         cmake "${options[@]}"
+        echo "-- runner.workspace: ${{ runner.workspace }}"
+        echo "-- github.workspace: ${{ github.workspace }}"
     - name: Build tests
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
-        cmake \
-          --build build \
-          --config ${{ env.build_type }} \
-          --target sfizz_tests \
-          --verbose \
-          -j 2
+        options=(
+          --build build
+          --config ${{ env.build_type }}
+          --parallel 2
+          --target sfizz_tests
+          --verbose
+        )
+        cmake "${options[@]}"
     - name: Run tests
-      shell: bash
-      run: ${{ runner.workspace }}/build/tests/sfizz_tests
-    - name: CTest
-      working-directory: ${{ runner.workspace }}/build
-      run: ctest -j 2 -C ${{ env.build_type }} --output-on-failure
-    - name: Build
-      shell: bash
-      working-directory: ${{ runner.workspace }}
-      run: cmake --build build --config ${{ env.build_type }} --verbose -j 2
+      run: |
+        ./build/tests/sfizz_tests
+        options=(
+          --build-config ${{ env.build_type }}
+          --debug
+          --extra-verbose
+          --output-on-failure
+          --parallel 2
+          --test-dir build
+        )
+        ctest "${options[@]}"
+    - name: Build all
+      run: |
+        options=(
+          --build build
+          --config ${{ env.build_type }}
+          --parallel 2
+          --verbose
+        )
+        cmake "${options[@]}"
     - name: Create tarball
       if: ${{ github.ref_type == 'tag' }}
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
         DESTDIR="$(pwd)/${{ env.install_name }}" \
           cmake --build build --config ${{ env.build_type }} --target install
@@ -164,7 +197,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: macOS tarball
-        path: "${{ runner.workspace }}/${{ env.install_name }}.tar.gz"
+        path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_for_windows:
   # if: ${{ false }}
@@ -189,40 +222,51 @@ jobs:
       with:
         submodules: recursive
     - name: Configure CMake
-      working-directory: ${{ runner.workspace }}
       run: |
         cmake `
           -G "Visual Studio 16 2019" `
           -A "${{ matrix.release_arch }}" `
           -B build `
-          -S "${Env:GITHUB_WORKSPACE}" `
+          -S . `
           -D CMAKE_BUILD_TYPE=${{ env.build_type }} `
           -D CMAKE_CXX_STANDARD=17 `
-          -D SFIZZ_TESTS=ON `
+          -D SFIZZ_TESTS=ON
+        echo "-- runner.workspace: ${{ runner.workspace }}"
+        echo "-- github.workspace: ${{ github.workspace }}"
     - name: Build tests
-      working-directory: ${{ runner.workspace }}
       run: |
         cmake `
           --build build `
           --config ${{ env.build_type }} `
+          --parallel 2 `
           --target sfizz_tests `
           --verbose `
-          -j 2 `
-    - name: Test
-      run: ${{ runner.workspace }}\build\tests\${{ env.build_type }}\sfizz_tests.exe
-    - name: Build
-      working-directory: ${{ runner.workspace }}
-      run: cmake --build build --config ${{ env.build_type }} --verbose -j 2
+    - name: Run tests
+      run: |
+        .\build\tests\${{ env.build_type }}\sfizz_tests.exe
+        ctest `
+          --build-config ${{ env.build_type }} `
+          --debug `
+          --extra-verbose `
+          --output-on-failure `
+          --parallel 2 `
+          --test-dir build `
+    - name: Build all
+      run: |
+        cmake `
+          --build build `
+          --config ${{ env.build_type }} `
+          --parallel 2 `
+          --verbose `
     - name: Create zip package
       if: ${{ github.ref_type == 'tag' }}
-      working-directory: ${{ runner.workspace }}
       run: 7z a "${{ env.install_name }}.zip" ".\build\src\${{ env.build_type }}\sfizz.*"
     - name: Upload
       if: ${{ github.ref_type == 'tag' }}
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.pkg_platform }} zip package
-        path: "${{ runner.workspace }}/${{ env.install_name }}.zip"
+        path: "${{ github.workspace }}/${{ env.install_name }}.zip"
 
   archive_source_code:
     # if: startsWith(github.ref, 'refs/tags/')
@@ -241,16 +285,15 @@ jobs:
         sudo apt-get update && sudo apt-get install python3-pip
         sudo pip install git-archive-all
     - name: Archive source code
-      shell: bash
       run: |
-        cd "$GITHUB_WORKSPACE" && git-archive-all \
+        git-archive-all \
           --prefix="${{ env.install_name }}/" \
-          -9 "${{ runner.workspace }}/${{ env.install_name }}.tar.gz"
+          -9 "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
         name: Source code tarball
-        path: "${{ runner.workspace }}/${{ env.install_name }}.tar.gz"
+        path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_for_mingw:
     if: ${{ false }} # DISABLED TEMPORARILY
@@ -271,7 +314,6 @@ jobs:
       install_name: sfizz-${{ github.ref_name }}-mingw${{ matrix.bits }}
     steps:
     - name: Configure pacman repositories
-      shell: bash
       run: |
         cat >>/etc/pacman.conf <<EOF
         [multilib]
@@ -281,7 +323,6 @@ jobs:
         Server = https://github.com/jpcima/arch-mingw-w64/releases/download/repo.\$arch/
         EOF
     - name: Install dependencies
-      shell: bash
       run: |
         packages=(
           base-devel git ninja wget
@@ -293,18 +334,15 @@ jobs:
       with:
         submodules: recursive
     - name: Fix MinGW headers
-      shell: bash
       run: |
-        cp -vf "$GITHUB_WORKSPACE"/scripts/mingw_dwrite_3.h \
+        cp -vf "${{ github.workspace }}"/scripts/mingw_dwrite_3.h \
           /usr/${{ matrix.platform }}-w64-mingw32/include/dwrite_3.h
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
         options=(
           -G Ninja
           -B build
-          -S "$GITHUB_WORKSPACE"
+          -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
           -D CMAKE_CXX_STANDARD=17
           -D ENABLE_LTO=OFF
@@ -313,14 +351,10 @@ jobs:
         )
         ${{ matrix.platform }}-w64-mingw32-cmake "${options[@]}"
     - name: Build
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: ${{ matrix.platform }}-w64-mingw32-cmake \
         --build build --config ${{ env.build_type }} --verbose -j 2
     - name: Install
       if: ${{ github.ref_type == 'tag' }}
-      working-directory: ${{ runner.workspace }}
-      shell: bash
       run: |
         DESTDIR="$(pwd)/${{ env.install_name }}" \
           ${{ matrix.platform }}-w64-mingw32-cmake \
@@ -331,7 +365,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.pkg_platform }} MinGW tarball
-        path: "${{ runner.workspace }}/${{ env.install_name }}.tar.gz"
+        path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_with_libsndfile:
   # if: ${{ false }}
@@ -348,13 +382,11 @@ jobs:
           ninja-build \
           libsndfile1-dev
     - name: Configure CMake
-      shell: bash
-      working-directory: ${{ runner.workspace }}
       run: |
         options=(
           -G Ninja
           -B build
-          -S "$GITHUB_WORKSPACE"
+          -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
           -D SFIZZ_JACK=OFF
           -D SFIZZ_RENDER=OFF
@@ -364,12 +396,17 @@ jobs:
         )
         cmake "${options[@]}"
     - name: Build tests
-      shell: bash
-      working-directory: ${{ runner.workspace }}
-      run: cmake --build build -j 2 --target sfizz_tests
+      run: |
+        options=(
+          --build build
+          --config ${{ env.build_type }}
+          --parallel 2
+          --target sfizz_tests
+          --verbose
+        )
+        cmake "${options[@]}"
     - name: Run tests
-      shell: bash
-      run: ${{ runner.workspace }}/build/tests/sfizz_tests
+      run: ./build/tests/sfizz_tests
 
   build_with_makefile:
   # if: ${{ false }}
@@ -381,12 +418,10 @@ jobs:
       with:
         submodules: recursive
     - name: Build with GNU make
-      shell: bash
-      run: make -C "$GITHUB_WORKSPACE" -f generic.mk -j2
+      run: make -C "${{ github.workspace }}" -f generic.mk -j2
     - name: Compile a simple program
-      shell: bash
       run: |
-        cat <<EOF > "$GITHUB_WORKSPACE"/simple.cpp
+        cat <<EOF > "${{ github.workspace }}"/simple.cpp
         #include <sfizz.hpp>
         int main() {
             sfz::Sfizz synth;
@@ -394,7 +429,7 @@ jobs:
             return 0;
         }
         EOF
-        cat <<EOF > "$GITHUB_WORKSPACE"/simple.mk
+        cat <<EOF > "${{ github.workspace }}"/simple.mk
         all: simple
         include generic.mk
         simple.o: simple.cpp
@@ -402,7 +437,7 @@ jobs:
         simple: simple.o \$(SFIZZ_TARGET)
         	\$(CXX) -o \$@ \$^ \$(SFIZZ_LINK_FLAGS) \$(LDFLAGS)
         EOF
-        make -C "$GITHUB_WORKSPACE" -f simple.mk
+        make -C "${{ github.workspace }}" -f simple.mk
 
   deploy:
     if: ${{ github.ref_type == 'tag' }}
@@ -448,7 +483,6 @@ jobs:
           name: Source code tarball
 
       - name: Display file information
-        shell: bash
         run: ls -lR
 
       - name: Release
