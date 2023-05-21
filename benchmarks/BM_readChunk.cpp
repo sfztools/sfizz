@@ -8,7 +8,7 @@
 #include "Buffer.h"
 #include <benchmark/benchmark.h>
 #include <sndfile.hh>
-#include "ghc/filesystem.hpp"
+#include "ghc/fs_std.hpp"
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 #include "AudioBuffer.h"
@@ -16,12 +16,13 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif
+#include <unistd.h> // readlink
 
 class FileFixture : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State& /* state */) {
         rootPath = getPath() / "sample1.wav";
-        if (!ghc::filesystem::exists(rootPath)) {
+        if (!fs::exists(rootPath)) {
         #ifndef NDEBUG
             std::cerr << "Can't find path" << '\n';
         #endif
@@ -36,7 +37,7 @@ public:
     void TearDown(const ::benchmark::State& /* state */) {
     }
 
-    ghc::filesystem::path getPath()
+    fs::path getPath()
     {
         #ifdef __linux__
         char buf[PATH_MAX + 1];
@@ -45,13 +46,13 @@ public:
         std::string str { buf };
         return str.substr(0, str.rfind('/'));
         #elif _WIN32
-        return ghc::filesystem::current_path();
+        return fs::current_path();
         #endif
     }
 
     std::unique_ptr<sfz::AudioBuffer<float>> output;
     SndfileHandle sndfile;
-    ghc::filesystem::path rootPath;
+    fs::path rootPath;
     size_t numFrames;
 };
 

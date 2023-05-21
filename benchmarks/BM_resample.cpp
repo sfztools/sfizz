@@ -11,8 +11,10 @@
 #include "absl/memory/memory.h"
 #include <samplerate.h>
 #include <sndfile.hh>
-#include "ghc/filesystem.hpp"
+#include "ghc/fs_std.hpp"
 #include "hiir/Upsampler2xFpu.h"
+#include <unistd.h> // readlink
+
 constexpr std::array<double, 12> coeffsStage2x {
     0.036681502163648017,
     0.13654762463195771,
@@ -192,7 +194,7 @@ public:
     {
 
         const auto rootPath = getPath() / "sample1.wav";
-        if (!ghc::filesystem::exists(rootPath)) {
+        if (!fs::exists(rootPath)) {
         #ifndef NDEBUG
             std::cerr << "Can't find path" << '\n';
         #endif
@@ -210,7 +212,7 @@ public:
     {
     }
 
-    ghc::filesystem::path getPath()
+    fs::path getPath()
     {
         #ifdef __linux__
         char buf[PATH_MAX + 1];
@@ -219,7 +221,7 @@ public:
         std::string str { buf };
         return str.substr(0, str.rfind('/'));
         #elif _WIN32
-        return ghc::filesystem::current_path();
+        return fs::current_path();
         #endif
     }
 

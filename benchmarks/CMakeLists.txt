@@ -18,7 +18,10 @@ sfizz_add_benchmark(bm_mathfuns BM_mathfuns.cpp)
 sfizz_add_benchmark(bm_gain BM_gain.cpp)
 sfizz_add_benchmark(bm_divide BM_divide.cpp)
 sfizz_add_benchmark(bm_ramp BM_ramp.cpp)
+
+if(0) #FIXME
 sfizz_add_benchmark(bm_ADSR BM_ADSR.cpp)
+endif()
 
 sfizz_add_benchmark(bm_add BM_add.cpp)
 sfizz_add_benchmark(bm_multiplyAdd BM_multiplyAdd.cpp)
@@ -39,13 +42,18 @@ sfizz_add_benchmark(bm_random BM_random.cpp)
 sfizz_add_benchmark(bm_clamp BM_clamp.cpp)
 sfizz_add_benchmark(bm_allWithin BM_allWithin.cpp)
 
+if(0) #FIXME
 sfizz_add_benchmark(bm_logger BM_logger.cpp)
+endif()
+
 sfizz_add_benchmark(bm_smoothers BM_smoothers.cpp)
 sfizz_add_benchmark(bm_powerFollower BM_powerFollower.cpp)
 
-if(TARGET sfizz::samplerate)
-sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
-target_link_libraries(bm_resample PRIVATE sfizz::samplerate sfizz::sndfile sfizz::hiir)
+if(SFIZZ_USE_SNDFILE)
+    if(TARGET sfizz::samplerate)
+        sfizz_add_benchmark(bm_resample BM_resample.cpp ${BENCHMARK_SIMD_SOURCES})
+        target_link_libraries(bm_resample PRIVATE sfizz::samplerate sfizz::sndfile sfizz::hiir)
+    endif()
 endif()
 
 sfizz_add_benchmark(bm_envelopes BM_envelopes.cpp)
@@ -56,13 +64,17 @@ target_link_libraries(bm_wavfile PRIVATE sfizz::sndfile)
 sfizz_add_benchmark(bm_flacfile BM_flacfile.cpp)
 target_link_libraries(bm_flacfile PRIVATE sfizz::sndfile)
 
-sfizz_add_benchmark(bm_audioReaders BM_audioReaders.cpp ../src/sfizz/AudioReader.cpp)
-target_link_libraries(bm_audioReaders PRIVATE st_audiofile sfizz::sndfile)
+if(SFIZZ_USE_SNDFILE)
+    sfizz_add_benchmark(bm_audioReaders BM_audioReaders.cpp ../src/sfizz/AudioReader.cpp)
+    target_link_libraries(bm_audioReaders PRIVATE st_audiofile sfizz::sndfile)
+endif()
 
-sfizz_add_benchmark(bm_readChunk BM_readChunk.cpp)
-target_link_libraries(bm_readChunk PRIVATE sfizz::sndfile)
-sfizz_add_benchmark(bm_readChunkFlac BM_readChunkFlac.cpp)
-target_link_libraries(bm_readChunkFlac PRIVATE sfizz::sndfile)
+if(SFIZZ_USE_SNDFILE)
+    sfizz_add_benchmark(bm_readChunk BM_readChunk.cpp)
+    target_link_libraries(bm_readChunk PRIVATE sfizz::sndfile)
+    sfizz_add_benchmark(bm_readChunkFlac BM_readChunkFlac.cpp)
+    target_link_libraries(bm_readChunkFlac PRIVATE sfizz::sndfile)
+endif()
 
 sfizz_add_benchmark(bm_interpolators BM_interpolators.cpp)
 
