@@ -36,8 +36,8 @@ int main(int argc, char *argv[])
 
     sfz::WavetableInfo wt {};
 
-    sfz::FileMetadataReader reader;
-    if (!reader.open(path)) {
+    sfz::FileMetadataReader reader(path);
+    if (!reader.open()) {
         fprintf(stderr, "Cannot open file\n");
         return 1;
     }
