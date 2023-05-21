@@ -92,6 +92,7 @@ int main(int argc, char* argv[])
 
         sfzPath = argv[1];
     }
+    // FIXME: OptionException was replaced by some cxxopts::exceptions::???
     catch (cxxopts::OptionException& ex) {
         std::cerr << ex.what() << "\n";
         return 1;

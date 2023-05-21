@@ -26,11 +26,22 @@ if(TARGET Qt5::Widgets)
     set_target_properties(sfizz_demo_stretch_tuning PROPERTIES AUTOUIC ON)
 endif()
 
-add_executable(eq_apply EQ.cpp)
-target_link_libraries(eq_apply PRIVATE sfizz::internal sfizz::sndfile sfizz::cxxopts sfizz::filesystem)
-
-add_executable(filter_apply Filter.cpp)
-target_link_libraries(filter_apply PRIVATE sfizz::internal sfizz::sndfile sfizz::cxxopts sfizz::filesystem)
+if(SFIZZ_USE_SNDFILE)
+    add_executable(eq_apply EQ.cpp)
+    target_link_libraries(eq_apply PRIVATE
+        sfizz::cxxopts
+        sfizz::filesystem
+        sfizz::internal
+        sfizz::sndfile
+    )
+    add_executable(filter_apply Filter.cpp)
+    target_link_libraries(filter_apply PRIVATE
+        sfizz::cxxopts
+        sfizz::filesystem
+        sfizz::internal
+        sfizz::sndfile
+    )
+endif()
 
 add_executable(sfizz_plot_curve PlotCurve.cpp)
 target_link_libraries(sfizz_plot_curve PRIVATE sfizz::internal)
@@ -38,11 +49,19 @@ target_link_libraries(sfizz_plot_curve PRIVATE sfizz::internal)
 add_executable(sfizz_plot_wavetables PlotWavetables.cpp)
 target_link_libraries(sfizz_plot_wavetables PRIVATE sfizz::internal)
 
-add_executable(sfizz_plot_lfo PlotLFO.cpp)
-target_link_libraries(sfizz_plot_lfo PRIVATE sfizz::internal sfizz::sndfile sfizz::cxxopts)
-
-add_executable(sfizz_file_instrument FileInstrument.cpp)
-target_link_libraries(sfizz_file_instrument PRIVATE sfizz::internal sfizz::sndfile)
+if(SFIZZ_USE_SNDFILE)
+    add_executable(sfizz_plot_lfo PlotLFO.cpp)
+    target_link_libraries(sfizz_plot_lfo PRIVATE
+        sfizz::cxxopts
+        sfizz::internal
+        sfizz::sndfile
+    )
+    add_executable(sfizz_file_instrument FileInstrument.cpp)
+    target_link_libraries(sfizz_file_instrument PRIVATE
+        sfizz::internal
+        sfizz::sndfile
+    )
+endif()
 
 add_executable(sfizz_file_wavetable FileWavetable.cpp)
 target_link_libraries(sfizz_file_wavetable PRIVATE sfizz::internal)
