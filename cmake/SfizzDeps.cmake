@@ -52,20 +52,16 @@ if(APPLE)
 endif()
 
 # Add Abseil
+
+# WARNING: When enabling SFIZZ_USE_SYSTEM_ABSEIL and the installed
+# library was built with C++17, the build fails if CMAKE_CXX_STANDARD
+# is set to 14. This happens at least with Archlinux and FreeBSD.
+# We'll need also to check if to set ABSL_PROPAGATE_CXX_STD=OFF in future versions.
 if(SFIZZ_USE_SYSTEM_ABSEIL)
     find_package(absl REQUIRED)
     if(absl_FOUND)
-        # FIXME:
-        # 1. Workaround for silent Abseil module, see #1117
+        # Workaround for silent Abseil module, see #1117
         message(STATUS "Found system Abseil libraries, version ${absl_VERSION}")
-        # 2. The current Abseil LTS version requires at least C++14, see
-        #    https://github.com/abseil/abseil-cpp/releases/tag/20230125.1
-        #    but results in errors by using std::string_view, optional etc.,
-        #    due to an ABI incompatibility with the installed system library
-        #    when built with C++17. This is happens at least with Archlinux and FreeBSD,
-        #    so in cases like these a -D CMAKE_CXX_STANDARD=17 is required.
-        # 3. We'll need also to check if to set ABSL_PROPAGATE_CXX_STD=OFF
-        #    in future versions because the above issue.
 
         # Make Abseil to be usable globally also for plugins project:
         # in CMake 3.24+ we can use `find_package(absl REQUIRED GLOBAL)`,
