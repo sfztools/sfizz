@@ -779,9 +779,10 @@ TEST_CASE("[Files] Unused samples are cleared on reloading")
     REQUIRE(synth.getNumPreloadedSamples() == 0);
 }
 
-// FIXME: this breaks on Github win32/win64/linux CI "sometimes" but I can't reproduce it reliably
-// Not sure the second test fails too but in doubt...
-#if 0
+// FIXME:
+// this breaks on Github win32/win64/linux CI "sometimes"
+// but I can't reproduce it reliably.
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 TEST_CASE("[Files] Embedded sample data")
 {
     sfz::Synth synth1;
@@ -816,7 +817,7 @@ TEST_CASE("[Files] Embedded sample data")
         REQUIRE(tmp1 == tmp2);
     }
 }
-
+#endif
 TEST_CASE("[Files] Key center from audio file, with embedded sample data")
 {
     sfz::Synth synth;
@@ -830,4 +831,3 @@ TEST_CASE("[Files] Key center from audio file, with embedded sample data")
     REQUIRE(synth.getRegionView(4)->pitchKeycenter == 10);
     REQUIRE(synth.getRegionView(5)->pitchKeycenter == 62);
 }
-#endif
