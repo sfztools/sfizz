@@ -117,15 +117,16 @@ cmake_dependent_option(USE_LIBCPP "Use libc++ with clang" "${APPLE}"
     "CMAKE_CXX_COMPILER_ID MATCHES Clang" OFF)
 if(USE_LIBCPP)
     add_compile_options(-stdlib=libc++)
-    # Presumably need the above for linking too, maybe other options missing as well
-    add_link_options(-stdlib=libc++)   # New command on CMake master, not in 3.12 release
-    add_link_options(-lc++abi)   # New command on CMake master, not in 3.12 release
+    add_link_options(-stdlib=libc++) # New command in CMake 3.13
+    add_link_options(-lc++abi)
 endif()
 
 include(GNUInstallDirs)
 
 if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(PROJECT_IS_MAIN TRUE)
+else()
+    set(PROJECT_IS_MAIN FALSE)
 endif()
 
 # Don't show build information when building a different project

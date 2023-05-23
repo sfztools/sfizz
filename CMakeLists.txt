@@ -2,7 +2,8 @@ if(WIN32)
     cmake_minimum_required(VERSION 3.15)
     cmake_policy(SET CMP0091 NEW)
 else()
-    cmake_minimum_required(VERSION 3.12)
+    # USE_LIBCPP requires add_link_options() in SfizzConfig.cmake
+    cmake_minimum_required(VERSION 3.13)
 endif()
 
 project(libsfizz
