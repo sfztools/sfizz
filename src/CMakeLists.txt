@@ -348,10 +348,13 @@ if(SFIZZ_SHARED)
         if(SFIZZ_USE_SNDFILE)
             set(SFIZZ_PC_REQUIRES "${SFIZZ_PC_REQUIRES} sndfile")
         endif()
-        configure_file(${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in sfizz.pc @ONLY)
-        install(FILES ${CMAKE_BINARY_DIR}/src/sfizz.pc
+        configure_file(${PROJECT_SOURCE_DIR}/scripts/sfizz.pc.in
+            ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pkgconfig/sfizz.pc @ONLY
+        )
+        install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pkgconfig/sfizz.pc
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-            COMPONENT "development")
+            COMPONENT "development"
+        )
     endif()
 endif()
 
