@@ -142,7 +142,7 @@ jobs:
           -B build
           -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
-          -D SFIZZ_JACK=OFF
+          -D CMAKE_CXX_STANDARD=17
           -D SFIZZ_SHARED=ON
           -D SFIZZ_TESTS=ON
         )
