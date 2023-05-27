@@ -90,6 +90,7 @@ struct FileData
         information = std::move(other.information);
         preloadedData = std::move(other.preloadedData);
         fileData = std::move(other.fileData);
+        preloadCallCount = other.preloadCallCount;
         availableFrames = other.availableFrames.load();
         lastViewerLeftAt = other.lastViewerLeftAt;
         status = other.status.load();
@@ -100,6 +101,7 @@ struct FileData
         information = std::move(other.information);
         preloadedData = std::move(other.preloadedData);
         fileData = std::move(other.fileData);
+        preloadCallCount = other.preloadCallCount;
         availableFrames = other.availableFrames.load();
         lastViewerLeftAt = other.lastViewerLeftAt;
         status = other.status.load();
