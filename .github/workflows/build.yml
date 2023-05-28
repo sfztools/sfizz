@@ -55,6 +55,8 @@ jobs:
         sudo apt-get update && sudo apt-get install \
           ninja-build \
           libjack-jackd2-dev
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
     - name: Install abseil
       if: ${{ github.ref_type == 'branch' }}
       run: |
@@ -68,6 +70,8 @@ jobs:
           -B build
           -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
+          -D CMAKE_C_COMPILER_LAUNCHER=ccache
+          -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
           -D SFIZZ_JACK=ON
           -D SFIZZ_RENDER=ON
           -D SFIZZ_SHARED=ON
@@ -142,12 +146,16 @@ jobs:
     - name: Install dependencies
       if: ${{ github.ref_type == 'branch' }}
       run: brew install abseil
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
     - name: Configure CMake
       run: |
         options=(
           -B build
           -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
+          -D CMAKE_C_COMPILER_LAUNCHER=ccache
+          -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
           -D SFIZZ_SHARED=ON
           -D SFIZZ_TESTS=ON
         )
