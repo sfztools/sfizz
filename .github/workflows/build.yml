@@ -68,7 +68,6 @@ jobs:
           -B build
           -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
-          -D CMAKE_CXX_STANDARD=17
           -D SFIZZ_JACK=ON
           -D SFIZZ_RENDER=ON
           -D SFIZZ_SHARED=ON
@@ -149,7 +148,6 @@ jobs:
           -B build
           -S .
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
-          -D CMAKE_CXX_STANDARD=17
           -D SFIZZ_SHARED=ON
           -D SFIZZ_TESTS=ON
         )
@@ -238,7 +236,6 @@ jobs:
           -B build `
           -S . `
           -D CMAKE_BUILD_TYPE=${{ env.build_type }} `
-          -D CMAKE_CXX_STANDARD=17 `
           -D SFIZZ_TESTS=ON
         echo "-- runner.workspace: ${{ runner.workspace }}"
         echo "-- github.workspace: ${{ github.workspace }}"
