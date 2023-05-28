@@ -236,6 +236,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: recursive
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.job }}-${{ matrix.platform }}
     - name: Configure CMake
       run: |
         cmake `
@@ -244,6 +248,8 @@ jobs:
           -B build `
           -S . `
           -D CMAKE_BUILD_TYPE=${{ env.build_type }} `
+          -D CMAKE_C_COMPILER_LAUNCHER=sccache
+          -D CMAKE_CXX_COMPILER_LAUNCHER=sccache
           -D SFIZZ_TESTS=ON
         echo "-- runner.workspace: ${{ runner.workspace }}"
         echo "-- github.workspace: ${{ github.workspace }}"
