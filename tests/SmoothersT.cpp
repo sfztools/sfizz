@@ -7,6 +7,7 @@
 #include "sfizz/OnePoleFilter.h"
 #include "sfizz/Smoothers.h"
 #include "catch2/catch.hpp"
+#include "TestHelpers.h"
 // #include "cnpy.h"
 // #include "ghc/fs_std.hpp"
 #include <absl/types/span.h>
@@ -15,21 +16,6 @@
 #include <string>
 #include <iostream>
 using namespace Catch::literals;
-
-template <class Type, size_t N>
-inline bool approxEqual(const std::array<Type, N>& lhs, const std::array<Type, N>& rhs, Type epsilon = 1e-3)
-{
-    if (lhs.size() != rhs.size())
-        return false;
-
-    for (size_t i = 0; i < rhs.size(); ++i)
-        if (lhs[i] != Approx(rhs[i]).epsilon(epsilon)) {
-            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
-            return false;
-        }
-
-    return true;
-}
 
 template <class Type, size_t N>
 void testFilter(const std::array<Type, N>& input, const std::array<Type, N>& expectedLow, const std::array<Type, N>& expectedHigh, Type gain)
@@ -43,19 +29,19 @@ void testFilter(const std::array<Type, N>& input, const std::array<Type, N>& exp
     sfz::OnePoleFilter<Type> filter;
     filter.setGain(gain);
     filter.processLowpass(input, outputSpan);
-    REQUIRE(approxEqual(output, expectedLow));
+    REQUIRE(approxEqual(absl::MakeConstSpan(output), absl::MakeConstSpan(expectedLow)));
 
     filter.reset();
     filter.processLowpass(input, outputSpan, gains);
-    REQUIRE(approxEqual(output, expectedLow));
+    REQUIRE(approxEqual(absl::MakeConstSpan(output), absl::MakeConstSpan(expectedLow)));
 
     filter.reset();
     filter.processHighpass(input, outputSpan);
-    REQUIRE(approxEqual(output, expectedHigh));
+    REQUIRE(approxEqual(absl::MakeConstSpan(output), absl::MakeConstSpan(expectedHigh)));
 
     filter.reset();
     filter.processHighpass(input, outputSpan, gains);
-    REQUIRE(approxEqual(output, expectedHigh));
+    REQUIRE(approxEqual(absl::MakeConstSpan(output), absl::MakeConstSpan(expectedHigh)));
 }
 
 constexpr std::array<float, 64> floatInput01 = {

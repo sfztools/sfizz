@@ -12,6 +12,8 @@
 #include "sfizz/Messaging.h"
 #include "catch2/catch.hpp"
 #include "sfizz/modulations/ModKey.h"
+#include <iostream>
+#include <iomanip>
 
 class RegionCCView {
 public:
@@ -148,18 +150,52 @@ std::string createDefaultGraph(std::vector<std::string> lines, int numRegions = 
 std::string createModulationDotGraph(std::vector<std::string> lines);
 
 template <class Type>
-inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
+bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
 {
     if (lhs.size() != rhs.size())
         return false;
 
+    bool different = false;
     for (size_t i = 0; i < rhs.size(); ++i)
-        if (rhs[i] != Approx(lhs[i]).epsilon(eps)) {
-            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
-            return false;
+        if (rhs[i] != Approx(lhs[i]).margin(eps)) {
+            std::cerr << lhs[i] << " != " << rhs[i] << " (delta " << std::abs(rhs[i] - lhs[i]) << ") at index " << i << '\n';
+            different = true;
+            break;
         }
 
-    return true;
+    auto print_span = [](absl::Span<const Type> span) {
+        if (span.empty()) {
+            std::cerr << "{ }" << '\n';
+            return;
+        }
+
+        std::cerr << "{ ";
+        if (span.size() < 16) {
+            for (unsigned i = 0; i < span.size() - 1; ++i) {
+                std::cerr << span[i] << ", ";
+            }
+        } else {
+            for (unsigned i = 0; i < 8; ++i) {
+                std::cerr << span[i] << ", ";
+            }
+            std::cerr << "..., ";
+            for (unsigned i = span.size() - 8; i < span.size() - 1; ++i) {
+                std::cerr << span[i] << ", ";
+            }
+        }
+        std::cerr << span.back() << " }" << '\n';
+    };
+
+    if (different) {
+        std::cerr << std::setprecision(3) << std::fixed;
+        std::cerr << "Differences between spans" << '\n';
+        std::cerr << "lhs: ";
+        print_span(lhs);
+        std::cerr << "rhs: ";
+        print_span(rhs);
+    }
+
+    return !different;
 }
 
 /**
