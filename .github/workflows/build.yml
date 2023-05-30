@@ -303,78 +303,6 @@ jobs:
         name: Source code tarball
         path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
-  build_for_mingw:
-    if: ${{ false }} # DISABLED TEMPORARILY
-    name: MinGW
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        include:
-        - platform: i686
-          pkg_platform: Win32
-          bits: 32
-        - platform: x86_64
-          pkg_platform: Win64
-          bits: 64
-    container:
-      image: archlinux
-    env:
-      install_name: sfizz-${{ github.ref_name }}-mingw${{ matrix.bits }}
-    steps:
-    - name: Configure pacman repositories
-      run: |
-        cat >>/etc/pacman.conf <<EOF
-        [multilib]
-        Include = /etc/pacman.d/mirrorlist
-        [mingw-w64]
-        SigLevel = Optional TrustAll
-        Server = https://github.com/jpcima/arch-mingw-w64/releases/download/repo.\$arch/
-        EOF
-    - name: Install dependencies
-      run: |
-        packages=(
-          base-devel git ninja wget
-          mingw-w64-{cmake,gcc,pkg-config,libsndfile}
-        )
-        pacman -Sqyu --noconfirm
-        pacman -Sq --needed --noconfirm "${packages[@]}"
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    - name: Fix MinGW headers
-      run: |
-        cp -vf "${{ github.workspace }}"/scripts/mingw_dwrite_3.h \
-          /usr/${{ matrix.platform }}-w64-mingw32/include/dwrite_3.h
-    - name: Configure CMake
-      run: |
-        options=(
-          -G Ninja
-          -B build
-          -S .
-          -D CMAKE_BUILD_TYPE=${{ env.build_type }}
-          -D CMAKE_CXX_STANDARD=17
-          -D ENABLE_LTO=OFF
-          -D SFIZZ_SNDFILE_STATIC=ON
-          -D SFIZZ_JACK=OFF
-        )
-        ${{ matrix.platform }}-w64-mingw32-cmake "${options[@]}"
-    - name: Build
-      run: ${{ matrix.platform }}-w64-mingw32-cmake \
-        --build build --config ${{ env.build_type }} --verbose -j 2
-    - name: Install
-      if: ${{ github.ref_type == 'tag' }}
-      run: |
-        DESTDIR="$(pwd)/${{ env.install_name }}" \
-          ${{ matrix.platform }}-w64-mingw32-cmake \
-          --build build --config ${{ env.build_type }} --target install
-        tar czvf "${{ env.install_name }}".tar.gz "${{ env.install_name }}"
-    - name: Upload
-      if: ${{ github.ref_type == 'tag' }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.pkg_platform }} MinGW tarball
-        path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
-
   build_with_libsndfile:
   # if: ${{ false }}
     name: Linux libsndfile
@@ -454,7 +382,6 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build_for_linux
-      # - build_for_mingw
       - build_for_macos
       # - build_for_mod
       - build_for_windows
@@ -464,18 +391,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: macOS tarball
-
-      - name: MinGW 32 download
-        if: ${{ false }} # DISABLED: MinGW 32 build temporarily disabled
-        uses: actions/download-artifact@v3
-        with:
-          name: Win32 MinGW tarball
-
-      - name: MinGW 64 download
-        if: ${{ false }} # DISABLED: MinGW 64 build temporarily disabled
-        uses: actions/download-artifact@v3
-        with:
-          name: Win64 MinGW tarball
 
       - name: Windows 32 download
         uses: actions/download-artifact@v3
