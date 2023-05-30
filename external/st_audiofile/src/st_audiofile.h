@@ -19,8 +19,6 @@
 #include <wchar.h>
 #endif
 
-#define WAVPACK_MEMORY_ASSUMED_VERSION 5
-
 #ifdef __cplusplus
 extern "C" {
 #endif

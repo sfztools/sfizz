@@ -9,6 +9,8 @@
 #include "st_audiofile_libs.h"
 #include <stdlib.h>
 
+#define WAVPACK_MEMORY_ASSUMED_VERSION 5
+
 struct st_audio_file {
     int type;
     union {
