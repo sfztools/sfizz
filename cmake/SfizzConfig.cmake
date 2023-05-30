@@ -153,7 +153,6 @@ Build devtools:                ${SFIZZ_DEVTOOLS}
 Use sndfile:                   ${SFIZZ_USE_SNDFILE}
 Statically link sndfile:       ${SFIZZ_SNDFILE_STATIC}
 
-Use vcpkg:                     ${SFIZZ_USE_VCPKG}
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
 
