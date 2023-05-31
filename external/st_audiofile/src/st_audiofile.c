@@ -9,6 +9,8 @@
 #include "st_audiofile_libs.h"
 #include <stdlib.h>
 
+#define WAVPACK_MEMORY_ASSUMED_VERSION 5
+
 struct st_audio_file {
     int type;
     union {
@@ -17,12 +19,14 @@ struct st_audio_file {
         AIFF_Ref aiff;
         drmp3 *mp3;
         stb_vorbis* ogg;
+        WavpackContext* wv;
     };
 
     union {
         struct { uint32_t channels; float sample_rate; uint64_t frames; } aiff;
         struct { uint64_t frames; } mp3;
         struct { uint32_t channels; float sample_rate; uint64_t frames; } ogg;
+        struct { uint32_t channels; float sample_rate; uint64_t frames; int bitrate; int mode; } wv;
     } cache;
 
     union {
@@ -173,6 +177,25 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
         }
     }
 
+    // Try WV
+    {
+        af->wv =
+#if defined(_WIN32)
+            WavpackOpenFileInput((const char*)filename, NULL, OPEN_FILE_UTF8, 0);
+#else
+            WavpackOpenFileInput((const char*)filename, NULL, 0, 0);
+#endif
+        if (af->wv) {
+            af->cache.wv.channels = (uint32_t)WavpackGetNumChannels(af->wv);
+            af->cache.wv.sample_rate = (float)WavpackGetSampleRate(af->wv);
+            af->cache.wv.frames = (uint64_t)WavpackGetNumSamples64(af->wv);
+            af->cache.wv.bitrate = WavpackGetBitsPerSample(af->wv);
+            af->cache.wv.mode = WavpackGetMode(af->wv);
+            af->type = st_audio_file_wv;
+            return af;
+        }
+    }
+
     free(af);
     return NULL;
 }
@@ -278,6 +301,17 @@ st_audio_file* st_open_memory(const void* memory, size_t length)
         }
     }
 
+    // Try WV
+    {
+        af->wv =
+            WavpackOpenRawDecoder((void*)memory, (int32_t)length, NULL, 0,
+                WAVPACK_MEMORY_ASSUMED_VERSION, NULL, 0, 0);
+        if (af->wv) {
+            af->type = st_audio_file_wv;
+            return af;
+        }
+    }
+
     free(af);
     return NULL;
 }
@@ -315,6 +349,9 @@ void st_close(st_audio_file* af)
         drmp3_uninit(af->mp3);
         free(af->mp3);
         break;
+    case st_audio_file_wv:
+        WavpackCloseFile(af->wv);
+        break;
     }
 
     free(af);
@@ -345,6 +382,9 @@ uint32_t st_get_channels(st_audio_file* af)
     case st_audio_file_mp3:
         channels = af->mp3->channels;
         break;
+    case st_audio_file_wv:
+        channels = af->cache.wv.channels;
+        break;
     }
 
     return channels;
@@ -369,6 +409,9 @@ float st_get_sample_rate(st_audio_file* af)
         break;
     case st_audio_file_mp3:
         sample_rate = af->mp3->sampleRate;
+        break;
+    case st_audio_file_wv:
+        sample_rate = af->cache.wv.sample_rate;
         break;
     }
 
@@ -395,6 +438,9 @@ uint64_t st_get_frame_count(st_audio_file* af)
     case st_audio_file_mp3:
         frames = af->cache.mp3.frames;
         break;
+    case st_audio_file_wv:
+        frames = af->cache.wv.frames;
+        break;
     }
 
     return frames;
@@ -419,6 +465,9 @@ bool st_seek(st_audio_file* af, uint64_t frame)
         break;
     case st_audio_file_mp3:
         success = drmp3_seek_to_pcm_frame(af->mp3, frame);
+        break;
+    case st_audio_file_wv:
+        success = WavpackSeekSample64(af->wv, (int64_t)frame);
         break;
     }
 
@@ -449,6 +498,25 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
     case st_audio_file_mp3:
         count = drmp3_read_pcm_frames_s16(af->mp3, count, buffer);
         break;
+    case st_audio_file_wv:
+        {
+            uint32_t channels = af->cache.wv.channels;
+            int32_t* buf_i32 = (int32_t*)malloc(4 * channels * count);
+            if (!buf_i32) {
+                return 0;
+            }
+            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            if (af->cache.wv.mode & MODE_FLOAT) {
+                drwav_f32_to_s16((drwav_int16*)buffer, (float*)buf_i32, (size_t)count);
+            } else {
+                int d = af->cache.wv.bitrate - 16;
+                for (uint64_t i = 0; i < count; i++) {
+                    buffer[i] = (int16_t)(buf_i32[i] >> d);
+                }
+            }
+            free(buf_i32);
+        }
+        break;
     }
 
     return count;
@@ -477,6 +545,28 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
         break;
     case st_audio_file_mp3:
         count = drmp3_read_pcm_frames_f32(af->mp3, count, buffer);
+        break;
+    case st_audio_file_wv:
+        if (af->cache.wv.mode & MODE_FLOAT) {
+            count = WavpackUnpackSamples(af->wv, (int32_t*)buffer, (uint32_t)count);
+        } else {
+            uint32_t channels = af->cache.wv.channels;
+            int32_t* buf_i32 = (int32_t*)malloc(4 * channels * count);
+            if (!buf_i32) {
+                return 0;
+            }
+            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            if (!(af->cache.wv.mode & MODE_FLOAT)) {
+                if (af->cache.wv.bitrate < 32) {
+                    int d = 32 - af->cache.wv.bitrate;
+                    for (uint64_t i = 0; i < count; i++) {
+                        buf_i32[i] <<= d;
+                    }
+                }
+                drwav_s32_to_f32(buffer, (drwav_int32*)buf_i32, (size_t)count);
+            }
+            free(buf_i32);
+        }
         break;
     }
 

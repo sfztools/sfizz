@@ -13,3 +13,6 @@
 [submodule "external/simde"]
 	path = external/simde
 	url = https://github.com/simd-everywhere/simde.git
+[submodule "external/st_audiofile/thirdparty/wavpack"]
+	path = external/st_audiofile/thirdparty/wavpack
+	url = https://github.com/dbry/WavPack.git

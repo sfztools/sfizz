@@ -57,6 +57,7 @@ set(SFIZZ_TEST_SOURCES
     MessagingT.cpp
     OversamplerT.cpp
     MemoryT.cpp
+    AudioFilesT.cpp
     DataHelpers.h
     DataHelpers.cpp
 )

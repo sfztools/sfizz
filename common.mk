@@ -171,6 +171,45 @@ SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/dr_libs \
 	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/stb_vorbis
 
+# Wavpack support
+SFIZZ_SOURCES += \
+	external/st_audiofile/thirdparty/wavpack/src/common_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/decorr_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/entropy_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/extra1.c \
+    external/st_audiofile/thirdparty/wavpack/src/extra2.c \
+    external/st_audiofile/thirdparty/wavpack/src/open_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/open_filename.c \
+    external/st_audiofile/thirdparty/wavpack/src/open_legacy.c \
+    external/st_audiofile/thirdparty/wavpack/src/open_raw.c \
+    external/st_audiofile/thirdparty/wavpack/src/pack.c \
+    external/st_audiofile/thirdparty/wavpack/src/pack_dns.c \
+    external/st_audiofile/thirdparty/wavpack/src/pack_floats.c \
+    external/st_audiofile/thirdparty/wavpack/src/pack_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/read_words.c \
+    external/st_audiofile/thirdparty/wavpack/src/tags.c \
+    external/st_audiofile/thirdparty/wavpack/src/tag_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/unpack.c \
+    external/st_audiofile/thirdparty/wavpack/src/unpack_floats.c \
+    external/st_audiofile/thirdparty/wavpack/src/unpack_seek.c \
+    external/st_audiofile/thirdparty/wavpack/src/unpack_utils.c \
+    external/st_audiofile/thirdparty/wavpack/src/write_words.c \
+	external/st_audiofile/thirdparty/wavpack/src/pack_dsd.c \
+	external/st_audiofile/thirdparty/wavpack/src/unpack_dsd.c \
+	external/st_audiofile/thirdparty/wavpack/src/unpack3.c \
+	external/st_audiofile/thirdparty/wavpack/src/unpack3_open.c \
+	external/st_audiofile/thirdparty/wavpack/src/unpack3_seek.c
+
+SFIZZ_C_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/wavpack/include \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/wavpack/src \
+	-DENABLE_DSD -DENABLE_LEGACY
+
+SFIZZ_CXX_FLAGS += \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/wavpack/include \
+	-I$(SFIZZ_DIR)/external/st_audiofile/thirdparty/wavpack/src \
+	-DENABLE_DSD -DENABLE_LEGACY
+
 ifeq ($(SFIZZ_USE_SNDFILE),1)
 SFIZZ_C_FLAGS += $(SFIZZ_SNDFILE_C_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1
 SFIZZ_CXX_FLAGS += $(SFIZZ_SNDFILE_CXX_FLAGS) -DST_AUDIO_FILE_USE_SNDFILE=1

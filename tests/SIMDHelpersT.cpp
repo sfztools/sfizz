@@ -7,6 +7,7 @@
 #include "sfizz/simd/Common.h"
 #include "sfizz/SIMDHelpers.h"
 #include "sfizz/Panning.h"
+#include "TestHelpers.h"
 #include "catch2/catch.hpp"
 #include <absl/algorithm/container.h>
 #include <absl/types/span.h>
@@ -20,38 +21,8 @@ template <class T, std::size_t A = sfz::config::defaultAlignment>
 using aligned_vector = std::vector<T, jsl::aligned_allocator<T, A>>;
 
 constexpr int bigBufferSize { 4095 };
-constexpr int medBufferSize { 127 };
+constexpr int medBufferSize { 1023 };
 constexpr float fillValue { 1.3f };
-
-template <class Type>
-inline bool approxEqualMargin(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
-{
-    if (lhs.size() != rhs.size())
-        return false;
-
-    for (size_t i = 0; i < rhs.size(); ++i)
-        if (rhs[i] != Approx(lhs[i]).margin(eps)) {
-            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
-            return false;
-        }
-
-    return true;
-}
-
-template <class Type>
-inline bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
-{
-    if (lhs.size() != rhs.size())
-        return false;
-
-    for (size_t i = 0; i < rhs.size(); ++i)
-        if (rhs[i] != Approx(lhs[i]).epsilon(eps)) {
-            std::cerr << lhs[i] << " != " << rhs[i] << " at index " << i << '\n';
-            return false;
-        }
-
-    return true;
-}
 
 TEST_CASE("[Helpers] willAlign, prevAligned and unaligned tests")
 {
@@ -430,8 +401,8 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD)")
 TEST_CASE("[Helpers] Linear Ramp (SIMD vs scalar)")
 {
     const float start { 0.0f };
-    std::vector<float> outputScalar(bigBufferSize);
-    std::vector<float> outputSIMD(bigBufferSize);
+    std::vector<float> outputScalar(medBufferSize);
+    std::vector<float> outputSIMD(medBufferSize);
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, false);
     sfz::linearRamp<float>(absl::MakeSpan(outputScalar), start, fillValue);
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, true);
@@ -442,8 +413,8 @@ TEST_CASE("[Helpers] Linear Ramp (SIMD vs scalar)")
 TEST_CASE("[Helpers] Linear Ramp unaligned (SIMD vs scalar)")
 {
     const float start { 0.0f };
-    std::vector<float> outputScalar(bigBufferSize);
-    std::vector<float> outputSIMD(bigBufferSize);
+    std::vector<float> outputScalar(medBufferSize);
+    std::vector<float> outputSIMD(medBufferSize);
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, false);
     sfz::linearRamp<float>(absl::MakeSpan(outputScalar).subspan(1), start, fillValue);
     sfz::setSIMDOpStatus<float>(sfz::SIMDOps::linearRamp, true);

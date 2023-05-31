@@ -22,6 +22,9 @@ target_include_directories(st_audiofile_formats
 add_subdirectory("thirdparty/libaiff" EXCLUDE_FROM_ALL)
 target_link_libraries(st_audiofile_formats PUBLIC aiff::aiff)
 
+add_subdirectory("thirdparty/wavpack" EXCLUDE_FROM_ALL)
+target_link_libraries(st_audiofile_formats PUBLIC wavpack)
+
 ###
 if(NOT ST_AUDIO_FILE_USE_SNDFILE)
     target_link_libraries(st_audiofile PRIVATE st_audiofile_formats)
