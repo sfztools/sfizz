@@ -1692,6 +1692,10 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
         auto it = std::find_if(connections.begin(), connections.end(),
             [ccNumber, &target](const Connection& x) -> bool
             {
+                if ((ccNumber > 13 && ccNumber < 138) || ccNumber == 140 || ccNumber == 141)
+                    return x.source.id() == ModId::PerVoiceController &&
+                        x.source.parameters().cc == ccNumber &&
+                        x.target == target;
                 return x.source.id() == ModId::Controller &&
                     x.source.parameters().cc == ccNumber &&
                     x.target == target;
@@ -1851,7 +1855,12 @@ sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source
 sfz::Region::Connection* sfz::Region::getConnectionFromCC(int sourceCC, const ModKey& target)
 {
     for (sfz::Region::Connection& conn : connections) {
-        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
+        if (conn.source.id() == sfz::ModId::PerVoiceController && conn.target == target) {
+            auto p = conn.source.parameters();
+            if (p.cc == sourceCC)
+                return &conn;
+        }
+        else if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
             auto p = conn.source.parameters();
             if (p.cc == sourceCC)
                 return &conn;
