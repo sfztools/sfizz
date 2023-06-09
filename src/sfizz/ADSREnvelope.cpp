@@ -58,13 +58,13 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
 void ADSREnvelope::updateValues(int delay) noexcept
 {
     if (currentState == State::Delay)
-        this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, triggerVelocity_, delay));
-    this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, triggerVelocity_, delay));
-    this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, triggerVelocity_, delay));
-    this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, triggerVelocity_, delay));
-    this->hold = secondsToSamples(desc_->getHold(midiState_, triggerVelocity_, delay));
-    this->sustain = clamp(desc_->getSustain(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
-    this->start = clamp(desc_->getStart(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
+        this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, curveSet_, triggerVelocity_, delay));
+    this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, curveSet_, triggerVelocity_, delay));
+    this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, curveSet_, triggerVelocity_, delay));
+    this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, curveSet_, triggerVelocity_, delay));
+    this->hold = secondsToSamples(desc_->getHold(midiState_, curveSet_, triggerVelocity_, delay));
+    this->sustain = clamp(desc_->getSustain(midiState_, curveSet_, triggerVelocity_, delay), 0.0f, 1.0f);
+    this->start = clamp(desc_->getStart(midiState_, curveSet_, triggerVelocity_, delay), 0.0f, 1.0f);
     sustainThreshold = this->sustain + config::virtuallyZero;
 }
 
