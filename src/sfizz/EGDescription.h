@@ -32,6 +32,8 @@
 #include "utility/LeakDetector.h"
 #include <absl/types/optional.h>
 
+#include "Curve.h"
+
 namespace sfz {
 /**
  * @brief A description for an SFZ envelope generator, with its envelope parameters
@@ -66,13 +68,20 @@ struct EGDescription {
     float vel2sustain { Default::egPercentMod };
     float vel2depth { Default::egVel2Depth };
 
-    CCMap<float> ccAttack;
-    CCMap<float> ccDecay;
-    CCMap<float> ccDelay;
-    CCMap<float> ccHold;
-    CCMap<float> ccRelease;
-    CCMap<float> ccStart;
-    CCMap<float> ccSustain;
+    CCMap<ModifierCurvePair<float>> ccAttack { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccDecay { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccDelay { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccHold { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccRelease { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccStart { ModifierCurvePair<float>{ Default::egPercentMod, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccSustain { ModifierCurvePair<float>{ Default:: egPercentMod, Default::curveCC } };
+    //CCMap<float> ccAttack;
+    //CCMap<float> ccDecay;
+    //CCMap<float> ccDelay;
+    //CCMap<float> ccHold;
+    //CCMap<float> ccRelease;
+    //CCMap<float> ccStart;
+    //CCMap<float> ccSustain;
     bool dynamic { false };
 
     /**
@@ -82,12 +91,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getAttack(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getAttack(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { attack + velocity * vel2attack };
         for (auto& mod: ccAttack) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
@@ -98,12 +108,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getDecay(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getDecay(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { decay + velocity * vel2decay };
         for (auto& mod: ccDecay) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
@@ -114,12 +125,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getDelay(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getDelay(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { this->delay + velocity * vel2delay };
         for (auto& mod: ccDelay) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
@@ -130,12 +142,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getHold(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getHold(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { hold + velocity * vel2hold };
         for (auto& mod: ccHold) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
@@ -146,12 +159,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getRelease(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getRelease(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { release + velocity * vel2release };
         for (auto& mod: ccRelease) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
@@ -162,12 +176,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getStart(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getStart(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
-        UNUSED(velocity);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { start };
         for (auto& mod: ccStart) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
@@ -178,12 +193,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getSustain(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getSustain(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
         ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { sustain + velocity * vel2sustain };
         for (auto& mod: ccSustain) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }
