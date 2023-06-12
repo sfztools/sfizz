@@ -1692,7 +1692,7 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
         auto it = std::find_if(connections.begin(), connections.end(),
             [ccNumber, &target](const Connection& x) -> bool
             {
-                if ((ccNumber > 13 && ccNumber < 138) || ccNumber == 140 || ccNumber == 141)
+                if ((ccNumber > 130 && ccNumber < 138) || ccNumber == 140 || ccNumber == 141)
                     return x.source.id() == ModId::PerVoiceController &&
                         x.source.parameters().cc == ccNumber &&
                         x.target == target;
