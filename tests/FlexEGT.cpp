@@ -251,10 +251,10 @@ TEST_CASE("[FlexEG] Detailed numerical envelope test (with shapes)")
     std::vector<float> output;
     std::vector<float> expected {
         0.0f,
-        0.01f, 0.04f, 0.09f, 0.16f, 0.25f,
-        0.58f, 0.72f, 0.83f, 0.92f, 1.0f,
+        0.002f, 0.016f, 0.054f, 0.128f, 0.25f,
+        0.317f, 0.44f, 0.6f, 0.787f, 1.0f,
         1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-        0.99f, 0.97f, 0.87f, 0.59f, 0.0f,
+        1.0f, 0.99f, 0.922f, 0.672f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f, 0.0f
     };
     output.resize(expected.size());
