@@ -41,7 +41,7 @@ endif()
 
 # Process sources as UTF-8
 if(MSVC)
-    add_compile_options("/utf-8")
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:/utf-8>)
 endif()
 
 # Define the math constants everywhere
@@ -104,7 +104,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         endif()
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    add_compile_options(/Zc:__cplusplus)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:/Zc:__cplusplus>)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
