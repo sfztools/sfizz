@@ -20,10 +20,6 @@ env:
 # shell: pwsh on windows, bash all the rest
 # working-directory: ${{ github.workspace }}
 
-# FIXME:
-# Tests disabled (again); they were working one day and broken the day after
-# without changes: ./build/tests/sfizz_tests: No such file or directory
-# It didn't work either by specifying the full path (that was OK in previous builds)
 jobs:
   clang_tidy:
     name: Clang Tidy
@@ -92,7 +88,6 @@ jobs:
         cmake "${options[@]}"
     - name: Run tests
       run: |
-        ./build/tests/sfizz_tests
         options=(
           --build-config ${{ env.build_type }}
           --output-on-failure
@@ -323,7 +318,14 @@ jobs:
         )
         cmake "${options[@]}"
     - name: Run tests
-      run: ./build/tests/sfizz_tests
+      run: |
+        options=(
+          --build-config ${{ env.build_type }}
+          --output-on-failure
+          --parallel 2
+          --test-dir build
+        )
+        ctest "${options[@]}"
 
   build_with_makefile:
     name: Linux makefile
