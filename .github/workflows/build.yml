@@ -26,7 +26,6 @@ env:
 # It didn't work either by specifying the full path (that was OK in previous builds)
 jobs:
   clang_tidy:
-  # if: ${{ false }}
     name: Clang Tidy
     runs-on: ubuntu-20.04
     steps:
@@ -40,7 +39,6 @@ jobs:
       run: ./scripts/run_clang_tidy.sh
 
   build_for_linux:
-  # if: ${{ false }}
     name: Linux Ubuntu 22.04
     runs-on: ubuntu-22.04 # abseil (libabsl) is not available in 20.04 repository
     env:
@@ -83,7 +81,6 @@ jobs:
         echo "-- github.workspace: ${{ github.workspace }}"
         echo "-- runner.workspace: ${{ runner.workspace }}"
     - name: Build tests
-      if: ${{ false }}
       run: |
         options=(
           --build build
@@ -94,13 +91,10 @@ jobs:
         )
         cmake "${options[@]}"
     - name: Run tests
-      if: ${{ false }}
       run: |
         ./build/tests/sfizz_tests
         options=(
           --build-config ${{ env.build_type }}
-          --debug
-          --extra-verbose
           --output-on-failure
           --parallel 2
           --test-dir build
@@ -129,7 +123,6 @@ jobs:
         path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_for_macos:
-  # if: ${{ false }}
     name: macOS 11
     runs-on: macos-11
     env:
@@ -161,7 +154,6 @@ jobs:
         echo "-- runner.workspace: ${{ runner.workspace }}"
         echo "-- github.workspace: ${{ github.workspace }}"
     - name: Build tests
-      if: ${{ false }}
       run: |
         options=(
           --build build
@@ -172,13 +164,9 @@ jobs:
         )
         cmake "${options[@]}"
     - name: Run tests
-      if: ${{ false }}
       run: |
-        ./build/tests/sfizz_tests
         options=(
           --build-config ${{ env.build_type }}
-          --debug
-          --extra-verbose
           --output-on-failure
           --parallel 2
           --test-dir build
@@ -207,7 +195,6 @@ jobs:
         path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_for_windows:
-  # if: ${{ false }}
     name: Windows 2019
     runs-on: windows-2019
     strategy:
@@ -299,7 +286,6 @@ jobs:
         path: "${{ github.workspace }}/${{ env.install_name }}.tar.gz"
 
   build_with_libsndfile:
-  # if: ${{ false }}
     name: Linux libsndfile
     runs-on: ubuntu-20.04
     steps:
@@ -327,7 +313,6 @@ jobs:
         )
         cmake "${options[@]}"
     - name: Build tests
-      if: ${{ false }}
       run: |
         options=(
           --build build
@@ -338,11 +323,9 @@ jobs:
         )
         cmake "${options[@]}"
     - name: Run tests
-      if: ${{ false }}
       run: ./build/tests/sfizz_tests
 
   build_with_makefile:
-  # if: ${{ false }}
     name: Linux makefile
     runs-on: ubuntu-20.04
     steps:
