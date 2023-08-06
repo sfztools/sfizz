@@ -240,7 +240,6 @@ jobs:
         echo "-- runner.workspace: ${{ runner.workspace }}"
         echo "-- github.workspace: ${{ github.workspace }}"
     - name: Build tests
-      if: ${{ false }}
       run: |
         cmake `
           --build build `
@@ -249,13 +248,9 @@ jobs:
           --target sfizz_tests `
           --verbose `
     - name: Run tests
-      if: ${{ false }}
       run: |
-        .\build\tests\${{ env.build_type }}\sfizz_tests.exe
         ctest `
           --build-config ${{ env.build_type }} `
-          --debug `
-          --extra-verbose `
           --output-on-failure `
           --parallel 2 `
           --test-dir build `

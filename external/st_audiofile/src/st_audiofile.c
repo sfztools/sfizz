@@ -185,7 +185,7 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
 #if defined(_WIN32)
         // WavPack expects an UTF8 input and has no widechar api, so we convert the filename back...
         unsigned wsize = wcslen(filename);
-        unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, 0, NULL, NULL);
+        unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, NULL, NULL);
         char *buffer = (char*)malloc((size+1) * sizeof(char));
         WideCharToMultiByte(CP_UTF8, 0, filename, wsize, buffer, size, NULL, NULL);
         buffer[size] = '\0';
