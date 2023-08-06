@@ -36,8 +36,8 @@ void sfz::MidiState::noteOnEvent(int delay, int noteNumber, float velocity) noex
         ccEvent(delay, ExtendedCCs::unipolarRandom, unipolarDist(Random::randomGenerator));
         ccEvent(delay, ExtendedCCs::bipolarRandom, bipolarDist(Random::randomGenerator));
         ccEvent(delay, ExtendedCCs::keyboardNoteGate, activeNotes > 0 ? 1.0f : 0.0f);
-        ccEvent(delay, ExtendedCCs::keydelta, keydelta);
-        ccEvent(delay, ExtendedCCs::absoluteKeydelta, std::abs(keydelta));
+        ccEvent(delay, AriaExtendedCCs::keydelta, keydelta);
+        ccEvent(delay, AriaExtendedCCs::absoluteKeydelta, std::abs(keydelta));
         activeNotes++;
 
         ccEvent(delay, ExtendedCCs::alternate, alternate);

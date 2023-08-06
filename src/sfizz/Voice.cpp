@@ -401,7 +401,7 @@ void Voice::Impl::updateExtendedCCValues() noexcept
     extendedCCValues_.bipolar = midiState.getCCValue(ExtendedCCs::bipolarRandom);
     extendedCCValues_.alternate = midiState.getCCValue(ExtendedCCs::alternate);
     extendedCCValues_.noteGate = midiState.getCCValue(ExtendedCCs::keyboardNoteGate);
-    extendedCCValues_.keydelta = midiState.getCCValue(ExtendedCCs::keydelta);
+    extendedCCValues_.keydelta = midiState.getCCValue(AriaExtendedCCs::keydelta);
 }
 
 bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexcept
@@ -1069,6 +1069,10 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
     }
 
     auto source = currentPromise_->getData();
+    if (source.getNumFrames() == 0) {
+        DBG("[Voice] Empty source in promise");
+        return;
+    }
 
     BufferPool& bufferPool = resources_.getBufferPool();
     const CurveSet& curves = resources_.getCurves();

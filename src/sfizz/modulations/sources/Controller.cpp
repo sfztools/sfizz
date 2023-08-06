@@ -170,14 +170,14 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
             canShortcut = true;
             break;
         }
-    case ExtendedCCs::keydelta: {
+    case AriaExtendedCCs::keydelta: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? voice->getExtendedCCValues().keydelta : 0.0f;
             sfz::fill(buffer, quantize(fillValue));
             canShortcut = true;
             break;
         }
-    case ExtendedCCs::absoluteKeydelta: {
+    case AriaExtendedCCs::absoluteKeydelta: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
             const float fillValue = voice ? std::abs(voice->getExtendedCCValues().keydelta) : 0.0f;
             sfz::fill(buffer, quantize(fillValue));

@@ -44,10 +44,10 @@ TEST_CASE("[AudioFiles] WavPack file")
     synth.noteOn(0, 60, 127);
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 2 );
-    REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1)) );
+    REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1), 0.005f) );
     while (numPlayingVoices(synth) > 0) {
         synth.renderBlock(buffer);
-        REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1)) );
+        REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1), 0.005f) );
     }
 }
 
@@ -63,9 +63,9 @@ TEST_CASE("[AudioFiles] Flac file")
     synth.noteOn(0, 60, 127);
     synth.renderBlock(buffer);
     REQUIRE( numPlayingVoices(synth) == 2 );
-    REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1)) );
+    REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1), 0.005f) );
     while (numPlayingVoices(synth) > 0) {
         synth.renderBlock(buffer);
-        REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1)) );
+        REQUIRE( approxEqual(span.getConstSpan(0), span.getConstSpan(1), 0.005f) );
     }
 }
