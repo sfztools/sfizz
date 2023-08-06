@@ -191,6 +191,7 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
         buffer[size] = '\0';
         af->wv =
             WavpackOpenFileInput(buffer, NULL, OPEN_FILE_UTF8, 0);
+        free(buffer);
 #else
         af->wv =
             WavpackOpenFileInput((const char*)filename, NULL, 0, 0);
