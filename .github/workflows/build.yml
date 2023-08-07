@@ -79,6 +79,7 @@ jobs:
       run: |
         options=(
           --build-config ${{ matrix.build_type }}
+          --parallel 2
           --output-on-failure
           --test-dir build
         )
@@ -140,6 +141,7 @@ jobs:
       run: |
         options=(
           --build-config ${{ env.build_type }}
+          --parallel 2
           --output-on-failure
           --test-dir build
         )
@@ -211,6 +213,7 @@ jobs:
       run: |
         options=(
           --build-config ${{ env.build_type }}
+          --parallel 2
           --output-on-failure
           --test-dir build
         )
@@ -366,6 +369,7 @@ jobs:
       run: |
         options=(
           --build-config ${{ env.build_type }}
+          --parallel 2
           --output-on-failure
           --test-dir build
         )
