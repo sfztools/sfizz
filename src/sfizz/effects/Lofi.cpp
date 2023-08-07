@@ -128,13 +128,13 @@ namespace fx {
 
         const float steps = (1.0f + (100.0f - fDepth)) * 0.75f;
         const float invSteps = 1.0f / steps;
+        float y2x[4] { 0.0f, 0.0f, 0.0f, 0.0f };
 
         for (uint32_t i = 0; i < nframes; ++i) {
             float x = in[i];
 
             float y = std::copysign((int)(0.5f + std::fabs(x * steps)), x) * invSteps; // NOLINT
 
-            float y2x[2];
             y2x[0] = (y != lastValue) ? (0.5f * (y + lastValue)) : y;
             y2x[1] = y;
 
@@ -185,6 +185,7 @@ namespace fx {
 
         float phase = fPhase;
         float lastValue = fLastValue;
+        float y2x[4] { 0.0f, 0.0f, 0.0f, 0.0f };
 
         for (uint32_t i = 0; i < nframes; ++i) {
             float x = in[i];
@@ -193,7 +194,6 @@ namespace fx {
             float y = (phase > 1.0f) ? x : lastValue;
             phase -= static_cast<float>(static_cast<int>(phase));
 
-            float y2x[2];
             y2x[0] = (y != lastValue) ? (0.5f * (y + lastValue)) : y;
             y2x[1] = y;
 

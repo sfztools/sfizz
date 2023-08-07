@@ -60,13 +60,13 @@ inline ST_AudioFile::~ST_AudioFile() noexcept
     reset();
 }
 
-ST_AudioFile::ST_AudioFile(ST_AudioFile&& other) noexcept
+inline ST_AudioFile::ST_AudioFile(ST_AudioFile&& other) noexcept
     : af_(other.af_)
 {
     other.af_ = nullptr;
 }
 
-ST_AudioFile& ST_AudioFile::operator=(ST_AudioFile&& other) noexcept
+inline ST_AudioFile& ST_AudioFile::operator=(ST_AudioFile&& other) noexcept
 {
     if (this != &other) {
         if (af_)
@@ -91,14 +91,14 @@ inline void ST_AudioFile::reset(st_audio_file* new_af) noexcept
     }
 }
 
-bool ST_AudioFile::open_file(const char* filename)
+inline bool ST_AudioFile::open_file(const char* filename)
 {
     st_audio_file* new_af = st_open_file(filename);
     reset(new_af);
     return new_af != nullptr;
 }
 
-bool ST_AudioFile::open_memory(const void* memory, size_t length)
+inline bool ST_AudioFile::open_memory(const void* memory, size_t length)
 {
     st_audio_file* new_af = st_open_memory(memory, length);
     reset(new_af);

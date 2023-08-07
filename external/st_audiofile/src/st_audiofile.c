@@ -9,6 +9,9 @@
 #include "st_audiofile_libs.h"
 #include <stdlib.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #define WAVPACK_MEMORY_ASSUMED_VERSION 5
 
 struct st_audio_file {
@@ -179,10 +182,18 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
 
     // Try WV
     {
-        af->wv =
 #if defined(_WIN32)
-            WavpackOpenFileInput((const char*)filename, NULL, OPEN_FILE_UTF8, 0);
+        // WavPack expects an UTF8 input and has no widechar api, so we convert the filename back...
+        unsigned wsize = wcslen(filename);
+        unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, NULL, NULL);
+        char *buffer = (char*)malloc((size+1) * sizeof(char));
+        WideCharToMultiByte(CP_UTF8, 0, filename, wsize, buffer, size, NULL, NULL);
+        buffer[size] = '\0';
+        af->wv =
+            WavpackOpenFileInput(buffer, NULL, OPEN_FILE_UTF8, 0);
+        free(buffer);
 #else
+        af->wv =
             WavpackOpenFileInput((const char*)filename, NULL, 0, 0);
 #endif
         if (af->wv) {

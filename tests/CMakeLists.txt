@@ -63,7 +63,7 @@ set(SFIZZ_TEST_SOURCES
 )
 
 add_executable(sfizz_tests ${SFIZZ_TEST_SOURCES})
-target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::static sfizz::spin_mutex sfizz::jsl sfizz::filesystem)
+target_link_libraries(sfizz_tests PRIVATE sfizz::internal sfizz::static sfizz::spin_mutex sfizz::jsl sfizz::filesystem st_audiofile)
 if(APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.12")
     # workaround for incomplete C++17 runtime on macOS
     target_compile_definitions(sfizz_tests PRIVATE "CATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS")

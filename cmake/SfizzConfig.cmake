@@ -116,6 +116,11 @@ function(sfizz_enable_fast_math NAME)
     endif()
 endfunction()
 
+function(sfizz_enable_release_asserts NAME)
+    target_compile_definitions("${NAME}" PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+    target_compile_definitions("${NAME}" PUBLIC "SFIZZ_ENABLE_RELEASE_DBG=1")
+endfunction()
+
 # If we build with Clang, optionally use libc++. Enabled by default on Apple OS.
 cmake_dependent_option(USE_LIBCPP "Use libc++ with clang" "${APPLE}"
     "CMAKE_CXX_COMPILER_ID MATCHES Clang" OFF)
@@ -131,6 +136,13 @@ if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(PROJECT_IS_MAIN TRUE)
 else()
     set(PROJECT_IS_MAIN FALSE)
+endif()
+
+if(SFIZZ_ASAN)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-fsanitize=address>)
+    add_link_options($<$<COMPILE_LANGUAGE:C,CXX>:-fsanitize=address>)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer>)
+    add_link_options($<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer>)
 endif()
 
 # Don't show build information when building a different project
@@ -155,6 +167,7 @@ Statically link sndfile:       ${SFIZZ_SNDFILE_STATIC}
 
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
+Use ASAN:                      ${SFIZZ_ASAN}
 
 Use system abseil-cpp:         ${SFIZZ_USE_SYSTEM_ABSEIL}
 Use system catch:              ${SFIZZ_USE_SYSTEM_CATCH}
@@ -182,11 +195,6 @@ VST3 destination directory:    ${VST3_PLUGIN_INSTALL_DIR}")
         endif()
         message(STATUS "
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
-
-CXX Debug flags:               ${CMAKE_CXX_FLAGS_DEBUG}
-CXX Release flags:             ${CMAKE_CXX_FLAGS_RELEASE}
-CXX MinSize flags:             ${CMAKE_CXX_FLAGS_MINSIZEREL}
-CXX RelWithDebInfo flags:      ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
 ")
     endif()
 endfunction()

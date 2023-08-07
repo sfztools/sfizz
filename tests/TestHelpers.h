@@ -152,8 +152,10 @@ std::string createModulationDotGraph(std::vector<std::string> lines);
 template <class Type>
 bool approxEqual(absl::Span<const Type> lhs, absl::Span<const Type> rhs, Type eps = 1e-3)
 {
-    if (lhs.size() != rhs.size())
+    if (lhs.size() != rhs.size()) {
+        std::cerr << "Span size are different: "<< lhs.size() << " != " << rhs.size() << '\n';
         return false;
+    }
 
     bool different = false;
     for (size_t i = 0; i < rhs.size(); ++i)
