@@ -1690,8 +1690,13 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
         // search an existing connection of same CC number and target
         // if it exists, modify, otherwise create
         auto it = std::find_if(connections.begin(), connections.end(),
-            [ccNumber, &target](const Connection& x) -> bool
+            [ccNumber, &target, this](const Connection& x) -> bool
             {
+                if (ccModulationIsPerVoice(ccNumber))
+                    return x.source.id() == ModId::PerVoiceController &&
+                        x.source.region() == id &&
+                        x.source.parameters().cc == ccNumber &&
+                        x.target == target;
                 return x.source.id() == ModId::Controller &&
                     x.source.parameters().cc == ccNumber &&
                     x.target == target;
@@ -1730,22 +1735,11 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
             break;
         }
 
-        switch (p.cc) {
-        case ExtendedCCs::noteOnVelocity: // fallthrough
-        case ExtendedCCs::noteOffVelocity: // fallthrough
-        case ExtendedCCs::keyboardNoteNumber: // fallthrough
-        case ExtendedCCs::keyboardNoteGate: // fallthrough
-        case ExtendedCCs::unipolarRandom: // fallthrough
-        case ExtendedCCs::bipolarRandom: // fallthrough
-        case ExtendedCCs::alternate:
-        case ExtendedCCs::keydelta:
-        case ExtendedCCs::absoluteKeydelta:
+       if (ccModulationIsPerVoice(p.cc)) {
             conn->source = ModKey(ModId::PerVoiceController, id, p);
-            break;
-        default:
+       } else {
             conn->source = ModKey(ModId::Controller, {}, p);
-            break;
-        }
+       }
     }
 
     return true;
@@ -1850,11 +1844,21 @@ sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source
 
 sfz::Region::Connection* sfz::Region::getConnectionFromCC(int sourceCC, const ModKey& target)
 {
-    for (sfz::Region::Connection& conn : connections) {
-        if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
-            auto p = conn.source.parameters();
-            if (p.cc == sourceCC)
-                return &conn;
+    if (ccModulationIsPerVoice(sourceCC)) {
+        for (sfz::Region::Connection& conn : connections) {
+            if (conn.source.id() == sfz::ModId::PerVoiceController && conn.target == target && conn.source.region() == id) {
+                const auto& p = conn.source.parameters();
+                if (p.cc == sourceCC)
+                    return &conn;
+            }
+        }
+    } else {
+        for (sfz::Region::Connection& conn : connections) {
+            if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
+                const auto& p = conn.source.parameters();
+                if (p.cc == sourceCC)
+                    return &conn;
+            }
         }
     }
     return nullptr;
