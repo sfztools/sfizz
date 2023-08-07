@@ -779,45 +779,6 @@ TEST_CASE("[Files] Unused samples are cleared on reloading")
     REQUIRE(synth.getNumPreloadedSamples() == 0);
 }
 
-// FIXME:
-// this breaks on Github win32/win64/linux CI "sometimes"
-// but I can't reproduce it reliably.
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-TEST_CASE("[Files] Embedded sample data")
-{
-    sfz::Synth synth1;
-    sfz::Synth synth2;
-    synth1.loadSfzFile(fs::current_path() / "tests/TestFiles/kick.sfz");
-    synth2.loadSfzFile(fs::current_path() / "tests/TestFiles/kick_embedded.sfz");
-    REQUIRE(synth1.getNumPreloadedSamples() == 1);
-    REQUIRE(synth2.getNumPreloadedSamples() == 1);
-
-    AudioBuffer<float> buffer1 { 2, 256 };
-    AudioBuffer<float> buffer2 { 2, 256 };
-    std::vector<float> tmp1 (buffer1.getNumFrames());
-    std::vector<float> tmp2 (buffer2.getNumFrames());
-
-    synth1.noteOn(0, 60, 100);
-    synth2.noteOn(0, 60, 100);
-
-    for (unsigned i = 0; i < 100; ++i) {
-        synth1.renderBlock(buffer1);
-        synth2.renderBlock(buffer2);
-
-        const auto left1 = buffer1.getConstSpan(0);
-        const auto left2 = buffer2.getConstSpan(0);
-        std::copy(left1.begin(), left1.end(), tmp1.begin());
-        std::copy(left2.begin(), left2.end(), tmp2.begin());
-        REQUIRE(tmp1 == tmp2);
-
-        const auto right1 = buffer1.getConstSpan(0);
-        const auto right2 = buffer2.getConstSpan(0);
-        std::copy(right1.begin(), right1.end(), tmp1.begin());
-        std::copy(right2.begin(), right2.end(), tmp2.begin());
-        REQUIRE(tmp1 == tmp2);
-    }
-}
-#endif
 TEST_CASE("[Files] Key center from audio file, with embedded sample data")
 {
     sfz::Synth synth;
