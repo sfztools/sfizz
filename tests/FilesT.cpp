@@ -11,6 +11,7 @@
 #include "sfizz/parser/Parser.h"
 #include "sfizz/modulations/ModId.h"
 #include "sfizz/modulations/ModKey.h"
+#include "sfizz/utility/bit_array/BitArray.h"
 #include "catch2/catch.hpp"
 #include "ghc/fs_std.hpp"
 #if defined(__APPLE__)
@@ -791,4 +792,29 @@ TEST_CASE("[Files] Key center from audio file, with embedded sample data")
     REQUIRE(synth.getRegionView(3)->pitchKeycenter == 62);
     REQUIRE(synth.getRegionView(4)->pitchKeycenter == 10);
     REQUIRE(synth.getRegionView(5)->pitchKeycenter == 62);
+}
+
+TEST_CASE("[Files] NewDrums: disappearing CCs (#1077)")
+{
+    sfz::Synth synth;
+    REQUIRE( synth.loadSfzFile(fs::current_path() / "tests/TestFiles/newdrums_flat.sfz") );
+    REQUIRE( synth.getNumRegions() > 0 );
+
+    auto used_ccs = synth.getUsedCCs().span();
+    std::vector<int> used;
+    std::vector<int> expected {
+        4, 7, 10, 11, 130,
+        201, 221, 242, 262, 283,
+        304, 325, 346, 367,
+        451, 452, 453, 454, 455, 456, 457,
+        471, 472, 473, 474, 475, 476, 477, 478, 479,
+        496, 497, 498, 499, 500,
+    };
+
+    for (unsigned i = 0; i < used_ccs.bit_size(); ++i) {
+        if (used_ccs.test(i))
+            used.push_back(i);
+    }
+
+    REQUIRE( used == expected );
 }
