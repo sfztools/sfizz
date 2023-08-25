@@ -62,9 +62,15 @@ public:
      * @return std::vector<Voice*>&
      */
     std::vector<Voice*>& getActiveVoices() noexcept { return voices; }
+    /**
+     * @brief Returns the start timestamp in samples of the most recently activated voice
+     */
+    unsigned getMostRecentStartTimestamp() const noexcept { return mostRecentStartStamp_; }
+
 private:
     unsigned polyphonyLimit { config::maxVoices };
     std::vector<Voice*> voices;
+    unsigned mostRecentStartStamp_ { 0 };
 };
 
 }

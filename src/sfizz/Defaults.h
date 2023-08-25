@@ -317,6 +317,8 @@ namespace Default
     extern const OpcodeSpec<FilterType> filter;
     extern const OpcodeSpec<EqType> eq;
     extern const OpcodeSpec<bool> sustainCancelsRelease;
+    extern const OpcodeSpec<float> loTimer;
+    extern const OpcodeSpec<float> hiTimer;
 
     // Default/max count for objects
     constexpr int numEQs { 3 };

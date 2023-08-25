@@ -244,6 +244,16 @@ void VoiceManager::checkNotePolyphony(const Region* region, int delay, const Tri
     }
 }
 
+bool VoiceManager::withinValidTimerRange(const Region* region, unsigned timestampSamples, float sampleRate) const noexcept
+{
+    auto found = polyphonyGroups_.find(static_cast<int>(region->group));
+    if (found != polyphonyGroups_.end()) {
+        // convert timestamp to seconds
+        return region->timerRange.contains((timestampSamples - found->second.getMostRecentStartTimestamp()) / sampleRate);
+    }
+    return true;
+}
+
 void VoiceManager::checkGroupPolyphony(const Region* region, int delay) noexcept
 {
     auto& group = polyphonyGroups_[region->group];

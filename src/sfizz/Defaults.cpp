@@ -199,6 +199,8 @@ FloatSpec lofiDecim { 0.0f, {0.0f, 100.0f}, 0 };
 FloatSpec rectify { 0.0f, {0.0f, 100.0f}, 0 };
 UInt32Spec stringsNumber { maxStrings, {0, maxStrings}, 0 };
 BoolSpec sustainCancelsRelease { false, {0, 1}, kEnforceBounds };
+FloatSpec loTimer { 0.0f, {0.0f, float_max}, 0 };
+FloatSpec hiTimer { float_max, {0.0f, float_max}, 0 };
 
 ESpec<Trigger> trigger { Trigger::attack, {Trigger::attack, Trigger::release_key}, 0};
 ESpec<CrossfadeCurve> crossfadeCurve { CrossfadeCurve::power, {CrossfadeCurve::gain, CrossfadeCurve::power}, 0};

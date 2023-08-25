@@ -730,6 +730,14 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
+        MATCH("/region&/timer_range", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            sfizz_arg_t args[2];
+            args[0].f = region.timerRange.getStart();
+            args[1].f = region.timerRange.getEnd();
+            client.receive(delay, path, "ff", args);
+        } break;
+
         MATCH("/region&/position", "") {
             GET_REGION_OR_BREAK(indices[0])
             client.receive<'f'>(delay, path, region.position * 100.0f);
