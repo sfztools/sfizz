@@ -562,6 +562,15 @@ bool sfz::Region::parseOpcode(const Opcode& rawOpcode, bool cleanOpcode)
         groupVolume = opcode.read(Default::volume);
         break;
 
+    case hash("lotimer"):
+        timerRange.setStart(opcode.read(Default::loTimer));
+        useTimerRange = useTimerRange || timerRange.getStart() != Default::loTimer;
+        break;
+    case hash("hitimer"):
+        timerRange.setEnd(opcode.read(Default::hiTimer));
+        useTimerRange = useTimerRange || timerRange.getEnd() != Default::hiTimer;
+        break;
+
     // Performance parameters: filters
     case hash("cutoff&"): // also cutoff
         {

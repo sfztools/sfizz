@@ -437,6 +437,13 @@ public:
      */
     int getSourcePosition() const noexcept;
 
+    /**
+     * @brief Get the timestamp in midistate transport sample time when the voice was started, in samples
+     *
+     * @return int
+     */
+    unsigned getStartTimestampSamples() const noexcept;
+
 public:
     /**
      * @brief Check if the voice already belongs to a sister ring

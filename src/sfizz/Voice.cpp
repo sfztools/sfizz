@@ -262,6 +262,7 @@ struct Voice::Impl
 
     int samplesPerBlock_ { config::defaultSamplesPerBlock };
     float sampleRate_ { config::defaultSampleRate };
+    unsigned startTimestamp_ { 0 };
 
     Resources& resources_;
 
@@ -429,13 +430,17 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         return false;
     }
 
-    impl.switchState(State::playing);
-
-    impl.updateExtendedCCValues();
-
     ASSERT(delay >= 0);
     if (delay < 0)
         delay = 0;
+
+    impl.triggerDelay_ = delay;
+    impl.initialDelay_ = delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_);
+    impl.startTimestamp_ = midiState.getInternalClock() + impl.initialDelay_; // need to set this before switchState
+
+    impl.switchState(State::playing);
+
+    impl.updateExtendedCCValues();
 
     if (region.isOscillator()) {
         WavetablePool& wavePool = resources.getWavePool();
@@ -510,8 +515,6 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
         impl.equalizers_[i].setup(region, i, impl.triggerEvent_.value);
     }
 
-    impl.triggerDelay_ = delay;
-    impl.initialDelay_ = delay + static_cast<int>(regionDelay(region, midiState) * impl.sampleRate_);
     impl.baseFrequency_ = tuning.getFrequencyOfKey(impl.triggerEvent_.number);
     impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
@@ -2077,6 +2080,12 @@ int Voice::getSourcePosition() const noexcept
 {
     Impl& impl = *impl_;
     return impl.sourcePosition_;
+}
+
+unsigned Voice::getStartTimestampSamples() const noexcept
+{
+    Impl& impl = *impl_;
+    return impl.startTimestamp_;
 }
 
 LFO* Voice::getLFO(size_t index)
