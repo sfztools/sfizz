@@ -294,7 +294,7 @@ jobs:
           --verbose `
     - name: Create zip package
       if: ${{ github.ref_type == 'tag' }}
-      run: 7z a "${{ env.install_name }}.zip" ".\build\src\${{ env.build_type }}\sfizz.*"
+      run: 7z a "${{ env.install_name }}.zip" ".\build\library\*"
     - name: Upload
       if: ${{ github.ref_type == 'tag' }}
       uses: actions/upload-artifact@v3
