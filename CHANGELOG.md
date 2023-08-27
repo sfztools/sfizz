@@ -6,13 +6,47 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [Unreleased]
 
+## [1.2.2] - 2023-08-25
+
+### Added
+
+- WavPack support (#1129 by @lucianoiam)
+
+### Changed
+
+- The project has been split into 2 repositories to separate
+  the library from the UI/plugins. (#1162)
+- Unclamp the cutoff and add OSC queries for the cutoff modifiers (#1100 by @PythonBlue)
+- SIMDe update (#1161 #1163)
+- Update cpuid, dr_libs and stb_vorbis libraries (#1164)
+- Various CMake and CI changes/fixes, also because the repository split
+  Minimum CMake version required is now 3.15 for Windows, 3.13 for other systems
+- Configurable amount of Control Change messages via CMake' `MIDI_CC_COUNT` variable,
+  Config.h is now a generated file
+- Update Abseil to 20230125.3 (#1169)
+
+### Fixed
+
+- Crash fix for reloading SFZ: needed to copy preloadCallCount in FilePool
+  copy constructors (#1170 by @essej)
+- Temporary fixes to build benchmarks and tests (see #1148)
+- Fixed FlexEGs shape (#1176 #1177)
+- Fixed build on Windows
+- Fixed modulation matrix when CC modulations are per voice (#1173 #1179 by @PythonBlue)
+- Fixed and reenabled tests
+- Modifications to support universal x86_64/ARM builds on macOS (#1183 by @essej)
+
+### Removed
+
+- VCPKG and MinGW CI builds
+
 ## [1.2.1] - 2023-04-15
 
 ### Globally
 
 #### Added
 
-- Mac OS Installer (#93 #1087)
+- macOS installer (#93 #1087)
 - This file from Release-Notes.md in wiki.
 
 #### Changed
@@ -758,7 +792,8 @@ becoming a library to be used in other projects, plus a LV2 plugin.
 [1]: https://keepachangelog.com/en/1.0.0/
 [2]: https://semver.org/spec/v2.0.0.html
 
-[Unreleased]: https://github.com/sfztools/sfizz/compare/1.2.1...HEAD
+[Unreleased]: https://github.com/sfztools/sfizz/compare/1.2.2...HEAD
+[1.2.2]:  https://github.com/sfztools/sfizz/compare/1.2.1...1.2.2
 [1.2.1]:  https://github.com/sfztools/sfizz/compare/1.2.0...1.2.1
 [1.2.0]:  https://github.com/sfztools/sfizz/compare/1.1.1...1.2.0
 [1.1.1]:  https://github.com/sfztools/sfizz/compare/1.1.0...1.1.1

@@ -56,14 +56,14 @@ std::shared_ptr<Curve> FlexEGs::getShapeCurve(float shape)
     else if (shape > 0) {
         for (unsigned i = 0; i < numPoints; ++i) {
             float x = float(i) / (numPoints - 1);
-            points[i] = std::pow(x, shape);
+            points[i] = std::pow(x, 1 + shape);
         }
         *curve = Curve::buildFromPoints(points);
     }
     else if (shape < 0) {
         for (unsigned i = 0; i < numPoints; ++i) {
             float x = float(i) / (numPoints - 1);
-            points[i] = 1 - std::pow(1 - x, -shape);
+            points[i] = 1 - std::pow(1 - x, 1 - shape);
         }
         *curve = Curve::buildFromPoints(points);
     }

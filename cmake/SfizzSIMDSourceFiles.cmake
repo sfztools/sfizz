@@ -9,7 +9,7 @@ macro(sfizz_add_simd_sources SOURCES_VAR PREFIX)
 
     # For CPU-dispatched X86 sources
     # Always build them for all X86 targets.
-    if(PROJECT_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64|i.86|x86|X86)$")
+    if(PROJECT_SYSTEM_PROCESSOR MATCHES "(x86_64|amd64|AMD64|x64|X64|i.86|x86|X86)")
         # on GCC, it requires to set ISA support flags on individual files
         # to be able to use the intrinsics
         if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

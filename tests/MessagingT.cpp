@@ -116,8 +116,10 @@ TEST_CASE("[Messaging] Type-safe client API")
         REQUIRE(args[index++].f == f);
         REQUIRE(args[index++].d == d);
         REQUIRE(!strcmp(args[index++].s, s));
+#if !defined(__SANITIZE_ADDRESS__)
         REQUIRE(args[index  ].b->data == b.data);
         REQUIRE(args[index++].b->size == b.size);
+#endif
     });
 
     client.receive<'i', 'm', 'h', 'f', 'd', 's', 'b', 'T', 'F', 'N', 'I'>(

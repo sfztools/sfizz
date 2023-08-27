@@ -477,7 +477,7 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
     AudioReaderPtr reader = createAudioReader(file, id->isReverse(), &readError);
 
     if (readError) {
-        DBG("[sfizz] libsndfile errored for " << *id << " with message " << readError.message());
+        DBG("[sfizz] reading the file errored for " << *id << " with code " << readError << ": " << readError.message());
         return;
     }
 

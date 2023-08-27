@@ -41,7 +41,7 @@ endif()
 
 # Process sources as UTF-8
 if(MSVC)
-    add_compile_options("/utf-8")
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:/utf-8>)
 endif()
 
 # Define the math constants everywhere
@@ -87,6 +87,8 @@ endif()
 if(NOT PROJECT_SYSTEM_PROCESSOR)
     if(MSVC)
         set(PROJECT_SYSTEM_PROCESSOR "${MSVC_CXX_ARCHITECTURE_ID}" CACHE STRING "" FORCE)
+    elseif(CMAKE_OSX_ARCHITECTURES)
+        set(PROJECT_SYSTEM_PROCESSOR "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING "" FORCE)
     else()
         set(PROJECT_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}" CACHE STRING "" FORCE)
     endif()
@@ -95,16 +97,16 @@ endif()
 # Add required flags for the builds
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     gw_warn(-Wall -Wextra -Wno-multichar -Werror=return-type)
-    if(PROJECT_SYSTEM_PROCESSOR MATCHES "^(i.86|x86_64)$")
+    if(PROJECT_SYSTEM_PROCESSOR MATCHES "(i.86|x86_64)")
         add_compile_options(-msse2)
-    elseif(PROJECT_SYSTEM_PROCESSOR MATCHES "^(arm.*)$")
+    elseif(PROJECT_SYSTEM_PROCESSOR MATCHES "(arm.*)")
         add_compile_options(-mfpu=neon)
         if(NOT ANDROID)
             add_compile_options(-mfloat-abi=hard)
         endif()
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    add_compile_options(/Zc:__cplusplus)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:/Zc:__cplusplus>)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
@@ -114,6 +116,11 @@ function(sfizz_enable_fast_math NAME)
     elseif(MSVC)
         target_compile_options("${NAME}" PRIVATE "/fp:fast")
     endif()
+endfunction()
+
+function(sfizz_enable_release_asserts NAME)
+    target_compile_definitions("${NAME}" PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
+    target_compile_definitions("${NAME}" PUBLIC "SFIZZ_ENABLE_RELEASE_DBG=1")
 endfunction()
 
 # If we build with Clang, optionally use libc++. Enabled by default on Apple OS.
@@ -131,6 +138,13 @@ if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(PROJECT_IS_MAIN TRUE)
 else()
     set(PROJECT_IS_MAIN FALSE)
+endif()
+
+if(SFIZZ_ASAN)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-fsanitize=address>)
+    add_link_options($<$<COMPILE_LANGUAGE:C,CXX>:-fsanitize=address>)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer>)
+    add_link_options($<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer>)
 endif()
 
 # Don't show build information when building a different project
@@ -155,6 +169,7 @@ Statically link sndfile:       ${SFIZZ_SNDFILE_STATIC}
 
 Use clang libc++:              ${USE_LIBCPP}
 Release asserts:               ${SFIZZ_RELEASE_ASSERTS}
+Use ASAN:                      ${SFIZZ_ASAN}
 
 Use system abseil-cpp:         ${SFIZZ_USE_SYSTEM_ABSEIL}
 Use system catch:              ${SFIZZ_USE_SYSTEM_CATCH}
@@ -182,11 +197,6 @@ VST3 destination directory:    ${VST3_PLUGIN_INSTALL_DIR}")
         endif()
         message(STATUS "
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
-
-CXX Debug flags:               ${CMAKE_CXX_FLAGS_DEBUG}
-CXX Release flags:             ${CMAKE_CXX_FLAGS_RELEASE}
-CXX MinSize flags:             ${CMAKE_CXX_FLAGS_MINSIZEREL}
-CXX RelWithDebInfo flags:      ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
 ")
     endif()
 endfunction()

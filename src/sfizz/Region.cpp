@@ -1097,15 +1097,6 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case_any_eg("veltosustain"): // also vel2sustain
         eg.vel2sustain = opcode.read(Default::egPercentMod);
         break;
-    case_any_eg("attack_shape"):
-        eg.attack_shape = opcode.read(Default::flexEGPointShape);
-        break;
-    case_any_eg("decay_shape"):
-        eg.decay_shape = opcode.read(Default::flexEGPointShape5);
-        break;
-    case_any_eg("release_shape"):
-        eg.release_shape = opcode.read(Default::flexEGPointShape5);
-        break;
     case_any_eg("attack_oncc&"): // also attackcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
@@ -1699,10 +1690,11 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
         // search an existing connection of same CC number and target
         // if it exists, modify, otherwise create
         auto it = std::find_if(connections.begin(), connections.end(),
-            [ccNumber, &target](const Connection& x) -> bool
+            [ccNumber, &target, this](const Connection& x) -> bool
             {
-                if ((ccNumber > 130 && ccNumber < 138) || ccNumber == 140 || ccNumber == 141)
+                if (ccModulationIsPerVoice(ccNumber))
                     return x.source.id() == ModId::PerVoiceController &&
+                        x.source.region() == id &&
                         x.source.parameters().cc == ccNumber &&
                         x.target == target;
                 return x.source.id() == ModId::Controller &&
@@ -1743,22 +1735,11 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
             break;
         }
 
-        switch (p.cc) {
-        case ExtendedCCs::noteOnVelocity: // fallthrough
-        case ExtendedCCs::noteOffVelocity: // fallthrough
-        case ExtendedCCs::keyboardNoteNumber: // fallthrough
-        case ExtendedCCs::keyboardNoteGate: // fallthrough
-        case ExtendedCCs::unipolarRandom: // fallthrough
-        case ExtendedCCs::bipolarRandom: // fallthrough
-        case ExtendedCCs::alternate:
-        case ExtendedCCs::keydelta:
-        case ExtendedCCs::absoluteKeydelta:
+       if (ccModulationIsPerVoice(p.cc)) {
             conn->source = ModKey(ModId::PerVoiceController, id, p);
-            break;
-        default:
+       } else {
             conn->source = ModKey(ModId::Controller, {}, p);
-            break;
-        }
+       }
     }
 
     return true;
@@ -1863,16 +1844,21 @@ sfz::Region::Connection& sfz::Region::getOrCreateConnection(const ModKey& source
 
 sfz::Region::Connection* sfz::Region::getConnectionFromCC(int sourceCC, const ModKey& target)
 {
-    for (sfz::Region::Connection& conn : connections) {
-        if (conn.source.id() == sfz::ModId::PerVoiceController && conn.target == target) {
-            auto p = conn.source.parameters();
-            if (p.cc == sourceCC)
-                return &conn;
+    if (ccModulationIsPerVoice(sourceCC)) {
+        for (sfz::Region::Connection& conn : connections) {
+            if (conn.source.id() == sfz::ModId::PerVoiceController && conn.target == target && conn.source.region() == id) {
+                const auto& p = conn.source.parameters();
+                if (p.cc == sourceCC)
+                    return &conn;
+            }
         }
-        else if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
-            auto p = conn.source.parameters();
-            if (p.cc == sourceCC)
-                return &conn;
+    } else {
+        for (sfz::Region::Connection& conn : connections) {
+            if (conn.source.id() == sfz::ModId::Controller && conn.target == target) {
+                const auto& p = conn.source.parameters();
+                if (p.cc == sourceCC)
+                    return &conn;
+            }
         }
     }
     return nullptr;

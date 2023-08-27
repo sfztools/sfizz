@@ -231,9 +231,7 @@ target_include_directories(sfizz_parser PUBLIC sfizz)
 target_link_libraries(sfizz_parser
     PUBLIC sfizz::filesystem sfizz::simde absl::strings
     PRIVATE absl::flat_hash_map)
-if(SFIZZ_RELEASE_ASSERTS)
-    target_compile_definitions(sfizz_parser PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
-endif()
+sfizz_enable_release_asserts(sfizz_parser)
 
 # OSC messaging library
 set(SFIZZ_MESSAGING_HEADERS
@@ -250,9 +248,8 @@ target_sources(sfizz_messaging PRIVATE
     ${SFIZZ_MESSAGING_HEADERS} ${SFIZZ_MESSAGING_SOURCES})
 target_include_directories(sfizz_messaging PUBLIC ".")
 target_link_libraries(sfizz_messaging PUBLIC absl::strings)
-if(SFIZZ_RELEASE_ASSERTS)
-    target_compile_definitions(sfizz_messaging PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
-endif()
+sfizz_enable_release_asserts(sfizz_messaging)
+
 
 # Import library
 set(SFIZZ_IMPORT_HEADERS
@@ -303,9 +300,8 @@ if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
     target_link_libraries(sfizz_internal PUBLIC st_audiofile)
 endif()
-if(SFIZZ_RELEASE_ASSERTS)
-    target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_ENABLE_RELEASE_ASSERT=1")
-endif()
+sfizz_enable_release_asserts(sfizz_internal)
+
 if(SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT)
     target_compile_definitions(sfizz_internal PRIVATE "SFIZZ_IMPLEMENT_CXX17_ALIGNED_NEW_SUPPORT=1")
 endif()
