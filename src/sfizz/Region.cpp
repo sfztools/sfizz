@@ -1097,6 +1097,15 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
     case_any_eg("veltosustain"): // also vel2sustain
         eg.vel2sustain = opcode.read(Default::egPercentMod);
         break;
+    case_any_eg("attack_shape"):
+        eg.attack_shape = opcode.read(Default::flexEGPointShape);
+        break;
+    case_any_eg("decay_shape"):
+        eg.decay_shape = opcode.read(Default::flexEGPointShape5);
+        break;
+    case_any_eg("release_shape"):
+        eg.release_shape = opcode.read(Default::flexEGPointShape5);
+        break;
     case_any_eg("attack_oncc&"): // also attackcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
