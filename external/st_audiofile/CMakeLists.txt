@@ -22,6 +22,14 @@ target_include_directories(st_audiofile_formats
 add_subdirectory("thirdparty/libaiff" EXCLUDE_FROM_ALL)
 target_link_libraries(st_audiofile_formats PUBLIC aiff::aiff)
 
+set(WAVPACK_BUILD_COOLEDIT_PLUGIN OFF)
+set(WAVPACK_BUILD_PROGRAMS OFF)
+set(WAVPACK_BUILD_WINAMP_PLUGIN OFF)
+set(WAVPACK_ENABLE_LIBCRYPTO OFF)
+set(WAVPACK_INSTALL_CMAKE_MODULE OFF)
+set(WAVPACK_INSTALL_DOCS OFF)
+set(WAVPACK_INSTALL_PKGCONFIG_MODULE OFF)
+
 add_subdirectory("thirdparty/wavpack" EXCLUDE_FROM_ALL)
 target_link_libraries(st_audiofile_formats PUBLIC wavpack)
 
