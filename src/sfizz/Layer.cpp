@@ -157,7 +157,7 @@ void Layer::updateCCState(int ccNumber, float ccValue) noexcept
     ccSwitched_.set(ccNumber, conditions->containsWithEnd(ccValue));
 }
 
-bool Layer::registerCC(int ccNumber, float ccValue, float randValue) noexcept
+bool Layer::registerCC(int ccNumber, float ccValue, float randValue, int extendedArg) noexcept
 {
     const Region& region = region_;
 
@@ -175,6 +175,11 @@ bool Layer::registerCC(int ccNumber, float ccValue, float randValue) noexcept
     if (auto triggerRange = region.ccTriggers.get(ccNumber)) {
         if (!triggerRange->containsWithEnd(ccValue))
             return false;
+
+        // only respect this polyAT trigger if the note number is one of ours
+        if (ccNumber == ExtendedCCs::polyphonicAftertouch && extendedArg >= 0 && !region.keyRange.containsWithEnd(extendedArg)) {
+            return false;
+        }
 
         sequenceSwitched_ =
             ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
