@@ -1425,7 +1425,7 @@ void Synth::cc(int delay, int ccNumber, int ccValue) noexcept
     hdcc(delay, ccNumber, normalizedCC);
 }
 
-void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
+void Synth::Impl::ccDispatch(int delay, int ccNumber, float value, int extendedArg) noexcept
 {
     SisterVoiceRingBuilder ring;
     TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
@@ -1447,7 +1447,7 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
             }
         }
 
-        if (layer->registerCC(ccNumber, value, randValue)) {
+        if (layer->registerCC(ccNumber, value, randValue, extendedArg)) {
             checkOffGroups(&region, delay, ccNumber);
             startVoice(layer, delay, triggerEvent, ring);
         }
@@ -1466,7 +1466,7 @@ void Synth::automateHdcc(int delay, int ccNumber, float normValue) noexcept
     impl.performHdcc(delay, ccNumber, normValue, false);
 }
 
-void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asMidi) noexcept
+void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asMidi, int extendedArg) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
@@ -1494,7 +1494,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
     for (auto& voice : voiceManager_)
         voice.registerCC(delay, ccNumber, normValue);
 
-    ccDispatch(delay, ccNumber, normValue);
+    ccDispatch(delay, ccNumber, normValue, extendedArg);
     midiState.ccEvent(delay, ccNumber, normValue);
 }
 
@@ -1594,8 +1594,7 @@ void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) no
     for (auto& voice : impl.voiceManager_)
         voice.registerPolyAftertouch(delay, noteNumber, normAftertouch);
 
-    // Note information is lost on this CC
-    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false);
+    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false, noteNumber);
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept
