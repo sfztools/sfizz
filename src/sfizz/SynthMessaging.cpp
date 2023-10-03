@@ -1327,25 +1327,25 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/region&/ampeg_decay_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
+            const auto& cc = region.amplitudeEG.ccDecay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/ampeg_delay_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
+            const auto& cc = region.amplitudeEG.ccDelay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/ampeg_hold_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
+            const auto& cc = region.amplitudeEG.ccHold.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/ampeg_release_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
+            const auto& cc = region.amplitudeEG.ccRelease.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
@@ -1357,7 +1357,7 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/region&/ampeg_sustain_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
+            const auto& cc = region.amplitudeEG.ccSustain.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier * 100.0f);
         } break;
 
