@@ -74,7 +74,7 @@ struct EGDescription {
     CCMap<ModifierCurvePair<float>> ccHold { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
     CCMap<ModifierCurvePair<float>> ccRelease { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
     CCMap<float> ccStart;
-    CCMap<ModifierCurvePair<float>> ccSustain { ModifierCurvePair<float>{ Default::egSustain, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccSustain { ModifierCurvePair<float>{ Default::egPercent, Default::curveCC } };
     //CCMap<float> ccAttack;
     //CCMap<float> ccDecay;
     //CCMap<float> ccDelay;
