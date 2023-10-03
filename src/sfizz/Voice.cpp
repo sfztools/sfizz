@@ -274,7 +274,7 @@ struct Voice::Impl
     std::unique_ptr<LFO> lfoPitch_;
     std::unique_ptr<LFO> lfoFilter_;
 
-    ADSREnvelope egAmplitude_ { resources_.getMidiState(), resources_ };
+    ADSREnvelope egAmplitude_ { resources_.getMidiState(), resources_.getCurves() };
     std::unique_ptr<ADSREnvelope> egPitch_;
     std::unique_ptr<ADSREnvelope> egFilter_;
 
@@ -761,6 +761,10 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
+    downsampleFilter.setType(FilterType::kFilterLpf6p);
+    downsampleFilter.setChannels(2);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -1846,7 +1850,7 @@ void Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
 {
     Impl& impl = *impl_;
     if (havePitchEG)
-        impl.egPitch_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_));
+        impl.egPitch_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_.getCurves()));
     else
         impl.egPitch_.reset();
 }
@@ -1855,7 +1859,7 @@ void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
 {
     Impl& impl = *impl_;
     if (haveFilterEG)
-        impl.egFilter_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_));
+        impl.egFilter_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_.getCurves()));
     else
         impl.egFilter_.reset();
 }
