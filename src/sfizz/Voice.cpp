@@ -761,10 +761,6 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
-    downsampleFilter.setType(FilterType::kFilterLpf6p);
-    downsampleFilter.setChannels(2);
-    downsampleFilter.init(sampleRate);
-    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
