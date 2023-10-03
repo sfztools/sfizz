@@ -1889,7 +1889,7 @@ void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
 {
     Impl& impl = *impl_;
     if (haveFilterEG)
-        impl.egFilter_.reset(new ADSREnvelope(impl.resources_.getMidiState()), impl.resources_.getCurves());
+        impl.egFilter_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_.getCurves()));
     else
         impl.egFilter_.reset();
 }
