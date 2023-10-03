@@ -35,7 +35,7 @@ Float ADSREnvelope::secondsToExpRate(Float timeInSeconds) const noexcept
         return Float(0.0);
 
     timeInSeconds = std::max(Float(Default::offTime), timeInSeconds);
-    return std::exp(Float(-9.0) / (timeInSeconds * sampleRate));
+    return 1.0 / (sampleRate * timeInSeconds);
 };
 
 void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int delay, float velocity, float sampleRate) noexcept
@@ -235,6 +235,7 @@ void ADSREnvelope::startRelease(int releaseDelay) noexcept
         this->releaseValue = this->sustain;
     releaseCount = 1;
     shouldRelease = true;
+    this->releaseDelay = 0;
     this->releaseDelay = releaseDelay;
 }
 
