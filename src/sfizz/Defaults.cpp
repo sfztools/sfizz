@@ -162,7 +162,7 @@ FloatSpec flexEGPointTimeMod { 0.0f, {-100.0f, 100.0f}, kPermissiveBounds };
 FloatSpec flexEGPointLevel { 0.0f, {-1.0f, 1.0f}, kEnforceBounds };
 FloatSpec flexEGPointLevelMod { 0.0f, {-1.0f, 1.0f}, kEnforceBounds };
 FloatSpec flexEGPointShape { 0.0f, {-100.0f, 100.0f}, kPermissiveBounds };
-FloatSpec flexEGPointShape5 { -5.0f, {-100.0f, 100.0f}, kPermissiveBounds };
+FloatSpec flexEGPointShape3 { -3.0f, {-100.0f, 100.0f}, kPermissiveBounds };
 Int32Spec sampleQuality { 2, {0, 10}, 0 };
 Int32Spec oscillatorQuality { 1, {0, 3}, 0 };
 Int32Spec freewheelingSampleQuality { 10, {0, 10}, 0 };

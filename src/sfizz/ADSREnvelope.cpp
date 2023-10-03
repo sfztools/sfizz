@@ -46,9 +46,9 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
     triggerVelocity_ = velocity;
     currentState = State::Delay; // Has to be before the update
     updateValues(delay);
-    this->attackShape = desc.attack_shape / 2;
-    this->decayShape = desc.decay_shape / 2;
-    this->releaseShape = desc.release_shape / 2;
+    this->attackShape = desc.attack_shape;
+    this->decayShape = desc.decay_shape;
+    this->releaseShape = desc.release_shape;
     releaseDelay = 0;
     shouldRelease = false;
     freeRunning = (
@@ -61,12 +61,12 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
 void ADSREnvelope::updateValues(int delay) noexcept
 {
     if (currentState == State::Delay)
-        this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, triggerVelocity_, delay));
-    this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, triggerVelocity_, delay));
-    this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, triggerVelocity_, delay));
-    this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, triggerVelocity_, delay));
-    this->hold = secondsToSamples(desc_->getHold(midiState_, triggerVelocity_, delay));
-    this->sustain = clamp(desc_->getSustain(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
+        this->delay = delay + secondsToSamples(desc_->getDelay(midiState_, resources_, triggerVelocity_, delay));
+    this->attackStep = secondsToLinRate(desc_->getAttack(midiState_, resources_, triggerVelocity_, delay));
+    this->decayRate = secondsToExpRate(desc_->getDecay(midiState_, resources_, triggerVelocity_, delay));
+    this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, resources_, triggerVelocity_, delay));
+    this->hold = secondsToSamples(desc_->getHold(midiState_, resources_, triggerVelocity_, delay));
+    this->sustain = clamp(desc_->getSustain(midiState_, resources_, triggerVelocity_, delay), 0.0f, 1.0f);
     this->start = clamp(desc_->getStart(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
     sustainThreshold = this->sustain + config::virtuallyZero;
 }

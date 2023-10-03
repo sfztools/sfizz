@@ -274,7 +274,7 @@ struct Voice::Impl
     std::unique_ptr<LFO> lfoPitch_;
     std::unique_ptr<LFO> lfoFilter_;
 
-    ADSREnvelope egAmplitude_ { resources_.getMidiState() };
+    ADSREnvelope egAmplitude_ { resources_.getMidiState(), resources_ };
     std::unique_ptr<ADSREnvelope> egPitch_;
     std::unique_ptr<ADSREnvelope> egFilter_;
 
@@ -1870,7 +1870,7 @@ void Voice::setPitchEGEnabledPerVoice(bool havePitchEG)
 {
     Impl& impl = *impl_;
     if (havePitchEG)
-        impl.egPitch_.reset(new ADSREnvelope(impl.resources_.getMidiState()));
+        impl.egPitch_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_));
     else
         impl.egPitch_.reset();
 }
@@ -1879,7 +1879,7 @@ void Voice::setFilterEGEnabledPerVoice(bool haveFilterEG)
 {
     Impl& impl = *impl_;
     if (haveFilterEG)
-        impl.egFilter_.reset(new ADSREnvelope(impl.resources_.getMidiState()));
+        impl.egFilter_.reset(new ADSREnvelope(impl.resources_.getMidiState(), impl.resources_));
     else
         impl.egFilter_.reset();
 }
