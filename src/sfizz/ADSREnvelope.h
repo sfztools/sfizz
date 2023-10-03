@@ -14,12 +14,13 @@ namespace sfz {
  * @brief Describe an attack/delay/sustain/release envelope that can
  * produce its coefficient in a blockwise manner for SIMD-type operations.
  */
+class Resources;
 class ADSREnvelope {
 public:
     using Float = float;
 
-    ADSREnvelope(const MidiState& state)
-    : midiState_(state) {}
+    ADSREnvelope(const MidiState& state, Resources& resources)
+    : midiState_(state), resources_(resources) {}
     /**
      * @brief Resets the ADSR envelope given a Region, the current midi state, and a delay and
      * trigger velocity
@@ -104,6 +105,7 @@ private:
     Float currentValue { 0.0 };
     const EGDescription* desc_ { nullptr };
     const MidiState& midiState_;
+    Resources& resources_;
     float triggerVelocity_ { 0.0f };
     bool dynamic_ { false };
     int delay { 0 };
@@ -124,8 +126,8 @@ private:
     Float releaseValue { 0 };
 
     Float attackShape {Default::flexEGPointShape};
-    Float decayShape {Default::flexEGPointShape5};
-    Float releaseShape {Default::flexEGPointShape5};
+    Float decayShape {Default::flexEGPointShape3};
+    Float releaseShape {Default::flexEGPointShape3};
 
     LEAK_DETECTOR(ADSREnvelope);
 };
