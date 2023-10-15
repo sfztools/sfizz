@@ -184,7 +184,7 @@ bool Layer::registerCC(int ccNumber, float ccValue, float randValue, int extende
         sequenceSwitched_ =
             ((sequenceCounter_++ % region.sequenceLength) == region.sequencePosition - 1);
 
-        if (isSwitchedOn() && (ccValue != midiState_.getCCValue(ccNumber)))
+        if (isSwitchedOn() && (ccNumber == ExtendedCCs::polyphonicAftertouch || ccValue != midiState_.getCCValue(ccNumber)))
             return true;
     }
 
