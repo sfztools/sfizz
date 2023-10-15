@@ -426,3 +426,23 @@ TEST_CASE("[Triggers] Offed voices with CC triggers do not activate release trig
     synth.hdcc(10, 64, 10_norm);
     REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw" });
 }
+
+TEST_CASE("[Triggers] Respect poly-aftertouch note values when triggering on cc130")
+{
+    Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/poly_at_trigger.sfz", R"(
+        <region> key=55 on_locc130=127 on_hicc130=127 sample=*saw
+        <region> key=57 on_locc130=127 on_hicc130=127 sample=*sine
+    )");
+
+    synth.polyAftertouch(0, 54, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.polyAftertouch(0, 56, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.polyAftertouch(0, 58, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.polyAftertouch(0, 55, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw" });
+    synth.polyAftertouch(10, 57, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*sine" });
+}
