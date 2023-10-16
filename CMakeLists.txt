@@ -15,6 +15,18 @@ set(PROJECT_REPOSITORY https://github.com/sfztools/sfizz)
 
 # External configuration CMake scripts
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# Ensure presence of Git submodules (when not using the source tarball)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    include(GitSubmoduleCheck)
+    git_submodule_check(external/abseil-cpp)
+    git_submodule_check(external/filesystem)
+    git_submodule_check(external/simde)
+    git_submodule_check(external/st_audiofile/thirdparty/dr_libs)
+    git_submodule_check(external/st_audiofile/thirdparty/libaiff)
+    git_submodule_check(external/st_audiofile/thirdparty/wavpack)
+endif()
+
 include(BuildType)
 
 # Build Options
