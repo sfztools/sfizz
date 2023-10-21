@@ -309,6 +309,15 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
+        MATCH("/region&/use_timer_range", "") {
+            GET_REGION_OR_BREAK(indices[0])
+            if (region.useTimerRange) {
+                client.receive<'T'>(delay, path, {});
+            } else {
+                client.receive<'F'>(delay, path, {});
+            }
+        } break;
+
         MATCH("/region&/count", "") {
             GET_REGION_OR_BREAK(indices[0])
             if (region.sampleCount)
