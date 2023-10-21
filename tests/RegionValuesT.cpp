@@ -1106,6 +1106,39 @@ TEST_CASE("[Values] Rand range")
     REQUIRE(messageList == expected);
 }
 
+TEST_CASE("[Values] Timer range")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+        <region> sample=kick.wav
+        <region> sample=kick.wav lotimer=0.2 hitimer=0.4
+        <region> sample=kick.wav lotimer=-0.1 hitimer=0.4
+        <region> sample=kick.wav lotimer=0.2 hitimer=-0.1
+    )");
+    synth.dispatchMessage(client, 0, "/region0/timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region0/use_timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region1/use_timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region2/use_timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region3/timer_range", "", nullptr);
+    synth.dispatchMessage(client, 0, "/region3/use_timer_range", "", nullptr);
+    std::vector<std::string> expected {
+        "/region0/timer_range,ff : { 0, 3.40282e+38 }",
+        "/region0/use_timer_range,F : {  }",
+        "/region1/timer_range,ff : { 0.2, 0.4 }",
+        "/region1/use_timer_range,T : {  }",
+        "/region2/timer_range,ff : { 0, 0.4 }",
+        "/region2/use_timer_range,T : {  }",
+        "/region3/timer_range,ff : { 0.2, 3.40282e+38 }",
+        "/region3/use_timer_range,T : {  }",
+    };
+    REQUIRE(messageList == expected);
+}
+
 TEST_CASE("[Values] Sequence length")
 {
     Synth synth;
