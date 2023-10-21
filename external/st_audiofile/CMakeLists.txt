@@ -30,6 +30,7 @@ set(WAVPACK_INSTALL_CMAKE_MODULE OFF)
 set(WAVPACK_INSTALL_DOCS OFF)
 set(WAVPACK_INSTALL_PKGCONFIG_MODULE OFF)
 # FIXME: remove when WavPack updates their build script
+# see https://github.com/dbry/WavPack/issues/93
 if(APPLE AND PROJECT_SYSTEM_PROCESSOR MATCHES "(arm.*)")
     SET(WAVPACK_ENABLE_ASM OFF)
 endif()
