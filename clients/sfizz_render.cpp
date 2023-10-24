@@ -3,6 +3,7 @@
 #include "sfizz/MathHelpers.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/SIMDHelpers.h"
+#include "sfizz/utility/U8Strings.h"
 #include "MidiHelpers.h"
 #include <st_audiofile_libs.h>
 #include <cxxopts.hpp>
@@ -165,7 +166,7 @@ int main(int argc, char** argv)
     ERROR_IF(!synth.loadSfzFile(sfzPath), "There was an error loading the SFZ file.");
     LOG_INFO(synth.getNumRegions() << " regions in the SFZ.");
 
-    fmidi_smf_u midiFile { fmidi_smf_file_read(midiPath.u8string().c_str()) };
+    fmidi_smf_u midiFile { fmidi_smf_file_read(u8EncodedString(midiPath).c_str()) };
     ERROR_IF(!midiFile, "Can't read " << midiPath);
 
     const auto* midiInfo = fmidi_smf_get_info(midiFile.get());

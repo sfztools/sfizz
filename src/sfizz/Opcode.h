@@ -143,6 +143,16 @@ private:
  */
 absl::optional<uint8_t> readNoteValue(absl::string_view value);
 
+#if defined(__cpp_lib_char8_t)
+/**
+ * @brief Convert a note in string to its equivalent midi note number
+ *
+ * @param value
+ * @return absl::optional<uint8_t>
+ */
+absl::optional<uint8_t> readNoteValue(std::u8string_view value);
+#endif
+
 /**
  * @brief Read a boolean value from the sfz file and cast it to the destination parameter.
  */
