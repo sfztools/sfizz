@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "AudioFile.h"
+#include "utility/U8Strings.h"
 #include <absl/strings/match.h>
 #include <absl/strings/string_view.h>
 #include <absl/memory/memory.h>
@@ -31,8 +32,7 @@ const char* AudioFileInstrumentFormat::name() const noexcept
 
 bool AudioFileInstrumentFormat::matchesFilePath(const fs::path& path) const
 {
-    const std::string ext = path.extension().u8string();
-
+    const std::string ext = u8EncodedString(path.extension());
     for (absl::string_view knownExt : kRecognizedAudioExtensions) {
         if (absl::EqualsIgnoreCase(ext, knownExt))
             return true;
@@ -51,7 +51,7 @@ std::string AudioFileInstrumentImporter::convertToSfz(const fs::path& path) cons
 {
     std::ostringstream os;
     os.imbue(std::locale::classic());
-    os << "<region>sample=" << path.filename().u8string();
+    os << "<region>sample=" << u8EncodedString(path.filename());
     return os.str();
 }
 

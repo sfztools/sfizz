@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "utility/Debug.h"
 #include "utility/Macros.h"
+#include "utility/U8Strings.h"
 #include "modulations/ModId.h"
 #include "modulations/ModKey.h"
 #include "modulations/ModMatrix.h"
@@ -702,7 +703,7 @@ void Synth::Impl::finalizeSfzLoad()
     filePool.setRootDirectory(rootDirectory);
 
     // a string representation used for OSC purposes
-    rootPath_ = rootDirectory.u8string();
+    rootPath_ = u8EncodedString(rootDirectory);
 
     size_t currentRegionIndex = 0;
     size_t currentRegionCount = layers_.size();
