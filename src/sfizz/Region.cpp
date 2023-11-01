@@ -1104,11 +1104,25 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.ccAttack[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
 
         break;
+    case_any_eg("attack_curvecc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccAttack[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
+
+        break;
     case_any_eg("decay_oncc&"): // also decaycc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
         eg.ccDecay[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
+
+        break;
+    case_any_eg("decay_curvecc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccDecay[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
 
         break;
     case_any_eg("delay_oncc&"): // also delaycc&
@@ -1118,11 +1132,25 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.ccDelay[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
 
         break;
+    case_any_eg("delay_curvecc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccDelay[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
+
+        break;
     case_any_eg("hold_oncc&"): // also holdcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
         eg.ccHold[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
+
+        break;
+    case_any_eg("hold_curvecc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccHold[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
 
         break;
     case_any_eg("release_oncc&"): // also releasecc&
@@ -1132,6 +1160,13 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.ccRelease[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
 
         break;
+    case_any_eg("release_curvecc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccRelease[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
+
+        break;
     case_any_eg("start_oncc&"): // also startcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
@@ -1139,7 +1174,7 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.ccStart[opcode.parameters.back()].modifier = opcode.read(Default::egPercentMod);
 
         break;
-    case_any_eg("sustain_curveccc&"): // also sustaincc&
+    case_any_eg("start_curvecc&"): // also startcc&
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
@@ -1151,6 +1186,13 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
             return false;
 
         eg.ccSustain[opcode.parameters.back()].modifier = opcode.read(Default::egPercentMod);
+
+        break;
+    case_any_eg("sustain_curvecc&"): // also attackcc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccSustain[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
 
         break;
 
