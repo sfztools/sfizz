@@ -64,7 +64,7 @@ void ADSREnvelope::updateValues(int delay) noexcept
     this->releaseRate = secondsToExpRate(desc_->getRelease(midiState_, curveSet_, triggerVelocity_, delay));
     this->hold = secondsToSamples(desc_->getHold(midiState_, curveSet_, triggerVelocity_, delay));
     this->sustain = clamp(desc_->getSustain(midiState_, curveSet_, triggerVelocity_, delay), 0.0f, 1.0f);
-    this->start = clamp(desc_->getStart(midiState_, triggerVelocity_, delay), 0.0f, 1.0f);
+    this->start = clamp(desc_->getStart(midiState_, curveSet_, triggerVelocity_, delay), 0.0f, 1.0f);
     sustainThreshold = this->sustain + config::virtuallyZero;
 }
 

@@ -73,8 +73,8 @@ struct EGDescription {
     CCMap<ModifierCurvePair<float>> ccDelay { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
     CCMap<ModifierCurvePair<float>> ccHold { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
     CCMap<ModifierCurvePair<float>> ccRelease { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
-    CCMap<float> ccStart;
-    CCMap<ModifierCurvePair<float>> ccSustain { ModifierCurvePair<float>{ Default::egPercent, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccStart { ModifierCurvePair<float>{ Default::egPercent, Default::curveCC } };
+    CCMap<ModifierCurvePair<float>> ccSustain { ModifierCurvePair<float>{ Default::egSustain, Default::curveCC } };
     //CCMap<float> ccAttack;
     //CCMap<float> ccDecay;
     //CCMap<float> ccDelay;
@@ -176,12 +176,13 @@ struct EGDescription {
      * @param velocity
      * @return float
      */
-    float getStart(const MidiState& state, float velocity, int delay = 0) const noexcept
+    float getStart(const MidiState& state, CurveSet& curveSet, float velocity, int delay = 0) const noexcept
     {
-        UNUSED(velocity);
+        ASSERT(velocity >= 0.0f && velocity <= 1.0f);
         float returnedValue { start };
         for (auto& mod: ccStart) {
-            returnedValue += state.getCCValueAt(mod.cc, delay) * mod.data;
+            const auto& curve = curveSet.getCurve(mod.data.curve);
+            returnedValue += curve.evalNormalized(state.getCCValueAt(mod.cc, delay)) * mod.data.modifier;
         }
         return returnedValue;
     }

@@ -1136,7 +1136,14 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         if (opcode.parameters.back() >= config::numCCs)
             return false;
 
-        eg.ccStart[opcode.parameters.back()] = opcode.read(Default::egPercentMod);
+        eg.ccStart[opcode.parameters.back()].modifier = opcode.read(Default::egPercentMod);
+
+        break;
+    case_any_eg("sustain_curveccc&"): // also sustaincc&
+        if (opcode.parameters.back() >= config::numCCs)
+            return false;
+
+        eg.ccStart[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
 
         break;
     case_any_eg("sustain_oncc&"): // also sustaincc&
