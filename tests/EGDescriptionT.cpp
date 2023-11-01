@@ -159,20 +159,21 @@ TEST_CASE("[EGDescription] Start level")
 {
     sfz::EGDescription eg;
     sfz::MidiState state;
+    sfz::CurveSet curveSet;
     eg.start = 0;
-    eg.ccStart[63] = 127.0f;
-    REQUIRE(eg.getStart(state, 0_norm) == 0.0f);
-    REQUIRE(eg.getStart(state, 127_norm) == 0.0f);
+    eg.ccStart[63].modifier = 127.0f;
+    REQUIRE(eg.getStart(state, curveSet, 0_norm) == 0.0f);
+    REQUIRE(eg.getStart(state, curveSet, 127_norm) == 0.0f);
     state.ccEvent(0, 63, 127_norm);
-    //REQUIRE(eg.getStart(state, 0_norm) == 100.0f);
+    //REQUIRE(eg.getStart(state, curveSet, 0_norm) == 100.0f);
     //eg.ccStart[63] = -127.0f;
-    //REQUIRE(eg.getStart(state, 0_norm) == 0.0f);
+    //REQUIRE(eg.getStart(state, curveSet, 0_norm) == 0.0f);
     eg.start = 0;
-    eg.ccStart[63] = 50.0f;
-    eg.ccStart[65] = 50.0f;
-    REQUIRE(eg.getStart(state, 0_norm) == 50.0f);
-    REQUIRE(eg.getStart(state, 127_norm) == 50.0f);
+    eg.ccStart[63].modifier = 50.0f;
+    eg.ccStart[65].modifier = 50.0f;
+    REQUIRE(eg.getStart(state, curveSet, 0_norm) == 50.0f);
+    REQUIRE(eg.getStart(state, curveSet, 127_norm) == 50.0f);
     state.ccEvent(0, 65, 127_norm);
-    REQUIRE(eg.getStart(state, 0_norm) == 100.0f);
-    REQUIRE(eg.getStart(state, 127_norm) == 100.0f);
+    REQUIRE(eg.getStart(state, curveSet, 0_norm) == 100.0f);
+    REQUIRE(eg.getStart(state, curveSet, 127_norm) == 100.0f);
 }
