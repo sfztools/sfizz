@@ -434,15 +434,18 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
         DBG("[sfizz] File not found in the preloaded files: " << fileId->filename());
         return {};
     }
-    QueuedFileData queuedData { fileId, &preloaded->second };
-    if (!filesToLoad->try_push(queuedData)) {
-        DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
-        return {};
-    }
 
-    std::error_code ec;
-    dispatchBarrier.post(ec);
-    ASSERT(!ec);
+    if (!loadInRam) {
+        QueuedFileData queuedData { fileId, &preloaded->second };
+        if (!filesToLoad->try_push(queuedData)) {
+            DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
+            return {};
+        }
+
+        std::error_code ec;
+        dispatchBarrier.post(ec);
+        ASSERT(!ec);
+    }
 
     return { &preloaded->second };
 }
