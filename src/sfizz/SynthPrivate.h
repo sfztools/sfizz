@@ -260,7 +260,7 @@ struct Synth::Impl final: public Parser::Listener {
      * @param delay
      * @param number
      */
-    void checkOffGroups(const Region* region, int delay, int number);
+    void checkOffGroups(const Region* region, int delay, int number, bool chokedByCC = false);
 
     /**
      * @brief Resets the callback duration breakdown to 0

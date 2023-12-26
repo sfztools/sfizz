@@ -1309,12 +1309,12 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
         ring.addVoiceToRing(selectedVoice);
 }
 
-void Synth::Impl::checkOffGroups(const Region* region, int delay, int number)
+void Synth::Impl::checkOffGroups(const Region* region, int delay, int number, bool chokedByCC)
 {
     for (auto& voice : voiceManager_) {
         if (voice.checkOffGroup(region, delay, number)) {
             const TriggerEvent& event = voice.getTriggerEvent();
-            if (event.type == TriggerEventType::NoteOn)
+            if (event.type == TriggerEventType::NoteOn && !chokedByCC)
                 noteOffDispatch(delay, event.number, event.value);
         }
     }
@@ -1451,7 +1451,7 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value, int extendedA
             if (region.useTimerRange && ! voiceManager_.withinValidTimerRange(&region, midiState.getInternalClock() + delay, sampleRate_))
                 continue;
 
-            checkOffGroups(&region, delay, ccNumber);
+            checkOffGroups(&region, delay, ccNumber, true);
             startVoice(layer, delay, triggerEvent, ring);
         }
     }
