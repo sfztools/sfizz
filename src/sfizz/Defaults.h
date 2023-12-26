@@ -319,6 +319,7 @@ namespace Default
     extern const OpcodeSpec<bool> sustainCancelsRelease;
     extern const OpcodeSpec<float> loTimer;
     extern const OpcodeSpec<float> hiTimer;
+    extern const OpcodeSpec<bool> ramBased;
 
     // Default/max count for objects
     constexpr int numEQs { 3 };
