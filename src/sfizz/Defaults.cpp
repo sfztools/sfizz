@@ -99,7 +99,7 @@ BoolSpec rtDead { false, {false, true}, kEnforceBounds };
 FloatSpec rtDecay { 0.0f, {0.0f, 200.0f}, kEnforceLowerBound|kPermissiveUpperBound };
 FloatSpec filterCutoff { 0.0f, {0.0f, 20000.0f}, kPermissiveBounds };
 FloatSpec filterCutoffMod { 0.0f, {-12000.0f, 12000.0f}, kPermissiveBounds };
-FloatSpec filterResonance { 0.0f, {0.0f, 96.0f}, kPermissiveBounds };
+FloatSpec filterResonance { 0.0f, {-3.0f, 96.0f}, kPermissiveBounds };
 FloatSpec filterResonanceMod { 0.0f, {0.0f, 96.0f}, kPermissiveBounds };
 FloatSpec filterGain { 0.0f, {-96.0f, 96.0f}, kPermissiveBounds };
 FloatSpec filterGainMod { 0.0f, {-96.0f, 96.0f}, kPermissiveBounds };
