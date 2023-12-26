@@ -441,13 +441,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("hint_ram_based"):
         {
             FilePool& filePool = resources_.getFilePool();
-            if (member.value == "1")
-                filePool.setRamLoading(true);
-            else if (member.value == "0")
-                filePool.setRamLoading(false);
-            else
-                DBG("Unsupported value for hint_ram_based: " << member.value);
-            break;
+            filePool.setRamLoading(member.read(Default::ramBased));
         }
         case hash("hint_stealing"):
             switch(hash(member.value)) {
