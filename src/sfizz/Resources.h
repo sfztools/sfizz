@@ -21,6 +21,7 @@ class StretchTuning;
 class ModMatrix;
 class BeatClock;
 class Metronome;
+class Logger;
 
 class Resources
 {

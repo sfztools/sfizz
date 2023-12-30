@@ -1670,6 +1670,11 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             sub.wave = Opcode::transform(Default::lfoWave, args[0].i);
         } break;
 
+        MATCH("/log_level", "s") {
+            impl.resources_.getSynthConfig().liveSampleQuality =
+                Opcode::transform(Default::sampleQuality, static_cast<int>(args[0].i));
+        } break;
+
         #undef GET_REGION_OR_BREAK
         #undef GET_FILTER_OR_BREAK
         #undef GET_LFO_OR_BREAK
