@@ -22,7 +22,7 @@ set(SFIZZ_TEST_SOURCES
     ParsingT.cpp
     BindingsT.cpp
     HelpersT.cpp
-    HelpersT.cpp
+    LoggingT.cpp
     AudioBufferT.cpp
     EGDescriptionT.cpp
     RangeT.cpp
