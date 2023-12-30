@@ -17,7 +17,7 @@ set(PROJECT_REPOSITORY https://github.com/sfztools/sfizz)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Ensure presence of Git submodules (when not using the source tarball)
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND NOT CMAKE_VERSION VERSION_LESS "3.19.0")
     include(GitSubmoduleCheck)
     git_submodule_check(external/abseil-cpp)
     git_submodule_check(external/filesystem)
