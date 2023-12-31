@@ -2954,7 +2954,7 @@ TEST_CASE("[Values] ampeg CC")
         REQUIRE(messageList == expected);
     }
 
-    SECTION("Basic")
+    SECTION("Negative values")
     {
         synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
             <region> sample=kick.wav
@@ -2980,6 +2980,326 @@ TEST_CASE("[Values] ampeg CC")
         };
         REQUIRE(messageList == expected);
     }
+}
+
+TEST_CASE("[Values] fileg CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/fileg_attack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_delay_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_decay_cc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_hold_cc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_release_cc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_start_cc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_sustain_cc7", "", nullptr);
+        std::vector<std::string> expected { };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Positive values")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                fileg_attack_oncc1=1 fileg_delay_oncc2=2 fileg_decay_oncc3=3
+                fileg_hold_oncc4=4 fileg_release_oncc5=5 fileg_start_oncc6=6
+                fileg_sustain_oncc7=7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/fileg_attack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_delay_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_decay_cc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_hold_cc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_release_cc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_start_cc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_sustain_cc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/fileg_attack_cc1,f : { 1 }",
+            "/region0/fileg_delay_cc2,f : { 2 }",
+            "/region0/fileg_decay_cc3,f : { 3 }",
+            "/region0/fileg_hold_cc4,f : { 4 }",
+            "/region0/fileg_release_cc5,f : { 5 }",
+            "/region0/fileg_start_cc6,f : { 6 }",
+            "/region0/fileg_sustain_cc7,f : { 7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Negative values")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                fileg_attack_cc1=-1 fileg_delay_cc2=-2 fileg_decay_cc3=-3
+                fileg_hold_cc4=-4 fileg_release_cc5=-5 fileg_start_cc6=-6
+                fileg_sustain_cc7=-7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/fileg_attack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_delay_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_decay_cc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_hold_cc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_release_cc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_start_cc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_sustain_cc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/fileg_attack_cc1,f : { -1 }",
+            "/region0/fileg_delay_cc2,f : { -2 }",
+            "/region0/fileg_decay_cc3,f : { -3 }",
+            "/region0/fileg_hold_cc4,f : { -4 }",
+            "/region0/fileg_release_cc5,f : { -5 }",
+            "/region0/fileg_start_cc6,f : { -6 }",
+            "/region0/fileg_sustain_cc7,f : { -7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+}
+
+TEST_CASE("[Values] pitcheg CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_attack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_delay_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_decay_cc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_hold_cc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_release_cc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_start_cc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_cc7", "", nullptr);
+        std::vector<std::string> expected { };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Positive values")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                pitcheg_attack_oncc1=1 pitcheg_delay_oncc2=2 pitcheg_decay_oncc3=3
+                pitcheg_hold_oncc4=4 pitcheg_release_oncc5=5 pitcheg_start_oncc6=6
+                pitcheg_sustain_oncc7=7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_attack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_delay_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_decay_cc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_hold_cc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_release_cc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_start_cc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_cc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/pitcheg_attack_cc1,f : { 1 }",
+            "/region0/pitcheg_delay_cc2,f : { 2 }",
+            "/region0/pitcheg_decay_cc3,f : { 3 }",
+            "/region0/pitcheg_hold_cc4,f : { 4 }",
+            "/region0/pitcheg_release_cc5,f : { 5 }",
+            "/region0/pitcheg_start_cc6,f : { 6 }",
+            "/region0/pitcheg_sustain_cc7,f : { 7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Negative values")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                pitcheg_attack_cc1=-1 pitcheg_delay_cc2=-2 pitcheg_decay_cc3=-3
+                pitcheg_hold_cc4=-4 pitcheg_release_cc5=-5 pitcheg_start_cc6=-6
+                pitcheg_sustain_cc7=-7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_attack_cc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_delay_cc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_decay_cc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_hold_cc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_release_cc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_start_cc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_cc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/pitcheg_attack_cc1,f : { -1 }",
+            "/region0/pitcheg_delay_cc2,f : { -2 }",
+            "/region0/pitcheg_decay_cc3,f : { -3 }",
+            "/region0/pitcheg_hold_cc4,f : { -4 }",
+            "/region0/pitcheg_release_cc5,f : { -5 }",
+            "/region0/pitcheg_start_cc6,f : { -6 }",
+            "/region0/pitcheg_sustain_cc7,f : { -7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+}
+
+TEST_CASE("[Values] ampeg curve CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/ampeg_attack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_delay_curvecc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_decay_curvecc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_hold_curvecc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_release_curvecc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_start_curvecc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_sustain_curvecc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/ampeg_attack_curvecc1,f : { 0 }",
+            "/region0/ampeg_delay_curvecc2,f : { 0 }",
+            "/region0/ampeg_decay_curvecc3,f : { 0 }",
+            "/region0/ampeg_hold_curvecc4,f : { 0 }",
+            "/region0/ampeg_release_curvecc5,f : { 0 }",
+            "/region0/ampeg_start_curvecc6,f : { 0 }",
+            "/region0/ampeg_sustain_curvecc7,f : { 0 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Change curves")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                ampeg_attack_curvecc1=1 ampeg_delay_curvecc2=2 ampeg_decay_curvecc3=3
+                ampeg_hold_curvecc4=4 ampeg_release_curvecc5=5 ampeg_start_curvecc6=6
+                ampeg_sustain_curvecc7=7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/ampeg_attack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_delay_curvecc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_decay_curvecc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_hold_curvecc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_release_curvecc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_start_curvecc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/ampeg_sustain_curvecc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/ampeg_attack_curvecc1,f : { 1 }",
+            "/region0/ampeg_delay_curvecc2,f : { 2 }",
+            "/region0/ampeg_decay_curvecc3,f : { 3 }",
+            "/region0/ampeg_hold_curvecc4,f : { 4 }",
+            "/region0/ampeg_release_curvecc5,f : { 5 }",
+            "/region0/ampeg_start_curvecc6,f : { 6 }",
+            "/region0/ampeg_sustain_curvecc7,f : { 7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+}
+
+TEST_CASE("[Values] fileg curve CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/fileg_attack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_delay_curvecc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_decay_curvecc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_hold_curvecc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_release_curvecc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_start_curvecc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_sustain_curvecc7", "", nullptr);
+        std::vector<std::string> expected { };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Change curves")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                fileg_attack_curvecc1=1 fileg_delay_curvecc2=2 fileg_decay_curvecc3=3
+                fileg_hold_curvecc4=4 fileg_release_curvecc5=5 fileg_start_curvecc6=6
+                fileg_sustain_curvecc7=7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/fileg_attack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_delay_curvecc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_decay_curvecc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_hold_curvecc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_release_curvecc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_start_curvecc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/fileg_sustain_curvecc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/fileg_attack_curvecc1,f : { 1 }",
+            "/region0/fileg_delay_curvecc2,f : { 2 }",
+            "/region0/fileg_decay_curvecc3,f : { 3 }",
+            "/region0/fileg_hold_curvecc4,f : { 4 }",
+            "/region0/fileg_release_curvecc5,f : { 5 }",
+            "/region0/fileg_start_curvecc6,f : { 6 }",
+            "/region0/fileg_sustain_curvecc7,f : { 7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
+}
+
+TEST_CASE("[Values] pitcheg curve CC")
+{
+    Synth synth;
+    std::vector<std::string> messageList;
+    Client client(&messageList);
+    client.setReceiveCallback(&simpleMessageReceiver);
+
+    SECTION("Basic")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_attack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_delay_curvecc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_decay_curvecc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_hold_curvecc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_release_curvecc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_start_curvecc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_curvecc7", "", nullptr);
+        std::vector<std::string> expected { };
+        REQUIRE(messageList == expected);
+    }
+
+    SECTION("Change curves")
+    {
+        synth.loadSfzString(fs::current_path() / "tests/TestFiles/value_tests.sfz", R"(
+            <region> sample=kick.wav
+                pitcheg_attack_curvecc1=1 pitcheg_delay_curvecc2=2 pitcheg_decay_curvecc3=3
+                pitcheg_hold_curvecc4=4 pitcheg_release_curvecc5=5 pitcheg_start_curvecc6=6
+                pitcheg_sustain_curvecc7=7
+        )");
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_attack_curvecc1", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_delay_curvecc2", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_decay_curvecc3", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_hold_curvecc4", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_release_curvecc5", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_start_curvecc6", "", nullptr);
+        synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_curvecc7", "", nullptr);
+        std::vector<std::string> expected {
+            "/region0/pitcheg_attack_curvecc1,f : { 1 }",
+            "/region0/pitcheg_delay_curvecc2,f : { 2 }",
+            "/region0/pitcheg_decay_curvecc3,f : { 3 }",
+            "/region0/pitcheg_hold_curvecc4,f : { 4 }",
+            "/region0/pitcheg_release_curvecc5,f : { 5 }",
+            "/region0/pitcheg_start_curvecc6,f : { 6 }",
+            "/region0/pitcheg_sustain_curvecc7,f : { 7 }",
+        };
+        REQUIRE(messageList == expected);
+    }
+
 }
 
 TEST_CASE("[Values] Filter stacking and cutoffs")
