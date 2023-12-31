@@ -5,6 +5,7 @@
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
 #include "Region.h"
+#include "Defaults.h"
 #include "Opcode.h"
 #include "MathHelpers.h"
 #include "utility/SwapAndPop.h"
@@ -1059,12 +1060,30 @@ bool sfz::Region::parseLFOOpcode(const Opcode& opcode, absl::optional<LFODescrip
     return parsed;
 }
 
+template<class Member, class T, class U>
+bool parseEGModifierCurveHelper(const sfz::Opcode& opcode, sfz::CCMap<sfz::ModifierCurvePair<T>>& ccMap, sfz::OpcodeSpec<U> spec, Member member)
+{
+    if (opcode.parameters.back() >= sfz::config::numCCs)
+        return false;
+
+    ccMap[opcode.parameters.back()].*member = opcode.read(spec);
+    return true;
+}
+
 bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
 {
     #define case_any_eg(param)                      \
         case hash("ampeg_" param):                  \
         case hash("pitcheg_" param):                \
         case hash("fileg_" param)                   \
+
+    auto setModifier = [&opcode] (auto& ccMap, auto& spec) -> bool {
+        return parseEGModifierCurveHelper(opcode, ccMap, spec, &ModifierCurvePair<float>::modifier);
+    };
+
+    auto setCurve = [&opcode] (auto& ccMap) -> bool {
+        return parseEGModifierCurveHelper(opcode, ccMap, Default::curveCC, &ModifierCurvePair<float>::curve);
+    };
 
     switch (opcode.lettersOnlyHash) {
     case_any_eg("attack"):
@@ -1107,102 +1126,60 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.vel2sustain = opcode.read(Default::egPercentMod);
         break;
     case_any_eg("attack_oncc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccAttack, Default::egTimeMod)) 
             return false;
-
-        eg.ccAttack[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
-
         break;
-    case_any_eg("attack_curvecc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+    case_any_eg("attack_curvecc&"):
+        if (!setCurve(eg.ccAttack)) 
             return false;
-
-        eg.ccAttack[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
     case_any_eg("decay_oncc&"): // also decaycc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccDecay, Default::egTimeMod))
             return false;
-
-        eg.ccDecay[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
-
         break;
-    case_any_eg("decay_curvecc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+    case_any_eg("decay_curvecc&"):
+        if (!setCurve(eg.ccDecay)) 
             return false;
-
-        eg.ccDecay[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
     case_any_eg("delay_oncc&"): // also delaycc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccDelay, Default::egTimeMod)) 
             return false;
-
-        eg.ccDelay[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
-
         break;
-    case_any_eg("delay_curvecc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+    case_any_eg("delay_curvecc&"):
+        if (!setCurve(eg.ccDelay)) 
             return false;
-
-        eg.ccDelay[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
     case_any_eg("hold_oncc&"): // also holdcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccHold, Default::egTimeMod)) 
             return false;
-
-        eg.ccHold[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
-
         break;
     case_any_eg("hold_curvecc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setCurve(eg.ccHold)) 
             return false;
-
-        eg.ccHold[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
     case_any_eg("release_oncc&"): // also releasecc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccRelease, Default::egTimeMod)) 
             return false;
-
-        eg.ccRelease[opcode.parameters.back()].modifier = opcode.read(Default::egTimeMod);
-
         break;
     case_any_eg("release_curvecc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setCurve(eg.ccRelease)) 
             return false;
-
-        eg.ccRelease[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
     case_any_eg("start_oncc&"): // also startcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccStart, Default::egPercentMod)) 
             return false;
-
-        eg.ccStart[opcode.parameters.back()].modifier = opcode.read(Default::egPercentMod);
-
         break;
     case_any_eg("start_curvecc&"): // also startcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setCurve(eg.ccStart)) 
             return false;
-
-        eg.ccStart[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
     case_any_eg("sustain_oncc&"): // also sustaincc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setModifier(eg.ccSustain, Default::egPercentMod)) 
             return false;
-
-        eg.ccSustain[opcode.parameters.back()].modifier = opcode.read(Default::egPercentMod);
-
         break;
     case_any_eg("sustain_curvecc&"): // also attackcc&
-        if (opcode.parameters.back() >= config::numCCs)
+        if (!setCurve(eg.ccSustain)) 
             return false;
-
-        eg.ccSustain[opcode.parameters.back()].curve = opcode.read(Default::curveCC);
-
         break;
 
     case_any_eg("dynamic"):
