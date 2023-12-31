@@ -1224,84 +1224,98 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
 
         MATCH("/region&/pitcheg_attack_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccAttack.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/pitcheg_decay_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccDecay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/pitcheg_delay_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccDelay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/pitcheg_hold_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccHold.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/pitcheg_release_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccRelease.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
         MATCH("/region&/pitcheg_start_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccStart.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier * 100.0f);
         } break;
 
         MATCH("/region&/pitcheg_sustain_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccSustain.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier * 100.0f);
         } break;
 
         MATCH("/region&/pitcheg_attack_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccAttack.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
         MATCH("/region&/pitcheg_decay_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccDecay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
         MATCH("/region&/pitcheg_delay_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccDelay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
         MATCH("/region&/pitcheg_hold_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccHold.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
         MATCH("/region&/pitcheg_release_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccRelease.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
         MATCH("/region&/pitcheg_start_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccStart.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
         MATCH("/region&/pitcheg_sustain_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
+            if (!region.pitchEG) break;
             const auto& cc = region.pitchEG->ccSustain.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
@@ -1621,101 +1635,101 @@ void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, co
             }
         } break;
 
-        MATCH("/region&/filter&/fileg_attack_cc&", "") {
+        MATCH("/region&/fileg_attack_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccAttack.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccAttack.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
-        MATCH("/region&/filter&/fileg_decay_cc&", "") {
+        MATCH("/region&/fileg_decay_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDecay.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccDecay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
-        MATCH("/region&/filter&/fileg_delay_cc&", "") {
+        MATCH("/region&/fileg_delay_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDelay.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccDelay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
-        MATCH("/region&/filter&/fileg_hold_cc&", "") {
+        MATCH("/region&/fileg_hold_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccHold.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccHold.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
-        MATCH("/region&/filter&/fileg_release_cc&", "") {
+        MATCH("/region&/fileg_release_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccRelease.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccRelease.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier);
         } break;
 
-        MATCH("/region&/filter&/fileg_start_cc&", "") {
+        MATCH("/region&/fileg_start_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccStart.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccStart.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier * 100.0f);
         } break;
 
-        MATCH("/region&/filter&/fileg_sustain_cc&", "") {
+        MATCH("/region&/fileg_sustain_cc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccSustain.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccSustain.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.modifier * 100.0f);
         } break;
 
-        MATCH("/region&/filter&/fileg_attack_curvecc&", "") {
+        MATCH("/region&/fileg_attack_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccAttack.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccAttack.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
-        MATCH("/region&/filter&/fileg_decay_curvecc&", "") {
+        MATCH("/region&/fileg_decay_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDecay.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccDecay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
-        MATCH("/region&/filter&/fileg_delay_curvecc&", "") {
+        MATCH("/region&/fileg_delay_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDelay.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccDelay.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
-        MATCH("/region&/filter&/fileg_hold_curvecc&", "") {
+        MATCH("/region&/fileg_hold_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccHold.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccHold.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
-        MATCH("/region&/filter&/fileg_release_curvecc&", "") {
+        MATCH("/region&/fileg_release_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccRelease.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccRelease.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
-        MATCH("/region&/filter&/fileg_start_curvecc&", "") {
+        MATCH("/region&/fileg_start_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccStart.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccStart.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
-        MATCH("/region&/filter&/fileg_sustain_curvecc&", "") {
+        MATCH("/region&/fileg_sustain_curvecc&", "") {
             GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccSustain.getWithDefault(indices[2]);
+            if (!region.filterEG) break;
+            const auto& cc = region.filterEG->ccSustain.getWithDefault(indices[1]);
             client.receive<'f'>(delay, path, cc.curve);
         } break;
 
