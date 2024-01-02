@@ -740,8 +740,8 @@ public:
      */
     void setBroadcastCallback(sfizz_receive_t* broadcast, void* data);
 
-private:
     struct Impl;
+private:
     std::unique_ptr<Impl> impl_;
 
     LEAK_DETECTOR(Synth);

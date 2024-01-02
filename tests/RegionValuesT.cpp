@@ -256,7 +256,7 @@ TEST_CASE("[Values] Count")
     synth.dispatchMessage(client, 0, "/region2/count", "", nullptr);
     std::vector<std::string> expected {
         "/region0/count,N : {  }",
-        "/region1/count,h : { 2 }",
+        "/region1/count,i : { 2 }",
         "/region2/count,N : {  }",
     };
     REQUIRE(messageList == expected);
@@ -421,7 +421,7 @@ TEST_CASE("[Values] Loop count")
     synth.dispatchMessage(client, 0, "/region2/loop_count", "", nullptr);
     std::vector<std::string> expected {
         "/region0/loop_count,N : {  }",
-        "/region1/loop_count,h : { 2 }",
+        "/region1/loop_count,i : { 2 }",
         "/region2/loop_count,N : {  }",
     };
     REQUIRE(messageList == expected);
@@ -1158,9 +1158,9 @@ TEST_CASE("[Values] Sequence length")
     // TODO: activate for the new region parser ; ignore the second value
     // synth.dispatchMessage(client, 0, "/region3/seq_length", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/seq_length,h : { 1 }",
-        "/region1/seq_length,h : { 12 }",
-        "/region2/seq_length,h : { 1 }",
+        "/region0/seq_length,i : { 1 }",
+        "/region1/seq_length,i : { 12 }",
+        "/region2/seq_length,i : { 1 }",
         // TODO: activate for the new region parser ; ignore the second value
         // "/region3/seq_length,f : { 12 }",
     };
@@ -1186,9 +1186,9 @@ TEST_CASE("[Values] Sequence position")
     // TODO: activate for the new region parser ; ignore the second value
     // synth.dispatchMessage(client, 0, "/region3/seq_position", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/seq_position,h : { 1 }",
-        "/region1/seq_position,h : { 12 }",
-        "/region2/seq_position,h : { 1 }",
+        "/region0/seq_position,i : { 1 }",
+        "/region1/seq_position,i : { 12 }",
+        "/region2/seq_position,i : { 1 }",
         // TODO: activate for the new region parser ; ignore the second value
         // "/region3/seq_position,f : { 12 }",
     };
@@ -2133,9 +2133,9 @@ TEST_CASE("[Values] Pitch Keytrack")
     synth.dispatchMessage(client, 0, "/region1/pitch_keytrack", "", nullptr);
     synth.dispatchMessage(client, 0, "/region2/pitch_keytrack", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/pitch_keytrack,i : { 100 }",
-        "/region1/pitch_keytrack,i : { 1000 }",
-        "/region2/pitch_keytrack,i : { -100 }",
+        "/region0/pitch_keytrack,f : { 100 }",
+        "/region1/pitch_keytrack,f : { 1000 }",
+        "/region2/pitch_keytrack,f : { -100 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2158,9 +2158,9 @@ TEST_CASE("[Values] Pitch Veltrack")
         synth.dispatchMessage(client, 0, "/region1/pitch_veltrack", "", nullptr);
         synth.dispatchMessage(client, 0, "/region2/pitch_veltrack", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/pitch_veltrack,i : { 0 }",
-            "/region1/pitch_veltrack,i : { 10 }",
-            "/region2/pitch_veltrack,i : { -132 }",
+            "/region0/pitch_veltrack,f : { 0 }",
+            "/region1/pitch_veltrack,f : { 10 }",
+            "/region2/pitch_veltrack,f : { -132 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -2233,11 +2233,11 @@ TEST_CASE("[Values] Transpose")
     synth.dispatchMessage(client, 0, "/region3/transpose", "", nullptr);
     synth.dispatchMessage(client, 0, "/region4/transpose", "", nullptr);
     std::vector<std::string> expected {
-        "/region0/transpose,i : { 0 }",
-        "/region1/transpose,i : { 10 }",
-        "/region2/transpose,i : { -4 }",
-        "/region3/transpose,i : { -400 }",
-        "/region4/transpose,i : { 400 }",
+        "/region0/transpose,f : { 0 }",
+        "/region1/transpose,f : { 10 }",
+        "/region2/transpose,f : { -4 }",
+        "/region3/transpose,f : { -400 }",
+        "/region4/transpose,f : { 400 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -2891,7 +2891,7 @@ TEST_CASE("[Values] Support floating point for int values")
     synth.dispatchMessage(client, 0, "/region1/pitch_keytrack", "", nullptr);
     std::vector<std::string> expected {
         "/region0/offset,h : { 1042 }",
-        "/region1/pitch_keytrack,i : { -2 }",
+        "/region1/pitch_keytrack,f : { -2.1 }",
     };
     REQUIRE(messageList == expected);
 }
@@ -3001,7 +3001,15 @@ TEST_CASE("[Values] fileg CC")
         synth.dispatchMessage(client, 0, "/region0/fileg_release_cc5", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/fileg_start_cc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/fileg_sustain_cc7", "", nullptr);
-        std::vector<std::string> expected { };
+        std::vector<std::string> expected {
+            "/region0/fileg_attack_cc1,N : {  }",
+            "/region0/fileg_delay_cc2,N : {  }",
+            "/region0/fileg_decay_cc3,N : {  }",
+            "/region0/fileg_hold_cc4,N : {  }",
+            "/region0/fileg_release_cc5,N : {  }",
+            "/region0/fileg_start_cc6,N : {  }",
+            "/region0/fileg_sustain_cc7,N : {  }",
+        };
         REQUIRE(messageList == expected);
     }
 
@@ -3079,7 +3087,15 @@ TEST_CASE("[Values] pitcheg CC")
         synth.dispatchMessage(client, 0, "/region0/pitcheg_release_cc5", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/pitcheg_start_cc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_cc7", "", nullptr);
-        std::vector<std::string> expected { };
+        std::vector<std::string> expected {
+            "/region0/pitcheg_attack_cc1,N : {  }",
+            "/region0/pitcheg_delay_cc2,N : {  }",
+            "/region0/pitcheg_decay_cc3,N : {  }",
+            "/region0/pitcheg_hold_cc4,N : {  }",
+            "/region0/pitcheg_release_cc5,N : {  }",
+            "/region0/pitcheg_start_cc6,N : {  }",
+            "/region0/pitcheg_sustain_cc7,N : {  }",
+        };
         REQUIRE(messageList == expected);
     }
 
@@ -3158,13 +3174,13 @@ TEST_CASE("[Values] ampeg curve CC")
         synth.dispatchMessage(client, 0, "/region0/ampeg_start_curvecc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/ampeg_sustain_curvecc7", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/ampeg_attack_curvecc1,f : { 0 }",
-            "/region0/ampeg_delay_curvecc2,f : { 0 }",
-            "/region0/ampeg_decay_curvecc3,f : { 0 }",
-            "/region0/ampeg_hold_curvecc4,f : { 0 }",
-            "/region0/ampeg_release_curvecc5,f : { 0 }",
-            "/region0/ampeg_start_curvecc6,f : { 0 }",
-            "/region0/ampeg_sustain_curvecc7,f : { 0 }",
+            "/region0/ampeg_attack_curvecc1,i : { 0 }",
+            "/region0/ampeg_delay_curvecc2,i : { 0 }",
+            "/region0/ampeg_decay_curvecc3,i : { 0 }",
+            "/region0/ampeg_hold_curvecc4,i : { 0 }",
+            "/region0/ampeg_release_curvecc5,i : { 0 }",
+            "/region0/ampeg_start_curvecc6,i : { 0 }",
+            "/region0/ampeg_sustain_curvecc7,i : { 0 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3185,13 +3201,13 @@ TEST_CASE("[Values] ampeg curve CC")
         synth.dispatchMessage(client, 0, "/region0/ampeg_start_curvecc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/ampeg_sustain_curvecc7", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/ampeg_attack_curvecc1,f : { 1 }",
-            "/region0/ampeg_delay_curvecc2,f : { 2 }",
-            "/region0/ampeg_decay_curvecc3,f : { 3 }",
-            "/region0/ampeg_hold_curvecc4,f : { 4 }",
-            "/region0/ampeg_release_curvecc5,f : { 5 }",
-            "/region0/ampeg_start_curvecc6,f : { 6 }",
-            "/region0/ampeg_sustain_curvecc7,f : { 7 }",
+            "/region0/ampeg_attack_curvecc1,i : { 1 }",
+            "/region0/ampeg_delay_curvecc2,i : { 2 }",
+            "/region0/ampeg_decay_curvecc3,i : { 3 }",
+            "/region0/ampeg_hold_curvecc4,i : { 4 }",
+            "/region0/ampeg_release_curvecc5,i : { 5 }",
+            "/region0/ampeg_start_curvecc6,i : { 6 }",
+            "/region0/ampeg_sustain_curvecc7,i : { 7 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3217,7 +3233,15 @@ TEST_CASE("[Values] fileg curve CC")
         synth.dispatchMessage(client, 0, "/region0/fileg_release_curvecc5", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/fileg_start_curvecc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/fileg_sustain_curvecc7", "", nullptr);
-        std::vector<std::string> expected { };
+        std::vector<std::string> expected { 
+            "/region0/fileg_attack_curvecc1,N : {  }",
+            "/region0/fileg_delay_curvecc2,N : {  }",
+            "/region0/fileg_decay_curvecc3,N : {  }",
+            "/region0/fileg_hold_curvecc4,N : {  }",
+            "/region0/fileg_release_curvecc5,N : {  }",
+            "/region0/fileg_start_curvecc6,N : {  }",
+            "/region0/fileg_sustain_curvecc7,N : {  }",
+        };
         REQUIRE(messageList == expected);
     }
 
@@ -3237,13 +3261,13 @@ TEST_CASE("[Values] fileg curve CC")
         synth.dispatchMessage(client, 0, "/region0/fileg_start_curvecc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/fileg_sustain_curvecc7", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/fileg_attack_curvecc1,f : { 1 }",
-            "/region0/fileg_delay_curvecc2,f : { 2 }",
-            "/region0/fileg_decay_curvecc3,f : { 3 }",
-            "/region0/fileg_hold_curvecc4,f : { 4 }",
-            "/region0/fileg_release_curvecc5,f : { 5 }",
-            "/region0/fileg_start_curvecc6,f : { 6 }",
-            "/region0/fileg_sustain_curvecc7,f : { 7 }",
+            "/region0/fileg_attack_curvecc1,i : { 1 }",
+            "/region0/fileg_delay_curvecc2,i : { 2 }",
+            "/region0/fileg_decay_curvecc3,i : { 3 }",
+            "/region0/fileg_hold_curvecc4,i : { 4 }",
+            "/region0/fileg_release_curvecc5,i : { 5 }",
+            "/region0/fileg_start_curvecc6,i : { 6 }",
+            "/region0/fileg_sustain_curvecc7,i : { 7 }",
         };
         REQUIRE(messageList == expected);
     }
@@ -3269,7 +3293,15 @@ TEST_CASE("[Values] pitcheg curve CC")
         synth.dispatchMessage(client, 0, "/region0/pitcheg_release_curvecc5", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/pitcheg_start_curvecc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_curvecc7", "", nullptr);
-        std::vector<std::string> expected { };
+        std::vector<std::string> expected { 
+            "/region0/pitcheg_attack_curvecc1,N : {  }",
+            "/region0/pitcheg_delay_curvecc2,N : {  }",
+            "/region0/pitcheg_decay_curvecc3,N : {  }",
+            "/region0/pitcheg_hold_curvecc4,N : {  }",
+            "/region0/pitcheg_release_curvecc5,N : {  }",
+            "/region0/pitcheg_start_curvecc6,N : {  }",
+            "/region0/pitcheg_sustain_curvecc7,N : {  }",
+        };
         REQUIRE(messageList == expected);
     }
 
@@ -3289,17 +3321,16 @@ TEST_CASE("[Values] pitcheg curve CC")
         synth.dispatchMessage(client, 0, "/region0/pitcheg_start_curvecc6", "", nullptr);
         synth.dispatchMessage(client, 0, "/region0/pitcheg_sustain_curvecc7", "", nullptr);
         std::vector<std::string> expected {
-            "/region0/pitcheg_attack_curvecc1,f : { 1 }",
-            "/region0/pitcheg_delay_curvecc2,f : { 2 }",
-            "/region0/pitcheg_decay_curvecc3,f : { 3 }",
-            "/region0/pitcheg_hold_curvecc4,f : { 4 }",
-            "/region0/pitcheg_release_curvecc5,f : { 5 }",
-            "/region0/pitcheg_start_curvecc6,f : { 6 }",
-            "/region0/pitcheg_sustain_curvecc7,f : { 7 }",
+            "/region0/pitcheg_attack_curvecc1,i : { 1 }",
+            "/region0/pitcheg_delay_curvecc2,i : { 2 }",
+            "/region0/pitcheg_decay_curvecc3,i : { 3 }",
+            "/region0/pitcheg_hold_curvecc4,i : { 4 }",
+            "/region0/pitcheg_release_curvecc5,i : { 5 }",
+            "/region0/pitcheg_start_curvecc6,i : { 6 }",
+            "/region0/pitcheg_sustain_curvecc7,i : { 7 }",
         };
         REQUIRE(messageList == expected);
     }
-
 }
 
 TEST_CASE("[Values] Filter stacking and cutoffs")
@@ -3358,8 +3389,8 @@ TEST_CASE("[Values] Filter stacking and cutoffs")
             "/region1/filter0/gain,f : { 0 }",
             "/region1/filter0/resonance,f : { 0 }",
             "/region1/filter0/keycenter,i : { 60 }",
-            "/region1/filter0/keytrack,i : { 0 }",
-            "/region1/filter0/veltrack,i : { 0 }",
+            "/region1/filter0/keytrack,f : { 0 }",
+            "/region1/filter0/veltrack,f : { 0 }",
             "/region1/filter0/type,s : { lpf_2p }",
             // No second filter
         };
@@ -3388,15 +3419,15 @@ TEST_CASE("[Values] Filter stacking and cutoffs")
             "/region2/filter0/gain,f : { 0 }",
             "/region2/filter0/resonance,f : { 0 }",
             "/region2/filter0/keycenter,i : { 60 }",
-            "/region2/filter0/keytrack,i : { 0 }",
-            "/region2/filter0/veltrack,i : { 0 }",
+            "/region2/filter0/keytrack,f : { 0 }",
+            "/region2/filter0/veltrack,f : { 0 }",
             "/region2/filter0/type,s : { lpf_2p }",
             "/region2/filter1/cutoff,f : { 500 }",
             "/region2/filter1/gain,f : { 0 }",
             "/region2/filter1/resonance,f : { 0 }",
             "/region2/filter1/keycenter,i : { 60 }",
-            "/region2/filter1/keytrack,i : { 0 }",
-            "/region2/filter1/veltrack,i : { 0 }",
+            "/region2/filter1/keytrack,f : { 0 }",
+            "/region2/filter1/veltrack,f : { 0 }",
             "/region2/filter1/type,s : { lpf_2p }",
             // No second filter
         };
@@ -3429,12 +3460,16 @@ TEST_CASE("[Values] Cutoff modifiers")
     synth.dispatchMessage(client, 0, "/region1/filter1/cutoff_smoothcc3", "", nullptr);
     synth.dispatchMessage(client, 0, "/region1/filter1/cutoff_curvecc3", "", nullptr);
     std::vector<std::string> expected {
+        "/region0/filter0/cutoff_cc1,N : {  }",
+        "/region0/filter0/cutoff_stepcc1,N : {  }",
+        "/region0/filter0/cutoff_smoothcc1,N : {  }",
+        "/region0/filter0/cutoff_curvecc1,N : {  }",
         "/region0/filter0/cutoff_cc2,f : { 1000 }",
-        "/region0/filter0/cutoff_stepcc2,i : { 10 }",
+        "/region0/filter0/cutoff_stepcc2,f : { 10 }",
         "/region0/filter0/cutoff_smoothcc2,i : { 2 }",
         "/region0/filter0/cutoff_curvecc2,i : { 4 }",
         "/region1/filter1/cutoff_cc3,f : { 100 }",
-        "/region1/filter1/cutoff_stepcc3,i : { 1 }",
+        "/region1/filter1/cutoff_stepcc3,f : { 1 }",
         "/region1/filter1/cutoff_smoothcc3,i : { 20 }",
         "/region1/filter1/cutoff_curvecc3,i : { 3 }",
     };
@@ -3551,9 +3586,9 @@ TEST_CASE("[Values] Filter dispatching")
         "/region0/filter2/cutoff,f : { 50 }",
         "/region0/filter1/resonance,f : { 3 }",
         "/region0/filter1/gain,f : { -5 }",
-        "/region0/filter2/keytrack,i : { 100 }",
+        "/region0/filter2/keytrack,f : { 100 }",
         "/region0/filter0/gain,f : { -5 }",
-        "/region0/filter1/veltrack,i : { -100 }",
+        "/region0/filter1/veltrack,f : { -100 }",
         "/region0/filter3/veltrack_cc7,f : { -100 }",
         "/region0/filter4/veltrack_curvecc2,i : { 2 }",
     };
@@ -3870,8 +3905,8 @@ TEST_CASE("[Values] Dynamic EGs")
     synth.dispatchMessage(client, 0, "/region1/fileg_dynamic", "", nullptr);
     std::vector<std::string> expected {
         "/region0/ampeg_dynamic,F : {  }",
-        "/region0/pitcheg_dynamic,F : {  }",
-        "/region0/fileg_dynamic,F : {  }",
+        "/region0/pitcheg_dynamic,N : {  }",
+        "/region0/fileg_dynamic,N : {  }",
         "/region1/ampeg_dynamic,T : {  }",
         "/region1/pitcheg_dynamic,T : {  }",
         "/region1/fileg_dynamic,T : {  }",

@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "Defaults.h"
 #include "sfizz/Region.h"
 #include "catch2/catch.hpp"
 using namespace Catch::literals;
@@ -572,4 +573,12 @@ TEST_CASE("[Opcode] readBooleanFromOpcode")
     REQUIRE(readBoolean({"off"}) == false);
     REQUIRE(readBoolean({"On"}) == true);
     REQUIRE(readBoolean({"oFf"}) == false);
+}
+
+TEST_CASE("[Opcode] denormalize")
+{
+    REQUIRE(Default::egTimeMod.denormalizeInput(0.0f) == 0.0f);
+    REQUIRE(Default::egTimeMod.denormalizeInput(1.0f) == 1.0f);
+    REQUIRE(Default::egPercentMod.denormalizeInput(0.0f) == 0.0f);
+    REQUIRE(Default::egPercentMod.denormalizeInput(0.01f) == 1.0f);
 }

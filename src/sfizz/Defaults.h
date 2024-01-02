@@ -126,6 +126,51 @@ struct OpcodeSpec
     }
 
     operator T() const { return normalizeInput(defaultInputValue); }
+
+
+    /**
+     * @brief Demormalizes an input as needed for the spec
+     *
+     * @tparam U
+     * @param input
+     * @return U
+     */
+    template<class U=T>
+    typename std::enable_if<IsNormalizable<U>::value, U>::type denormalizeInput(U input) const
+    {
+        constexpr int needsOperation {
+            kNormalizePercent |
+            kNormalizeMidi |
+            kNormalizeBend |
+            kDb2Mag
+        };
+
+        if (!(flags & needsOperation))
+            return input;
+        else if (flags & kNormalizePercent)
+            return static_cast<U>(input * U(100));
+        else if (flags & kNormalizeMidi)
+            return static_cast<U>(input * U(127));
+        else if (flags & kNormalizeBend)
+            return static_cast<U>(input * U(8191));
+        else if (flags & kDb2Mag)
+            return static_cast<U>(mag2db(input));
+
+        return input;
+    }
+
+    /**
+     * @brief Normalizes an input as needed for the spec
+     *
+     * @tparam U
+     * @param input
+     * @return U
+     */
+    template<class U=T>
+    typename std::enable_if<!IsNormalizable<U>::value, U>::type denormalizeInput(U input) const
+    {
+        return input;
+    }
 };
 
 namespace Default
