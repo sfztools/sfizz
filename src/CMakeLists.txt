@@ -51,8 +51,11 @@ set(SFIZZ_HEADERS
     sfizz/effects/impl/ResonantArrayAVX.h
     sfizz/effects/impl/ResonantArraySSE.h
     sfizz/effects/impl/ResonantString.h
+    sfizz/effects/impl/ResonantStringInline.h
     sfizz/effects/impl/ResonantStringAVX.h
+    sfizz/effects/impl/ResonantStringAVXInline.h
     sfizz/effects/impl/ResonantStringSSE.h
+    sfizz/effects/impl/ResonantStringSSEInline.h
     sfizz/effects/Apan.h
     sfizz/effects/Compressor.h
     sfizz/effects/Disto.h
