@@ -6,25 +6,29 @@
 #   OUTPUT_FILE  The file which gets written
 #   PREFIX       An optional prefix for the constant name
 
-get_filename_component(OUTPUT_NAME "${OUTPUT_FILE}" NAME)
-get_filename_component(OUTPUT_DIR "${OUTPUT_FILE}" DIRECTORY)
-
-message("(Git Build ID) Generating ${OUTPUT_NAME}")
-
 find_package(Git QUIET)
 
-file(MAKE_DIRECTORY "${OUTPUT_DIR}")
+function(make_git_build_id)
+    set(oneValueArgs SOURCE_DIR OUTPUT_FILE PREFIX)
+    cmake_parse_arguments(GBI "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-if(GIT_FOUND)
-    execute_process(COMMAND "${GIT_EXECUTABLE}" "rev-parse" "--short" "HEAD"
-        WORKING_DIRECTORY "${SOURCE_DIR}"
-        OUTPUT_VARIABLE GIT_COMMIT_ID
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
-    set(GIT_COMMIT_ID "")
-    message("(Git Build ID) Error: could not find Git")
-endif()
+    get_filename_component(OUTPUT_NAME "${GBI_OUTPUT_FILE}" NAME)
+    get_filename_component(OUTPUT_DIR  "${GBI_OUTPUT_FILE}" DIRECTORY)
+    message("(Git Build ID) Generating ${OUTPUT_NAME}")
 
-file(WRITE "${OUTPUT_FILE}.temp" "const char* ${PREFIX}GitBuildId = \"${GIT_COMMIT_ID}\";\n")
-execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "copy_if_different" "${OUTPUT_FILE}.temp" "${OUTPUT_FILE}")
-file(REMOVE "${OUTPUT_FILE}.temp")
+    file(MAKE_DIRECTORY "${OUTPUT_DIR}")
+
+    if(GIT_FOUND)
+        execute_process(COMMAND "${GIT_EXECUTABLE}" "rev-parse" "--short" "HEAD"
+            WORKING_DIRECTORY "${GBI_SOURCE_DIR}"
+            OUTPUT_VARIABLE GIT_COMMIT_ID
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else()
+        set(GIT_COMMIT_ID "")
+        message("(Git Build ID) Error: could not find Git")
+    endif()
+
+    file(WRITE "${GBI_OUTPUT_FILE}.temp" "const char* ${GBI_PREFIX}GitBuildId = \"${GIT_COMMIT_ID}\";\n")
+    execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "copy_if_different" "${GBI_OUTPUT_FILE}.temp" "${GBI_OUTPUT_FILE}")
+    file(REMOVE "${GBI_OUTPUT_FILE}.temp")
+endfunction()
