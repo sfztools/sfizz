@@ -4,6 +4,7 @@
 # Arguments:
 #   SOURCE_DIR   The root directory of the project, expected to be a Git repo
 #   OUTPUT_FILE  The file which gets written
+#   PREFIX       An optional prefix for the constant name
 
 get_filename_component(OUTPUT_NAME "${OUTPUT_FILE}" NAME)
 get_filename_component(OUTPUT_DIR "${OUTPUT_FILE}" DIRECTORY)
@@ -24,6 +25,6 @@ else()
     message("(Git Build ID) Error: could not find Git")
 endif()
 
-file(WRITE "${OUTPUT_FILE}.temp" "const char* GitBuildId = \"${GIT_COMMIT_ID}\";\n")
+file(WRITE "${OUTPUT_FILE}.temp" "const char* ${PREFIX}GitBuildId = \"${GIT_COMMIT_ID}\";\n")
 execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "copy_if_different" "${OUTPUT_FILE}.temp" "${OUTPUT_FILE}")
 file(REMOVE "${OUTPUT_FILE}.temp")
