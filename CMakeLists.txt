@@ -8,7 +8,7 @@ endif()
 
 project(libsfizz
     LANGUAGES CXX C
-    VERSION 1.2.2
+    VERSION 1.2.3
 )
 set(PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 set(PROJECT_REPOSITORY https://github.com/sfztools/sfizz)
