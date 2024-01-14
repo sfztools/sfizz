@@ -6,6 +6,8 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [Unreleased]
 
+## [1.2.3] - 2024-01-15
+
 ### Added 
 
 - Support for curvecc opcodes on v1 EGs (@PythonBlue)
