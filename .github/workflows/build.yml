@@ -189,6 +189,7 @@ jobs:
           -D CMAKE_BUILD_TYPE=${{ env.build_type }}
           -D SFIZZ_SHARED=ON
           -D SFIZZ_TESTS=ON
+          -D CMAKE_OSX_ARCHITECTURES="arm64;x86_64"
         )
         if [[ ${{ github.ref_type }} == 'branch' ]]; then
           options=(
