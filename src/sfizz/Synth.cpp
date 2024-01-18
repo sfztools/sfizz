@@ -442,7 +442,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         {
             FilePool& filePool = resources_.getFilePool();
             filePool.setRamLoading(member.read(Default::ramBased));
-        }
+        } break;
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
