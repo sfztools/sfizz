@@ -243,6 +243,10 @@ SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/atomic_queue/include
 
 SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/filesystem/include
 
+# invoke.hpp dependency
+
+SFIZZ_CXX_FLAGS += -I$(SFIZZ_DIR)/external/invoke.hpp/headers
+
 ### Abseil dependency
 
 SFIZZ_C_FLAGS += -I$(SFIZZ_DIR)/external/abseil-cpp
@@ -293,7 +297,11 @@ SFIZZ_SOURCES += \
 	external/abseil-cpp/absl/synchronization/blocking_counter.cc \
 	external/abseil-cpp/absl/synchronization/internal/create_thread_identity.cc \
 	external/abseil-cpp/absl/synchronization/internal/per_thread_sem.cc \
-	external/abseil-cpp/absl/synchronization/internal/waiter.cc \
+	external/abseil-cpp/absl/synchronization/internal/waiter_base.cc \
+	external/abseil-cpp/absl/synchronization/internal/win32_waiter.cc \
+	external/abseil-cpp/absl/synchronization/internal/stdcpp_waiter.cc \
+	external/abseil-cpp/absl/synchronization/internal/sem_waiter.cc \
+	external/abseil-cpp/absl/synchronization/internal/pthread_waiter.cc \
 	external/abseil-cpp/absl/synchronization/notification.cc \
 	external/abseil-cpp/absl/synchronization/mutex.cc
 # absl::graphcycles_internal

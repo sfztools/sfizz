@@ -290,8 +290,8 @@ struct Region {
     VelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
-    uint16_t sustainCC { Default::sustainCC }; // sustain_cc
-    uint16_t sostenutoCC { Default::sostenutoCC }; // sustain_cc
+    uint8_t sustainCC { Default::sustainCC }; // sustain_cc
+    uint8_t sostenutoCC { Default::sostenutoCC }; // sostenuto_cc
     float sustainThreshold { Default::sustainThreshold }; // sustain_cc
     float sostenutoThreshold { Default::sostenutoThreshold }; // sustain_cc
 

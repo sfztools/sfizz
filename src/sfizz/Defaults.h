@@ -228,6 +228,7 @@ namespace Default
     extern const OpcodeSpec<float> hiPolyAftertouch;
     extern const OpcodeSpec<uint16_t> ccNumber;
     extern const OpcodeSpec<uint8_t> curveCC;
+    extern const OpcodeSpec<float> stepCC;
     extern const OpcodeSpec<uint16_t> smoothCC;
     extern const OpcodeSpec<uint8_t> sustainCC;
     extern const OpcodeSpec<uint8_t> sostenutoCC;
