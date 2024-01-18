@@ -83,6 +83,11 @@ else()
     sfizz_add_vendor_abseil()
 endif()
 
+# C++14 std::invoke
+# add_subdirectory("external/invoke.hpp")
+add_library(invoke_hpp INTERFACE)
+target_include_directories(invoke_hpp INTERFACE "external/invoke.hpp/headers")
+
 # The jsl utility library for C++
 add_library(sfizz_jsl INTERFACE)
 add_library(sfizz::jsl ALIAS sfizz_jsl)

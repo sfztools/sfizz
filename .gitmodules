@@ -16,3 +16,6 @@
 [submodule "external/st_audiofile/thirdparty/wavpack"]
 	path = external/st_audiofile/thirdparty/wavpack
 	url = https://github.com/dbry/WavPack.git
+[submodule "external/invoke.hpp"]
+	path = external/invoke.hpp
+	url = https://github.com/BlackMATov/invoke.hpp.git

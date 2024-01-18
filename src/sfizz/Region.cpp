@@ -1126,11 +1126,11 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
         eg.vel2sustain = opcode.read(Default::egPercentMod);
         break;
     case_any_eg("attack_oncc&"): // also attackcc&
-        if (!setModifier(eg.ccAttack, Default::egTimeMod)) 
+        if (!setModifier(eg.ccAttack, Default::egTimeMod))
             return false;
         break;
     case_any_eg("attack_curvecc&"):
-        if (!setCurve(eg.ccAttack)) 
+        if (!setCurve(eg.ccAttack))
             return false;
         break;
     case_any_eg("decay_oncc&"): // also decaycc&
@@ -1138,47 +1138,47 @@ bool sfz::Region::parseEGOpcode(const Opcode& opcode, EGDescription& eg)
             return false;
         break;
     case_any_eg("decay_curvecc&"):
-        if (!setCurve(eg.ccDecay)) 
+        if (!setCurve(eg.ccDecay))
             return false;
         break;
     case_any_eg("delay_oncc&"): // also delaycc&
-        if (!setModifier(eg.ccDelay, Default::egTimeMod)) 
+        if (!setModifier(eg.ccDelay, Default::egTimeMod))
             return false;
         break;
     case_any_eg("delay_curvecc&"):
-        if (!setCurve(eg.ccDelay)) 
+        if (!setCurve(eg.ccDelay))
             return false;
         break;
     case_any_eg("hold_oncc&"): // also holdcc&
-        if (!setModifier(eg.ccHold, Default::egTimeMod)) 
+        if (!setModifier(eg.ccHold, Default::egTimeMod))
             return false;
         break;
     case_any_eg("hold_curvecc&"): // also attackcc&
-        if (!setCurve(eg.ccHold)) 
+        if (!setCurve(eg.ccHold))
             return false;
         break;
     case_any_eg("release_oncc&"): // also releasecc&
-        if (!setModifier(eg.ccRelease, Default::egTimeMod)) 
+        if (!setModifier(eg.ccRelease, Default::egTimeMod))
             return false;
         break;
     case_any_eg("release_curvecc&"): // also attackcc&
-        if (!setCurve(eg.ccRelease)) 
+        if (!setCurve(eg.ccRelease))
             return false;
         break;
     case_any_eg("start_oncc&"): // also startcc&
-        if (!setModifier(eg.ccStart, Default::egPercentMod)) 
+        if (!setModifier(eg.ccStart, Default::egPercentMod))
             return false;
         break;
     case_any_eg("start_curvecc&"): // also startcc&
-        if (!setCurve(eg.ccStart)) 
+        if (!setCurve(eg.ccStart))
             return false;
         break;
     case_any_eg("sustain_oncc&"): // also sustaincc&
-        if (!setModifier(eg.ccSustain, Default::egPercentMod)) 
+        if (!setModifier(eg.ccSustain, Default::egPercentMod))
             return false;
         break;
     case_any_eg("sustain_curvecc&"): // also attackcc&
-        if (!setCurve(eg.ccSustain)) 
+        if (!setCurve(eg.ccSustain))
             return false;
         break;
 
@@ -1757,10 +1757,7 @@ bool sfz::Region::processGenericCc(const Opcode& opcode, OpcodeSpec<float> spec,
                 p.curve = opcode.read(Default::curveCC);
             break;
         case kOpcodeStepCcN:
-            {
-                const OpcodeSpec<float> stepCC { 0.0f, {}, kPermissiveBounds };
-                p.step = spec.normalizeInput(opcode.read(stepCC));
-            }
+                p.step = spec.normalizeInput(opcode.read(Default::stepCC));
             break;
         case kOpcodeSmoothCcN:
             p.smooth = opcode.read(Default::smoothCC);
