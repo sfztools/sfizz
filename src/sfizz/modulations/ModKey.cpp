@@ -228,7 +228,7 @@ std::string ModKey::toString() const
     }
 }
 
-ModKey ModKey::getSourceDepthKey(ModKey source, ModKey target)
+ModKey ModKey::getSourceDepthKey(const ModKey& source, const ModKey& target)
 {
     const NumericId<Region> region = source.region();
     const ModKey::Parameters& tp = target.parameters();
