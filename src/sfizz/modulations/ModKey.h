@@ -26,7 +26,10 @@ public:
 
     ModKey() = default;
     explicit ModKey(ModId id, NumericId<Region> region = {}, Parameters params = {})
-        : id_(id), region_(region), params_(params), flags_(ModIds::flags(id_)) {}
+        : id_(id), region_(region), params_(params), flags_(ModIds::flags(id_))
+        {
+            calculateHash();
+        }
 
     static ModKey createCC(uint16_t cc, uint8_t curve, uint16_t smooth, float step);
     static ModKey createNXYZ(ModId id, NumericId<Region> region = {}, uint8_t N = 0, uint8_t X = 0, uint8_t Y = 0, uint8_t Z = 0);
@@ -46,7 +49,7 @@ public:
      * @brief Obtain the modulation key of the source depth, in the connection
      * between source and target, if such a key exists.
      */
-    static ModKey getSourceDepthKey(ModKey source, ModKey target);
+    static ModKey getSourceDepthKey(const ModKey& source, const ModKey& target);
 
     struct RawParameters {
         union {
@@ -94,6 +97,10 @@ public:
         return !this->operator==(other);
     }
 
+public:
+    size_t hash() const { return hash_; };
+private:
+    void calculateHash();
 
 private:
     //! Identifier
@@ -104,6 +111,9 @@ private:
     Parameters params_ {};
     // Memorize the flag
     int flags_;
+    // Hash number
+    size_t hash_ = size_t(16806506973555142816ULL);
 };
+
 
 } // namespace sfz

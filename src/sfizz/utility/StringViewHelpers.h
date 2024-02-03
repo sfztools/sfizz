@@ -101,7 +101,12 @@ uint64_t hashNumber(Int i, uint64_t h = Fnv1aBasis)
 {
     static_assert(std::is_arithmetic<Int>::value,
                   "The hashed object must be of arithmetic type");
-    return hash(absl::string_view(reinterpret_cast<const char*>(&i), sizeof(i)), h);
+    union {
+        uint64_t u64;
+        Int i;
+    } un {};
+    un.i = i;
+    return (h ^ un.u64) * Fnv1aPrime;
 }
 
 /**
