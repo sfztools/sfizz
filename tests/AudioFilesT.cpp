@@ -7,6 +7,7 @@
 #include "AudioSpan.h"
 #include "absl/types/span.h"
 #include "sfizz/Synth.h"
+#include "sfizz/FilePool.h"
 #include "TestHelpers.h"
 #include "catch2/catch.hpp"
 #include "st_audiofile.hpp"
@@ -97,9 +98,6 @@ void compareOutputs(const std::string& lFile, const std::string& rFile, CompareO
     }
 }
 
-// FIXME: these fail somewhat randomly
-
-#if 0
 TEST_CASE("[AudioFiles] Sanity check (native sample rate)")
 {
     std::string lFile = "<region> sample=kick.wav key=60";
@@ -109,7 +107,6 @@ TEST_CASE("[AudioFiles] Sanity check (native sample rate)")
     compareOutputs(lFile, rFile, opts);
 }
 
-#if !defined(SFIZZ_USE_SNDFILE)
 TEST_CASE("[AudioFiles] Wavpack file (native sample rate)")
 {
     std::string lFile = "<region> sample=kick.wav key=60";
@@ -127,7 +124,6 @@ TEST_CASE("[AudioFiles] Wavpack file (resampled)")
     opts.sampleRate = 48000.0f;
     compareOutputs(lFile, rFile, opts);
 }
-#endif
 
 TEST_CASE("[AudioFiles] Flac file (native sample rate)")
 {
@@ -146,7 +142,6 @@ TEST_CASE("[AudioFiles] Flac file (resampled)")
     opts.sampleRate = 48000.0f;
     compareOutputs(lFile, rFile, opts);
 }
-#endif
 
 TEST_CASE("[Files] Embedded sample data")
 {
@@ -164,6 +159,8 @@ TEST_CASE("[Files] Embedded sample data")
 
     REQUIRE(synth1.getNumPreloadedSamples() == 1);
     REQUIRE(synth2.getNumPreloadedSamples() == 1);
+    REQUIRE(synth1.getResources().getFilePool().getActualNumPreloadedSamples() == 1);
+    REQUIRE(synth2.getResources().getFilePool().getActualNumPreloadedSamples() == 1);
 
     sfz::AudioBuffer<float> buffer1 { 2, 256 };
     sfz::AudioBuffer<float> buffer2 { 2, 256 };

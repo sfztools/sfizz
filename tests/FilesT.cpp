@@ -7,6 +7,7 @@
 #include "TestHelpers.h"
 #include "sfizz/Synth.h"
 #include "sfizz/Voice.h"
+#include "sfizz/FilePool.h"
 #include "sfizz/SfzHelpers.h"
 #include "sfizz/parser/Parser.h"
 #include "sfizz/modulations/ModId.h"
@@ -772,12 +773,14 @@ TEST_CASE("[Files] Unused samples are cleared on reloading")
         <region> sample=kick.wav
     )");
     REQUIRE(synth.getNumPreloadedSamples() == 1);
+    REQUIRE(synth.getResources().getFilePool().getActualNumPreloadedSamples() == 1);
 
     // Same file path to reload
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/unused_samples.sfz", R"(
         <region> sample=*sine
     )");
     REQUIRE(synth.getNumPreloadedSamples() == 0);
+    REQUIRE(synth.getResources().getFilePool().getActualNumPreloadedSamples() == 0);
 }
 
 TEST_CASE("[Files] Key center from audio file, with embedded sample data")
