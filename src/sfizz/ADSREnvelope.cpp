@@ -233,7 +233,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
 void ADSREnvelope::startRelease(int releaseDelay) noexcept
 {
     this->releaseValue = this->currentValue;
-    if (this->currentValue < 0.00001f)
+    if (this->currentValue < config::egReleaseThreshold)
         this->releaseValue = this->sustain;
     releaseCount = 1;
     shouldRelease = true;
