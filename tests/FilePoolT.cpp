@@ -10,7 +10,6 @@
 #include "sfizz/FilePool.h"
 #include "TestHelpers.h"
 #include "catch2/catch.hpp"
-#include "st_audiofile.hpp"
 #include <algorithm>
 #include <vector>
 #include <chrono>
