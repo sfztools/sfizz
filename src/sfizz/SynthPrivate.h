@@ -150,8 +150,9 @@ struct Synth::Impl final: public Parser::Listener {
      * @param delay
      * @param ccNumber
      * @param value
+     * @param extendedArg used for some extendedCC (eg. polyaftertouch note num, etc)
      */
-    void ccDispatch(int delay, int ccNumber, float value) noexcept;
+    void ccDispatch(int delay, int ccNumber, float value, int extendedArg=-1) noexcept;
 
     /**
      * @brief Start a voice for a specific region.
@@ -239,8 +240,9 @@ struct Synth::Impl final: public Parser::Listener {
      * @param ccNumber   The CC number
      * @param normValue  The normalized value
      * @param asMidi     Whether to process as a MIDI event
+     * @param extendedArg for some extendedCC (eg. polyaftertouch: note num, etc)
      */
-    void performHdcc(int delay, int ccNumber, float normValue, bool asMidi) noexcept;
+    void performHdcc(int delay, int ccNumber, float normValue, bool asMidi, int extendedArg=-1) noexcept;
 
     /**
      * @brief Set the default value for a CC
@@ -258,7 +260,7 @@ struct Synth::Impl final: public Parser::Listener {
      * @param delay
      * @param number
      */
-    void checkOffGroups(const Region* region, int delay, int number);
+    void checkOffGroups(const Region* region, int delay, int number, bool chokedByCC = false);
 
     /**
      * @brief Resets the callback duration breakdown to 0

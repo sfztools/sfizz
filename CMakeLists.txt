@@ -8,13 +8,14 @@ endif()
 
 project(libsfizz
     LANGUAGES CXX C
-    VERSION 1.2.2
+    VERSION 1.2.3
 )
 set(PROJECT_DESCRIPTION "A library to load SFZ description files and use them to render music.")
 set(PROJECT_REPOSITORY https://github.com/sfztools/sfizz)
 
 # External configuration CMake scripts
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(BuildType)
 
 # Build Options
@@ -42,9 +43,22 @@ option_ex(SFIZZ_RELEASE_ASSERTS     "Forced assertions in release builds" OFF)
 option_ex(SFIZZ_PROFILE_BUILD       "Profile the build time" OFF)
 option_ex(SFIZZ_SNDFILE_STATIC      "Link the sndfile library statically" OFF)
 option_ex(SFIZZ_ASAN                "Use address sanitizer on all sfizz targets" OFF)
+option_ex(SFIZZ_GIT_SUBMODULE_CHECK "Check Git submodules presence" ON)
 
 # Continuous Controller count (0 to 511)
 set(MIDI_CC_COUNT 512 CACHE STRING "Maximum number of managed Control Change messages")
+
+# Ensure presence of Git submodules (when not using the source tarball)
+if(SFIZZ_GIT_SUBMODULE_CHECK AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git"
+    AND NOT CMAKE_VERSION VERSION_LESS "3.19.0")
+    include(GitSubmoduleCheck)
+    git_submodule_check(external/abseil-cpp)
+    git_submodule_check(external/filesystem)
+    git_submodule_check(external/simde)
+    git_submodule_check(external/st_audiofile/thirdparty/dr_libs)
+    git_submodule_check(external/st_audiofile/thirdparty/libaiff)
+    git_submodule_check(external/st_audiofile/thirdparty/wavpack)
+endif()
 
 include(SfizzConfig)
 include(SfizzDeps)

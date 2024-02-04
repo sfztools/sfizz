@@ -4,1984 +4,579 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
-#include "SynthPrivate.h"
-#include "FilePool.h"
-#include "Curve.h"
-#include "MidiState.h"
-#include "SynthConfig.h"
-#include "utility/StringViewHelpers.h"
-#include <absl/strings/ascii.h>
-#include <cstring>
-
-// TODO: `ccModDepth` and `ccModParameters` are O(N), need better implementation
+#include "Defaults.h"
+#include "Region.h"
+#include "SynthMessagingHelper.hpp"
 
 namespace sfz {
-static constexpr unsigned maxIndices = 8;
-
-static bool extractMessage(const char* pattern, const char* path, unsigned* indices);
-static uint64_t hashMessagePath(const char* path, const char* sig);
 
 void sfz::Synth::dispatchMessage(Client& client, int delay, const char* path, const char* sig, const sfizz_arg_t* args)
 {
-    UNUSED(args);
     Impl& impl = *impl_;
-    unsigned indices[maxIndices];
+    MessagingHelper m {client, delay, path, sig, args, impl};
+    using ModParam = MessagingHelper::ModParam;
 
     switch (hashMessagePath(path, sig)) {
-        #define MATCH(p, s) case hash(p "," s): \
-            if (extractMessage(p, path, indices) && !strcmp(sig, s))
-
-        #define GET_REGION_OR_BREAK(idx)            \
-            if (idx >= impl.layers_.size())         \
-                break;                              \
-            Layer& layer = *impl.layers_[idx];      \
-            const Region& region = layer.getRegion();
-
-        #define GET_FILTER_OR_BREAK(idx)                \
-            if (idx >= region.filters.size())           \
-                break;                                  \
-            const auto& filter = region.filters[idx];
-
-        #define GET_EQ_OR_BREAK(idx)                    \
-            if (idx >= region.equalizers.size())        \
-                break;                                  \
-            const auto& eq = region.equalizers[idx];
-
-        #define GET_LFO_OR_BREAK(idx)             \
-            if (idx >= region.lfos.size())        \
-                break;                            \
-            const auto& lfo = region.lfos[idx];
-
-        #define GET_EG_OR_BREAK(idx)              \
-            if (idx >= region.flexEGs.size())     \
-                break;                            \
-            auto& eg = region.flexEGs[idx];
-
-        #define GET_EG_POINT_OR_BREAK(idx)        \
-            if (idx >= eg.points.size())          \
-                break;                            \
-            auto& point = eg.points[idx];
-
-        MATCH("/hello", "") {
-            client.receive(delay, "/hello", "", nullptr);
-        } break;
-
+        #define MATCH(p, s) case hash(p "," s): if (m.match(p, s))
+        MATCH("/hello", "") { m.reply(""); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/num_regions", "") {
-            client.receive<'i'>(delay, path, int(impl.layers_.size()));
-        } break;
-
-        MATCH("/num_groups", "") {
-            client.receive<'i'>(delay, path, impl.numGroups_);
-        } break;
-
-        MATCH("/num_masters", "") {
-            client.receive<'i'>(delay, path, impl.numMasters_);
-        } break;
-
-        MATCH("/num_curves", "") {
-            client.receive<'i'>(delay, path, int(impl.resources_.getCurves().getNumCurves()));
-        } break;
-
-        MATCH("/num_samples", "") {
-            client.receive<'i'>(delay, path, int(impl.resources_.getFilePool().getNumPreloadedSamples()));
-        } break;
-
-        MATCH("/octave_offset", "") {
-            client.receive<'i'>(delay, path, impl.octaveOffset_);
-        } break;
-
-        MATCH("/note_offset", "") {
-            client.receive<'i'>(delay, path, impl.noteOffset_);
-        } break;
-
-        MATCH("/num_outputs", "") {
-            client.receive<'i'>(delay, path, impl.numOutputs_);
-        } break;
-
+        MATCH("/num_regions", "") { m.reply(impl.layers_.size()); } break;
+        MATCH("/num_groups", "") { m.reply(impl.numGroups_); } break;
+        MATCH("/num_masters", "") { m.reply(impl.numMasters_); } break;
+        MATCH("/num_curves", "") { m.reply(impl.resources_.getCurves().getNumCurves()); } break;
+        MATCH("/num_samples", "") { m.reply(impl.resources_.getFilePool().getNumPreloadedSamples()); } break;
+        MATCH("/octave_offset", "") { m.reply(impl.octaveOffset_); } break;
+        MATCH("/note_offset", "") { m.reply(impl.noteOffset_); } break;
+        MATCH("/num_outputs", "") { m.reply(impl.numOutputs_); } break;
+        MATCH("/num_active_voices", "") { m.reply(uint32_t(impl.voiceManager_.getNumActiveVoices())); } break;
+        MATCH("/sustain_cancels_release", "") { m.reply(&SynthConfig::sustainCancelsRelease); } break;
+        MATCH("/sample_quality", "") { m.reply(&SynthConfig::liveSampleQuality); } break;
+        MATCH("/sustain_cancels_release", "s") { m.set(&SynthConfig::sustainCancelsRelease, Default::sustainCancelsRelease); } break;
+        MATCH("/sustain_cancels_release", "T") { m.set(&SynthConfig::sustainCancelsRelease, Default::sustainCancelsRelease); } break;
+        MATCH("/sustain_cancels_release", "F") { m.set(&SynthConfig::sustainCancelsRelease, Default::sustainCancelsRelease); } break;
+        MATCH("/sample_quality", "i") { m.set(&SynthConfig::liveSampleQuality, Default::sampleQuality); } break;
+        MATCH("/oscillator_quality", "") { m.reply(&SynthConfig::liveOscillatorQuality); } break;
+        MATCH("/oscillator_quality", "i") { m.set(&SynthConfig::liveOscillatorQuality, Default::oscillatorQuality); } break;
+        MATCH("/freewheeling_sample_quality", "") { m.reply(&SynthConfig::freeWheelingSampleQuality); } break;
+        MATCH("/freewheeling_sample_quality", "i") { m.set(&SynthConfig::freeWheelingSampleQuality, Default::sampleQuality); } break;
+        MATCH("/freewheeling_oscillator_quality", "") { m.reply(&SynthConfig::freeWheelingOscillatorQuality); } break;
+        MATCH("/freewheeling_oscillator_quality", "i") { m.set(&SynthConfig::freeWheelingOscillatorQuality, Default::oscillatorQuality); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/key/slots", "") {
-            const BitArray<128>& keys = impl.keySlots_;
-            sfizz_blob_t blob { keys.data(), static_cast<uint32_t>(keys.byte_size()) };
-            client.receive<'b'>(delay, path, &blob);
-        } break;
-
-        MATCH("/key&/label", "") {
-            if (indices[0] >= 128)
-                break;
-            const std::string* label = impl.getKeyLabel(indices[0]);
-            client.receive<'s'>(delay, path, label ? label->c_str() : "");
-        } break;
-
+        MATCH("/key/slots", "") { m.reply(impl.keySlots_); } break;
+        MATCH("/key&/label", "") { if (auto k = m.sindex(0)) m.reply(impl.getKeyLabel(*k)); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/root_path", "") {
-            client.receive<'s'>(delay, path, impl.rootPath_.c_str());
-        } break;
-
-        MATCH("/image", "") {
-            client.receive<'s'>(delay, path, impl.image_.c_str());
-        } break;
-
-        MATCH("/image_controls", "") {
-            client.receive<'s'>(delay, path, impl.image_controls_.c_str());
-        } break;
-
+        MATCH("/root_path", "") { m.reply(impl.rootPath_); } break;
+        MATCH("/image", "") { m.reply(impl.image_.c_str()); } break;
+        MATCH("/image_controls", "") { m.reply(impl.image_controls_.c_str()); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/sw/last/slots", "") {
-            const BitArray<128>& switches = impl.swLastSlots_;
-            sfizz_blob_t blob { switches.data(), static_cast<uint32_t>(switches.byte_size()) };
-            client.receive<'b'>(delay, path, &blob);
-        } break;
-
-        MATCH("/sw/last/current", "") {
-            if (impl.currentSwitch_)
-                client.receive<'i'>(delay, path, *impl.currentSwitch_);
-            else
-                client.receive<'N'>(delay, path, {});
-        } break;
-
-        MATCH("/sw/last/&/label", "") {
-            if (indices[0] >= 128)
-                break;
-            const std::string* label = impl.getKeyswitchLabel(indices[0]);
-            client.receive<'s'>(delay, path, label ? label->c_str() : "");
-        } break;
-
+        MATCH("/sw/last/slots", "") { m.reply(impl.swLastSlots_); } break;
+        MATCH("/sw/last/current", "") { m.reply(impl.currentSwitch_); } break;
+        MATCH("/sw/last/&/label", "") { if (auto k = m.sindex(0)) m.reply(impl.getKeyswitchLabel(*k)); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/cc/slots", "") {
-            const BitArray<config::numCCs>& ccs = impl.currentUsedCCs_;
-            sfizz_blob_t blob { ccs.data(), static_cast<uint32_t>(ccs.byte_size()) };
-            client.receive<'b'>(delay, path, &blob);
-        } break;
-
-        MATCH("/cc&/default", "") {
-            if (indices[0] >= config::numCCs)
-                break;
-            client.receive<'f'>(delay, path, impl.defaultCCValues_[indices[0]]);
-        } break;
-
-        MATCH("/cc&/value", "") {
-            if (indices[0] >= config::numCCs)
-                break;
-            // Note: result value is not frame-exact
-            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getCCValue(indices[0]));
-        } break;
-
-        MATCH("/cc&/value", "f") {
-            if (indices[0] >= config::numCCs)
-                break;
-            impl.resources_.getMidiState().ccEvent(delay, indices[0], args[0].f);
-        } break;
-
-        MATCH("/cc&/label", "") {
-            if (indices[0] >= config::numCCs)
-                break;
-            const std::string* label = impl.getCCLabel(indices[0]);
-            client.receive<'s'>(delay, path, label ? label->c_str() : "");
-        } break;
-
-        MATCH("/cc/changed", "") {
-            const BitArray<config::numCCs>& changedCCs = impl.changedCCsThisCycle_;
-            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
-            client.receive<'b'>(delay, path, &blob);
-        } break;
-
-        MATCH("/cc/changed~", "") {
-            const BitArray<config::numCCs>& changedCCs = impl.changedCCsLastCycle_;
-            sfizz_blob_t blob { changedCCs.data(), static_cast<uint32_t>(changedCCs.byte_size()) };
-            client.receive<'b'>(delay, path, &blob);
-        } break;
-
-        MATCH("/sustain_or_sostenuto/slots", "") {
-            const BitArray<128>& sustainOrSostenuto = impl.sustainOrSostenuto_;
-            sfizz_blob_t blob { sustainOrSostenuto.data(),
-                static_cast<uint32_t>(sustainOrSostenuto.byte_size()) };
-            client.receive<'b'>(delay, path, &blob);
-        } break;
-
-        MATCH("/aftertouch", "") {
-            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getChannelAftertouch());
-        } break;
-
-        MATCH("/poly_aftertouch/&", "") {
-            if (indices[0] > 127)
-                break;
-            // Note: result value is not frame-exact
-            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPolyAftertouch(indices[0]));
-        } break;
-
-        MATCH("/pitch_bend", "") {
-            // Note: result value is not frame-exact
-            client.receive<'f'>(delay, path, impl.resources_.getMidiState().getPitchBend());
-        } break;
-
+        MATCH("/cc/slots", "") { m.reply(impl.currentUsedCCs_); } break;
+        MATCH("/cc&/default", "") { if (auto cc = m.checkCC()) m.reply(impl.defaultCCValues_[*cc]); } break;
+        MATCH("/cc&/value", "") { if (auto cc = m.checkCC()) m.reply(impl.resources_.getMidiState().getCCValue(*cc)); } break;
+        MATCH("/cc&/value", "f") { if (auto cc = m.checkCC()) impl.resources_.getMidiState().ccEvent(delay, *cc, args[0].f); } break;
+        MATCH("/cc&/label", "") { if (auto cc = m.checkCC()) m.reply(impl.getCCLabel(*cc)); } break;
+        MATCH("/cc/changed", "") { m.reply(impl.changedCCsThisCycle_); } break;
+        MATCH("/cc/changed~", "") {  m.reply(impl.changedCCsLastCycle_); } break;
+        MATCH("/sustain_or_sostenuto/slots", "") { m.reply(impl.sustainOrSostenuto_); } break;
+        MATCH("/aftertouch", "") { m.reply(impl.resources_.getMidiState().getChannelAftertouch()); } break;
+        MATCH("/poly_aftertouch/&", "") { if (auto note = m.checkNote()) m.reply(impl.resources_.getMidiState().getPolyAftertouch(*note)); } break;
+        MATCH("/pitch_bend", "") { m.reply(impl.resources_.getMidiState().getPitchBend()); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/mem/buffers", "") {
-            uint64_t total = BufferCounter::counter().getTotalBytes();
-            client.receive<'h'>(delay, path, total);
-        } break;
-
+        MATCH("/mem/buffers", "") { m.reply(BufferCounter::counter().getTotalBytes()); } break;
         //----------------------------------------------------------------------
-
-        MATCH("/region&/delay", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.delay);
-        } break;
-
-        MATCH("/region&/sample", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'s'>(delay, path, region.sampleId->filename().c_str());
-        } break;
-
-        MATCH("/region&/direction", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.sampleId->isReverse())
-                client.receive<'s'>(delay, path, "reverse");
-            else
-                client.receive<'s'>(delay, path, "forward");
-        } break;
-
-        MATCH("/region&/delay_random", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.delayRandom);
-        } break;
-
-        MATCH("/region&/delay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.delayCC.getWithDefault(indices[1]));
-        } break;
-
-        MATCH("/region&/offset", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.offset);
-        } break;
-
-        MATCH("/region&/offset_random", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.offsetRandom);
-        } break;
-
-        MATCH("/region&/offset_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.offsetCC.getWithDefault(indices[1]));
-        } break;
-
-        MATCH("/region&/end", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.sampleEnd);
-        } break;
-
-        MATCH("/region&/end_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.endCC.getWithDefault(indices[1]));
-        } break;
-
-        MATCH("/region&/enabled", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.disabled()) {
-                client.receive<'F'>(delay, path, {});
-            } else {
-                client.receive<'T'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/trigger_on_note", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.triggerOnNote) {
-                client.receive<'T'>(delay, path, {});
-            } else {
-                client.receive<'F'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/trigger_on_cc", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.triggerOnCC) {
-                client.receive<'T'>(delay, path, {});
-            } else {
-                client.receive<'F'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/count", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.sampleCount)
-                client.receive<'h'>(delay, path, *region.sampleCount);
-            else
-                client.receive<'N'>(delay, path, {});
-        } break;
-
-        MATCH("/region&/loop_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].h = region.loopRange.getStart();
-            args[1].h = region.loopRange.getEnd();
-            client.receive(delay, path, "hh", args);
-        } break;
-
-        MATCH("/region&/loop_start_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.loopStartCC.getWithDefault(indices[1]));
-        } break;
-
-        MATCH("/region&/loop_end_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.loopEndCC.getWithDefault(indices[1]));
-        } break;
-
-        MATCH("/region&/loop_mode", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (!region.loopMode) {
-                client.receive<'s'>(delay, path, "no_loop");
-                break;
-            }
-
-            switch (*region.loopMode) {
-            case LoopMode::no_loop:
-                client.receive<'s'>(delay, path, "no_loop");
-                break;
-            case LoopMode::loop_continuous:
-                client.receive<'s'>(delay, path, "loop_continuous");
-                break;
-            case LoopMode::loop_sustain:
-                client.receive<'s'>(delay, path, "loop_sustain");
-                break;
-            case LoopMode::one_shot:
-                client.receive<'s'>(delay, path, "one_shot");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/loop_crossfade", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.loopCrossfade);
-        } break;
-
-        MATCH("/region&/loop_count", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.loopCount)
-                client.receive<'h'>(delay, path, *region.loopCount);
-            else
-                client.receive<'N'>(delay, path, {});
-        } break;
-
-        MATCH("/region&/output", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.output);
-        } break;
-
-        MATCH("/region&/group", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.group);
-        } break;
-
-        MATCH("/region&/off_by", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (!region.offBy) {
-                client.receive<'N'>(delay, path, {});
-            } else {
-                client.receive<'h'>(delay, path, *region.offBy);
-            }
-        } break;
-
-        MATCH("/region&/off_mode", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch (region.offMode) {
-            case OffMode::time:
-                client.receive<'s'>(delay, path, "time");
-                break;
-            case OffMode::normal:
-                client.receive<'s'>(delay, path, "normal");
-                break;
-            case OffMode::fast:
-                client.receive<'s'>(delay, path, "fast");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/key_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].i = region.keyRange.getStart();
-            args[1].i = region.keyRange.getEnd();
-            client.receive(delay, path, "ii", args);
-        } break;
-
-        MATCH("/region&/off_time", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.offTime);
-        } break;
-
-        MATCH("/region&/pitch_keycenter", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.pitchKeycenter);
-        } break;
-
-        MATCH("/region&/vel_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.velocityRange.getStart();
-            args[1].f = region.velocityRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/bend_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.bendRange.getStart();
-            args[1].f = region.bendRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/program_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].i = region.programRange.getStart();
-            args[1].i = region.programRange.getEnd();
-            client.receive(delay, path, "ii", args);
-        } break;
-
-        MATCH("/region&/cc_range&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            const auto& conditions = region.ccConditions.getWithDefault(indices[1]);
-            args[0].f = conditions.getStart();
-            args[1].f = conditions.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
+        MATCH("/region&/delay", "") { m.reply(&Region::delay); } break;
+        MATCH("/region&/delay", "f") { m.set(&Region::delay, Default::delay); } break;
+        MATCH("/region&/delay_random", "") { m.reply(&Region::delayRandom); } break;
+        MATCH("/region&/delay_random", "f") { m.set(&Region::delayRandom, Default::delayRandom); } break;
+        MATCH("/region&/sample", "") { if (auto region = m.getRegion()) { m.reply(region->sampleId->filename()); } } break;
+        MATCH("/region&/direction", "") { if (auto region = m.getRegion()) { m.reply(region->sampleId->isReverse() ? "reverse" : "forward"); } } break;
+        MATCH("/region&/delay_cc&", "") { m.reply(&Region::delayCC); } break;
+        MATCH("/region&/delay_cc&", "f") { m.set(&Region::delayCC, Default::delayMod); } break;
+        MATCH("/region&/offset", "") { m.reply(&Region::offset); } break;
+        MATCH("/region&/offset", "h") { m.set(&Region::offset, Default::offset); } break;
+        MATCH("/region&/offset_random", "") { m.reply(&Region::offsetRandom); } break;
+        MATCH("/region&/offset_random", "h") { m.set(&Region::offsetRandom, Default::offsetRandom); } break;
+        MATCH("/region&/offset_cc&", "") { m.reply(&Region::offsetCC); } break;
+        MATCH("/region&/offset_cc&", "h") { m.set(&Region::offsetCC, Default::offsetMod); } break;
+        MATCH("/region&/end", "") { m.reply(&Region::sampleEnd); } break;
+        MATCH("/region&/end", "h") { m.set(&Region::sampleEnd, Default::sampleEnd); } break;
+        MATCH("/region&/end_cc&", "") { m.reply(&Region::endCC); } break;
+        MATCH("/region&/end_cc&", "h") { m.set(&Region::endCC, Default::sampleEndMod); } break;
+        MATCH("/region&/enabled", "") { if (auto region = m.getRegion()) { m.reply(!region->disabled()); } } break;
+        MATCH("/region&/trigger_on_note", "") { m.reply(&Region::triggerOnNote); } break;
+        MATCH("/region&/trigger_on_cc", "") { m.reply(&Region::triggerOnCC); } break;
+        MATCH("/region&/use_timer_range", "") { m.reply(&Region::useTimerRange); } break;
+        MATCH("/region&/count", "") { m.reply(&Region::sampleCount); } break;
+        MATCH("/region&/count", "i") { m.set(&Region::sampleCount, Default::sampleCount); } break;
+        MATCH("/region&/count", "N") { m.set(&Region::sampleCount, Default::sampleCount); } break;
+        MATCH("/region&/loop_range", "") { m.reply(&Region::loopRange); } break;
+        MATCH("/region&/loop_range", "hh") { m.set(&Region::loopRange, Default::loopStart, Default::loopEnd); } break;
+        MATCH("/region&/loop_start_cc&", "") { m.reply(&Region::loopStartCC); } break;
+        MATCH("/region&/loop_start_cc&", "h") { m.set(&Region::loopStartCC, Default::loopStart); } break;
+        MATCH("/region&/loop_end_cc&", "") { m.reply(&Region::loopEndCC); } break;
+        MATCH("/region&/loop_end_cc&", "h") { m.set(&Region::loopEndCC, Default::loopEnd); } break;
+        MATCH("/region&/loop_mode", "") { m.reply(&Region::loopMode, LoopMode::no_loop); } break;
+        MATCH("/region&/loop_mode", "s") { m.set(&Region::loopMode, Default::loopMode); } break;
+        MATCH("/region&/loop_crossfade", "") { m.reply(&Region::loopCrossfade); } break;
+        MATCH("/region&/loop_crossfade", "f") { m.set(&Region::loopCrossfade, Default::loopCrossfade); } break;
+        MATCH("/region&/loop_count", "") { m.reply(&Region::loopCount); } break;
+        MATCH("/region&/loop_count", "i") { m.set(&Region::loopCount, Default::loopCount); } break;
+        MATCH("/region&/loop_count", "N") { m.set(&Region::loopCount, Default::loopCount); } break;
+        MATCH("/region&/output", "") { m.reply(&Region::output); } break;
+        MATCH("/region&/output", "i") { m.set(&Region::output, Default::output); } break;
+        MATCH("/region&/group", "") { m.reply(&Region::group); } break;
+        MATCH("/region&/group", "h") { m.set(&Region::group, Default::group); } break;
+        MATCH("/region&/off_by", "") { m.reply(&Region::offBy); } break;
+        MATCH("/region&/off_by", "h") { m.set(&Region::offBy, Default::group); } break;
+        MATCH("/region&/off_by", "N") { m.set(&Region::offBy, Default::group); } break;
+        MATCH("/region&/off_mode", "") { m.reply(&Region::offMode); } break;
+        MATCH("/region&/off_mode", "s") { m.set(&Region::offMode, Default::offMode); } break;
+        MATCH("/region&/key_range", "") { m.reply(&Region::keyRange); } break;
+        MATCH("/region&/key_range", "ii") { m.set(&Region::keyRange, Default::loKey, Default::hiKey); } break;
+        MATCH("/region&/off_time", "") { m.reply(&Region::offTime); } break;
+        MATCH("/region&/off_time", "f") { m.set(&Region::offTime, Default::offTime); } break;
+        MATCH("/region&/pitch_keycenter", "") { m.reply(&Region::pitchKeycenter); } break;
+        MATCH("/region&/pitch_keycenter", "i") { m.set(&Region::pitchKeycenter, Default::key); } break;
+        MATCH("/region&/vel_range", "") { m.reply(&Region::velocityRange); } break;
+        MATCH("/region&/vel_range", "ff") { m.set(&Region::velocityRange); } break;
+        MATCH("/region&/bend_range", "") { m.reply(&Region::bendRange); } break;
+        MATCH("/region&/bend_range", "ff") { m.set(&Region::bendRange); } break;
+        MATCH("/region&/program_range", "") { m.reply(&Region::programRange); } break;
+        MATCH("/region&/program_range", "ii") { m.set(&Region::programRange); } break;
+        MATCH("/region&/cc_range&", "") { m.reply(&Region::ccConditions); } break;
+        MATCH("/region&/cc_range&", "ff") { m.set(&Region::ccConditions); } break;
         MATCH("/region&/sw_last", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.lastKeyswitch) {
-                client.receive<'i'>(delay, path, *region.lastKeyswitch);
-            } else if (region.lastKeyswitchRange) {
-                sfizz_arg_t args[2];
-                args[0].i = region.lastKeyswitchRange->getStart();
-                args[1].i = region.lastKeyswitchRange->getEnd();
-                client.receive(delay, path, "ii", args);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-
-        } break;
-
-        MATCH("/region&/sw_label", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.keyswitchLabel) {
-                client.receive<'s'>(delay, path, region.keyswitchLabel->c_str());
-            } else {
-                client.receive<'N'>(delay, path, {});
+            if (auto region = m.getRegion()) {
+                if (region->lastKeyswitch) m.reply(region->lastKeyswitch);
+                else m.reply(region->lastKeyswitchRange);
             }
         } break;
-
-        MATCH("/region&/sw_up", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.upKeyswitch) {
-                client.receive<'i'>(delay, path, *region.upKeyswitch);
-            } else {
-                client.receive<'N'>(delay, path, {});
+        MATCH("/region&/sw_last", "i") {
+            if (auto region = m.getRegion()) {
+                m.set(&Region::lastKeyswitch, Default::key);
+                region->lastKeyswitchRange.reset();
             }
         } break;
-
-        MATCH("/region&/sw_down", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.downKeyswitch) {
-                client.receive<'i'>(delay, path, *region.downKeyswitch);
-            } else {
-                client.receive<'N'>(delay, path, {});
+        MATCH("/region&/sw_last", "ii") {
+            if (auto region = m.getRegion()) {
+                region->lastKeyswitch.reset();
+                region->lastKeyswitchRange.emplace(args[0].i, args[1].i);
             }
         } break;
-
-        MATCH("/region&/sw_previous", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.previousKeyswitch) {
-                client.receive<'i'>(delay, path, *region.previousKeyswitch);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/sw_vel", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch (region.velocityOverride) {
-            case VelocityOverride::current:
-                client.receive<'s'>(delay, path, "current");
-                break;
-            case VelocityOverride::previous:
-                client.receive<'s'>(delay, path, "previous");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/chanaft_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.aftertouchRange.getStart();
-            args[1].f = region.aftertouchRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/polyaft_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.polyAftertouchRange.getStart();
-            args[1].f = region.polyAftertouchRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/bpm_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.bpmRange.getStart();
-            args[1].f = region.bpmRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/rand_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.randRange.getStart();
-            args[1].f = region.randRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/seq_length", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.sequenceLength);
-        } break;
-
-        MATCH("/region&/seq_position", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'h'>(delay, path, region.sequencePosition);
-        } break;
-
-        MATCH("/region&/trigger", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch (region.trigger) {
-            case Trigger::attack:
-                client.receive<'s'>(delay, path, "attack");
-                break;
-            case Trigger::first:
-                client.receive<'s'>(delay, path, "first");
-                break;
-            case Trigger::release:
-                client.receive<'s'>(delay, path, "release");
-                break;
-            case Trigger::release_key:
-                client.receive<'s'>(delay, path, "release_key");
-                break;
-            case Trigger::legato:
-                client.receive<'s'>(delay, path, "legato");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/start_cc_range&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto trigger = region.ccTriggers.get(indices[1]);
-            if (trigger) {
-                sfizz_arg_t args[2];
-                args[0].f = trigger->getStart();
-                args[1].f = trigger->getEnd();
-                client.receive(delay, path, "ff", args);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/volume", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.volume);
-        } break;
-
-        MATCH("/region&/volume_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto value = region.ccModDepth(indices[1], ModId::Volume);
-            if (value) {
-                client.receive<'f'>(delay, path, *value);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/volume_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Volume);
-            if (params) {
-                client.receive<'f'>(delay, path, params->step);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/volume_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Volume);
-            if (params) {
-                client.receive<'i'>(delay, path, params->smooth);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/volume_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Volume);
-            if (params) {
-                client.receive<'i'>(delay, path, params->curve);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pan", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.pan * 100.0f);
-        } break;
-
-        MATCH("/region&/pan_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto value = region.ccModDepth(indices[1], ModId::Pan);
-            if (value) {
-                client.receive<'f'>(delay, path, *value * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pan_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Pan);
-            if (params) {
-                client.receive<'f'>(delay, path, params->step * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pan_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Pan);
-            if (params) {
-                client.receive<'i'>(delay, path, params->smooth);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pan_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Pan);
-            if (params) {
-                client.receive<'i'>(delay, path, params->curve);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/width", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.width * 100.0f);
-        } break;
-
-        MATCH("/region&/width_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto value = region.ccModDepth(indices[1], ModId::Width);
-            if (value) {
-                client.receive<'f'>(delay, path, *value * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/width_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Width);
-            if (params) {
-                client.receive<'f'>(delay, path, params->step * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/width_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Width);
-            if (params) {
-                client.receive<'i'>(delay, path, params->smooth);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/width_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Width);
-            if (params) {
-                client.receive<'i'>(delay, path, params->curve);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/position", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.position * 100.0f);
-        } break;
-
-        MATCH("/region&/position_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto value = region.ccModDepth(indices[1], ModId::Position);
-            if (value) {
-                client.receive<'f'>(delay, path, *value * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/position_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Position);
-            if (params) {
-                client.receive<'f'>(delay, path, params->step * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/position_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Position);
-            if (params) {
-                client.receive<'i'>(delay, path, params->smooth);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/position_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Position);
-            if (params) {
-                client.receive<'i'>(delay, path, params->curve);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amplitude", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitude * 100.0f);
-        } break;
-
-        MATCH("/region&/amplitude_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto value = region.ccModDepth(indices[1], ModId::Amplitude);
-            if (value) {
-                client.receive<'f'>(delay, path, *value * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amplitude_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Amplitude);
-            if (params) {
-                client.receive<'f'>(delay, path, params->step * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amplitude_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Amplitude);
-            if (params) {
-                client.receive<'i'>(delay, path, params->smooth);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amplitude_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Amplitude);
-            if (params) {
-                client.receive<'i'>(delay, path, params->curve);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amp_keycenter", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.ampKeycenter);
-        } break;
-
-        MATCH("/region&/amp_keytrack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.ampKeytrack);
-        } break;
-
-        MATCH("/region&/amp_veltrack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.ampVeltrack * 100.0f);
-        } break;
-
-        MATCH("/region&/amp_veltrack_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.ampVeltrackCC.contains(indices[1])) {
-                const auto& cc = region.ampVeltrackCC.getWithDefault(indices[1]);
-                client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amp_veltrack_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.ampVeltrackCC.contains(indices[1])) {
-                const auto& cc = region.ampVeltrackCC.getWithDefault(indices[1]);
-                client.receive<'i'>(delay, path, cc.curve );
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/amp_random", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.ampRandom);
-        } break;
-
-        MATCH("/region&/xfin_key_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].i = region.crossfadeKeyInRange.getStart();
-            args[1].i = region.crossfadeKeyInRange.getEnd();
-            client.receive(delay, path, "ii", args);
-        } break;
-
-        MATCH("/region&/xfout_key_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].i = region.crossfadeKeyOutRange.getStart();
-            args[1].i = region.crossfadeKeyOutRange.getEnd();
-            client.receive(delay, path, "ii", args);
-        } break;
-
-        MATCH("/region&/xfin_vel_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.crossfadeVelInRange.getStart();
-            args[1].f = region.crossfadeVelInRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/xfout_vel_range", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            sfizz_arg_t args[2];
-            args[0].f = region.crossfadeVelOutRange.getStart();
-            args[1].f = region.crossfadeVelOutRange.getEnd();
-            client.receive(delay, path, "ff", args);
-        } break;
-
-        MATCH("/region&/xfin_cc_range&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto range = region.crossfadeCCInRange.get(indices[1]);
-            if (range) {
-                sfizz_arg_t args[2];
-                args[0].f = range->getStart();
-                args[1].f = range->getEnd();
-                client.receive(delay, path, "ff", args);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/xfout_cc_range&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto range = region.crossfadeCCOutRange.get(indices[1]);
-            if (range) {
-                sfizz_arg_t args[2];
-                args[0].f = range->getStart();
-                args[1].f = range->getEnd();
-                client.receive(delay, path, "ff", args);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/xf_keycurve", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch (region.crossfadeKeyCurve) {
-            case CrossfadeCurve::gain:
-                client.receive<'s'>(delay, path, "gain");
-                break;
-            case CrossfadeCurve::power:
-                client.receive<'s'>(delay, path, "power");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/xf_velcurve", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch (region.crossfadeVelCurve) {
-            case CrossfadeCurve::gain:
-                client.receive<'s'>(delay, path, "gain");
-                break;
-            case CrossfadeCurve::power:
-                client.receive<'s'>(delay, path, "power");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/xf_cccurve", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch (region.crossfadeCCCurve) {
-            case CrossfadeCurve::gain:
-                client.receive<'s'>(delay, path, "gain");
-                break;
-            case CrossfadeCurve::power:
-                client.receive<'s'>(delay, path, "power");
-                break;
-            }
-        } break;
-
-        MATCH("/region&/global_volume", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.globalVolume);
-        } break;
-
-        MATCH("/region&/master_volume", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.masterVolume);
-        } break;
-
-        MATCH("/region&/group_volume", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.groupVolume);
-        } break;
-
-        MATCH("/region&/global_amplitude", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.globalAmplitude * 100.0f);
-        } break;
-
-        MATCH("/region&/master_amplitude", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.masterAmplitude * 100.0f);
-        } break;
-
-        MATCH("/region&/group_amplitude", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.groupAmplitude * 100.0f);
-        } break;
-
-        MATCH("/region&/pitch_keytrack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.pitchKeytrack);
-        } break;
-
-        MATCH("/region&/pitch_veltrack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.pitchVeltrack);
-        } break;
-
-        MATCH("/region&/pitch_veltrack_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.pitchVeltrackCC.contains(indices[1])) {
-                const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
-                client.receive<'f'>(delay, path, cc.modifier);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitch_veltrack_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.pitchVeltrackCC.contains(indices[1])) {
-                const auto& cc = region.pitchVeltrackCC.getWithDefault(indices[1]);
-                client.receive<'i'>(delay, path, cc.curve );
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitch_random", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.pitchRandom);
-        } break;
-
-        MATCH("/region&/transpose", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.transpose);
-        } break;
-
-        MATCH("/region&/pitch", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.pitch);
-        } break;
-
-        MATCH("/region&/pitch_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto value = region.ccModDepth(indices[1], ModId::Pitch);
-            if (value) {
-                client.receive<'f'>(delay, path, *value);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitch_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Pitch);
-            if (params) {
-                client.receive<'f'>(delay, path, params->step);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitch_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Pitch);
-            if (params) {
-                client.receive<'i'>(delay, path, params->smooth);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitch_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto params = region.ccModParameters(indices[1], ModId::Pitch);
-            if (params) {
-                client.receive<'i'>(delay, path, params->curve);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/bend_up", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.bendUp);
-        } break;
-
-        MATCH("/region&/bend_down", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.bendDown);
-        } break;
-
-        MATCH("/region&/bend_step", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.bendStep);
-        } break;
-
-        MATCH("/region&/bend_smooth", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.bendSmooth);
-        } break;
-
-        MATCH("/region&/ampeg_attack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.attack);
-        } break;
-
-        MATCH("/region&/ampeg_delay", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.delay);
-        } break;
-
-        MATCH("/region&/ampeg_decay", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.decay);
-        } break;
-
-        MATCH("/region&/ampeg_hold", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.hold);
-        } break;
-
-        MATCH("/region&/ampeg_release", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.release);
-        } break;
-
-        MATCH("/region&/ampeg_start", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.start * 100.0f);
-        } break;
-
-        MATCH("/region&/ampeg_sustain", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.sustain * 100.0f);
-        } break;
-
-        MATCH("/region&/ampeg_depth", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.amplitudeEG.depth);
-        } break;
-
-        MATCH("/region&/ampeg_vel&attack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2attack);
-        } break;
-
-        MATCH("/region&/ampeg_vel&delay", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2delay);
-        } break;
-
-        MATCH("/region&/ampeg_vel&decay", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2decay);
-        } break;
-
-        MATCH("/region&/ampeg_vel&hold", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2hold);
-        } break;
-
-        MATCH("/region&/ampeg_vel&release", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2release);
-        } break;
-
-        MATCH("/region&/ampeg_vel&sustain", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2sustain * 100.0f);
-        } break;
-
-        MATCH("/region&/ampeg_vel&depth", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (indices[1] != 2)
-                break;
-            client.receive<'f'>(delay, path, region.amplitudeEG.vel2depth);
-        } break;
-
-        MATCH("/region&/ampeg_dynamic", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.amplitudeEG.dynamic) {
-                client.receive<'T'>(delay, path, {});
-            } else {
-                client.receive<'F'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/fileg_dynamic", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.filterEG && region.filterEG->dynamic) {
-                client.receive<'T'>(delay, path, {});
-            } else {
-                client.receive<'F'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitcheg_dynamic", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.pitchEG && region.pitchEG->dynamic) {
-                client.receive<'T'>(delay, path, {});
-            } else {
-                client.receive<'F'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/pitcheg_attack_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccAttack.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/pitcheg_decay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccDecay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/pitcheg_delay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccDelay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/pitcheg_hold_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccHold.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/pitcheg_release_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccRelease.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/pitcheg_start_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccStart.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-        } break;
-
-        MATCH("/region&/pitcheg_sustain_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccSustain.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-        } break;
-
-        MATCH("/region&/pitcheg_attack_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccAttack.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/pitcheg_decay_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccDecay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/pitcheg_delay_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccDelay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/pitcheg_hold_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccHold.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/pitcheg_release_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccRelease.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/pitcheg_start_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccStart.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/pitcheg_sustain_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.pitchEG->ccSustain.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/note_polyphony", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.notePolyphony) {
-                client.receive<'i'>(delay, path, *region.notePolyphony);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/note_selfmask", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            switch(region.selfMask) {
-            case SelfMask::mask:
-                client.receive(delay, path, "T", nullptr);
-                break;
-            case SelfMask::dontMask:
-                client.receive(delay, path, "F", nullptr);
-                break;
-            }
-        } break;
-
-        MATCH("/region&/rt_dead", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.rtDead) {
-                client.receive(delay, path, "T", nullptr);
-            } else {
-                client.receive(delay, path, "F", nullptr);
-            }
-        } break;
-
-        MATCH("/region&/sustain_sw", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.checkSustain) {
-                client.receive(delay, path, "T", nullptr);
-            } else {
-                client.receive(delay, path, "F", nullptr);
-            }
-        } break;
-
-        MATCH("/region&/sostenuto_sw", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.checkSostenuto) {
-                client.receive(delay, path, "T", nullptr);
-            } else {
-                client.receive(delay, path, "F", nullptr);
-            }
-        } break;
-
-        MATCH("/region&/sustain_cc", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.sustainCC);
-        } break;
-
-        MATCH("/region&/sostenuto_cc", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.sostenutoCC);
-        } break;
-
-        MATCH("/region&/sustain_lo", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.sustainThreshold);
-        } break;
-
-        MATCH("/region&/sostenuto_lo", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.sostenutoThreshold);
-        } break;
-
-        MATCH("/region&/oscillator_phase", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.oscillatorPhase);
-        } break;
-
-        MATCH("/region&/oscillator_quality", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            if (region.oscillatorQuality) {
-                client.receive<'i'>(delay, path, *region.oscillatorQuality);
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/oscillator_mode", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.oscillatorMode);
-        } break;
-
-        MATCH("/region&/oscillator_multi", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, region.oscillatorMulti);
-        } break;
-
-        MATCH("/region&/oscillator_detune", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.oscillatorDetune);
-        } break;
-
-        MATCH("/region&/oscillator_mod_depth", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, region.oscillatorModDepth * 100.0f);
-        } break;
-
+        MATCH("/region&/sw_label", "") { m.reply(&Region::keyswitchLabel); } break;
+        MATCH("/region&/sw_label", "s") { m.set(&Region::keyswitchLabel); } break;
+        MATCH("/region&/sw_up", "") { m.reply(&Region::upKeyswitch); } break;
+        MATCH("/region&/sw_up", "i") { m.set(&Region::upKeyswitch, Default::key); } break;
+        MATCH("/region&/sw_up", "s") { m.set(&Region::upKeyswitch, Default::key); } break;
+        MATCH("/region&/sw_down", "") { m.reply(&Region::downKeyswitch); } break;
+        MATCH("/region&/sw_down", "i") { m.set(&Region::downKeyswitch, Default::key); } break;
+        MATCH("/region&/sw_down", "s") { m.set(&Region::downKeyswitch, Default::key); } break;
+        MATCH("/region&/sw_previous", "") { m.reply(&Region::previousKeyswitch); } break;
+        MATCH("/region&/sw_previous", "i") { m.set(&Region::previousKeyswitch, Default::key); } break;
+        MATCH("/region&/sw_previous", "s") { m.set(&Region::previousKeyswitch, Default::key); } break;
+        MATCH("/region&/sw_vel", "") { m.reply(&Region::velocityOverride); } break;
+        MATCH("/region&/sw_vel", "s") { m.set(&Region::velocityOverride, Default::velocityOverride); } break;
+        MATCH("/region&/chanaft_range", "") { m.reply(&Region::aftertouchRange); } break;
+        MATCH("/region&/chanaft_range", "ff") { m.set(&Region::aftertouchRange); } break;
+        MATCH("/region&/polyaft_range", "") { m.reply(&Region::polyAftertouchRange); } break;
+        MATCH("/region&/polyaft_range", "ff") { m.set(&Region::polyAftertouchRange); } break;
+        MATCH("/region&/bpm_range", "") { m.reply(&Region::bpmRange); } break;
+        MATCH("/region&/bpm_range", "ff") { m.set(&Region::bpmRange, Default::loBPM, Default::hiBPM); } break;
+        MATCH("/region&/rand_range", "") { m.reply(&Region::randRange); } break;
+        MATCH("/region&/rand_range", "ff") { m.set(&Region::randRange, Default::loNormalized, Default::hiNormalized); } break;
+        MATCH("/region&/seq_length", "") { m.reply(&Region::sequenceLength); } break;
+        MATCH("/region&/seq_length", "i") { m.set(&Region::sequenceLength, Default::sequence); } break;
+        MATCH("/region&/seq_position", "") { m.reply(&Region::sequencePosition); } break;
+        MATCH("/region&/seq_position", "i") { m.set(&Region::sequencePosition, Default::sequence); } break;
+        MATCH("/region&/trigger", "") { m.reply(&Region::trigger); } break;
+        MATCH("/region&/trigger", "s") { m.set(&Region::trigger, Default::trigger); } break;
+        MATCH("/region&/start_cc_range&", "") { m.reply(&Region::ccTriggers, false); } break;
+        MATCH("/region&/start_cc_range&", "ff") { m.set(&Region::ccTriggers); } break;
+        MATCH("/region&/volume", "") { m.reply(&Region::volume); } break;
+        MATCH("/region&/volume", "f") { m.set(&Region::volume, Default::volume); } break;
+        // Probably need to rethink the way we set these in both the Region parsing and here before making changes
+        MATCH("/region&/volume_cc&", "") { m.reply(ModId::Volume, ModParam::Depth); } break;
+        MATCH("/region&/volume_stepcc&", "") { m.reply(ModId::Volume, ModParam::Step); } break;
+        MATCH("/region&/volume_smoothcc&", "") { m.reply(ModId::Volume, ModParam::Smooth); } break;
+        MATCH("/region&/volume_curvecc&", "") { m.reply(ModId::Volume, ModParam::Curve); } break;
+        MATCH("/region&/pan", "") { m.reply(&Region::pan, Default::pan); } break;
+        MATCH("/region&/pan", "f") { m.set(&Region::pan, Default::pan); } break;
+        MATCH("/region&/pan_cc&", "") { m.reply(ModId::Pan, ModParam::Depth, Default::pan); } break;
+        MATCH("/region&/pan_stepcc&", "") { m.reply(ModId::Pan, ModParam::Step, Default::pan); } break;
+        MATCH("/region&/pan_smoothcc&", "") { m.reply(ModId::Pan, ModParam::Smooth, Default::pan); } break;
+        MATCH("/region&/pan_curvecc&", "") { m.reply(ModId::Pan, ModParam::Curve, Default::pan); } break;
+        MATCH("/region&/width", "") { m.reply(&Region::width, Default::width); } break;
+        MATCH("/region&/width", "f") { m.set(&Region::width, Default::width); } break;
+        MATCH("/region&/width_cc&", "") { m.reply(ModId::Width, ModParam::Depth, Default::width); } break;
+        MATCH("/region&/width_stepcc&", "") { m.reply(ModId::Width, ModParam::Step, Default::width); } break;
+        MATCH("/region&/width_smoothcc&", "") { m.reply(ModId::Width, ModParam::Smooth, Default::width); } break;
+        MATCH("/region&/width_curvecc&", "") { m.reply(ModId::Width, ModParam::Curve, Default::width); } break;
+        MATCH("/region&/timer_range", "") { m.reply(&Region::timerRange); } break;
+        MATCH("/region&/position", "") { m.reply(&Region::position, Default::position); } break;
+        MATCH("/region&/position", "f") { m.set(&Region::position, Default::position); } break;
+        MATCH("/region&/position_cc&", "") { m.reply(ModId::Position, ModParam::Depth, Default::position); } break;
+        MATCH("/region&/position_stepcc&", "") { m.reply(ModId::Position, ModParam::Step, Default::position); } break;
+        MATCH("/region&/position_smoothcc&", "") { m.reply(ModId::Position, ModParam::Smooth, Default::position); } break;
+        MATCH("/region&/position_curvecc&", "") { m.reply(ModId::Position, ModParam::Curve, Default::position); } break;
+        MATCH("/region&/amplitude", "") { m.reply(&Region::amplitude, Default::amplitude); } break;
+        MATCH("/region&/amplitude", "f") { m.set(&Region::amplitude, Default::amplitude); } break;
+        MATCH("/region&/amplitude_cc&", "") { m.reply(ModId::Amplitude, ModParam::Depth, Default::amplitude); } break;
+        MATCH("/region&/amplitude_stepcc&", "") { m.reply(ModId::Amplitude, ModParam::Step, Default::amplitude); } break;
+        MATCH("/region&/amplitude_smoothcc&", "") { m.reply(ModId::Amplitude, ModParam::Smooth, Default::amplitude); } break;
+        MATCH("/region&/amplitude_curvecc&", "") { m.reply(ModId::Amplitude, ModParam::Curve, Default::amplitude); } break;
+        MATCH("/region&/amp_keycenter", "") { m.reply(&Region::ampKeycenter); } break;
+        MATCH("/region&/amp_keycenter", "i") { m.set(&Region::ampKeycenter, Default::key); } break;
+        MATCH("/region&/amp_keytrack", "") { m.reply(&Region::ampKeytrack); } break;
+        MATCH("/region&/amp_keytrack", "f") { m.set(&Region::ampKeytrack, Default::ampKeytrack); } break;
+        MATCH("/region&/amp_veltrack", "") { m.reply(&Region::ampVeltrack, Default::ampVeltrack); } break;
+        MATCH("/region&/amp_veltrack", "f") { m.set(&Region::ampVeltrack, Default::ampVeltrack); } break;
+        MATCH("/region&/amp_veltrack_cc&", "") { m.reply(&Region::ampVeltrackCC, false, ModParam::Depth, Default::ampVeltrackMod); } break;
+        MATCH("/region&/amp_veltrack_cc&", "f") { m.set(&Region::ampVeltrackCC, ModParam::Depth, Default::ampVeltrackMod); } break;
+        MATCH("/region&/amp_veltrack_curvecc&", "") { m.reply(&Region::ampVeltrackCC, false, ModParam::Curve, Default::ampVeltrackMod); } break;
+        MATCH("/region&/amp_veltrack_curvecc&", "i") { m.set(&Region::ampVeltrackCC, ModParam::Curve, Default::ampVeltrackMod); } break;
+        MATCH("/region&/amp_random", "") { m.reply(&Region::ampRandom); } break;
+        MATCH("/region&/amp_random", "f") { m.set(&Region::ampRandom, Default::ampRandom); } break;
+        MATCH("/region&/xfin_key_range", "") { m.reply(&Region::crossfadeKeyInRange); } break;
+        MATCH("/region&/xfin_key_range", "ii") { m.set(&Region::crossfadeKeyInRange, Default::loKey, Default::hiKey); } break;
+        MATCH("/region&/xfout_key_range", "") { m.reply(&Region::crossfadeKeyOutRange); } break;
+        MATCH("/region&/xfout_key_range", "ii") { m.set(&Region::crossfadeKeyOutRange, Default::loKey, Default::hiKey); } break;
+        MATCH("/region&/xfin_vel_range", "") { m.reply(&Region::crossfadeVelInRange); } break;
+        MATCH("/region&/xfin_vel_range", "ff") { m.set(&Region::crossfadeVelInRange); } break;
+        MATCH("/region&/xfout_vel_range", "") { m.reply(&Region::crossfadeVelOutRange); } break;
+        MATCH("/region&/xfout_vel_range", "ff") { m.set(&Region::crossfadeVelOutRange); } break;
+        MATCH("/region&/xfin_cc_range&", "") { m.reply(&Region::crossfadeCCInRange, false); } break;
+        MATCH("/region&/xfin_cc_range&", "ff") { m.set(&Region::crossfadeCCInRange); } break;
+        MATCH("/region&/xfout_cc_range&", "") { m.reply(&Region::crossfadeCCOutRange, false); } break;
+        MATCH("/region&/xfout_cc_range&", "ff") { m.set(&Region::crossfadeCCOutRange); } break;
+        MATCH("/region&/xf_keycurve", "") { m.reply(&Region::crossfadeKeyCurve); } break;
+        MATCH("/region&/xf_keycurve", "s") { m.set(&Region::crossfadeKeyCurve, Default::crossfadeCurve); } break;
+        MATCH("/region&/xf_velcurve", "") { m.reply(&Region::crossfadeVelCurve); } break;
+        MATCH("/region&/xf_velcurve", "s") { m.set(&Region::crossfadeVelCurve, Default::crossfadeCurve); } break;
+        MATCH("/region&/xf_cccurve", "") { m.reply(&Region::crossfadeCCCurve); } break;
+        MATCH("/region&/xf_cccurve", "s") { m.set(&Region::crossfadeCCCurve, Default::crossfadeCurve); } break;
+        MATCH("/region&/global_volume", "") { m.reply(&Region::globalVolume); } break;
+        MATCH("/region&/global_volume", "f") { m.set(&Region::globalVolume, Default::volume); } break;
+        MATCH("/region&/master_volume", "") { m.reply(&Region::masterVolume); } break;
+        MATCH("/region&/master_volume", "f") { m.set(&Region::masterVolume, Default::volume); } break;
+        MATCH("/region&/group_volume", "") { m.reply(&Region::groupVolume); } break;
+        MATCH("/region&/group_volume", "f") { m.set(&Region::groupVolume, Default::volume); } break;
+        MATCH("/region&/global_amplitude", "") { m.reply(&Region::globalAmplitude, Default::amplitude); } break;
+        MATCH("/region&/global_amplitude", "f") { m.set(&Region::globalAmplitude, Default::amplitude); } break;
+        MATCH("/region&/master_amplitude", "") { m.reply(&Region::masterAmplitude, Default::amplitude); } break;
+        MATCH("/region&/master_amplitude", "f") { m.set(&Region::masterAmplitude, Default::amplitude); } break;
+        MATCH("/region&/group_amplitude", "") { m.reply(&Region::groupAmplitude, Default::amplitude); } break;
+        MATCH("/region&/group_amplitude", "f") { m.set(&Region::groupAmplitude, Default::amplitude); } break;
+        MATCH("/region&/pitch_keytrack", "") { m.reply(&Region::pitchKeytrack); } break;
+        MATCH("/region&/pitch_keytrack", "f") { m.set(&Region::pitchKeytrack, Default::pitchKeytrack); } break;
+        MATCH("/region&/pitch_veltrack", "") { m.reply(&Region::pitchVeltrack); } break;
+        MATCH("/region&/pitch_veltrack", "f") { m.set(&Region::pitchVeltrack, Default::pitchVeltrack); } break;
+        MATCH("/region&/pitch_veltrack_cc&", "") { m.reply(&Region::pitchVeltrackCC, false, ModParam::Depth); } break;
+        MATCH("/region&/pitch_veltrack_cc&", "f") { m.set(&Region::pitchVeltrackCC, ModParam::Depth, Default::pitchVeltrackMod); } break;
+        MATCH("/region&/pitch_veltrack_curvecc&", "") { m.reply(&Region::pitchVeltrackCC, false, ModParam::Curve); } break;
+        MATCH("/region&/pitch_veltrack_curvecc&", "i") { m.set(&Region::pitchVeltrackCC, ModParam::Curve, Default::pitchVeltrackMod); } break;
+        MATCH("/region&/pitch_random", "") { m.reply(&Region::pitchRandom); } break;
+        MATCH("/region&/pitch_random", "f") { m.set(&Region::pitchRandom, Default::pitchRandom); } break;
+        MATCH("/region&/transpose", "") { m.reply(&Region::transpose); } break;
+        MATCH("/region&/transpose", "f") { m.set(&Region::transpose, Default::transpose); } break;
+        MATCH("/region&/pitch", "") { m.reply(&Region::pitch); } break;
+        MATCH("/region&/pitch", "f") { m.set(&Region::pitch, Default::pitch); } break;
+        MATCH("/region&/pitch_cc&", "") { m.reply(ModId::Pitch, ModParam::Depth, Default::pitch); } break;
+        MATCH("/region&/pitch_stepcc&", "") { m.reply(ModId::Pitch, ModParam::Step, Default::pitch); } break;
+        MATCH("/region&/pitch_smoothcc&", "") { m.reply(ModId::Pitch, ModParam::Smooth, Default::pitch); } break;
+        MATCH("/region&/pitch_curvecc&", "") { m.reply(ModId::Pitch, ModParam::Curve, Default::pitch); } break;
+        MATCH("/region&/bend_up", "") { m.reply(&Region::bendUp); } break;
+        MATCH("/region&/bend_up", "f") { m.set(&Region::bendUp, Default::bendUp); } break;
+        MATCH("/region&/bend_down", "") { m.reply(&Region::bendDown); } break;
+        MATCH("/region&/bend_down", "f") { m.set(&Region::bendDown, Default::bendDown); } break;
+        MATCH("/region&/bend_step", "") { m.reply(&Region::bendStep); } break;
+        MATCH("/region&/bend_step", "f") { m.set(&Region::bendStep, Default::bendStep); } break;
+        MATCH("/region&/bend_smooth", "") { m.reply(&Region::bendSmooth); } break;
+        MATCH("/region&/bend_smooth", "i") { m.set(&Region::bendSmooth, Default::smoothCC); } break;
+        MATCH("/region&/ampeg_attack", "") { m.reply(&Region::amplitudeEG, &EGDescription::attack); } break;
+        MATCH("/region&/ampeg_delay", "") { m.reply(&Region::amplitudeEG, &EGDescription::delay); } break;
+        MATCH("/region&/ampeg_decay", "") { m.reply(&Region::amplitudeEG, &EGDescription::decay); } break;
+        MATCH("/region&/ampeg_hold", "") { m.reply(&Region::amplitudeEG, &EGDescription::hold); } break;
+        MATCH("/region&/ampeg_release", "") { m.reply(&Region::amplitudeEG, &EGDescription::release); } break;
+        MATCH("/region&/ampeg_start", "") { m.reply(&Region::amplitudeEG, &EGDescription::start, Default::egPercent); } break;
+        MATCH("/region&/ampeg_sustain", "") { m.reply(&Region::amplitudeEG, &EGDescription::sustain, Default::egPercent); } break;
+        MATCH("/region&/ampeg_depth", "") { m.reply(&Region::amplitudeEG, &EGDescription::depth); } break;
+        MATCH("/region&/ampeg_attack_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccAttack, ModParam::Depth); } break;
+        MATCH("/region&/ampeg_attack_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccAttack, ModParam::Curve); } break;
+        MATCH("/region&/ampeg_decay_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccDecay, ModParam::Depth); } break;
+        MATCH("/region&/ampeg_decay_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccDecay, ModParam::Curve); } break;
+        MATCH("/region&/ampeg_delay_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccDelay, ModParam::Depth); } break;
+        MATCH("/region&/ampeg_delay_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccDelay, ModParam::Curve); } break;
+        MATCH("/region&/ampeg_hold_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccHold, ModParam::Depth); } break;
+        MATCH("/region&/ampeg_hold_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccHold, ModParam::Curve); } break;
+        MATCH("/region&/ampeg_release_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccRelease, ModParam::Depth); } break;
+        MATCH("/region&/ampeg_release_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccRelease, ModParam::Curve); } break;
+        MATCH("/region&/ampeg_sustain_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccSustain, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_sustain_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccSustain, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_start_cc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccStart, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_start_curvecc&", "") { m.reply(&Region::amplitudeEG, &EGDescription::ccStart, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_vel&attack", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2attack); } break;
+        MATCH("/region&/ampeg_vel&delay", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2delay); } break;
+        MATCH("/region&/ampeg_vel&decay", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2decay); } break;
+        MATCH("/region&/ampeg_vel&hold", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2hold); } break;
+        MATCH("/region&/ampeg_vel&release", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2release); } break;
+        MATCH("/region&/ampeg_vel&sustain", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2sustain, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_vel&depth", "") { m.reply(&Region::amplitudeEG, &EGDescription::vel2depth); } break;
+        MATCH("/region&/ampeg_dynamic", "") { m.reply(&Region::amplitudeEG, &EGDescription::dynamic); } break;
+        MATCH("/region&/ampeg_attack", "f") { m.set(&Region::amplitudeEG, &EGDescription::attack, Default::egTime); } break;
+        MATCH("/region&/ampeg_delay", "f") { m.set(&Region::amplitudeEG, &EGDescription::delay, Default::egTime); } break;
+        MATCH("/region&/ampeg_decay", "f") { m.set(&Region::amplitudeEG, &EGDescription::decay, Default::egTime); } break;
+        MATCH("/region&/ampeg_hold", "f") { m.set(&Region::amplitudeEG, &EGDescription::hold, Default::egTime); } break;
+        MATCH("/region&/ampeg_release", "f") { m.set(&Region::amplitudeEG, &EGDescription::release, Default::egTime); } break;
+        MATCH("/region&/ampeg_start", "f") { m.set(&Region::amplitudeEG, &EGDescription::start, Default::egPercent); } break;
+        MATCH("/region&/ampeg_sustain", "f") { m.set(&Region::amplitudeEG, &EGDescription::sustain, Default::egPercent); } break;
+        MATCH("/region&/ampeg_depth", "f") { m.set(&Region::amplitudeEG, &EGDescription::depth, Default::egDepth); } break;
+        MATCH("/region&/ampeg_attack_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccAttack, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_attack_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccAttack, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_decay_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccDecay, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_decay_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccDecay, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_delay_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccDelay, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_delay_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccDelay, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_hold_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccHold, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_hold_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccHold, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_release_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccRelease, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_release_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccRelease, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_sustain_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccSustain, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_sustain_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccSustain, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_start_cc&", "f") { m.set(&Region::amplitudeEG, &EGDescription::ccStart, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_start_curvecc&", "i") { m.set(&Region::amplitudeEG, &EGDescription::ccStart, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_vel&attack", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2attack, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_vel&delay", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2delay, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_vel&decay", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2decay, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_vel&hold", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2hold, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_vel&release", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2release, Default::egTimeMod); } break;
+        MATCH("/region&/ampeg_vel&sustain", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2sustain, Default::egPercentMod); } break;
+        MATCH("/region&/ampeg_vel&depth", "f") { m.set(&Region::amplitudeEG, &EGDescription::vel2depth, Default::egDepth); } break;
+        MATCH("/region&/ampeg_dynamic", "T") { m.set(&Region::amplitudeEG, &EGDescription::dynamic, Default::egDynamic);  } break;
+        MATCH("/region&/ampeg_dynamic", "F") { m.set(&Region::amplitudeEG, &EGDescription::dynamic, Default::egDynamic); } break;
+        MATCH("/region&/ampeg_dynamic", "s") { m.set(&Region::amplitudeEG, &EGDescription::dynamic, Default::egDynamic); } break;
+        MATCH("/region&/fileg_attack", "") { m.reply(&Region::filterEG, &EGDescription::attack); } break;
+        MATCH("/region&/fileg_delay", "") { m.reply(&Region::filterEG, &EGDescription::delay); } break;
+        MATCH("/region&/fileg_decay", "") { m.reply(&Region::filterEG, &EGDescription::decay); } break;
+        MATCH("/region&/fileg_hold", "") { m.reply(&Region::filterEG, &EGDescription::hold); } break;
+        MATCH("/region&/fileg_release", "") { m.reply(&Region::filterEG, &EGDescription::release); } break;
+        MATCH("/region&/fileg_start", "") { m.reply(&Region::filterEG, &EGDescription::start, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_sustain", "") { m.reply(&Region::filterEG, &EGDescription::sustain, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_depth", "") { m.reply(&Region::filterEG, &EGDescription::depth); } break;
+        MATCH("/region&/fileg_attack_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccAttack, ModParam::Depth); } break;
+        MATCH("/region&/fileg_attack_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccAttack, ModParam::Curve); } break;
+        MATCH("/region&/fileg_decay_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccDecay, ModParam::Depth); } break;
+        MATCH("/region&/fileg_decay_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccDecay, ModParam::Curve); } break;
+        MATCH("/region&/fileg_delay_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccDelay, ModParam::Depth); } break;
+        MATCH("/region&/fileg_delay_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccDelay, ModParam::Curve); } break;
+        MATCH("/region&/fileg_hold_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccHold, ModParam::Depth); } break;
+        MATCH("/region&/fileg_hold_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccHold, ModParam::Curve); } break;
+        MATCH("/region&/fileg_release_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccRelease, ModParam::Depth); } break;
+        MATCH("/region&/fileg_release_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccRelease, ModParam::Curve); } break;
+        MATCH("/region&/fileg_sustain_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccSustain, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_sustain_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccSustain, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_start_cc&", "") { m.reply(&Region::filterEG, &EGDescription::ccStart, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_start_curvecc&", "") { m.reply(&Region::filterEG, &EGDescription::ccStart, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_dynamic", "") { m.reply(&Region::filterEG, &EGDescription::dynamic); } break;
+        MATCH("/region&/fileg_attack", "f") { m.set(&Region::filterEG, &EGDescription::attack, Default::egTime); } break;
+        MATCH("/region&/fileg_delay", "f") { m.set(&Region::filterEG, &EGDescription::delay, Default::egTime); } break;
+        MATCH("/region&/fileg_decay", "f") { m.set(&Region::filterEG, &EGDescription::decay, Default::egTime); } break;
+        MATCH("/region&/fileg_hold", "f") { m.set(&Region::filterEG, &EGDescription::hold, Default::egTime); } break;
+        MATCH("/region&/fileg_release", "f") { m.set(&Region::filterEG, &EGDescription::release, Default::egTime); } break;
+        MATCH("/region&/fileg_start", "f") { m.set(&Region::filterEG, &EGDescription::start, Default::egPercent); } break;
+        MATCH("/region&/fileg_sustain", "f") { m.set(&Region::filterEG, &EGDescription::sustain, Default::egPercent); } break;
+        MATCH("/region&/fileg_depth", "f") { m.set(&Region::filterEG, &EGDescription::depth, Default::egDepth); } break;
+        MATCH("/region&/fileg_attack_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccAttack, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_attack_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccAttack, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_decay_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccDecay, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_decay_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccDecay, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_delay_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccDelay, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_delay_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccDelay, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_hold_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccHold, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_hold_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccHold, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_release_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccRelease, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_release_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccRelease, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/fileg_sustain_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccSustain, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_sustain_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccSustain, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_start_cc&", "f") { m.set(&Region::filterEG, &EGDescription::ccStart, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_start_curvecc&", "i") { m.set(&Region::filterEG, &EGDescription::ccStart, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/fileg_dynamic", "T") {  m.set(&Region::filterEG, &EGDescription::dynamic, Default::egDynamic); } break;
+        MATCH("/region&/fileg_dynamic", "F") {  m.set(&Region::filterEG, &EGDescription::dynamic, Default::egDynamic); } break;
+        MATCH("/region&/fileg_dynamic", "s") { m.set(&Region::filterEG, &EGDescription::dynamic, Default::egDynamic); } break;
+        MATCH("/region&/pitcheg_attack", "") { m.reply(&Region::pitchEG, &EGDescription::attack); } break;
+        MATCH("/region&/pitcheg_delay", "") { m.reply(&Region::pitchEG, &EGDescription::delay); } break;
+        MATCH("/region&/pitcheg_decay", "") { m.reply(&Region::pitchEG, &EGDescription::decay); } break;
+        MATCH("/region&/pitcheg_hold", "") { m.reply(&Region::pitchEG, &EGDescription::hold); } break;
+        MATCH("/region&/pitcheg_release", "") { m.reply(&Region::pitchEG, &EGDescription::release); } break;
+        MATCH("/region&/pitcheg_start", "") { m.reply(&Region::pitchEG, &EGDescription::start, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_sustain", "") { m.reply(&Region::pitchEG, &EGDescription::sustain, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_depth", "") { m.reply(&Region::pitchEG, &EGDescription::depth); } break;
+        MATCH("/region&/pitcheg_attack_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccAttack, ModParam::Depth); } break;
+        MATCH("/region&/pitcheg_attack_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccAttack, ModParam::Curve); } break;
+        MATCH("/region&/pitcheg_decay_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccDecay, ModParam::Depth); } break;
+        MATCH("/region&/pitcheg_decay_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccDecay, ModParam::Curve); } break;
+        MATCH("/region&/pitcheg_delay_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccDelay, ModParam::Depth); } break;
+        MATCH("/region&/pitcheg_delay_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccDelay, ModParam::Curve); } break;
+        MATCH("/region&/pitcheg_hold_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccHold, ModParam::Depth); } break;
+        MATCH("/region&/pitcheg_hold_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccHold, ModParam::Curve); } break;
+        MATCH("/region&/pitcheg_release_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccRelease, ModParam::Depth); } break;
+        MATCH("/region&/pitcheg_release_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccRelease, ModParam::Curve); } break;
+        MATCH("/region&/pitcheg_sustain_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccSustain, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_sustain_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccSustain, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_start_cc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccStart, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_start_curvecc&", "") { m.reply(&Region::pitchEG, &EGDescription::ccStart, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_dynamic", "") { m.reply(&Region::pitchEG, &EGDescription::dynamic); } break;
+        MATCH("/region&/pitcheg_attack", "f") { m.set(&Region::pitchEG, &EGDescription::attack, Default::egTime); } break;
+        MATCH("/region&/pitcheg_delay", "f") { m.set(&Region::pitchEG, &EGDescription::delay, Default::egTime); } break;
+        MATCH("/region&/pitcheg_decay", "f") { m.set(&Region::pitchEG, &EGDescription::decay, Default::egTime); } break;
+        MATCH("/region&/pitcheg_hold", "f") { m.set(&Region::pitchEG, &EGDescription::hold, Default::egTime); } break;
+        MATCH("/region&/pitcheg_release", "f") { m.set(&Region::pitchEG, &EGDescription::release, Default::egTime); } break;
+        MATCH("/region&/pitcheg_start", "f") { m.set(&Region::pitchEG, &EGDescription::start, Default::egPercent); } break;
+        MATCH("/region&/pitcheg_sustain", "f") { m.set(&Region::pitchEG, &EGDescription::sustain, Default::egPercent); } break;
+        MATCH("/region&/pitcheg_depth", "f") { m.set(&Region::pitchEG, &EGDescription::depth, Default::egDepth); } break;
+        MATCH("/region&/pitcheg_attack_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccAttack, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_attack_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccAttack, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_decay_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccDecay, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_decay_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccDecay, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_delay_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccDelay, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_delay_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccDelay, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_hold_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccHold, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_hold_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccHold, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_release_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccRelease, ModParam::Depth, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_release_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccRelease, ModParam::Curve, Default::egTimeMod); } break;
+        MATCH("/region&/pitcheg_sustain_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccSustain, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_sustain_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccSustain, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_start_cc&", "f") { m.set(&Region::pitchEG, &EGDescription::ccStart, ModParam::Depth, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_start_curvecc&", "i") { m.set(&Region::pitchEG, &EGDescription::ccStart, ModParam::Curve, Default::egPercentMod); } break;
+        MATCH("/region&/pitcheg_dynamic", "T") { if (auto region = m.getRegion()) { if (region->pitchEG) { region->pitchEG->dynamic = true;} }  } break;
+        MATCH("/region&/pitcheg_dynamic", "F") { if (auto region = m.getRegion()) { if (region->pitchEG) { region->pitchEG->dynamic = false;} } } break;
+        MATCH("/region&/pitcheg_dynamic", "s") { m.set(&Region::pitchEG, &EGDescription::dynamic, Default::egDynamic); } break;
+        MATCH("/region&/note_polyphony", "") { m.reply(&Region::notePolyphony); } break;
+        MATCH("/region&/note_polyphony", "i") { m.set(&Region::notePolyphony, Default::notePolyphony); } break;
+        MATCH("/region&/rt_dead", "") { m.reply(&Region::rtDead); } break;
+        MATCH("/region&/rt_dead", "s") { m.set(&Region::rtDead, Default::rtDead); } break;
+        MATCH("/region&/rt_dead", "T") { m.set(&Region::rtDead, Default::rtDead); } break;
+        MATCH("/region&/rt_dead", "F") { m.set(&Region::rtDead, Default::rtDead); } break;
+        MATCH("/region&/sustain_sw", "") { m.reply(&Region::checkSustain); } break;
+        MATCH("/region&/sustain_sw", "s") { m.set(&Region::checkSustain, Default::checkSustain); } break;
+        MATCH("/region&/sustain_sw", "T") { m.set(&Region::checkSustain, Default::checkSustain); } break;
+        MATCH("/region&/sustain_sw", "F") { m.set(&Region::checkSustain, Default::checkSustain); } break;
+        MATCH("/region&/sostenuto_sw", "") { m.reply(&Region::checkSostenuto); } break;
+        MATCH("/region&/sostenuto_sw", "s") { m.set(&Region::checkSostenuto, Default::checkSostenuto); } break;
+        MATCH("/region&/sostenuto_sw", "T") { m.set(&Region::checkSostenuto, Default::checkSostenuto); } break;
+        MATCH("/region&/sostenuto_sw", "F") { m.set(&Region::checkSostenuto, Default::checkSostenuto); } break;
+        MATCH("/region&/sustain_cc", "") { m.reply(&Region::sustainCC); } break;
+        MATCH("/region&/sustain_cc", "i") { m.set(&Region::sustainCC, Default::sustainCC); } break;
+        MATCH("/region&/sostenuto_cc", "") { m.reply(&Region::sostenutoCC); } break;
+        MATCH("/region&/sostenuto_cc", "i") { m.set(&Region::sostenutoCC, Default::sostenutoCC); } break;
+        MATCH("/region&/sustain_lo", "") { m.reply(&Region::sustainThreshold); } break;
+        MATCH("/region&/sustain_lo", "f") { m.set(&Region::sustainThreshold); } break;
+        MATCH("/region&/sostenuto_lo", "") { m.reply(&Region::sostenutoThreshold); } break;
+        MATCH("/region&/sostenuto_lo", "f") { m.set(&Region::sostenutoThreshold); } break;
+        MATCH("/region&/note_selfmask", "") { m.reply(&Region::selfMask); } break;
+        MATCH("/region&/note_selfmask", "s") { m.set(&Region::selfMask, Default::selfMask); } break;
+        MATCH("/region&/oscillator_phase", "") { m.reply(&Region::oscillatorPhase); } break;
+        MATCH("/region&/oscillator_phase", "f") { m.set(&Region::oscillatorPhase, Default::oscillatorPhase); } break;
+        MATCH("/region&/oscillator_quality", "") { m.reply(&Region::oscillatorQuality); } break;
+        MATCH("/region&/oscillator_quality", "i") { m.set(&Region::oscillatorQuality, Default::oscillatorQuality); } break;
+        MATCH("/region&/oscillator_mode", "") { m.reply(&Region::oscillatorMode); } break;
+        MATCH("/region&/oscillator_mode", "i") { m.set(&Region::oscillatorMode, Default::oscillatorMode); } break;
+        MATCH("/region&/oscillator_multi", "") { m.reply(&Region::oscillatorMulti); } break;
+        MATCH("/region&/oscillator_multi", "i") { m.set(&Region::oscillatorMulti, Default::oscillatorMulti); } break;
+        MATCH("/region&/oscillator_detune", "") { m.reply(&Region::oscillatorDetune); } break;
+        MATCH("/region&/oscillator_detune", "f") { m.set(&Region::oscillatorDetune, Default::oscillatorDetune); } break;
+        MATCH("/region&/oscillator_mod_depth", "") { m.reply(&Region::oscillatorModDepth, Default::oscillatorModDepth); } break;
+        MATCH("/region&/oscillator_mod_depth", "f") { m.set(&Region::oscillatorModDepth, Default::oscillatorModDepth); } break;
         // TODO: detune cc, mod depth cc
 
         MATCH("/region&/effect&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            auto effectIdx = indices[1];
-            if (indices[1] == 0)
-                break;
-
-            if (effectIdx < region.gainToEffect.size())
-                client.receive<'f'>(delay, path, region.gainToEffect[effectIdx] * 100.0f);
+            if (auto region = m.getRegion())
+                if (auto effectIdx = m.sindex(1))
+                    if (effectIdx > 0 && effectIdx < ssize(region->gainToEffect))
+                        m.reply(region->gainToEffect[*effectIdx], Default::effect);
         } break;
-
-        MATCH("/region&/ampeg_attack_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
+        MATCH("/region&/effect&", "f") {
+            if (auto region = m.getRegion())
+                if (auto effectIdx = m.sindex(1))
+                    if (effectIdx > 0 && effectIdx < ssize(region->gainToEffect))
+                        m.set(region->gainToEffect[*effectIdx], Default::effect);
         } break;
-
-        MATCH("/region&/ampeg_decay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccDecay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/ampeg_delay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccDelay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/ampeg_hold_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccHold.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/ampeg_release_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccRelease.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/ampeg_start_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccStart.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-        } break;
-
-        MATCH("/region&/ampeg_sustain_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccSustain.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-        } break;
-
-        MATCH("/region&/ampeg_attack_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccAttack.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/ampeg_decay_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccDecay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/ampeg_delay_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccDelay.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/ampeg_hold_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccHold.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/ampeg_release_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccRelease.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/ampeg_start_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccStart.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/ampeg_sustain_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto& cc = region.amplitudeEG.ccSustain.getWithDefault(indices[1]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/cutoff", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            client.receive<'f'>(delay, path, filter.cutoff);
-        } break;
-
-        MATCH("/region&/filter&/cutoff_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto depth = region.ccModDepth(indices[2], ModId::FilCutoff, indices[1]);
-            if (depth)
-                client.receive<'f'>(delay, path, *depth);
-        } break;
-
-        MATCH("/region&/filter&/cutoff_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto params = region.ccModParameters(indices[2], ModId::FilCutoff, indices[1]);
-            if (params)
-                client.receive<'i'>(delay, path, params->curve);
-        } break;
-
-        MATCH("/region&/filter&/cutoff_stepcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto params = region.ccModParameters(indices[2], ModId::FilCutoff, indices[1]);
-            if (params)
-                client.receive<'i'>(delay, path, params->step);
-        } break;
-
-        MATCH("/region&/filter&/cutoff_smoothcc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            const auto params = region.ccModParameters(indices[2], ModId::FilCutoff, indices[1]);
-            if (params)
-                client.receive<'i'>(delay, path, params->smooth);
-        } break;
-
-        MATCH("/region&/filter&/resonance", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            client.receive<'f'>(delay, path, filter.resonance);
-        } break;
-
-        MATCH("/region&/filter&/gain", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            client.receive<'f'>(delay, path, filter.gain);
-        } break;
-
-        MATCH("/region&/filter&/keycenter", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            client.receive<'i'>(delay, path, filter.keycenter);
-        } break;
-
-        MATCH("/region&/filter&/keytrack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            client.receive<'i'>(delay, path, filter.keytrack);
-        } break;
-
-        MATCH("/region&/filter&/veltrack", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            client.receive<'i'>(delay, path, filter.veltrack);
-        } break;
-
-        MATCH("/region&/filter&/veltrack_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            if (filter.veltrackCC.contains(indices[2])) {
-                const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
-                client.receive<'f'>(delay, path, cc.modifier);
-            } else {
-                client.receive<'N'>(delay, path, {});
+        MATCH("/region&/add_filter", "") {
+            if (auto region = m.getRegion()) {
+                region->filters.emplace_back();
+                int32_t index = region->filters.size() - 1;
+                impl.settingsPerVoice_.maxFilters = max(impl.settingsPerVoice_.maxFilters, region->flexEGs.size());
+                impl.applySettingsPerVoice();
+                m.reply(index);
             }
         } break;
-
-        MATCH("/region&/filter&/veltrack_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            if (filter.veltrackCC.contains(indices[2])) {
-                const auto& cc = filter.veltrackCC.getWithDefault(indices[2]);
-                client.receive<'i'>(delay, path, cc.curve );
-            } else {
-                client.receive<'N'>(delay, path, {});
-            }
-        } break;
-
-        MATCH("/region&/filter&/type", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            switch (filter.type) {
-            case FilterType::kFilterLpf1p: client.receive<'s'>(delay, path, "lpf_1p"); break;
-            case FilterType::kFilterHpf1p: client.receive<'s'>(delay, path, "hpf_1p"); break;
-            case FilterType::kFilterLpf2p: client.receive<'s'>(delay, path, "lpf_2p"); break;
-            case FilterType::kFilterHpf2p: client.receive<'s'>(delay, path, "hpf_2p"); break;
-            case FilterType::kFilterBpf2p: client.receive<'s'>(delay, path, "bpf_2p"); break;
-            case FilterType::kFilterBrf2p: client.receive<'s'>(delay, path, "brf_2p"); break;
-            case FilterType::kFilterBpf1p: client.receive<'s'>(delay, path, "bpf_1p"); break;
-            case FilterType::kFilterBrf1p: client.receive<'s'>(delay, path, "brf_1p"); break;
-            case FilterType::kFilterApf1p: client.receive<'s'>(delay, path, "apf_1p"); break;
-            case FilterType::kFilterLpf2pSv: client.receive<'s'>(delay, path, "lpf_2p_sv"); break;
-            case FilterType::kFilterHpf2pSv: client.receive<'s'>(delay, path, "hpf_2p_sv"); break;
-            case FilterType::kFilterBpf2pSv: client.receive<'s'>(delay, path, "bpf_2p_sv"); break;
-            case FilterType::kFilterBrf2pSv: client.receive<'s'>(delay, path, "brf_2p_sv"); break;
-            case FilterType::kFilterLpf4p: client.receive<'s'>(delay, path, "lpf_4p"); break;
-            case FilterType::kFilterHpf4p: client.receive<'s'>(delay, path, "hpf_4p"); break;
-            case FilterType::kFilterLpf6p: client.receive<'s'>(delay, path, "lpf_6p"); break;
-            case FilterType::kFilterHpf6p: client.receive<'s'>(delay, path, "hpf_6p"); break;
-            case FilterType::kFilterPink: client.receive<'s'>(delay, path, "pink"); break;
-            case FilterType::kFilterLsh: client.receive<'s'>(delay, path, "lsh"); break;
-            case FilterType::kFilterHsh: client.receive<'s'>(delay, path, "hsh"); break;
-            case FilterType::kFilterPeq: client.receive<'s'>(delay, path, "peq"); break;
-            case FilterType::kFilterBpf4p: client.receive<'s'>(delay, path, "bpf_4p"); break;
-            case FilterType::kFilterBpf6p: client.receive<'s'>(delay, path, "bpf_6p"); break;
-            case FilterType::kFilterNone: client.receive<'s'>(delay, path, "none"); break;
-            }
-        } break;
-
-        MATCH("/region&/filter&/fileg_attack_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccAttack.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/filter&/fileg_decay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDecay.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/filter&/fileg_delay_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDelay.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/filter&/fileg_hold_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccHold.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/filter&/fileg_release_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccRelease.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier);
-        } break;
-
-        MATCH("/region&/filter&/fileg_start_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccStart.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-        } break;
-
-        MATCH("/region&/filter&/fileg_sustain_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccSustain.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.modifier * 100.0f);
-        } break;
-
-        MATCH("/region&/filter&/fileg_attack_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccAttack.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/fileg_decay_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDecay.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/fileg_delay_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccDelay.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/fileg_hold_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccHold.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/fileg_release_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccRelease.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/fileg_start_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccStart.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/filter&/fileg_sustain_curvecc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            const auto& cc = region.filterEG->ccSustain.getWithDefault(indices[2]);
-            client.receive<'f'>(delay, path, cc.curve);
-        } break;
-
-        MATCH("/region&/eq&/gain", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EQ_OR_BREAK(indices[1])
-            client.receive<'f'>(delay, path, eq.gain);
-        } break;
-
-        MATCH("/region&/eq&/bandwidth", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EQ_OR_BREAK(indices[1])
-            client.receive<'f'>(delay, path, eq.bandwidth);
-        } break;
-
-        MATCH("/region&/eq&/frequency", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EQ_OR_BREAK(indices[1])
-            client.receive<'f'>(delay, path, eq.frequency);
-        } break;
-
-        MATCH("/region&/eq&/vel&freq", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EQ_OR_BREAK(indices[1])
-            if (indices[2] != 2)
-                break;
-            client.receive<'f'>(delay, path, eq.vel2frequency);
-        } break;
-
-        MATCH("/region&/eq&/vel&gain", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EQ_OR_BREAK(indices[1])
-            if (indices[2] != 2)
-                break;
-            client.receive<'f'>(delay, path, eq.vel2gain);
-        } break;
-
-        MATCH("/region&/eq&/type", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EQ_OR_BREAK(indices[1])
-            switch (eq.type) {
-            case EqType::kEqNone: client.receive<'s'>(delay, path, "none"); break;
-            case EqType::kEqPeak: client.receive<'s'>(delay, path, "peak"); break;
-            case EqType::kEqLshelf: client.receive<'s'>(delay, path, "lshelf"); break;
-            case EqType::kEqHshelf: client.receive<'s'>(delay, path, "hshelf"); break;
-            }
-        } break;
-
-        MATCH("/region&/lfo&/wave", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_LFO_OR_BREAK(indices[1])
-            if (lfo.sub.size() == 0)
-                break;
-
-            client.receive<'i'>(delay, path, static_cast<int32_t>(lfo.sub[0].wave));
-        } break;
-
-        MATCH("/region&/eg&/point&/time", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EG_OR_BREAK(indices[1])
-            GET_EG_POINT_OR_BREAK(indices[2] + 1)
-
-            client.receive<'f'>(delay, path, point.time);
-        } break;
-
-        MATCH("/region&/eg&/point&/time_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EG_OR_BREAK(indices[1])
-            GET_EG_POINT_OR_BREAK(indices[2] + 1)
-
-            client.receive<'f'>(delay, path, point.ccTime.getWithDefault(indices[3]));
-        } break;
-
-        MATCH("/region&/eg&/point&/level", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EG_OR_BREAK(indices[1])
-            GET_EG_POINT_OR_BREAK(indices[2] + 1)
-
-            client.receive<'f'>(delay, path, point.level);
-        } break;
-
-        MATCH("/region&/eg&/point&/level_cc&", "") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_EG_OR_BREAK(indices[1])
-            GET_EG_POINT_OR_BREAK(indices[2] + 1)
-
-            client.receive<'f'>(delay, path, point.ccLevel.getWithDefault(indices[3]));
-        } break;
-
-        #undef GET_REGION_OR_BREAK
-        #undef GET_FILTER_OR_BREAK
-        #undef GET_EQ_OR_BREAK
-        #undef GET_LFO_OR_BREAK
-        #undef GET_EG_OR_BREAK
-        #undef GET_EG_POINT_OR_BREAK
-
+        MATCH("/region&/filter&/cutoff", "") { m.reply(&FilterDescription::cutoff); } break;
+        MATCH("/region&/filter&/cutoff", "f") { m.set(&FilterDescription::cutoff, Default::filterCutoff); } break;
+        MATCH("/region&/filter&/cutoff_cc&", "") { m.reply(ModId::FilCutoff, ModParam::Depth); } break;
+        MATCH("/region&/filter&/cutoff_curvecc&", "") { m.reply(ModId::FilCutoff, ModParam::Curve); } break;
+        MATCH("/region&/filter&/cutoff_stepcc&", "") { m.reply(ModId::FilCutoff, ModParam::Step); } break;
+        MATCH("/region&/filter&/cutoff_smoothcc&", "") { m.reply(ModId::FilCutoff, ModParam::Smooth); } break;
+        MATCH("/region&/filter&/resonance", "") { m.reply(&FilterDescription::resonance); } break;
+        MATCH("/region&/filter&/resonance", "f") { m.set(&FilterDescription::resonance, Default::filterResonance); } break;
+        MATCH("/region&/filter&/gain", "") { m.reply(&FilterDescription::gain); } break;
+        MATCH("/region&/filter&/gain", "f") { m.set(&FilterDescription::gain, Default::filterGain); } break;
+        MATCH("/region&/filter&/keycenter", "") { m.reply(&FilterDescription::keycenter); } break;
+        MATCH("/region&/filter&/keycenter", "i") { m.set(&FilterDescription::keycenter, Default::key); } break;
+        MATCH("/region&/filter&/keytrack", "") { m.reply(&FilterDescription::keytrack); } break;
+        MATCH("/region&/filter&/keytrack", "f") { m.set(&FilterDescription::keytrack, Default::filterKeytrack); } break;
+        MATCH("/region&/filter&/veltrack", "") { m.reply(&FilterDescription::veltrack); } break;
+        MATCH("/region&/filter&/veltrack", "f") { m.set(&FilterDescription::veltrack, Default::filterVeltrack); } break;
+        MATCH("/region&/filter&/veltrack_cc&", "") { m.reply(&FilterDescription::veltrackCC, ModParam::Depth); } break;
+        MATCH("/region&/filter&/veltrack_cc&", "f") { m.set(&FilterDescription::veltrackCC, ModParam::Depth, Default::filterVeltrackMod); } break;
+        MATCH("/region&/filter&/veltrack_curvecc&", "") { m.reply(&FilterDescription::veltrackCC, ModParam::Curve); } break;
+        MATCH("/region&/filter&/veltrack_curvecc&", "i") { m.set(&FilterDescription::veltrackCC, ModParam::Curve, Default::filterVeltrackMod); } break;
+        MATCH("/region&/filter&/type", "") { m.reply(&FilterDescription::type); } break;
+        MATCH("/region&/filter&/type", "s") { m.set(&FilterDescription::type, Default::filter); } break;
         //----------------------------------------------------------------------
-        // Setting values
-        // Note: all these must be rt-safe within the parseOpcode method in region
-
-        MATCH("/sample_quality", "i") {
-            impl.resources_.getSynthConfig().liveSampleQuality =
-                Opcode::transform(Default::sampleQuality, static_cast<int>(args[0].i));
-        } break;
-
-        MATCH("/oscillator_quality", "i") {
-            impl.resources_.getSynthConfig().liveOscillatorQuality =
-                Opcode::transform(Default::oscillatorQuality, static_cast<int>(args[0].i));
-        } break;
-
-        MATCH("/freewheeling_sample_quality", "i") {
-            impl.resources_.getSynthConfig().freeWheelingSampleQuality =
-                Opcode::transform(Default::freewheelingSampleQuality, static_cast<int>(args[0].i));
-        } break;
-
-        MATCH("/freewheeling_oscillator_quality", "i") {
-            impl.resources_.getSynthConfig().freeWheelingOscillatorQuality =
-                Opcode::transform(Default::freewheelingOscillatorQuality, static_cast<int>(args[0].i));
-        } break;
-
-        MATCH("/sustain_cancels_release", "T") {
-            impl.resources_.getSynthConfig().sustainCancelsRelease = true;
-        } break;
-
-        MATCH("/sustain_cancels_release", "F") {
-            impl.resources_.getSynthConfig().sustainCancelsRelease = false;
-        } break;
-
-        #define GET_REGION_OR_BREAK(idx)            \
-            if (idx >= impl.layers_.size())         \
-                break;                              \
-            Layer& layer = *impl.layers_[idx];      \
-            Region& region = layer.getRegion();
-
-        #define GET_FILTER_OR_BREAK(idx)          \
-            if (idx >= region.filters.size())     \
-                break;                            \
-            auto& filter = region.filters[idx];
-
-        #define GET_LFO_OR_BREAK(idx)             \
-            if (idx >= region.lfos.size())        \
-                break;                            \
-            auto& lfo = region.lfos[idx];
-
-        #define GET_LFO_SUB_OR_BREAK(idx)         \
-            if (idx >= lfo.sub.size())            \
-                break;                            \
-            auto& sub = lfo.sub[idx];
-
-        MATCH("/region&/pitch_keycenter", "i") {
-            GET_REGION_OR_BREAK(indices[0])
-            region.pitchKeycenter = Opcode::transform(Default::key, args[0].i);
-        } break;
-
-        MATCH("/region&/loop_mode", "s") {
-            GET_REGION_OR_BREAK(indices[0])
-            region.loopMode = Opcode::readOptional(Default::loopMode, args[0].s);
-        } break;
-
-        MATCH("/region&/filter&/type", "s") {
-            GET_REGION_OR_BREAK(indices[0])
-            GET_FILTER_OR_BREAK(indices[1])
-            filter.type = Opcode::read(Default::filter, args[0].s);
-        } break;
-
-        MATCH("/region&/lfo&/wave", "i") {
-            indices[2] = 0;
-            goto set_lfoN_wave;
-        } break;
-
-        MATCH("/region&/lfo&/wave&", "i") {
-        set_lfoN_wave:
-            GET_REGION_OR_BREAK(indices[0])
-            GET_LFO_OR_BREAK(indices[1])
-            GET_LFO_SUB_OR_BREAK(indices[2])
-            sub.wave = Opcode::transform(Default::lfoWave, args[0].i);
-        } break;
-
-        #undef GET_REGION_OR_BREAK
-        #undef GET_FILTER_OR_BREAK
-        #undef GET_LFO_OR_BREAK
-        #undef GET_LFO_SUB_OR_BREAK
-
-        //----------------------------------------------------------------------
-        // Voices
-
-        MATCH("/num_active_voices", "") {
-            client.receive<'i'>(delay, path, impl.voiceManager_.getNumActiveVoices());
-        } break;
-
-        #define GET_VOICE_OR_BREAK(idx)                     \
-            if (static_cast<int>(idx) >= impl.numVoices_)   \
-                break;                                      \
-            const auto& voice = impl.voiceManager_[idx];    \
-            if (voice.isFree())                             \
-                break;
-
-        MATCH("/voice&/trigger_value", "") {
-            GET_VOICE_OR_BREAK(indices[0])
-            client.receive<'f'>(delay, path, voice.getTriggerEvent().value);
-        } break;
-
-        MATCH("/voice&/trigger_number", "") {
-            GET_VOICE_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, voice.getTriggerEvent().number);
-        } break;
-
-        MATCH("/voice&/trigger_type", "") {
-            GET_VOICE_OR_BREAK(indices[0])
-            const auto& event = voice.getTriggerEvent();
-            switch (event.type) {
-            case TriggerEventType::CC:
-                client.receive<'s'>(delay, path, "cc");
-                break;
-            case TriggerEventType::NoteOn:
-                client.receive<'s'>(delay, path, "note_on");
-                break;
-            case TriggerEventType::NoteOff:
-                client.receive<'s'>(delay, path, "note_on");
-                break;
+        MATCH("/region&/add_eq", "") {
+            if (auto region = m.getRegion()) {
+                region->equalizers.emplace_back();
+                int32_t index = region->equalizers.size() - 1;
+                impl.settingsPerVoice_.maxEQs = max(impl.settingsPerVoice_.maxEQs, region->flexEGs.size());
+                impl.applySettingsPerVoice();
+                m.reply(index);
             }
-
         } break;
-
-        MATCH("/voice&/remaining_delay", "") {
-            GET_VOICE_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, voice.getRemainingDelay());
+        MATCH("/region&/eq&/gain", "") { m.reply(&EQDescription::gain); } break;
+        MATCH("/region&/eq&/gain", "f") { m.set(&EQDescription::gain, Default::eqGain); } break;
+        MATCH("/region&/eq&/bandwidth", "") { m.reply(&EQDescription::bandwidth); } break;
+        MATCH("/region&/eq&/bandwidth", "f") { m.set(&EQDescription::bandwidth, Default::eqBandwidth); } break;
+        MATCH("/region&/eq&/frequency", "") { m.reply(&EQDescription::frequency); } break;
+        MATCH("/region&/eq&/frequency", "f") { m.set(&EQDescription::frequency, Default::eqFrequency); } break;
+        MATCH("/region&/eq&/vel&freq", "") { m.reply(&EQDescription::vel2frequency); } break;
+        MATCH("/region&/eq&/vel&freq", "f") { m.set(&EQDescription::vel2frequency, Default::eqVel2Frequency); } break;
+        MATCH("/region&/eq&/vel&gain", "") { m.reply(&EQDescription::vel2gain); } break;
+        MATCH("/region&/eq&/vel&gain", "f") { m.set(&EQDescription::vel2gain, Default::eqVel2Gain); } break;
+        MATCH("/region&/eq&/type", "") { m.reply(&EQDescription::type); } break;
+        MATCH("/region&/eq&/type", "s") { m.set(&EQDescription::type, Default::eq); } break;
+        //----------------------------------------------------------------------
+        MATCH("/region&/lfo&/wave", "") { m.reply(&LFODescription::Sub::wave); } break;
+        MATCH("/region&/lfo&/wave", "i") { m.set(&LFODescription::Sub::wave, Default::lfoWave); } break;
+        MATCH("/region&/lfo&/wave&", "") { m.reply(&LFODescription::Sub::wave); } break;
+        MATCH("/region&/lfo&/wave&", "i") { m.set(&LFODescription::Sub::wave, Default::lfoWave); } break;
+        //----------------------------------------------------------------------
+        MATCH("/region&/add_eg", "") {
+            if (auto region = m.getRegion()) {
+                region->flexEGs.emplace_back();
+                region->flexEGs.back().points.emplace_back();
+                int32_t index = region->flexEGs.size() - 1;
+                impl.settingsPerVoice_.maxFlexEGs = max(impl.settingsPerVoice_.maxFlexEGs, region->flexEGs.size());
+                impl.applySettingsPerVoice();
+                m.reply(index);
+            }
         } break;
-
-        MATCH("/voice&/source_position", "") {
-            GET_VOICE_OR_BREAK(indices[0])
-            client.receive<'i'>(delay, path, voice.getSourcePosition());
+        MATCH("/region&/eg&/add_point", "") {
+            if (auto region = m.getRegion()) {
+                if (auto eg = m.getEG(*region)) {
+                    eg->points.emplace_back();
+                    int32_t index = eg->points.size() - 2;
+                    m.reply(index);
+                }
+            }
         } break;
-
+        MATCH("/region&/eg&/point&/time", "") { m.reply(&FlexEGPoint::time); } break;
+        MATCH("/region&/eg&/point&/time", "f") { m.set(&FlexEGPoint::time, Default::flexEGPointTime); } break;
+        MATCH("/region&/eg&/point&/time_cc&", "") { m.reply(&FlexEGPoint::ccTime); } break;
+        MATCH("/region&/eg&/point&/time_cc&", "f") { m.set(&FlexEGPoint::ccTime, Default::flexEGPointTimeMod); } break;
+        MATCH("/region&/eg&/point&/level", "") { m.reply(&FlexEGPoint::level); } break;
+        MATCH("/region&/eg&/point&/level", "f") { m.set(&FlexEGPoint::level, Default::flexEGPointLevel); } break;
+        MATCH("/region&/eg&/point&/level_cc&", "") { m.reply(&FlexEGPoint::ccLevel); } break;
+        MATCH("/region&/eg&/point&/level_cc&", "f") { m.set(&FlexEGPoint::ccLevel, Default::flexEGPointLevelMod); } break;
+        //----------------------------------------------------------------------
+        MATCH("/voice&/trigger_value", "") { m.reply(&TriggerEvent::value); } break;
+        MATCH("/voice&/trigger_number", "") { m.reply(&TriggerEvent::number); } break;
+        MATCH("/voice&/trigger_type", "") { m.reply(&TriggerEvent::type); } break;
+        MATCH("/voice&/remaining_delay", "") { m.reply(&Voice::getRemainingDelay); } break;
+        MATCH("/voice&/source_position", "") { m.reply(&Voice::getSourcePosition); } break;
         #undef MATCH
-        // TODO...
     }
-}
-
-static bool extractMessage(const char* pattern, const char* path, unsigned* indices)
-{
-    unsigned nthIndex = 0;
-
-    while (const char *endp = strchr(pattern, '&')) {
-        if (nthIndex == maxIndices)
-            return false;
-
-        size_t length = endp - pattern;
-        if (strncmp(pattern, path, length))
-            return false;
-        pattern += length;
-        path += length;
-
-        length = 0;
-        while (absl::ascii_isdigit(path[length]))
-            ++length;
-
-        if (!absl::SimpleAtoi(absl::string_view(path, length), &indices[nthIndex++]))
-            return false;
-
-        pattern += 1;
-        path += length;
-    }
-
-    return !strcmp(path, pattern);
-}
-
-static uint64_t hashMessagePath(const char* path, const char* sig)
-{
-    uint64_t h = Fnv1aBasis;
-    while (unsigned char c = *path++) {
-        if (!absl::ascii_isdigit(c))
-            h = hashByte(c, h);
-        else {
-            h = hashByte('&', h);
-            while (absl::ascii_isdigit(*path))
-                ++path;
-        }
-    }
-    h = hashByte(',', h);
-    while (unsigned char c = *sig++)
-        h = hashByte(c, h);
-    return h;
 }
 
 } // namespace sfz

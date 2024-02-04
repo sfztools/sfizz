@@ -516,12 +516,13 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
             if (!buf_i32) {
                 return 0;
             }
-            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            count = WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            uint64_t buf_size = channels * count;
             if (af->cache.wv.mode & MODE_FLOAT) {
-                drwav_f32_to_s16((drwav_int16*)buffer, (float*)buf_i32, (size_t)count);
+                drwav_f32_to_s16((drwav_int16*)buffer, (float*)buf_i32, (size_t)buf_size);
             } else {
                 int d = af->cache.wv.bitrate - 16;
-                for (uint64_t i = 0; i < count; i++) {
+                for (uint64_t i = 0; i < buf_size; i++) {
                     buffer[i] = (int16_t)(buf_i32[i] >> d);
                 }
             }
@@ -566,15 +567,16 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
             if (!buf_i32) {
                 return 0;
             }
-            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
-            if (!(af->cache.wv.mode & MODE_FLOAT)) {
+            count = WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            {
+                uint64_t buf_size = count * channels;
                 if (af->cache.wv.bitrate < 32) {
                     int d = 32 - af->cache.wv.bitrate;
-                    for (uint64_t i = 0; i < count; i++) {
+                    for (uint64_t i = 0; i < buf_size; i++) {
                         buf_i32[i] <<= d;
                     }
                 }
-                drwav_s32_to_f32(buffer, (drwav_int32*)buf_i32, (size_t)count);
+                drwav_s32_to_f32(buffer, (drwav_int32*)buf_i32, (size_t)buf_size);
             }
             free(buf_i32);
         }

@@ -33,6 +33,7 @@
 #include "parser/Parser.h"
 #include <absl/algorithm/container.h>
 #include <absl/memory/memory.h>
+#include <absl/strings/str_cat.h>
 #include <absl/strings/str_replace.h>
 #include <absl/types/optional.h>
 #include <absl/types/span.h>
@@ -442,14 +443,8 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
         case hash("hint_ram_based"):
         {
             FilePool& filePool = resources_.getFilePool();
-            if (member.value == "1")
-                filePool.setRamLoading(true);
-            else if (member.value == "0")
-                filePool.setRamLoading(false);
-            else
-                DBG("Unsupported value for hint_ram_based: " << member.value);
-            break;
-        }
+            filePool.setRamLoading(member.read(Default::ramBased));
+        } break;
         case hash("hint_stealing"):
             switch(hash(member.value)) {
             case hash("first"):
@@ -1321,16 +1316,17 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
     if (selectedVoice == nullptr)
         return;
 
+    selectedVoice->reset();
     if (selectedVoice->startVoice(layer, delay, triggerEvent))
         ring.addVoiceToRing(selectedVoice);
 }
 
-void Synth::Impl::checkOffGroups(const Region* region, int delay, int number)
+void Synth::Impl::checkOffGroups(const Region* region, int delay, int number, bool chokedByCC)
 {
     for (auto& voice : voiceManager_) {
         if (voice.checkOffGroup(region, delay, number)) {
             const TriggerEvent& event = voice.getTriggerEvent();
-            if (event.type == TriggerEventType::NoteOn)
+            if (event.type == TriggerEventType::NoteOn && !chokedByCC)
                 noteOffDispatch(delay, event.number, event.value);
         }
     }
@@ -1364,6 +1360,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
+    MidiState& midiState = resources_.getMidiState();
 
     if (!lastKeyswitchLists_[noteNumber].empty()) {
         if (currentSwitch_ && *currentSwitch_ != noteNumber) {
@@ -1385,6 +1382,9 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
     for (Layer* layer : noteActivationLists_[noteNumber]) {
         if (layer->registerNoteOn(noteNumber, velocity, randValue)) {
             const Region& region = layer->getRegion();
+            if (region.useTimerRange && !voiceManager_.withinValidTimerRange(&region, midiState.getInternalClock() + delay, sampleRate_))
+                continue;
+
             checkOffGroups(&region, delay, noteNumber);
             TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
             startVoice(layer, delay, triggerEvent, ring);
@@ -1436,11 +1436,12 @@ void Synth::cc(int delay, int ccNumber, int ccValue) noexcept
     hdcc(delay, ccNumber, normalizedCC);
 }
 
-void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
+void Synth::Impl::ccDispatch(int delay, int ccNumber, float value, int extendedArg) noexcept
 {
     SisterVoiceRingBuilder ring;
     TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
+    MidiState& midiState = resources_.getMidiState();
     for (Layer* layer : ccActivationLists_[ccNumber]) {
         const Region& region = layer->getRegion();
 
@@ -1458,8 +1459,11 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value) noexcept
             }
         }
 
-        if (layer->registerCC(ccNumber, value, randValue)) {
-            checkOffGroups(&region, delay, ccNumber);
+        if (layer->registerCC(ccNumber, value, randValue, extendedArg)) {
+            if (region.useTimerRange && ! voiceManager_.withinValidTimerRange(&region, midiState.getInternalClock() + delay, sampleRate_))
+                continue;
+
+            checkOffGroups(&region, delay, ccNumber, true);
             startVoice(layer, delay, triggerEvent, ring);
         }
     }
@@ -1477,7 +1481,7 @@ void Synth::automateHdcc(int delay, int ccNumber, float normValue) noexcept
     impl.performHdcc(delay, ccNumber, normValue, false);
 }
 
-void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asMidi) noexcept
+void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asMidi, int extendedArg) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
@@ -1505,7 +1509,7 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
     for (auto& voice : voiceManager_)
         voice.registerCC(delay, ccNumber, normValue);
 
-    ccDispatch(delay, ccNumber, normValue);
+    ccDispatch(delay, ccNumber, normValue, extendedArg);
     midiState.ccEvent(delay, ccNumber, normValue);
 }
 
@@ -1605,8 +1609,7 @@ void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) no
     for (auto& voice : impl.voiceManager_)
         voice.registerPolyAftertouch(delay, noteNumber, normAftertouch);
 
-    // Note information is lost on this CC
-    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false);
+    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false, noteNumber);
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept

@@ -139,6 +139,16 @@ struct VoiceManager final : public Voice::StateListener
      */
     void requireNumVoices(int numVoices, Resources& resources);
 
+    /**
+     * @brief Is this timestamp within the lo/hitimer range for this region based on current group activity
+     *
+     * @param region
+     * @param timestampSamples in samples
+     * @param sampleRate
+     * @return bool
+     */
+    bool withinValidTimerRange(const Region* region, unsigned timestampSamples, float sampleRate) const noexcept;
+
 private:
     int numRequiredVoices_ { config::numVoices };
     std::vector<Voice> list_;

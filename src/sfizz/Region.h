@@ -290,8 +290,8 @@ struct Region {
     VelocityOverride velocityOverride { Default::velocityOverride }; // sw_vel
     bool checkSustain { Default::checkSustain }; // sustain_sw
     bool checkSostenuto { Default::checkSostenuto }; // sostenuto_sw
-    uint16_t sustainCC { Default::sustainCC }; // sustain_cc
-    uint16_t sostenutoCC { Default::sostenutoCC }; // sustain_cc
+    uint8_t sustainCC { Default::sustainCC }; // sustain_cc
+    uint8_t sostenutoCC { Default::sostenutoCC }; // sostenuto_cc
     float sustainThreshold { Default::sustainThreshold }; // sustain_cc
     float sostenutoThreshold { Default::sostenutoThreshold }; // sustain_cc
 
@@ -335,6 +335,8 @@ struct Region {
     CCMap<UncheckedRange<float>> crossfadeCCInRange { Default::crossfadeCCInRange }; // xfin_loccN xfin_hiccN
     CCMap<UncheckedRange<float>> crossfadeCCOutRange { Default::crossfadeCCOutRange }; // xfout_loccN xfout_hiccN
     float rtDecay { Default::rtDecay }; // rt_decay
+    UncheckedRange<float> timerRange { Default::loTimer, Default::hiTimer }; // hitimer and lotimer (seconds)
+    bool useTimerRange { false }; // to optimize having to check the timer range, because this is very rare opcode
 
     float globalAmplitude { 1.0 }; // global_amplitude
     float masterAmplitude { 1.0 }; // master_amplitude

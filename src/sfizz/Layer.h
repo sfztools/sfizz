@@ -96,10 +96,11 @@ public:
      * @param ccNumber
      * @param ccValue
      * @param randValue
+     * @param extendedArg is used for special extendedCCs (eg. polyaftertouch to represent note num, etc)
      * @return true if the region should trigger on this event
      * @return false otherwise
      */
-    bool registerCC(int ccNumber, float ccValue, float randValue) noexcept;
+    bool registerCC(int ccNumber, float ccValue, float randValue, int extendedArg=-1) noexcept;
     /**
      * @brief Register a new pitch wheel event.
      *

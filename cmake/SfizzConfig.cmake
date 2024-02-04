@@ -51,7 +51,7 @@ endif()
 
 # Set macOS compatibility level
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
 endif()
 
 # If using C++17, check if aligned-new has runtime support on the platform;

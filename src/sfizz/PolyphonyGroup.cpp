@@ -15,6 +15,7 @@ void sfz::PolyphonyGroup::registerVoice(Voice* voice) noexcept
 {
     if (absl::c_find(voices, voice) == voices.end())
         voices.push_back(voice);
+    mostRecentStartStamp_ = voice->getStartTimestampSamples();
 }
 
 void sfz::PolyphonyGroup::removeVoice(const Voice* voice) noexcept

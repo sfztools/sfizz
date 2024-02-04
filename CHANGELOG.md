@@ -6,6 +6,27 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [Unreleased]
 
+## [1.2.3] - 2024-01-15
+
+### Added 
+
+- Support for curvecc opcodes on v1 EGs (@PythonBlue)
+- Support for `lotimer/hitimer` (@essej)
+
+### Changed
+
+- Allow polyphonic aftertouch (cc 130) to respect the note number, which improves e.g. the choking logic (@essej)
+
+### Fixed
+
+- Adjusted the gain compensation on pan stages (@cvde)
+- Ensure that voices are cleaned up before being force-reused (@iv-m)
+- Fixed a bug in the wavpack wrapper for multichannel files (@KKQ-KKQ)
+- Fixed a bug in the way the tuning root was computed (@KKQ-KKQ)
+- Fixed a bug where samples would be loaded in RAM twice when using `hint_ram_based=1`
+- Fixed a bug where quasi-simultaneous notes would not properly choke each other
+- Don't send a note off even if a note was choked by a CC event.
+
 ## [1.2.2] - 2023-08-25
 
 ### Added

@@ -295,7 +295,7 @@ target_sources(sfizz_internal PRIVATE ${SFIZZ_HEADERS} ${SFIZZ_SOURCES} ${FAUST_
 target_include_directories(sfizz_internal PUBLIC "." "sfizz")
 target_link_libraries(sfizz_internal
     PUBLIC absl::strings absl::span sfizz::filesystem sfizz::atomic_queue sfizz::spin_mutex sfizz::bit_array sfizz::simde sfizz::hiir sfizz::jsl
-    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::atomic)
+    PRIVATE sfizz::parser sfizz::messaging absl::flat_hash_map Threads::Threads st_audiofile sfizz::pugixml sfizz::spline sfizz::tunings sfizz::kissfft sfizz::cephes sfizz::cpuid sfizz::threadpool sfizz::atomic invoke_hpp)
 if(SFIZZ_USE_SNDFILE)
     target_compile_definitions(sfizz_internal PUBLIC "SFIZZ_USE_SNDFILE=1")
     target_link_libraries(sfizz_internal PUBLIC st_audiofile)

@@ -166,6 +166,12 @@ public:
     void advanceTime(int numSamples) noexcept;
 
     /**
+     * @brief Returns current internal sample clock
+     *
+     */
+    unsigned getInternalClock() const noexcept { return internalClock; }
+
+    /**
      * @brief Flush events in all states, keeping only the last one as the "base" state
      *
      */

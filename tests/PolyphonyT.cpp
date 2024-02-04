@@ -588,3 +588,72 @@ TEST_CASE("[Polyphony] Choke same group and note if the region is switched off (
     synth.renderBlock(buffer);
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine" } );
 }
+
+TEST_CASE("[Polyphony] Choking on poly-aftertouch respects the note number")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyat_choke.sfz", R"(
+        <region> key=55 group=1 off_by=2 sample=*saw
+        <region> key=55 group=2 on_locc130=127 on_hicc130=127 trigger=release sample=*sine
+    )");
+    synth.noteOn(0, 55, 63 );
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*saw" } );
+    synth.hdPolyAftertouch(0, 54, 1.0f);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*saw" } );
+    synth.hdPolyAftertouch(0, 57, 1.0f);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*saw" } );
+    synth.hdPolyAftertouch(0, 55, 1.0f);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine"} );
+    synth.hdPolyAftertouch(0, 55, 0.0f);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "*sine"} );
+}
+
+TEST_CASE("[Polyphony] A note coming at the same time as another can choke it")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=69 off_by=2 off_mode=normal tune=-3200 ampeg_release=1 sample=snare.wav
+        <region> key=81 group=2 sample=kick.wav
+    )");
+    synth.noteOn(1, 69, 63);
+    synth.noteOn(1, 81, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( activeSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav" } );
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
+}
+
+TEST_CASE("[Polyphony] A note coming one sample after another note can choke it")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=69 off_by=2 off_mode=normal tune=-3200 ampeg_release=1 sample=snare.wav
+        <region> key=81 group=2 sample=kick.wav
+    )");
+    synth.noteOn(1, 69, 63);
+    synth.noteOn(2, 81, 127);
+    synth.renderBlock(buffer);
+    REQUIRE( activeSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav" } );
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
+}
+
+TEST_CASE("[Polyphony] A note coming one sample before another note cannot choke it")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+        <region> key=69 off_by=2 off_mode=normal tune=-3200 ampeg_release=1 sample=snare.wav
+        <region> key=81 group=2 sample=kick.wav
+    )");
+    synth.noteOn(1, 81, 127);
+    synth.noteOn(2, 69, 63);
+    synth.renderBlock(buffer);
+    REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav", "snare.wav" } );
+}

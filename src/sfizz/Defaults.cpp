@@ -70,6 +70,7 @@ FloatSpec loBipolar { -1.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 FloatSpec hiBipolar { 1.0f, {-1.0f, 1.0f}, kPermissiveBounds };
 UInt16Spec ccNumber { 0, {0, config::numCCs}, 0 };
 UInt16Spec smoothCC { 0, {0, 100}, kPermissiveUpperBound };
+FloatSpec stepCC { 0.0f, {0.0f, 127.0f}, kPermissiveUpperBound };
 UInt8Spec curveCC { 0, {0, 255}, 0 };
 UInt8Spec sustainCC { 64, {0, 127}, 0 };
 UInt8Spec sostenutoCC { 66, {0, 127}, 0 };
@@ -200,6 +201,9 @@ FloatSpec lofiDecim { 0.0f, {0.0f, 100.0f}, 0 };
 FloatSpec rectify { 0.0f, {0.0f, 100.0f}, 0 };
 UInt32Spec stringsNumber { maxStrings, {0, maxStrings}, 0 };
 BoolSpec sustainCancelsRelease { false, {0, 1}, kEnforceBounds };
+FloatSpec loTimer { 0.0f, {0.0f, float_max}, 0 };
+FloatSpec hiTimer { float_max, {0.0f, float_max}, 0 };
+BoolSpec ramBased { false, {0, 1}, kEnforceBounds };
 
 ESpec<Trigger> trigger { Trigger::attack, {Trigger::attack, Trigger::release_key}, 0};
 ESpec<CrossfadeCurve> crossfadeCurve { CrossfadeCurve::power, {CrossfadeCurve::gain, CrossfadeCurve::power}, 0};

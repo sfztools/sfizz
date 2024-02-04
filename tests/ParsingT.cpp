@@ -10,6 +10,7 @@
 #include <iostream>
 #include "catch2/catch.hpp"
 #include "absl/strings/string_view.h"
+#include "absl/strings/str_cat.h"
 using namespace Catch::literals;
 
 struct ParsingMocker: sfz::Parser::Listener

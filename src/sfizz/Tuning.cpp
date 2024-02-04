@@ -146,8 +146,7 @@ Tunings::KeyboardMapping Tuning::Impl::mappingFromParameters(int rootKey, float 
     rootKey = std::max(0, rootKey - 12);
 #endif
     // fixed frequency of the root note
-    const double rootFrequency = tuningFrequency * std::exp2((rootKey - 69) / 12.0);
-    return Tunings::tuneNoteTo(rootKey, rootFrequency);
+    return Tunings::startScaleOnAndTuneNoteTo(rootKey, 69, tuningFrequency);
 }
 
 ///

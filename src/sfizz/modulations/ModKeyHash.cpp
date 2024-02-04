@@ -10,12 +10,27 @@
 #include "utility/StringViewHelpers.h"
 #include <cstdint>
 
-size_t std::hash<sfz::ModKey>::operator()(const sfz::ModKey &key) const
+void sfz::ModKey::calculateHash()
 {
-    uint64_t k = hashNumber(static_cast<int>(key.id()));
-    const sfz::ModKey::Parameters& p = key.parameters();
+#if !defined(NDEBUG)
+    static bool once = false;
+    if (!once) {
+        once = true;
+        ModKey m;
+        size_t h = m.hash();
+        m.calculateHash();
+        if (h != m.hash()) {
+            printf("ModKey default hash is %llu\n", (uint64_t)m.hash());
+            assert(false && "Number of variables is wrong. Needs updating the default hash.");
+        }
+    }
+#endif
 
-    switch (key.id()) {
+    uint64_t k = hashNumber(static_cast<int>(id()));
+    k = hashNumber(region_.number(), k);
+    const sfz::ModKey::Parameters& p = parameters();
+
+    switch (id()) {
     case sfz::ModId::Controller:
         k = hashNumber(p.cc, k);
         k = hashNumber(p.curve, k);
@@ -29,5 +44,10 @@ size_t std::hash<sfz::ModKey>::operator()(const sfz::ModKey &key) const
         k = hashNumber(p.Z, k);
         break;
     }
-    return k;
+    hash_ = size_t(k);
+}
+
+size_t std::hash<sfz::ModKey>::operator()(const sfz::ModKey &key) const
+{
+    return key.hash();
 }

@@ -2,12 +2,11 @@
 
 [![build actions]](https://github.com/sfztools/sfizz/actions)
 [![build obs]](https://build.opensuse.org/package/show/home:sfztools:sfizz:develop/sfizz)
-
 [![Discord Badge Image]](https://discord.gg/3ArE9Mw)
+
 [![SFZv1 Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=1)
 [![SFZv2 Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=2)
 [![ARIA Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=aria)
-[![Cakewalk Status Image]](https://sfz.tools/sfizz/development/status/opcodes/?v=cakewalk)
 
 SFZ parser and synth c++ library and JACK standalone client,
 please check [our website] for more details, or [our wiki] for further information.
@@ -120,10 +119,9 @@ The sfizz library also uses in some subprojects:
 [build actions]:         https://github.com/sfztools/sfizz/actions/workflows/build.yml/badge.svg?branch=develop
 [build obs]:             https://build.opensuse.org/projects/home:sfztools:sfizz:develop/packages/sfizz/badge.svg
 [OBS]:                   https://software.opensuse.org//download.html?project=home%3Asfztools%3Asfizz&package=sfizz
-[SFZv1 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz1.svg
-[SFZv2 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfz2.svg
+[SFZv1 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfzv1.svg
+[SFZv2 Status Image]:    https://sfz.tools/assets/img/sfizz/badge_sfzv2.svg
 [ARIA Status Image]:     https://sfz.tools/assets/img/sfizz/badge_aria.svg
-[Cakewalk Status Image]: https://sfz.tools/assets/img/sfizz/badge_cakewalk.svg
 
 [AppVeyor Build Status]: https://img.shields.io/appveyor/ci/sfztools/sfizz.svg?label=Windows&style=popout&logo=appveyor
 [Travis Build Status]:   https://img.shields.io/travis/com/sfztools/sfizz.svg?label=Linux&style=popout&logo=travis

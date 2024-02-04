@@ -426,3 +426,147 @@ TEST_CASE("[Triggers] Offed voices with CC triggers do not activate release trig
     synth.hdcc(10, 64, 10_norm);
     REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw" });
 }
+
+TEST_CASE("[Triggers] lotimer")
+{
+    Synth synth;
+    synth.setSampleRate(48000);
+    synth.setSamplesPerBlock(480);
+    sfz::AudioBuffer<float> buffer { 2, 480 };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> key=40 lotimer=0.1 sample=kick.wav loop_mode=one_shot
+    )");
+
+    // Advance time, t = 0.2s
+    for (int i = 0; i < 20; ++i)
+        synth.renderBlock(buffer);
+
+    synth.noteOn(0, 40, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+
+    // Advance time by 0.02s and send a note off
+    synth.renderBlock(buffer);
+    synth.noteOff(0, 40, 100);
+    synth.renderBlock(buffer);
+
+    // t = 0.22s, not allowed to retrigger
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+    synth.noteOn(0, 40, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+
+    // Advance time by 0.08s and send a note off
+    synth.renderBlock(buffer);
+    synth.noteOff(0, 40, 100);
+    for (int i = 0; i < 7; ++i)
+        synth.renderBlock(buffer);
+
+    // t = 0.3s, retriggering OK
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+    synth.noteOn(0, 40, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav", "kick.wav" });
+}
+
+TEST_CASE("[Triggers] lotimer on CC")
+{
+    Synth synth;
+    synth.setSampleRate(48000);
+    synth.setSamplesPerBlock(480);
+    sfz::AudioBuffer<float> buffer { 2, 480 };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> start_locc4=100 start_hicc4=100 lotimer=0.1 sample=kick.wav loop_mode=one_shot
+    )");
+
+    // Advance time, t = 0.2s
+    for (int i = 0; i < 20; ++i)
+        synth.renderBlock(buffer);
+
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.hdcc(0, 4, 100_norm);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+
+    // Advance time by 0.02s and reset CC
+    synth.renderBlock(buffer);
+    synth.hdcc(0, 4, 0);
+    synth.renderBlock(buffer);
+
+    // t = 0.22s, not allowed to retrigger
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+    synth.hdcc(0, 4, 100_norm);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+
+    // Advance time by 0.08s and reset CC
+    synth.renderBlock(buffer);
+    synth.hdcc(0, 4, 0);
+    for (int i = 0; i < 7; ++i)
+        synth.renderBlock(buffer);
+
+    // t = 0.3s, retriggering OK
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav" });
+    synth.hdcc(0, 4, 100_norm);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "kick.wav", "kick.wav" });
+}
+
+TEST_CASE("[Triggers] hitimer (with group)")
+{
+    Synth synth;
+    synth.setSampleRate(48000);
+    synth.setSamplesPerBlock(480);
+    sfz::AudioBuffer<float> buffer { 2, 480 };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+        <region> group=1 key=40 sample=snare.wav loop_mode=one_shot
+        <region> group=1 key=41 hitimer=0.1 sample=kick.wav loop_mode=one_shot
+    )");
+
+    // Advance time to 0.1s
+    for (int i = 0; i < 10; ++i)
+        synth.renderBlock(buffer);
+
+    // Not triggering before snare
+    synth.noteOn(0, 41, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.noteOn(0, 40, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav" });
+
+    // OK to trigger now
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav" });
+    synth.noteOn(0, 41, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav" });
+
+    // Advance time
+    for (int i = 0; i < 5; ++i)
+        synth.renderBlock(buffer);
+
+    // t = 0.15s, still OK to trigger now
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav" });
+    synth.noteOn(0, 41, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav", "kick.wav" });
+
+    // Advance time (it has to be 0.1s because playing the kick resets the timer)
+    for (int i = 0; i < 10; ++i)
+        synth.renderBlock(buffer);
+    
+    // t = 0.25s, not triggering a new kick 
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav", "kick.wav" });
+    synth.noteOn(0, 41, 100);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav", "kick.wav" });
+}
+
+TEST_CASE("[Triggers] Respect poly-aftertouch note values when triggering on cc130")
+{
+    Synth synth;
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/poly_at_trigger.sfz", R"(
+        <region> key=55 on_locc130=127 on_hicc130=127 sample=*saw
+        <region> key=57 on_locc130=127 on_hicc130=127 sample=*sine
+    )");
+
+    synth.polyAftertouch(0, 54, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.polyAftertouch(0, 56, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.polyAftertouch(0, 58, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { });
+    synth.polyAftertouch(0, 55, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw" });
+    synth.polyAftertouch(10, 57, 127);
+    REQUIRE(playingSamples(synth) == std::vector<std::string> { "*saw", "*sine" });
+}

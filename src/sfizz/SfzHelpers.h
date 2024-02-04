@@ -283,22 +283,21 @@ inline CXX14_CONSTEXPR bool ccModulationIsPerVoice(int cc) {
 }
 
 namespace literals {
-    inline float operator""_norm(unsigned long long int value)
+    inline float operator""_norm(unsigned long long int value) 
     {
-        if (value > 127)
-            value = 127;
-
-        return normalize7Bits(value);
+        return static_cast<float>(value) / 127.0f; 
     }
-
-    inline float operator""_norm(long double value)
+    inline float operator""_norm(long double value) 
     {
-        if (value < 0)
-            value = 0;
-        if (value > 127)
-            value = 127;
-
-        return normalize7Bits(value);
+        return static_cast<float>(value) / 127.0f; 
+    }
+    inline float operator""_bend(unsigned long long int value) 
+    {
+        return static_cast<float>(value) / 8191.0f; 
+    }
+    inline float operator""_bend(long double value) 
+    {
+        return static_cast<float>(value) / 8191.0f; 
     }
 }
 

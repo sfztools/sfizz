@@ -67,9 +67,6 @@ struct EGDescription {
     float vel2release { Default::egPercentMod };
     float vel2sustain { Default::egPercentMod };
     float vel2depth { Default::egVel2Depth };
-    float attack_shape { Default::flexEGPointShape };
-    float decay_shape { Default::flexEGPointShape3 };
-    float release_shape { Default::flexEGPointShape3 };
 
     CCMap<ModifierCurvePair<float>> ccAttack { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
     CCMap<ModifierCurvePair<float>> ccDecay { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
@@ -78,13 +75,7 @@ struct EGDescription {
     CCMap<ModifierCurvePair<float>> ccRelease { ModifierCurvePair<float>{ Default::egTime, Default::curveCC } };
     CCMap<ModifierCurvePair<float>> ccStart { ModifierCurvePair<float>{ Default::egPercentMod, Default::curveCC } };
     CCMap<ModifierCurvePair<float>> ccSustain { ModifierCurvePair<float>{ Default:: egPercentMod, Default::curveCC } };
-    //CCMap<float> ccAttack;
-    //CCMap<float> ccDecay;
-    //CCMap<float> ccDelay;
-    //CCMap<float> ccHold;
-    //CCMap<float> ccRelease;
-    //CCMap<float> ccStart;
-    //CCMap<float> ccSustain;
+    
     bool dynamic { false };
 
     /**
