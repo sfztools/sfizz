@@ -71,7 +71,7 @@ struct Voice::Impl
     static void fillInterpolated(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs,
-        absl::Span<const float> addingGains);
+        absl::Span<const float> addingGains, float mod);
 
     /**
      * @brief Fill a destination with an interpolated source, selecting
@@ -81,13 +81,13 @@ struct Voice::Impl
      * @param dest the destination buffer
      * @param indices the integral parts of the source positions
      * @param coeffs the fractional parts of the source positions
-     * @param quality the quality level 1-10
+     * @param quality the quality level 1-11
      */
     template <bool Adding>
     static void fillInterpolatedWithQuality(
         const AudioSpan<const float>& source, const AudioSpan<float>& dest,
         absl::Span<const int> indices, absl::Span<const float> coeffs,
-        absl::Span<const float> addingGains, int quality);
+        absl::Span<const float> addingGains, int quality, float mod);
 
     /**
      * @brief Get a S-shaped curve that is applicable to loop crossfading.
@@ -764,6 +764,10 @@ void Voice::setSampleRate(float sampleRate) noexcept
         eq.setSampleRate(sampleRate);
 
     impl.powerFollower_.setSampleRate(sampleRate);
+    downsampleFilter.setType(FilterType::kFilterLpf6p);
+    downsampleFilter.setChannels(2);
+    downsampleFilter.init(sampleRate);
+    downsampleFilter.prepare(0.48f * sampleRate / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0);
 }
 
 void Voice::setSamplesPerBlock(int samplesPerBlock) noexcept
@@ -787,12 +791,31 @@ void Voice::renderBlock(AudioSpan<float, 2> buffer) noexcept
     auto delayed_buffer = buffer.subspan(delay);
     impl.initialDelay_ -= static_cast<int>(delay);
 
-    { // Fill buffer with raw data
+    for (int h = 0; h < impl.resources_.getSynthConfig().OSFactor; ++h)
+    {
+
+    AudioBuffer<float> interBuffer(delayed_buffer.getNumChannels(), delayed_buffer.getNumFrames());
+    AudioSpan<float> upsampled_buffer(interBuffer);
+    upsampled_buffer.fill(0.0f);
+
+// Fill buffer with raw data
         ScopedTiming logger { impl.dataDuration_ };
         if (region->isOscillator())
-            impl.fillWithGenerator(delayed_buffer);
+            impl.fillWithGenerator(upsampled_buffer);
         else
-            impl.fillWithData(delayed_buffer);
+            impl.fillWithData(upsampled_buffer);
+
+    if (impl.resources_.getSynthConfig().OSFactor > 1)
+	downsampleFilter.process(upsampled_buffer, upsampled_buffer, 0.48f * impl.sampleRate_ / float(impl.resources_.getSynthConfig().OSFactor), 0.0, 0.0, upsampled_buffer.getNumFrames());
+
+    for (size_t i = 0; i < delayed_buffer.getNumChannels(); ++i)
+{
+    for (size_t j = 0; j < delayed_buffer.getNumFrames(); ++j)
+{
+    size_t resultOff = (j + delayed_buffer.getNumFrames() * h) / impl.resources_.getSynthConfig().OSFactor;
+    delayed_buffer[i][resultOff] += upsampled_buffer[i][j] / float(impl.resources_.getSynthConfig().OSFactor);
+}
+}
     }
 
     if (region->isStereo()) {
@@ -1099,7 +1122,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         absl::Span<float> pitch = *jumps; // temporary
         pitchEnvelope(pitch);
 
-        float baseRatio = pitchRatio_ * speedRatio_;
+        float baseRatio = pitchRatio_ * speedRatio_ / float(resources_.getSynthConfig().OSFactor);
         for (size_t i = 0; i < numSamples; ++i)
             (*jumps)[i] = baseRatio * centsFactor(pitch[i]);
 
@@ -1247,10 +1270,15 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
         // partition spans
         AudioSpan<float> ptBuffer = buffer.subspan(ptStart, ptSize);
         absl::Span<const int> ptIndices = indices->subspan(ptStart, ptSize);
-        absl::Span<const float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+        absl::Span<float> ptCoeffs = coeffs->subspan(ptStart, ptSize);
+        
+	float mod = 1.0f;
+        float baseRatio = pitchRatio_ * speedRatio_ / float(resources_.getSynthConfig().OSFactor);
+            if (baseRatio <= 0.5f && getCurrentSampleQuality() == 11)
+                mod = baseRatio;
 
         fillInterpolatedWithQuality<false>(
-            source, ptBuffer, ptIndices, ptCoeffs, {}, quality);
+            source, ptBuffer, ptIndices, ptCoeffs, {}, quality, mod);
 
         if (ptType == kPartitionLoopXfade) {
             auto xfTemp1 = bufferPool.getBuffer(numSamples);
@@ -1340,7 +1368,7 @@ void Voice::Impl::fillWithData(AudioSpan<float> buffer) noexcept
                 }
                 // apply in curve
                 fillInterpolatedWithQuality<true>(
-                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality);
+                    source, xfInBuffer, xfInIndices, xfInCoeffs, xfCurve, quality, mod);
             }
         }
     }
@@ -1360,7 +1388,7 @@ template <InterpolatorModel M, bool Adding>
 void Voice::Impl::fillInterpolated(
     const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
-    absl::Span<const float> addingGains)
+    absl::Span<const float> addingGains, float mod)
 {
     auto* ind = indices.data();
     auto* coeff = coeffs.data();
@@ -1369,7 +1397,7 @@ void Voice::Impl::fillInterpolated(
     auto left = dest.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
-            auto output = interpolate<M>(&leftSource[*ind], *coeff);
+            auto output = interpolate<M>(&leftSource[*ind], *coeff, mod);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * output;
@@ -1382,8 +1410,8 @@ void Voice::Impl::fillInterpolated(
         auto right = dest.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
-            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff);
-            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff);
+            auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff, mod);
+            auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff, mod);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
                 *left += g * leftOutput;
@@ -1402,19 +1430,19 @@ template <bool Adding>
 void Voice::Impl::fillInterpolatedWithQuality(
     const AudioSpan<const float>& source, const AudioSpan<float>& dest,
     absl::Span<const int> indices, absl::Span<const float> coeffs,
-    absl::Span<const float> addingGains, int quality)
+    absl::Span<const float> addingGains, int quality, float mod)
 {
-    switch (clamp(quality, 0, 10)) {
+    switch (clamp(quality, 0, 11)) {
     case 0:
         {
             constexpr auto itp = kInterpolatorNearest;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 1:
         {
             constexpr auto itp = kInterpolatorLinear;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 2:
@@ -1426,55 +1454,60 @@ void Voice::Impl::fillInterpolatedWithQuality(
             // Hermite polynomial, has less pass-band attenuation
             constexpr auto itp = kInterpolatorHermite3;
 #endif
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 3:
         {
             constexpr auto itp = kInterpolatorSinc8;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 4:
         {
             constexpr auto itp = kInterpolatorSinc12;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 5:
         {
             constexpr auto itp = kInterpolatorSinc16;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 6:
         {
             constexpr auto itp = kInterpolatorSinc24;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 7:
         {
             constexpr auto itp = kInterpolatorSinc36;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 8:
         {
             constexpr auto itp = kInterpolatorSinc48;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 9:
         {
             constexpr auto itp = kInterpolatorSinc60;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     case 10:
         {
             constexpr auto itp = kInterpolatorSinc72;
-            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains);
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
+        }
+    case 11:
+        {
+            constexpr auto itp = kInterpolatorLoFi;
+            fillInterpolated<itp, Adding>(source, dest, indices, coeffs, addingGains, mod);
         }
         break;
     }
@@ -1528,7 +1561,7 @@ void Voice::Impl::fillWithGenerator(AudioSpan<float> buffer) noexcept
         pitchEnvelope(pitch);
 
         const float keycenterFrequency = midiNoteFrequency(pitchKeycenter_);
-        const float baseRatio = pitchRatio_ * keycenterFrequency;
+        const float baseRatio = pitchRatio_ * keycenterFrequency / float(resources_.getSynthConfig().OSFactor);
 
         for (size_t i = 0; i < numFrames; ++i)
             (*frequencies)[i] = baseRatio * centsFactor(pitch[i]);
@@ -1721,6 +1754,7 @@ void Voice::reset() noexcept
 
     for (auto& eq : impl.equalizers_)
         eq.reset();
+    downsampleFilter.clear();
 
     removeVoiceFromRing();
 }

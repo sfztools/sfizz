@@ -32,7 +32,7 @@ Float ADSREnvelope::secondsToLinRate(Float timeInSeconds) const noexcept
 Float ADSREnvelope::secondsToExpRate(Float timeInSeconds) const noexcept
 {
     if (timeInSeconds <= 0)
-        return Float(0.0);
+        return Float(1);
 
     timeInSeconds = std::max(Float(Default::offTime), timeInSeconds);
     return 1.0 / (sampleRate * timeInSeconds);
@@ -56,6 +56,7 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
         || (region.loopMode == LoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
+    releaseValue = this->start;
 }
 
 void ADSREnvelope::updateValues(int delay) noexcept
@@ -95,6 +96,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
     bool shouldRelease = this->shouldRelease;
     int releaseDelay = this->releaseDelay;
     Float transitionDelta = this->transitionDelta;
+    Float releaseValue = this->releaseValue;
 
     while (!output.empty()) {
         size_t count = 0;
@@ -117,6 +119,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
         case State::Delay:
             while (count < size && delay-- > 0) {
                 currentValue = start;
+                releaseValue = currentValue;
                 output[count++] = currentValue;
                 attackCount = 0;
             }
@@ -133,11 +136,13 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
                     currentValue = start + (1 - start) * pow(attackCount, -attackShape + 1.0f);
                 else
                     currentValue = start + (1 - start) * pow(attackCount, 1.0f / (attackShape + 1.0f));
+                releaseValue = currentValue;
                 output[count++] = currentValue;
                 attackCount = min(attackCount + attackStep, 1.0f);
             }
             if (currentValue >= 1) {
                 currentValue = 1;
+                releaseValue = currentValue;
                 currentState = State::Hold;
             }
             break;
@@ -156,18 +161,18 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
         case State::Decay:
             while (count < size && (currentValue > sustain))
             {
-                if (decayShape == 0)
-                    currentValue = sustain + 1 * decayCount;
-                else if (decayShape < 0)
+                if (decayShape < 0)
                     currentValue = sustain + (1.0f - sustain) * pow(decayCount, -decayShape + 1.0f);
                 else
                     currentValue = sustain + (1.0f - sustain) * pow(decayCount, 1.0f / (decayShape + 1.0f));
                 output[count++] = currentValue;
+                releaseValue = currentValue;
                 decayCount = clamp(decayCount - decayRate, 0.0f, 1.0f);
             }
             if (currentValue <= sustainThreshold) {
                 currentState = State::Sustain;
                 currentValue = std::max(sustain, currentValue);
+                releaseValue = currentValue;
                 transitionDelta = (sustain - currentValue) / (sampleRate * config::egTransitionTime);
             }
             break;
@@ -179,6 +184,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             while (count < size) {
                 if (currentValue > sustain)
                     currentValue += transitionDelta;
+                releaseValue = currentValue;
                 output[count++] = currentValue;
             }
             break;
@@ -186,7 +192,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             previousValue = currentValue;
             while (count < size && (currentValue > config::egReleaseThreshold))
             {
-                if (releaseShape <= 0)
+                if (releaseShape < 0)
                     currentValue = releaseValue * pow(releaseCount, -releaseShape + 1.0f);
                 else
                     currentValue = releaseValue * pow(releaseCount, 1.0f / (releaseShape + 1.0f));
@@ -226,18 +232,14 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
     this->shouldRelease = shouldRelease;
     this->releaseDelay = releaseDelay;
     this->transitionDelta = transitionDelta;
+    this->releaseValue = releaseValue;
 
     ASSERT(!hasNanInf(output));
 }
 
 void ADSREnvelope::startRelease(int releaseDelay) noexcept
 {
-    this->releaseValue = this->currentValue;
-    if (this->currentValue < config::egReleaseThreshold)
-        this->releaseValue = this->sustain;
-    releaseCount = 1;
     shouldRelease = true;
-    this->releaseDelay = 0;
     this->releaseDelay = releaseDelay;
 }
 
