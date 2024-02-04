@@ -56,7 +56,8 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
         || (region.loopMode == LoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
-    releaseValue = this->start;
+    releaseValue = 1.0f;
+    releaseCount = 1.0f;
 }
 
 void ADSREnvelope::updateValues(int delay) noexcept
