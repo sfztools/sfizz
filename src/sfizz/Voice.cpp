@@ -28,6 +28,7 @@
 #include "SIMDHelpers.h"
 #include "Smoothers.h"
 #include "FilePool.h"
+#include "Logger.h"
 #include "Wavetables.h"
 #include "Tuning.h"
 #include "BufferPool.h"
@@ -439,7 +440,6 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.startTimestamp_ = midiState.getInternalClock() + impl.initialDelay_; // need to set this before switchState
 
     impl.switchState(State::playing);
-
     impl.updateExtendedCCValues();
 
     if (region.isOscillator()) {
@@ -1972,6 +1972,11 @@ void Voice::Impl::switchState(State s)
 {
     if (s != state_) {
         state_ = s;
+        if (s == State::playing && triggerDelay_) {
+            auto& logger = resources_.getLogger();
+            logger.send<'i'>(*triggerDelay_, LogMessage::VoiceStarted, id_.number());
+        }
+        
         if (stateListener_)
             stateListener_->onVoiceStateChanging(id_, s);
     }

@@ -1103,6 +1103,31 @@ public:
     void sendMessage(Client& client, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     /**
+     * @brief Subscribe to a log message
+     *
+     * @since 1.3.0
+     *
+     * @param path         The OSC address pattern.
+     * @param client       The client sending the message.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void subscribe(const char* path, Client& client);
+
+    /**
+     * @brief Unsubscribe to a log message
+     *
+     * @since 1.3.0
+     *
+     * @param path         The OSC address pattern.
+     *
+     * @par Thread-safety constraints
+     * - @b RT: the function must be invoked from the Real-time thread
+     */
+    void unsubscribe(const char* path);
+
+    /**
      * @brief Set the function which receives broadcast messages from the synth engine.
      *
      * @since 1.0.0

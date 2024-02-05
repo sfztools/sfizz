@@ -4,8 +4,10 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "Messaging.h"
 #include "TestHelpers.h"
 #include "sfizz/Synth.h"
+#include "sfizz/Logger.h"
 #include "catch2/catch.hpp"
 #include <stdexcept>
 #include <absl/strings/str_cat.h>
@@ -16,27 +18,28 @@ using namespace sfz;
 TEST_CASE("[Logging] Basic logging")
 {
     Synth synth;
+    Client client { nullptr };
+    auto& logger = synth.getResources().getLogger();
+    REQUIRE_FALSE(logger.subscribed("/log/default_path_changed"));
+    logger.subscribe("/log/default_path_changed", client);
+    REQUIRE(logger.subscribed("/log/default_path_changed"));
+}
+
+TEST_CASE("[Logging] Changing default path")
+{
+    Synth synth;
     std::vector<std::string> messageList;
-    synth.setBroadcastCallback(&simpleMessageReceiver, &messageList);
-
     Client client { &messageList };
-    synth.dispatchMessage(client, 0, "/log_level", "", nullptr);
-    sfizz_arg_t args;
-    args.s = "TRACE";
-    synth.dispatchMessage(client, 0, "/log_level", "s", &args);
-    synth.dispatchMessage(client, 0, "/log_level", "", nullptr);
-    args.s = "INFO";
-    synth.dispatchMessage(client, 0, "/log_level", "s", &args);
-    synth.dispatchMessage(client, 0, "/log_level", "", nullptr);
-    args.s = "WARNING";
-    synth.dispatchMessage(client, 0, "/log_level", "s", &args);
-    synth.dispatchMessage(client, 0, "/log_level", "", nullptr);
-
+    client.setReceiveCallback(&simpleMessageReceiver);
+    synth.subscribe("/log/default_path_changed", client);
+    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/default_path.sfz");
     std::vector<std::string> expected {
-        "/log_level,s : { ERROR }",
-        "/log_level,s : { TRACE }",
-        "/log_level,s : { INFO }",
-        "/log_level,s : { WARNING }",
+        "/log/default_path_changed,s : {  }",
+        "/log/default_path_changed,s : { DefaultPath/SubPath2/ }",
+        "/log/default_path_changed,s : {  }",
+        "/log/default_path_changed,s : { DefaultPath/SubPath1/sample }",
+        "/log/default_path_changed,s : {  }",
     };
     REQUIRE(messageList == expected);
 }
+

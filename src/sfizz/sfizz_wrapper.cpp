@@ -458,6 +458,16 @@ void sfizz_send_message(sfizz_synth_t* synth, sfizz_client_t* client, int delay,
     synth->synth.dispatchMessage(*reinterpret_cast<sfz::Client*>(client), delay, path, sig, args);
 }
 
+void sfizz_subscribe(sfizz_synth_t* synth, const char* path, sfizz_client_t* client)
+{
+    synth->synth.subscribe(path, *reinterpret_cast<sfz::Client*>(client));
+}
+
+void sfizz_unsubscribe(sfizz_synth_t* synth, const char* path)
+{
+    synth->synth.unsubscribe(path);
+}
+
 void sfizz_set_broadcast_callback(sfizz_synth_t* synth, sfizz_receive_t* broadcast, void* data)
 {
     synth->synth.setBroadcastCallback(broadcast, data);

@@ -4,6 +4,7 @@
 // license. You should have receive a LICENSE.md file along with the code.
 // If not, contact the sfizz maintainers at https://github.com/sfztools/sfizz
 
+#include "Messaging.h"
 #include "SynthPrivate.h"
 #include "Config.h"
 #include "utility/Debug.h"
@@ -18,6 +19,7 @@
 #include "Resources.h"
 #include "BufferPool.h"
 #include "FilePool.h"
+#include "Logger.h"
 #include "Wavetables.h"
 #include "Tuning.h"
 #include "BeatClock.h"
@@ -108,6 +110,7 @@ void Synth::Impl::onParseFullBlock(const std::string& header, const std::vector<
         break;
     case hash("control"):
         defaultPath_ = ""; // Always reset on a new control header
+        resources_.getLogger().send<'s'>(0, LogMessage::ChangingDefaultPath, defaultPath_.c_str());
         handleControlOpcodes(members);
         break;
     case hash("master"):
@@ -425,7 +428,7 @@ void Synth::Impl::handleControlOpcodes(const std::vector<Opcode>& members)
             break;
         case hash("default_path"):
             defaultPath_ = absl::StrReplaceAll(trim(member.value), { { "\\", "/" } });
-            DBG("Changing default sample path to " << defaultPath_);
+            resources_.getLogger().send<'s'>(0, LogMessage::ChangingDefaultPath, defaultPath_.c_str());
             break;
         case hash("image"):
             image_ = absl::StrCat(defaultPath_, absl::StrReplaceAll(trim(member.value), { { "\\", "/" } }));
@@ -2213,6 +2216,18 @@ void sfz::Synth::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
     Impl& impl = *impl_;
     impl.broadcastReceiver = broadcast;
     impl.broadcastData = data;
+}
+
+void sfz::Synth::subscribe(absl::string_view path, Client& client)
+{
+    Impl& impl = *impl_;
+    impl.resources_.getLogger().subscribe(path, client);
+}
+
+void sfz::Synth::unsubscribe(absl::string_view path)
+{
+    Impl& impl = *impl_;
+    impl.resources_.getLogger().unsubscribe(path);
 }
 
 void Synth::Impl::collectUsedCCsFromRegion(BitArray<config::numCCs>& usedCCs, const Region& region)

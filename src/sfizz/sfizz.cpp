@@ -424,6 +424,16 @@ void sfz::Sfizz::sendMessage(Client& client, int delay, const char* path, const 
     synth->synth.dispatchMessage(client, delay, path, sig, args);
 }
 
+void sfz::Sfizz::subscribe(const char* path, Client& client)
+{
+    synth->synth.subscribe(path, client);
+}
+
+void sfz::Sfizz::unsubscribe(const char* path)
+{
+    synth->synth.unsubscribe(path);
+}
+
 void sfz::Sfizz::setBroadcastCallback(sfizz_receive_t* broadcast, void* data)
 {
     synth->synth.setBroadcastCallback(broadcast, data);

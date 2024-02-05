@@ -1215,6 +1215,28 @@ SFIZZ_EXPORTED_API void* sfizz_get_client_data(sfizz_client_t* client);
 SFIZZ_EXPORTED_API void sfizz_set_receive_callback(sfizz_client_t* client, sfizz_receive_t* receive);
 
 /**
+ * @brief Subscribe to a log callback
+ * @since 1.3.0
+ *
+ * @param synth        The synth.
+ * @param path         The logging message path.
+ * @param client       The client.
+ * @return             The client data.
+ */
+SFIZZ_EXPORTED_API void sfizz_subscribe(sfizz_synth_t* synth, const char* path, sfizz_client_t* client);
+
+/**
+ * @brief Unsubscribe to a log callback
+ * @since 1.3.0
+ *
+ * @param synth        The synth.
+ * @param path         The logging message path.
+ * @param client       The client.
+ * @return             The client data.
+ */
+SFIZZ_EXPORTED_API void sfizz_unsubscribe(sfizz_synth_t* synth, const char* path);
+
+/**
  * @brief Send a message to the synth engine
  * @since 1.0.0
  *

@@ -732,6 +732,23 @@ public:
     void dispatchMessage(Client& client, int delay, const char* path, const char* sig, const sfizz_arg_t* args);
 
     /**
+     * @brief Subscribe to a log message for a given client
+     * @since 1.3.0
+     *
+     * @param client       The client sending the message.
+     * @param path         The OSC address pattern.
+     */
+    void subscribe(absl::string_view path, Client& client);
+
+    /**
+     * @brief Unsubscribe to a log message
+     * @since 1.3.0
+     *
+     * @param path         The OSC address pattern.
+     */
+    void unsubscribe(absl::string_view path);
+
+    /**
      * @brief Set the function which receives broadcast messages from the synth engine.
      * @since 1.0.0
      *

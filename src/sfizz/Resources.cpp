@@ -12,6 +12,7 @@
 #include "Wavetables.h"
 #include "Curve.h"
 #include "Tuning.h"
+#include "Logger.h"
 #include "BeatClock.h"
 #include "Metronome.h"
 #include "modulations/ModMatrix.h"
@@ -30,6 +31,7 @@ struct Resources::Impl {
     ModMatrix modMatrix;
     BeatClock beatClock;
     Metronome metronome;
+    Logger logger;
 };
 
 Resources::Resources()
@@ -131,6 +133,11 @@ const BeatClock& Resources::getBeatClock() const noexcept
 const Metronome& Resources::getMetronome() const noexcept
 {
     return impl_->metronome;
+}
+
+const Logger& Resources::getLogger() const noexcept
+{
+    return impl_->logger;
 }
 
 } // namespace sfz

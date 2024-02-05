@@ -58,6 +58,7 @@ public:
     ACCESSOR_RW(getModMatrix, ModMatrix);
     ACCESSOR_RW(getBeatClock, BeatClock);
     ACCESSOR_RW(getMetronome, Metronome);
+    ACCESSOR_RW(getLogger, Logger);
 
     #undef ACCESSOR_RW
 
