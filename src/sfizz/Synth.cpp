@@ -1111,19 +1111,11 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     const SynthConfig& synthConfig = impl.resources_.getSynthConfig();
     FilePool& filePool = impl.resources_.getFilePool();
+    FilePool::RenderLock filePoolLock {filePool};
     BufferPool& bufferPool = impl.resources_.getBufferPool();
 
     if (synthConfig.freeWheeling)
         filePool.waitForBackgroundLoading();
-
-    const auto now = highResNow();
-    const auto timeSinceLastCollection =
-        std::chrono::duration_cast<std::chrono::seconds>(now - impl.lastGarbageCollection_);
-
-    if (timeSinceLastCollection.count() > config::fileClearingPeriod) {
-        impl.lastGarbageCollection_ = now;
-        filePool.triggerGarbageCollection();
-    }
 
     auto tempSpan = bufferPool.getStereoBuffer(numFrames);
     auto tempMixSpan = bufferPool.getStereoBuffer(numFrames);

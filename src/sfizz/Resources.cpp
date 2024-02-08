@@ -19,6 +19,8 @@
 namespace sfz {
 
 struct Resources::Impl {
+    Impl() : filePool {synthConfig.freeWheeling } {}
+
     SynthConfig synthConfig;
     BufferPool bufferPool;
     MidiState midiState;

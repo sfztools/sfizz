@@ -48,6 +48,11 @@
 class ThreadPool;
 
 namespace sfz {
+class FilePool;
+#if defined(SFIZZ_FILEOPENPREEXEC)
+class FileOpenPreexec;
+#endif
+
 using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
                                     sfz::config::excessFileFrames, sfz::config::excessFileFrames>;
 using FileAudioBufferPtr = std::shared_ptr<FileAudioBuffer>;
@@ -67,54 +72,100 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileData
 {
-    enum class Status { Invalid, Preloaded, Streaming, Done };
-    FileData() = default;
+    enum class Status { Invalid, Preloaded, Streaming, Done, FullLoaded };
+    FileData()
+    {
+    }
     FileData(FileAudioBuffer preloaded, FileInformation info)
     : preloadedData(std::move(preloaded)), information(std::move(info))
     {
 
     }
-    AudioSpan<const float> getData()
+
+    struct AudioSpanData {
+        AudioSpanData(AudioSpanData&& other)
+        : data(other.data),
+          fileData(other.fileData)
+        {}
+
+        AudioSpan<const float> data;
+
+        friend struct FileData;
+    private:
+        AudioSpanData(AudioSpan<const float>&& data, FileData& fileData, std::unique_lock<SpinMutex>&& lock)
+        : data(data),
+          fileData(fileData)
+        {
+            std::unique_lock<SpinMutex> l = std::move(lock);
+            fileData.dataReaderCount++;
+        }
+
+    public:
+        ~AudioSpanData() {
+            std::unique_lock<SpinMutex> l { fileData.garbageMutex };
+            fileData.lastViewerLeftAt = highResNow();
+            fileData.dataReaderCount--;
+        }
+
+    private:
+        FileData& fileData;
+    };
+
+    AudioSpanData getData()
     {
+        std::unique_lock<SpinMutex> lock { garbageMutex };
         if (availableFrames > preloadedData.getNumFrames())
-            return AudioSpan<const float>(fileData).first(availableFrames);
+            return { AudioSpan<const float>(fileData).first(availableFrames), *this, std::move(lock) };
         else
-            return AudioSpan<const float>(preloadedData);
-    }
+            return { AudioSpan<const float>(preloadedData), *this, std::move(lock) };
+    };
 
     FileData(const FileData& other) = delete;
     FileData& operator=(const FileData& other) = delete;
-    FileData(FileData&& other)
-    {
+    FileData(FileData&& other) = delete;
+    FileData& operator=(FileData&& other) = delete;
+
+    void initWith(Status newStatus, FileData&& other) {
         ASSERT(other.readerCount == 0); // Probably should not be moving this...
+        ASSERT(other.preloadCallCount == 0);
         information = std::move(other.information);
         preloadedData = std::move(other.preloadedData);
         fileData = std::move(other.fileData);
-        preloadCallCount = other.preloadCallCount;
         availableFrames = other.availableFrames.load();
         lastViewerLeftAt = other.lastViewerLeftAt;
-        status = other.status.load();
+        status = newStatus;
+        {
+            std::lock_guard<std::mutex> guard { readyMutex };
+            ready = true;
+        }
+        readyCond.notify_all();
     }
-    FileData& operator=(FileData&& other)
-    {
-        ASSERT(other.readerCount == 0); // Probably should not be moving this...
-        information = std::move(other.information);
-        preloadedData = std::move(other.preloadedData);
-        fileData = std::move(other.fileData);
-        preloadCallCount = other.preloadCallCount;
-        availableFrames = other.availableFrames.load();
-        lastViewerLeftAt = other.lastViewerLeftAt;
-        status = other.status.load();
-        return *this;
-    }
+
+    void addOwner(FilePool* owner);
+    void prepareForRemovingOwner(FilePool* owner);
+    bool checkAndRemoveOwner(FilePool* owner, const FileId &fileId);
+    bool addSecondaryOwner(FilePool* owner);
+    bool canRemove() const { return preloadCallCount == 0 && ready; };
+    bool isReady() { return ready; }
 
     FileAudioBuffer preloadedData;
     FileInformation information;
     FileAudioBuffer fileData {};
+
+private:
+    bool ready { false };
+    std::condition_variable readyCond;
+    std::mutex readyMutex;
+    std::mutex ownerMutex;
     int preloadCallCount { 0 };
+    std::map<FilePool*, bool> ownerMap;
+
+public:
+    SpinMutex garbageMutex;
     std::atomic<Status> status { Status::Invalid };
     std::atomic<size_t> availableFrames { 0 };
-    std::atomic<int> readerCount { 0 };
+    std::atomic<uint32_t> readerCount { 0 };
+    uint32_t dataReaderCount { 0 };
     std::chrono::time_point<std::chrono::high_resolution_clock> lastViewerLeftAt;
 
     LEAK_DETECTOR(FileData);
@@ -137,7 +188,7 @@ public:
         other.data = nullptr;
         return *this;
     }
-    FileDataHolder(FileData* data) : data(data)
+    FileDataHolder(const std::shared_ptr<FileData>& data) : data(data)
     {
         if (!data)
             return;
@@ -155,14 +206,13 @@ public:
     }
     ~FileDataHolder()
     {
-        ASSERT(!data || data->readerCount > 0);
         reset();
     }
     FileData& operator*() { return *data; }
-    FileData* operator->() { return data; }
-    explicit operator bool() const { return data != nullptr; }
+    FileData* operator->() { return data.get(); }
+    explicit operator bool() const { return (bool)data; }
 private:
-    FileData* data { nullptr };
+    std::shared_ptr<FileData> data { nullptr };
     LEAK_DETECTOR(FileDataHolder);
 };
 
@@ -194,7 +244,7 @@ public:
      * This creates the background threads based on config::numBackgroundThreads
      * as well as the garbage collection thread.
      */
-    FilePool();
+    FilePool(bool& freeWheel);
 
     ~FilePool();
     /**
@@ -330,12 +380,36 @@ public:
      * @param loadInRam
      */
     void setRamLoading(bool loadInRam) noexcept;
+
     /**
-     * @brief Prepares unused data to be freed on a background thread.
-     * This should be called regularly by the Synth, otherwise memory
-     * risk building up.
+     * @brief Notify when render starts 
      */
-    void triggerGarbageCollection() noexcept;
+    void startRender();
+
+    /**
+     * @brief Notify when render finishes
+     */
+    void stopRender();
+
+    /**
+     * @brief Allocate this when rendering
+     */
+    class RenderLock
+    {
+        public:
+        RenderLock(FilePool& filePool)
+        : filePool(filePool)
+        {
+            filePool.startRender();
+        }
+        ~RenderLock()
+        {
+            filePool.stopRender();
+        }
+
+        private:
+        FilePool& filePool;
+    };
 private:
 
     absl::optional<sfz::FileInformation> checkExistingFileInformation(const FileId& fileId) noexcept;
@@ -346,40 +420,71 @@ private:
 
     // Signals
     volatile bool dispatchFlag { true };
-    volatile bool garbageFlag { true };
     RTSemaphore dispatchBarrier;
-    RTSemaphore semGarbageBarrier;
 
     // Structures for the background loaders
     struct QueuedFileData
     {
         QueuedFileData() noexcept {}
-        QueuedFileData(std::weak_ptr<FileId> id, FileData* data) noexcept
+        QueuedFileData(std::weak_ptr<FileId> id, const std::shared_ptr<FileData>& data) noexcept
         : id(id), data(data) {}
         std::weak_ptr<FileId> id;
-        FileData* data { nullptr };
+        std::shared_ptr<FileData> data { nullptr };
     };
 
     using FileQueue = atomic_queue::AtomicQueue2<QueuedFileData, config::maxVoices>;
     aligned_unique_ptr<FileQueue> filesToLoad;
 
     void dispatchingJob() noexcept;
-    void garbageJob() noexcept;
     void loadingJob(const QueuedFileData& data) noexcept;
     std::mutex loadingJobsMutex;
     std::vector<std::future<void>> loadingJobs;
     std::thread dispatchThread { &FilePool::dispatchingJob, this };
-    std::thread garbageThread { &FilePool::garbageJob, this };
 
-    SpinMutex garbageAndLastUsedMutex;
-    std::vector<FileId> lastUsedFiles;
-    std::vector<FileAudioBuffer> garbageToCollect;
+public:
+    struct GlobalObject
+    {
+        friend class sfz::FilePool;
+        friend struct sfz::FileData;
+        GlobalObject(size_t num_threads);
 
-    std::shared_ptr<ThreadPool> threadPool;
+        public:
+        ~GlobalObject();
+
+        public:
+        size_t getNumLoadedSamples() {
+            return loadedFiles.size() + preloadedFiles.size();
+        }
+
+        private:
+        std::thread garbageThread { &GlobalObject::garbageJob, this };
+        volatile bool garbageFlag { true };
+        RTSemaphore semGarbageBarrier;
+        std::atomic<uint32_t> runningRender = { 0 };
+        void garbageJob();
+
+        std::unique_ptr<ThreadPool> threadPool;
+
+        std::mutex loadedFilesMutex;
+        std::mutex preloadedFilesMutex;
+
+        // Preloaded data
+        absl::flat_hash_map<FileId, std::shared_ptr<FileData>> preloadedFiles;
+        absl::flat_hash_map<FileId, std::shared_ptr<FileData>> loadedFiles;
+    };
+    static std::shared_ptr<GlobalObject> getGlobalObject();
+
+private:
+    std::shared_ptr<GlobalObject> globalObject;
+    static std::weak_ptr<GlobalObject> globalObjectWeakPtr;
+    static std::mutex globalObjectMutex;
 
     // Preloaded data
-    absl::flat_hash_map<FileId, FileData> preloadedFiles;
-    absl::flat_hash_map<FileId, FileData> loadedFiles;
+    absl::flat_hash_map<FileId, std::shared_ptr<FileData>> preloadedFiles;
+    absl::flat_hash_map<FileId, std::shared_ptr<FileData>> loadedFiles;
+
+    bool& freeWheeling;
+
     LEAK_DETECTOR(FilePool);
 };
 }

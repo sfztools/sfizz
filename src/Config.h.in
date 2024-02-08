@@ -58,6 +58,7 @@ namespace config {
     constexpr uint16_t numCCs { @MIDI_CC_COUNT@ };
     constexpr int maxCurves { 256 };
     constexpr int fileChunkSize { 1024 };
+    constexpr int numChunkForLoadingAtOnce { 64 };
     constexpr int processChunkSize { 16 };
     constexpr unsigned int defaultAlignment { 16 };
     constexpr int filtersInPool { maxVoices * 2 };
