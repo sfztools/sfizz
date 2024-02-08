@@ -127,7 +127,9 @@ bool sfz::FileData::addSecondaryOwner(FilePool* owner)
 {
     {
         std::unique_lock<std::mutex> guard { readyMutex };
-        readyCond.wait(guard, [this]{ return ready; });
+        if (!readyCond.wait_for(guard, std::chrono::seconds(10), [this]{ return ready; })) {
+            return false;
+        }
     }
 
     std::lock_guard<std::mutex> guard2 { ownerMutex };
