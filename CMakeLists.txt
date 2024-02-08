@@ -58,6 +58,7 @@ if(SFIZZ_GIT_SUBMODULE_CHECK AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git"
     git_submodule_check(external/st_audiofile/thirdparty/dr_libs)
     git_submodule_check(external/st_audiofile/thirdparty/libaiff)
     git_submodule_check(external/st_audiofile/thirdparty/wavpack)
+    git_submodule_check(external/invoke.hpp)
 endif()
 
 include(SfizzConfig)
