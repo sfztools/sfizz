@@ -173,10 +173,7 @@ TEST_CASE("[FilePool] Shared samples")
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
 }
 
-// It crashes strangely if this value is a large number.
-// When I run "sfizz_tests" directly, it doesn't crash.
-// static const unsigned synthCount = 100;
-static const unsigned synthCount = 10;
+static const unsigned synthCount = 100;
 
 TEST_CASE("[FilePool] Stress Alloc Test")
 {
