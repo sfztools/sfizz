@@ -7,7 +7,6 @@
 #pragma once
 #include "absl/types/span.h"
 #include "ghc/fs_std.hpp"
-#include <st_audiofile.h>
 #include <system_error>
 #include <memory>
 #include <cstdio>

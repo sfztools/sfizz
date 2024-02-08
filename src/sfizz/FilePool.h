@@ -49,9 +49,6 @@ class ThreadPool;
 
 namespace sfz {
 class FilePool;
-#if defined(SFIZZ_FILEOPENPREEXEC)
-class FileOpenPreexec;
-#endif
 
 using FileAudioBuffer = AudioBuffer<float, 2, config::defaultAlignment,
                                     sfz::config::excessFileFrames, sfz::config::excessFileFrames>;

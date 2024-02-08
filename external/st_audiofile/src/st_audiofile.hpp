@@ -169,7 +169,7 @@ inline void* ST_AudioFile::get_sndfile_handle() const noexcept
     return st_get_sndfile_handle(af_);
 }
 
-int ST_AudioFile::get_sndfile_format() const noexcept
+inline int ST_AudioFile::get_sndfile_format() const noexcept
 {
     return st_get_sndfile_format(af_);
 }

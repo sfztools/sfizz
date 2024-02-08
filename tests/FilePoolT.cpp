@@ -178,6 +178,68 @@ TEST_CASE("[FilePool] Shared samples")
 // static const unsigned synthCount = 100;
 static const unsigned synthCount = 10;
 
+TEST_CASE("[FilePool] Stress Alloc Test")
+{
+    struct TestSynthThread {
+        TestSynthThread()
+        {
+            synth.setSamplesPerBlock(256);
+        }
+
+        ~TestSynthThread()
+        {
+            running = false;
+            std::error_code ec;
+            semBarrier.post(ec);
+            ASSERT(!ec);
+            thread.join();
+        }
+
+        void job() noexcept
+        {
+            semBarrier.wait();
+            //synth.loadSfzFile(fs::current_path() / "tests/TestFiles/looped_regions.sfz");
+            if (execution)
+                execution();
+            if (running) {
+                while (semBarrier.wait(), running) {
+                    synth.renderBlock(buffer);
+                    if (execution)
+                        execution();
+                }
+            }
+        }
+
+        void noteOn()
+        {
+            synth.noteOn(0, 60, 100);
+        }
+
+        void noteOff()
+        {
+            synth.noteOff(0, 60, 100);
+        }
+
+        void trigger()
+        {
+            std::error_code ec;
+            semBarrier.post(ec);
+            ASSERT(!ec);
+        }
+
+        sfz::AudioBuffer<float> buffer { 2, 256 };
+        sfz::Synth synth {};
+        std::thread thread { &TestSynthThread::job, this };
+        RTSemaphore semBarrier { 0 };
+        bool running { true };
+        std::function<void()> execution;
+    };
+
+    std::unique_ptr<TestSynthThread[]> synthThreads { new TestSynthThread[synthCount]() };
+    std::shared_ptr<sfz::FilePool::GlobalObject> filePoolGlobalObj { sfz::FilePool::getGlobalObject() };
+    CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
+}
+
 TEST_CASE("[FilePool] Stress Test")
 {
     struct TestSynthThread {

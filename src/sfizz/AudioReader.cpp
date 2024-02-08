@@ -16,7 +16,7 @@
 namespace sfz {
 
 #if defined(SFIZZ_USE_SNDFILE)
-static bool formatHasFastSeeking(int format)
+static bool formatHasFastSeeking(int format);
 #endif
 
 class BasicSndfileReader : public AudioReader {
