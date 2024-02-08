@@ -24,6 +24,7 @@ jobs:
   clang_tidy:
     name: Clang Tidy
     runs-on: ubuntu-20.04
+    timeout-minutes: 10
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -37,6 +38,7 @@ jobs:
   test_with_asan:
     name: ASAN
     runs-on: ubuntu-22.04 # abseil (libabsl) is not available in 20.04 repository
+    timeout-minutes: 10
     env:
       install_name: sfizz-${{ github.ref_name }}-linux
     strategy:
@@ -88,6 +90,7 @@ jobs:
   build_for_linux:
     name: Linux Ubuntu 22.04
     runs-on: ubuntu-22.04 # abseil (libabsl) is not available in 20.04 repository
+    timeout-minutes: 10
     env:
       install_name: sfizz-${{ github.ref_name }}-linux
     steps:
@@ -171,6 +174,7 @@ jobs:
   build_for_macos:
     name: macOS 11
     runs-on: macos-11
+    timeout-minutes: 15
     env:
       install_name: "sfizz-${{ github.ref_name }}-macos"
     steps:
@@ -234,6 +238,7 @@ jobs:
   build_for_windows:
     name: Windows 2019
     runs-on: windows-2019
+    timeout-minutes: 15
     strategy:
       matrix:
         include:
@@ -297,6 +302,7 @@ jobs:
     if: ${{ github.ref_type == 'tag' }}
     name: Source code archive
     runs-on: ubuntu-20.04
+    timeout-minutes: 2
     env:
       install_name: sfizz-${{ github.ref_name }}
     steps:
@@ -322,6 +328,7 @@ jobs:
   build_with_libsndfile:
     name: Linux libsndfile
     runs-on: ubuntu-20.04
+    timeout-minutes: 10
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -369,6 +376,7 @@ jobs:
   build_with_makefile:
     name: Linux makefile
     runs-on: ubuntu-20.04
+    timeout-minutes: 10
     steps:
     - name: Checkout
       uses: actions/checkout@v3
