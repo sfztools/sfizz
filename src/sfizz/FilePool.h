@@ -456,7 +456,7 @@ public:
         private:
         std::thread garbageThread { &GlobalObject::garbageJob, this };
         volatile bool garbageFlag { true };
-        RTSemaphore semGarbageBarrier { 0 };
+        static RTSemaphore semGarbageBarrier;
         std::atomic<uint32_t> runningRender = { 0 };
         void garbageJob();
 

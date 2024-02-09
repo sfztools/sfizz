@@ -59,6 +59,7 @@ sfz::FilePool::GlobalObject::~GlobalObject()
     garbageThread.join();
 }
 
+RTSemaphore sfz::FilePool::GlobalObject::semGarbageBarrier { 0 };
 std::weak_ptr<sfz::FilePool::GlobalObject> sfz::FilePool::globalObjectWeakPtr;
 std::mutex sfz::FilePool::globalObjectMutex;
 
