@@ -853,11 +853,12 @@ void sfz::FilePool::GlobalObject::garbageJob()
                     if (secondsIdle < config::fileClearingPeriod)
                         continue;
 
+                    FileAudioBuffer garbage;
                     std::unique_lock<SpinMutex> guard2 { data->garbageMutex, std::try_to_lock };
                     if (guard2.owns_lock() && data->readerCount == 0 && data->dataReaderCount == 0) {
                         data->availableFrames = 0;
                         data->status = FileData::Status::Preloaded;
-                        auto garbage = std::move(data->fileData);
+                        garbage = std::move(data->fileData);
                     }
                 }
             }
