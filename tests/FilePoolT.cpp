@@ -17,6 +17,7 @@
 #include <memory>
 #include <functional>
 #include <atomic>
+
 using namespace Catch::literals;
 
 static void wait_ms(int ms)
@@ -191,6 +192,7 @@ TEST_CASE("[FilePool] Stress Test")
         {
             CHECK((bool)semBarrier);
             synth.setSamplesPerBlock(256);
+            thread.reset(new std::thread( &TestSynthThread::job, this ));
         }
 
         ~TestSynthThread()
@@ -201,10 +203,10 @@ TEST_CASE("[FilePool] Stress Test")
             std::error_code ec;
             semBarrier.post(ec);
             CHECK(!ec);
-            thread.join();
+            thread->join();
         }
 
-        void job() noexcept
+        void job()
         {
             status.store(Status::Waiting1, std::memory_order_release);
             semBarrier.wait();
@@ -245,7 +247,7 @@ TEST_CASE("[FilePool] Stress Test")
 
         sfz::AudioBuffer<float> buffer { 2, 256 };
         sfz::Synth synth {};
-        std::thread thread { &TestSynthThread::job, this };
+        std::unique_ptr<std::thread> thread {};
         RTSemaphore semBarrier { 0 };
         std::atomic<bool> running { true };
         std::atomic<Status> status { Status::Initialized };
