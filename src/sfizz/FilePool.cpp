@@ -608,6 +608,7 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
             DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
             return {};
         }
+        fileData->status = FileData::Status::PendingStreaming;
 
         std::error_code ec;
         dispatchBarrier.post(ec);
@@ -674,8 +675,8 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
         spinCounter += 1;
     }
 
-    // Already loading or loaded
-    if (currentStatus != FileData::Status::Preloaded)
+    // Already loading, loaded, or released
+    if (currentStatus != FileData::Status::PendingStreaming)
         return;
 
     // Someone else got the token
@@ -683,7 +684,7 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
         return;
 
     if (!streamFromFile(*reader, data.data->fileData, data.data->availableFrames, freeWheeling)) {
-        data.data->status = FileData::Status::Preloaded;
+        data.data->status = FileData::Status::PendingStreaming;
         filesToLoad->try_push(data);
 
         std::error_code ec;
@@ -724,7 +725,7 @@ void sfz::FilePool::dispatchingJob() noexcept
 
         QueuedFileData queuedData;
         if (filesToLoad->try_pop(queuedData)) {
-            if (queuedData.id.expired()) {
+            if (queuedData.id.expired() || queuedData.data->status != FileData::Status::PendingStreaming ) {
                 // file ID was nulled, it means the region was deleted, ignore
             }
             else
@@ -812,6 +813,9 @@ void sfz::FilePool::startRender()
 void sfz::FilePool::stopRender()
 {
     globalObject->runningRender--;
+    std::error_code ec;
+    globalObject->semGarbageBarrier.post(ec);
+    ASSERT(!ec);
 }
 
 void sfz::FilePool::GlobalObject::garbageJob()
@@ -850,7 +854,7 @@ void sfz::FilePool::GlobalObject::garbageJob()
                         continue;
 
                     std::unique_lock<SpinMutex> guard2 { data->garbageMutex, std::try_to_lock };
-                    if (guard2.owns_lock() && data->dataReaderCount == 0) {
+                    if (guard2.owns_lock() && data->readerCount == 0 && data->dataReaderCount == 0) {
                         data->availableFrames = 0;
                         data->status = FileData::Status::Preloaded;
                         auto garbage = std::move(data->fileData);

@@ -69,7 +69,7 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileData
 {
-    enum class Status { Invalid, Preloaded, Streaming, Done, FullLoaded };
+    enum class Status { Invalid, Preloaded, PendingStreaming, Streaming, Done, FullLoaded };
     FileData()
     {
     }
