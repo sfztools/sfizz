@@ -417,7 +417,7 @@ private:
 
     // Signals
     volatile bool dispatchFlag { true };
-    RTSemaphore dispatchBarrier;
+    RTSemaphore dispatchBarrier { 0 };
 
     // Structures for the background loaders
     struct QueuedFileData
@@ -456,7 +456,7 @@ public:
         private:
         std::thread garbageThread { &GlobalObject::garbageJob, this };
         volatile bool garbageFlag { true };
-        RTSemaphore semGarbageBarrier;
+        RTSemaphore semGarbageBarrier { 0 };
         std::atomic<uint32_t> runningRender = { 0 };
         void garbageJob();
 

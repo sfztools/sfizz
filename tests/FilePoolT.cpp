@@ -19,7 +19,7 @@
 #include <atomic>
 using namespace Catch::literals;
 
-static void WAIT(int ms)
+static void wait_ms(int ms)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
@@ -33,7 +33,7 @@ TEST_CASE("[FilePool] Ready Mutex")
         sfz::FilePool filePool {dummy};
         void prepare()
         {
-            WAIT(200);
+            wait_ms(200);
             fileData.initWith(sfz::FileData::Status::Preloaded, sfz::FileData());
         }
         void wait()
@@ -97,7 +97,7 @@ TEST_CASE("[FilePool] Shared samples")
         synth1->renderBlock(buffer);
         synth2->renderBlock(buffer);
         synth3->renderBlock(buffer);
-        WAIT(10);
+        wait_ms(10);
     }
 
     CHECK(synth1->getNumPreloadedSamples() == 0);
@@ -106,7 +106,7 @@ TEST_CASE("[FilePool] Shared samples")
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 1);
 
     synth2.reset();
-    WAIT(1100);
+    wait_ms(1100);
 
     CHECK(synth1->getNumPreloadedSamples() == 0);
     CHECK(synth3->getNumPreloadedSamples() == 0);
@@ -122,7 +122,7 @@ TEST_CASE("[FilePool] Shared samples")
         synth1->renderBlock(buffer);
         synth2->renderBlock(buffer);
         synth3->renderBlock(buffer);
-        WAIT(10);
+        wait_ms(10);
     }
     CHECK(synth1->getNumPreloadedSamples() == 1);
     CHECK(synth2->getNumPreloadedSamples() == 1);
@@ -135,7 +135,7 @@ TEST_CASE("[FilePool] Shared samples")
         synth1->renderBlock(buffer);
         synth2->renderBlock(buffer);
         synth3->renderBlock(buffer);
-        WAIT(10);
+        wait_ms(10);
     }
     CHECK(synth1->getNumPreloadedSamples() == 1);
     CHECK(synth2->getNumPreloadedSamples() == 1);
@@ -147,9 +147,9 @@ TEST_CASE("[FilePool] Shared samples")
         synth1->renderBlock(buffer);
         synth2->renderBlock(buffer);
         synth3->renderBlock(buffer);
-        WAIT(10);
+        wait_ms(10);
     }
-    WAIT(1100);
+    wait_ms(1100);
 
     CHECK(synth1->getNumPreloadedSamples() == 4);
     CHECK(synth2->getNumPreloadedSamples() == 1);
@@ -158,14 +158,14 @@ TEST_CASE("[FilePool] Shared samples")
 
     // Release
     synth3.reset();
-    WAIT(1100);
+    wait_ms(1100);
     CHECK(synth1->getNumPreloadedSamples() == 4);
     CHECK(synth2->getNumPreloadedSamples() == 1);
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 5);
 
     synth1.reset();
     synth2.reset();
-    WAIT(1100);
+    wait_ms(1100);
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
 
     filePoolGlobalObj.reset();
@@ -173,98 +173,55 @@ TEST_CASE("[FilePool] Shared samples")
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
 }
 
-static const unsigned synthCount = 100;
-
-TEST_CASE("[FilePool] Stress Alloc Test")
-{
-    struct TestSynthThread {
-        TestSynthThread()
-        {
-            synth.setSamplesPerBlock(256);
-        }
-
-        ~TestSynthThread()
-        {
-            running = false;
-            std::error_code ec;
-            semBarrier.post(ec);
-            ASSERT(!ec);
-            thread.join();
-        }
-
-        void job() noexcept
-        {
-            semBarrier.wait();
-            //synth.loadSfzFile(fs::current_path() / "tests/TestFiles/looped_regions.sfz");
-            if (execution)
-                execution();
-            if (running) {
-                while (semBarrier.wait(), running) {
-                    synth.renderBlock(buffer);
-                    if (execution)
-                        execution();
-                }
-            }
-        }
-
-        void noteOn()
-        {
-            synth.noteOn(0, 60, 100);
-        }
-
-        void noteOff()
-        {
-            synth.noteOff(0, 60, 100);
-        }
-
-        void trigger()
-        {
-            std::error_code ec;
-            semBarrier.post(ec);
-            ASSERT(!ec);
-        }
-
-        sfz::AudioBuffer<float> buffer { 2, 256 };
-        sfz::Synth synth {};
-        std::thread thread { &TestSynthThread::job, this };
-        RTSemaphore semBarrier { 0 };
-        bool running { true };
-        std::function<void()> execution;
-    };
-
-    std::unique_ptr<TestSynthThread[]> synthThreads { new TestSynthThread[synthCount]() };
-    std::shared_ptr<sfz::FilePool::GlobalObject> filePoolGlobalObj { sfz::FilePool::getGlobalObject() };
-    CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
-}
+static const int synthCount = 100;
 
 TEST_CASE("[FilePool] Stress Test")
 {
     struct TestSynthThread {
+        enum Status {
+            Initialized,
+            Waiting1,
+            Loading,
+            Waiting2,
+            Rendering,
+            Posted,
+        };
+
         TestSynthThread()
         {
+            CHECK((bool)semBarrier);
             synth.setSamplesPerBlock(256);
         }
 
         ~TestSynthThread()
         {
-            running = false;
+            running.store(false, std::memory_order_release);
+            flag.store(false, std::memory_order_release);
+            status.store(Status::Posted, std::memory_order_release);
             std::error_code ec;
             semBarrier.post(ec);
-            ASSERT(!ec);
+            CHECK(!ec);
             thread.join();
         }
 
         void job() noexcept
         {
+            status.store(Status::Waiting1, std::memory_order_release);
             semBarrier.wait();
+            CHECK(status.load(std::memory_order_acquire) == Status::Posted);
+            CHECK(flag.load(std::memory_order_acquire) == false);
+            flag.store(true, std::memory_order_release);
+            status.store(Status::Loading, std::memory_order_release);
             synth.loadSfzFile(fs::current_path() / "tests/TestFiles/looped_regions.sfz");
-            if (execution)
-                execution();
-            if (running) {
-                while (semBarrier.wait(), running) {
+            if (running.load(std::memory_order_acquire)) {
+                status.store(Status::Waiting2, std::memory_order_release);
+                while (semBarrier.wait(), running.load(std::memory_order_acquire)) {
+                    CHECK(status.load(std::memory_order_acquire) == Status::Posted);
+                    CHECK(!flag.load(std::memory_order_acquire));
+                    flag.store(true, std::memory_order_release);
+                    status.store(Status::Rendering, std::memory_order_release);
                     synth.renderBlock(buffer);
-                    if (execution)
-                        execution();
+                    status.store(Status::Waiting2, std::memory_order_release);
                 }
             }
         }
@@ -290,65 +247,79 @@ TEST_CASE("[FilePool] Stress Test")
         sfz::Synth synth {};
         std::thread thread { &TestSynthThread::job, this };
         RTSemaphore semBarrier { 0 };
-        bool running { true };
-        std::function<void()> execution;
+        std::atomic<bool> running { true };
+        std::atomic<Status> status { Status::Initialized };
+        std::atomic<bool> flag { true };
     };
 
-    std::unique_ptr<TestSynthThread[]> synthThreads { new TestSynthThread[synthCount]() };
+    std::unique_ptr<TestSynthThread> synthThreads[synthCount];
+    for (int i = 0; i < synthCount; ++i) {
+        synthThreads[i].reset(new TestSynthThread());
+    }
+    wait_ms(100);
     std::shared_ptr<sfz::FilePool::GlobalObject> filePoolGlobalObj { sfz::FilePool::getGlobalObject() };
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
 
-    std::atomic<int> finishCount { 0 };
-    auto countFunc = [&finishCount]() {
-        ++finishCount;
+    auto waitForStatus = [&](int max_counter, TestSynthThread::Status statusToWait) {
+        for (int j = 0; j < max_counter; ++j) {
+            int flagCount = 0;
+            for (int i = 0; i < synthCount; ++i) {
+                if (synthThreads[i]->status.load(std::memory_order_acquire) == statusToWait) {
+                    flagCount++;
+                }
+                else {
+                    wait_ms(10);
+                }
+            }
+            if (flagCount == synthCount) {
+                wait_ms(10);
+                for (int i = 0; i < synthCount; ++i) {
+                    ASSERT(synthThreads[i]->status.load(std::memory_order_acquire) == statusToWait);
+                }
+                return true;
+            }
+        }
+        return false;
     };
-    for (unsigned i = 0; i < synthCount; ++i) {
-        synthThreads[i].execution = countFunc;
-    }
 
-    finishCount = 0;
-    for (unsigned j = 0; j < synthCount; ++j) {
-        synthThreads[j].trigger();
-    }
-    int count = 0;
-    while (finishCount != synthCount) {
-        CHECK(++count < 65536);
-        WAIT(100);
-    }
+    auto triggerFunc = [&]() {
+        for (int i = 0; i < synthCount; ++i) {
+            synthThreads[i]->flag.store(false, std::memory_order_release);
+        }
+        for (int i = 0; i < synthCount; ++i) {
+            ASSERT(synthThreads[i]->flag.load(std::memory_order_acquire) == false);
+            synthThreads[i]->status.store(TestSynthThread::Status::Posted, std::memory_order_release);
+            synthThreads[i]->trigger();
+        }
+    };
+
+    CHECK(waitForStatus(200000, TestSynthThread::Status::Waiting1));
+    triggerFunc();
+    CHECK(waitForStatus(1000, TestSynthThread::Status::Waiting2));
+
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 1);
-
     for (unsigned i = 0; i < synthCount; ++i) {
-        CHECK(synthThreads[i].synth.getNumPreloadedSamples() == 1);
+        CHECK(synthThreads[i]->synth.getNumPreloadedSamples() == 1);
     }
     
     for (unsigned i = 0; i < synthCount; ++i) {
-        synthThreads[i].noteOn();
+        synthThreads[i]->noteOn();
     }
     for (unsigned i = 0; i < 100; ++i) {
-        finishCount = 0;
-        for (unsigned j = 0; j < synthCount; ++j) {
-            synthThreads[j].trigger();
-        }
-        while (finishCount != synthCount) {
-            WAIT(10);
-        }
+        triggerFunc();
+        CHECK(waitForStatus(10, TestSynthThread::Status::Waiting2));
     }
 
     for (unsigned i = 0; i < synthCount; ++i) {
-        synthThreads[i].noteOff();
+        synthThreads[i]->noteOff();
     }
     for (unsigned i = 0; i < 100; ++i) {
-        finishCount = 0;
-        for (unsigned j = 0; j < synthCount; ++j) {
-            synthThreads[j].trigger();
-        }
-        while (finishCount != synthCount) {
-            WAIT(10);
-        }
+        triggerFunc();
+        CHECK(waitForStatus(10, TestSynthThread::Status::Waiting2));
     }
-
-    std::unique_ptr<sfz::Synth> synth1 { new sfz::Synth() };
-    synthThreads.reset();
-    WAIT(1100);
+    for (unsigned i = 0; i < synthCount; ++i) {
+        synthThreads[i].reset();
+    }
+    wait_ms(1100);
     CHECK(filePoolGlobalObj->getNumLoadedSamples() == 0);
 }

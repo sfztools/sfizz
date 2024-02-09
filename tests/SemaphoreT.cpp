@@ -10,7 +10,7 @@
 
 TEST_CASE("[Semaphore] Basic operations")
 {
-    RTSemaphore sem;
+    RTSemaphore sem { 0 };
 
     REQUIRE(sem.try_wait() == false);
 
@@ -34,7 +34,7 @@ TEST_CASE("[Semaphore] Basic operations")
 
 TEST_CASE("[Semaphore] Counter initialization")
 {
-    RTSemaphore sem(3);
+    RTSemaphore sem { 3 };
 
     REQUIRE(sem.try_wait() == true);
     REQUIRE(sem.try_wait() == true);
@@ -44,8 +44,8 @@ TEST_CASE("[Semaphore] Counter initialization")
 
 TEST_CASE("[Semaphore] Thread synchronization")
 {
-    RTSemaphore sem1;
-    RTSemaphore sem2;
+    RTSemaphore sem1 { 0 };
+    RTSemaphore sem2 { 0 };
     constexpr int n = 1000;
 
     std::thread t1([&]() {
