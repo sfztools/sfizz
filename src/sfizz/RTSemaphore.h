@@ -17,7 +17,7 @@
 
 class RTSemaphore {
 public:
-    explicit RTSemaphore(unsigned value);
+    explicit RTSemaphore(unsigned value = 0);
     explicit RTSemaphore(std::error_code& ec, unsigned value = 0) noexcept;
     ~RTSemaphore() noexcept;
 
