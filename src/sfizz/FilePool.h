@@ -89,17 +89,15 @@ struct FileData
 
         friend struct FileData;
     private:
-        AudioSpanData(AudioSpan<const float>&& data, FileData& fileData, std::unique_lock<SpinMutex>&& lock)
+        AudioSpanData(AudioSpan<const float>&& data, FileData& fileData)
         : data(data),
           fileData(fileData)
         {
-            std::unique_lock<SpinMutex> l = std::move(lock);
             fileData.readerCount++;
         }
 
     public:
         ~AudioSpanData() {
-            std::unique_lock<SpinMutex> l { fileData.garbageMutex };
             fileData.lastViewerLeftAt = highResNow();
             fileData.readerCount--;
         }
@@ -110,11 +108,10 @@ struct FileData
 
     AudioSpanData getData()
     {
-        std::unique_lock<SpinMutex> lock { garbageMutex };
         if (availableFrames > preloadedData.getNumFrames())
-            return { AudioSpan<const float>(fileData).first(availableFrames), *this, std::move(lock) };
+            return { AudioSpan<const float>(fileData).first(availableFrames), *this };
         else
-            return { AudioSpan<const float>(preloadedData), *this, std::move(lock) };
+            return { AudioSpan<const float>(preloadedData), *this };
     };
 
     FileData(const FileData& other) = delete;
@@ -189,6 +186,7 @@ public:
         if (!data)
             return;
 
+        std::lock_guard<SpinMutex> guard { data->garbageMutex };
         data->readerCount += 1;
     }
     void reset()
@@ -196,8 +194,8 @@ public:
         if (!data)
             return;
 
-        data->readerCount -= 1;
         data->lastViewerLeftAt = highResNow();
+        data->readerCount -= 1;
         data = nullptr;
     }
     ~FileDataHolder()
