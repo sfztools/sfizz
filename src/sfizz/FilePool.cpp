@@ -848,7 +848,7 @@ void sfz::FilePool::GlobalObject::garbageJob()
                         continue;
                     }
 
-                    if (data->availableFrames == 0)
+                    if (data->availableFrames == 0 || data->readerCount != 0 || data->dataReaderCount != 0)
                         continue;
 
                     switch (FileData::Status(data->status)) {
