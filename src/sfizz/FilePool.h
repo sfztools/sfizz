@@ -94,14 +94,14 @@ struct FileData
           fileData(fileData)
         {
             std::unique_lock<SpinMutex> l = std::move(lock);
-            fileData.dataReaderCount++;
+            fileData.readerCount++;
         }
 
     public:
         ~AudioSpanData() {
             std::unique_lock<SpinMutex> l { fileData.garbageMutex };
             fileData.lastViewerLeftAt = highResNow();
-            fileData.dataReaderCount--;
+            fileData.readerCount--;
         }
 
     private:
@@ -162,7 +162,6 @@ public:
     std::atomic<Status> status { Status::Invalid };
     std::atomic<size_t> availableFrames { 0 };
     std::atomic<uint32_t> readerCount { 0 };
-    uint32_t dataReaderCount { 0 };
     std::chrono::time_point<std::chrono::high_resolution_clock> lastViewerLeftAt;
 
     LEAK_DETECTOR(FileData);

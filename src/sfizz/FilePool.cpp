@@ -848,7 +848,7 @@ void sfz::FilePool::GlobalObject::garbageJob()
                         continue;
                     }
 
-                    if (data->availableFrames == 0 || data->readerCount != 0 || data->dataReaderCount != 0)
+                    if (data->availableFrames == 0 || data->readerCount != 0)
                         continue;
 
                     switch (FileData::Status(data->status)) {
@@ -865,7 +865,7 @@ void sfz::FilePool::GlobalObject::garbageJob()
 
                     FileAudioBuffer garbage;
                     std::unique_lock<SpinMutex> guard2 { data->garbageMutex, std::try_to_lock };
-                    if (guard2.owns_lock() && data->readerCount == 0 && data->dataReaderCount == 0) {
+                    if (guard2.owns_lock() && data->readerCount == 0) {
                         data->availableFrames = 0;
                         data->status = FileData::Status::Preloaded;
                         garbage = std::move(data->fileData);
