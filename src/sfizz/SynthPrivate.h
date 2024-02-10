@@ -364,8 +364,6 @@ struct Synth::Impl final: public Parser::Listener {
     CallbackBreakdown callbackBreakdown_;
     double dispatchDuration_ { 0 };
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_;
-
     Parser parser_;
     std::string lastPath_;
     absl::optional<fs::file_time_type> modificationTime_ { };

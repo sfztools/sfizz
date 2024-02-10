@@ -47,8 +47,11 @@
 using namespace std::placeholders;
 
 sfz::FilePool::GlobalObject::GlobalObject(size_t num_threads)
-: threadPool { new ThreadPool(num_threads) }
-{}
+: lastGarbageCollection_ { std::chrono::high_resolution_clock::now() },
+  garbageThread { new std::thread( &GlobalObject::garbageJob, this ) },
+  threadPool { new ThreadPool(num_threads) }
+{
+}
 
 sfz::FilePool::GlobalObject::~GlobalObject()
 {
@@ -56,7 +59,7 @@ sfz::FilePool::GlobalObject::~GlobalObject()
     std::error_code ec;
     semGarbageBarrier.post(ec);
     ASSERT(!ec);
-    garbageThread.join();
+    garbageThread->join();
 }
 
 RTSemaphore sfz::FilePool::GlobalObject::semGarbageBarrier { 0 };
@@ -820,15 +823,22 @@ void sfz::FilePool::stopRender()
 
 void sfz::FilePool::GlobalObject::garbageJob()
 {
-    while (semGarbageBarrier.timed_wait(500), garbageFlag) {
+    while (semGarbageBarrier.timed_wait(sfz::config::fileClearingPeriod * 1000), garbageFlag) {
         if (runningRender != 0) {
             continue;
         }
+        const auto now = std::chrono::high_resolution_clock::now();
+        const auto timeSinceLastCollection =
+        std::chrono::duration_cast<std::chrono::seconds>(now - lastGarbageCollection_);
+
+        if (timeSinceLastCollection.count() < config::fileClearingPeriod) {
+            continue;
+        }
+        lastGarbageCollection_ = now;
 
         {
             std::unique_lock<std::mutex> guard { preloadedFilesMutex, std::try_to_lock };
             if (guard.owns_lock()) {
-                const auto now = std::chrono::high_resolution_clock::now();
                 for (auto it = preloadedFiles.begin(); it != preloadedFiles.end();) {
                     auto copyIt = it++;
                     auto& data = copyIt->second;

@@ -454,10 +454,11 @@ public:
         }
 
         private:
-        std::thread garbageThread { &GlobalObject::garbageJob, this };
         volatile bool garbageFlag { true };
-        static RTSemaphore semGarbageBarrier;
         std::atomic<uint32_t> runningRender = { 0 };
+        std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_ = {};
+        std::unique_ptr<std::thread> garbageThread {};
+        static RTSemaphore semGarbageBarrier;
         void garbageJob();
 
         std::unique_ptr<ThreadPool> threadPool;
