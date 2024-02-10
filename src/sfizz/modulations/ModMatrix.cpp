@@ -205,13 +205,20 @@ bool ModMatrix::connect(SourceId sourceId, TargetId targetId, float sourceDepth,
     if (sourceIndex >= impl.sources_.size() || targetIndex >= impl.targets_.size())
         return false;
 
+    TargetId sourceDepthModId;
+    // We need to register the target _before_ taking a reference to target.connectedSources
+    // because if the targets_ vector is reallocated, all targets' connected sources will be moved
+    // and conn will point to freed memory.
+    if (sourceDepthMod)
+        sourceDepthModId = registerTarget(sourceDepthMod);
+
     Impl::Target& target = impl.targets_[targetIndex];
     Impl::ConnectionData& conn = target.connectedSources[sourceIndex];
     conn.sourceDepth_ = sourceDepth;
     conn.sourceDepthMod_ = sourceDepthMod;
 
-    if (sourceDepthMod)
-        conn.sourceDepthModId_ = registerTarget(sourceDepthMod);
+    if (sourceDepthModId.valid())
+        conn.sourceDepthModId_ = sourceDepthModId;
 
     conn.velToDepth_ = velToDepth;
 
