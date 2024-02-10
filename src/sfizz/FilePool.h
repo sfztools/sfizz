@@ -73,8 +73,8 @@ struct FileData
     FileData()
     {
     }
-    FileData(FileAudioBuffer preloaded, FileInformation info)
-    : preloadedData(std::move(preloaded)), information(std::move(info))
+    FileData(FileAudioBuffer preloaded, const FileInformation& info)
+    : preloadedData(std::move(preloaded)), information(info)
     {
 
     }
