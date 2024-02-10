@@ -240,24 +240,16 @@ public:
     template <class T, typename = std::enable_if_t<std::is_integral<T>::value>>
     void reply2(T value1, T value2)
     {
-        sfizz_arg_t response_args[2];
         if (sizeof(value1) <= 4) {
-            response_args[0].i = value1;
-            response_args[1].i = value2;
-            client.receive(delay, path, "ii", response_args);
+            client.receive<'i', 'i'>(delay, path, value1, value2);
         } else {
-            response_args[0].h = value1;
-            response_args[1].h = value2;
-            client.receive(delay, path, "hh", response_args);
+            client.receive<'h', 'h'>(delay, path, value1, value2);
         }
     }
 
     void reply2(float value1, float value2)
     {
-        sfizz_arg_t response_args[2];
-        response_args[0].f = value1;
-        response_args[1].f = value2;
-        client.receive(delay, path, "ff", response_args);
+        client.receive<'f', 'f'>(delay, path, value1, value2);
     }
 
     void set(std::string& target) { target = request_args[0].s; }
@@ -267,11 +259,11 @@ public:
     void set(bool& target, const OpcodeSpec<bool>& spec)
     {
         if (sig[0] == 'T') {
-            target = true; 
+            target = true;
         } else if (sig[0] == 'F') {
-            target = false; 
+            target = false;
         } else {
-            target = Opcode::read(spec, request_args[0].s); 
+            target = Opcode::read(spec, request_args[0].s);
         }
     }
 
