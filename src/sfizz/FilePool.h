@@ -93,6 +93,7 @@ struct FileData
         : data(data),
           fileData(fileData)
         {
+            ASSERT(fileData.readerCount > 0);
             fileData.readerCount++;
         }
 
@@ -108,6 +109,7 @@ struct FileData
 
     AudioSpanData getData()
     {
+        ASSERT(readerCount > 0);
         if (availableFrames > preloadedData.getNumFrames())
             return { AudioSpan<const float>(fileData).first(availableFrames), *this };
         else
@@ -186,6 +188,7 @@ public:
         if (!data)
             return;
 
+        // short time spin lock
         std::lock_guard<SpinMutex> guard { data->garbageMutex };
         data->readerCount += 1;
     }
@@ -455,6 +458,7 @@ public:
         std::atomic<uint32_t> runningRender = { 0 };
         std::chrono::time_point<std::chrono::high_resolution_clock> lastGarbageCollection_ = {};
         std::unique_ptr<std::thread> garbageThread {};
+        // this semaphore should be static in mac.
         static RTSemaphore semGarbageBarrier;
         void garbageJob();
 

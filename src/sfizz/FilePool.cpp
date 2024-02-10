@@ -47,10 +47,10 @@
 using namespace std::placeholders;
 
 sfz::FilePool::GlobalObject::GlobalObject(size_t num_threads)
-: lastGarbageCollection_ { std::chrono::high_resolution_clock::now() },
-  garbageThread { new std::thread( &GlobalObject::garbageJob, this ) },
+: lastGarbageCollection_ { highResNow() },
   threadPool { new ThreadPool(num_threads) }
 {
+    garbageThread.reset(new std::thread(&GlobalObject::garbageJob, this));
 }
 
 sfz::FilePool::GlobalObject::~GlobalObject()
@@ -60,6 +60,8 @@ sfz::FilePool::GlobalObject::~GlobalObject()
     semGarbageBarrier.post(ec);
     ASSERT(!ec);
     garbageThread->join();
+    // clear semaphore
+    while (semGarbageBarrier.try_wait());
 }
 
 RTSemaphore sfz::FilePool::GlobalObject::semGarbageBarrier { 0 };
@@ -827,7 +829,7 @@ void sfz::FilePool::GlobalObject::garbageJob()
         if (runningRender != 0) {
             continue;
         }
-        const auto now = std::chrono::high_resolution_clock::now();
+        const auto now = highResNow();
         const auto timeSinceLastCollection =
         std::chrono::duration_cast<std::chrono::seconds>(now - lastGarbageCollection_);
 
@@ -863,11 +865,15 @@ void sfz::FilePool::GlobalObject::garbageJob()
                     if (secondsIdle < config::fileClearingPeriod)
                         continue;
 
+                    // construct/destruct outside the lock
                     FileAudioBuffer garbage;
+                    // short time spin lock
                     std::unique_lock<SpinMutex> guard2 { data->garbageMutex, std::try_to_lock };
                     if (guard2.owns_lock() && data->readerCount == 0) {
+                        if (data->status != FileData::Status::FullLoaded) {
+                            data->status = FileData::Status::Preloaded;
+                        }
                         data->availableFrames = 0;
-                        data->status = FileData::Status::Preloaded;
                         garbage = std::move(data->fileData);
                     }
                 }
