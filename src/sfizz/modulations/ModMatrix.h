@@ -57,6 +57,8 @@ public:
      * @brief Register a modulation source inside the matrix.
      * If it is already present, it just returns the existing id.
      *
+     * @note Might move the sources_ vector.
+     *
      * @param key source key
      * @param gen generator
      * @param flags source flags
@@ -65,6 +67,8 @@ public:
 
     /**
      * @brief Register a modulation target inside the matrix.
+     *
+     * @note Might move the targets_ vector.
      *
      * @param key target key
      * @param region target region
