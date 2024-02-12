@@ -226,7 +226,7 @@ TEST_CASE("[Polyphony] Self-masking")
     synth.noteOn(1, 64, 62);
     synth.noteOn(2, 64, 64);
     synth.renderBlock(buffer);
-    //REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
+    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
     REQUIRE( numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 63_norm);
     REQUIRE(!synth.getVoiceView(0)->offedOrFree());
@@ -268,7 +268,7 @@ TEST_CASE("[Polyphony] Self-masking with the exact same velocity")
     synth.noteOn(1, 64, 63 );
     synth.noteOn(2, 64, 63 );
     synth.renderBlock(buffer);
-    //REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
+    REQUIRE( synth.getNumActiveVoices() == 3 ); // One of these is releasing
     REQUIRE( numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 64_norm);
     REQUIRE(!synth.getVoiceView(0)->offedOrFree());
@@ -355,7 +355,7 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups")
     synth.noteOn(0, 64, 62 );
     synth.noteOn(1, 64, 63 );
     synth.renderBlock(buffer);
-    //REQUIRE( synth.getNumActiveVoices() == 4); // Both notes are playing
+    REQUIRE( synth.getNumActiveVoices() == 4); // Both notes are playing
     REQUIRE(numPlayingVoices(synth) == 2 );
     REQUIRE( synth.getVoiceView(0)->getTriggerEvent().value == 62_norm);
     REQUIRE( synth.getVoiceView(0)->offedOrFree()); // got killed
@@ -640,7 +640,7 @@ TEST_CASE("[Polyphony] A note coming one sample after another note can choke it"
     synth.noteOn(1, 69, 63);
     synth.noteOn(2, 81, 127);
     synth.renderBlock(buffer);
-    //REQUIRE( activeSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav" } );
+    REQUIRE( activeSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav" } );
     REQUIRE( playingSamples(synth) == std::vector<std::string> { "kick.wav" } );
 }
 

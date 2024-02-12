@@ -860,10 +860,10 @@ TEST_CASE("[Synth] Release (Different sostenuto CC)")
         synth.noteOff(3, 62, 85);
         synth.noteOff(3, 64, 85);
         synth.renderBlock(buffer);
-        //REQUIRE( synth.getNumActiveVoices() == 3 );
+        REQUIRE( synth.getNumActiveVoices() == 3 );
         synth.cc(4, 54, 0);
         synth.renderBlock(buffer);
-        //REQUIRE( synth.getNumActiveVoices() == 4 );
+        REQUIRE( synth.getNumActiveVoices() == 4 );
     }
 }
 

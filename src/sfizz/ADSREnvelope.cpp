@@ -210,14 +210,17 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
         case State::Fadeout:
             while (count < size && (currentValue += transitionDelta) > 0)
                 output[count++] = currentValue;
+                releaseValue = currentValue;
             if (currentValue <= 0) {
                 currentState = State::Done;
                 currentValue = 0;
+                releaseValue = currentValue;
             }
             break;
         default:
             count = size;
             currentValue = 0.0;
+            releaseValue = currentValue;
             sfz::fill(output, currentValue);
             break;
         }
