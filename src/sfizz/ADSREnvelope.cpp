@@ -123,11 +123,11 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
         switch (currentState) {
         case State::Delay:
             attackCount = 0;
-            while (count < size && delay-- > 0) {
+            while (count < size && delay-- >= 0) {
                 currentValue = start;
                 output[count++] = currentValue;
             }
-            if (delay <= 0)
+            if (delay < 0)
             {
                 currentState = State::Attack;
             }
