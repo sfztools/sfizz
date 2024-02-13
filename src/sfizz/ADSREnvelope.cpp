@@ -133,14 +133,14 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             }
             break;
         case State::Attack:
-            while (count < size && (currentValue) < 1)
+            while (count < size && currentValue < 1)
             {
+                output[count++] = currentValue;
+                attackCount += attackStep;
                 if (attackShape < 0)
                     currentValue = start + (1 - start) * pow(attackCount, -attackShape + 1.0f);
                 else
                     currentValue = start + (1 - start) * pow(attackCount, 1.0f / (attackShape + 1.0f));
-                output[count++] = currentValue;
-                attackCount = min(attackCount + attackStep, 1.0f);
             }
             if (currentValue >= 1) {
                 currentValue = 1;
@@ -159,14 +159,14 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             }
             break;
         case State::Decay:
-            while (count < size && (currentValue > sustain))
+            while (count < size && currentValue > sustainThreshold)
             {
+                output[count++] = currentValue;
+                decayCount -= decayRate;
                 if (decayShape < 0)
                     currentValue = sustain + (1.0f - sustain) * pow(decayCount, -decayShape + 1.0f);
                 else
                     currentValue = sustain + (1.0f - sustain) * pow(decayCount, 1.0f / (decayShape + 1.0f));
-                output[count++] = currentValue;
-                decayCount = clamp(decayCount - decayRate, 0.0f, 1.0f);
             }
             if (currentValue <= sustainThreshold) {
                 currentState = State::Sustain;
@@ -187,14 +187,14 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             break;
         case State::Release:
             previousValue = currentValue;
-            while (count < size && (currentValue > config::egReleaseThreshold))
+            while (count < size && currentValue > config::egReleaseThreshold)
             {
+                output[count++] = previousValue = currentValue;
+                releaseCount -= releaseRate;
                 if (releaseShape < 0)
                     currentValue = releaseValue * pow(releaseCount, -releaseShape + 1.0f);
                 else
                     currentValue = releaseValue * pow(releaseCount, 1.0f / (releaseShape + 1.0f));
-                output[count++] = previousValue = currentValue;
-                releaseCount = clamp(releaseCount - releaseRate, 0.0f, 1.0f);
             }
             if (currentValue <= config::egReleaseThreshold) {
                 currentState = State::Fadeout;
@@ -219,11 +219,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
         }
 
         if (shouldRelease)
-        {
             releaseDelay = std::max(-1, releaseDelay - static_cast<int>(count));
-            releaseValue = currentValue;
-            releaseCount = 1;
-        }
 
         output.remove_prefix(count);
     }
