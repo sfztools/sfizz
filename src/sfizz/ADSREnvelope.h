@@ -120,15 +120,6 @@ private:
     bool shouldRelease { false };
     bool freeRunning { false };
     Float transitionDelta {};
-    Float attackCount { 0 };
-    Float decayCount { 1 };
-    Float releaseCount { 1 };
-    Float releaseValue { 0 };
-
-    Float attackShape {Default::flexEGPointShape};
-    Float decayShape {Default::flexEGPointShape3};
-    Float releaseShape {Default::flexEGPointShape3};
-
     LEAK_DETECTOR(ADSREnvelope);
 };
 

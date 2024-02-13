@@ -33,8 +33,6 @@ enum InterpolatorModel : int {
     kInterpolatorSinc60,
     // a windowed-sinc 72-point interpolator
     kInterpolatorSinc72,
-    // a hybrid interpolation with a lo-fi sound
-    kInterpolatorLoFi,
 };
 
 /**
@@ -63,7 +61,7 @@ void initializeInterpolators();
  * @return R
  */
 template <InterpolatorModel M, class R>
-R interpolate(const R* values, R coeff, float mod = 1.0f);
+R interpolate(const R* values, R coeff);
 
 } // namespace sfz
 

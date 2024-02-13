@@ -35,9 +35,9 @@ template <InterpolatorModel M, class R>
 class Interpolator;
 
 template <InterpolatorModel M, class R>
-inline R interpolate(const R* values, R coeff, float mod)
+inline R interpolate(const R* values, R coeff)
 {
-    return Interpolator<M, R>::process(values, coeff, mod);
+    return Interpolator<M, R>::process(values, coeff);
 }
 
 //------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ template <class R>
 class Interpolator<kInterpolatorNearest, R>
 {
 public:
-    static inline R process(const R* values, R coeff, float mod)
+    static inline R process(const R* values, R coeff)
     {
         return values[coeff > static_cast<R>(0.5)];
     }
@@ -60,7 +60,7 @@ template <class R>
 class Interpolator<kInterpolatorLinear, R>
 {
 public:
-    static inline R process(const R* values, R coeff, float mod)
+    static inline R process(const R* values, R coeff)
     {
         return values[0] * (static_cast<R>(1.0) - coeff) + values[1] * coeff;
     }
@@ -74,7 +74,7 @@ template <>
 class Interpolator<kInterpolatorHermite3, float>
 {
 public:
-    static inline float process(const float* values, float coeff, float mod)
+    static inline float process(const float* values, float coeff)
     {
         simde__m128 x = simde_mm_sub_ps(simde_mm_setr_ps(-1, 0, 1, 2), simde_mm_set1_ps(coeff));
         simde__m128 h = hermite3x4(x);
@@ -91,7 +91,7 @@ template <class R>
 class Interpolator<kInterpolatorHermite3, R>
 {
 public:
-    static inline R process(const R* values, R coeff, float mod)
+    static inline R process(const R* values, R coeff)
     {
         R y = 0;
         for (int i = -1; i < 3; ++i) {
@@ -110,7 +110,7 @@ template <>
 class Interpolator<kInterpolatorBspline3, float>
 {
 public:
-    static inline float process(const float* values, float coeff, float mod)
+    static inline float process(const float* values, float coeff)
     {
         simde__m128 x = simde_mm_sub_ps(simde_mm_setr_ps(-1, 0, 1, 2), simde_mm_set1_ps(coeff));
         simde__m128 h = bspline3x4(x);
@@ -127,7 +127,7 @@ template <class R>
 class Interpolator<kInterpolatorBspline3, R>
 {
 public:
-    static inline R process(const R* values, R coeff, float mod)
+    static inline R process(const R* values, R coeff)
     {
         R y = 0;
         for (int i = -1; i < 3; ++i) {
@@ -201,7 +201,7 @@ class SincInterpolator<float, Points>
 public:
     static_assert(Points % 4 == 0, "Windowed sinc must be multiple of 4");
 
-    static inline float process(const float* values, float coeff, float mod)
+    static inline float process(const float* values, float coeff)
     {
         const auto &ws = *SincInterpolatorTraits<Points>::windowedSinc;
 
@@ -229,7 +229,7 @@ template <class R, size_t Points>
 class SincInterpolator
 {
 public:
-    static inline R process(const R* values, R coeff, float mod)
+    static inline R process(const R* values, R coeff)
     {
         const auto &ws = *SincInterpolatorTraits<Points>::windowedSinc;
 
@@ -263,45 +263,5 @@ template <class R>
 class Interpolator<kInterpolatorSinc60, R> : public SincInterpolator<R, 60> {};
 template <class R>
 class Interpolator<kInterpolatorSinc72, R> : public SincInterpolator<R, 72> {};
-
-//------------------------------------------------------------------------------
-// Lo-Fi, SSE specialization
-
-#if SIMDE_NATURAL_VECTOR_SIZE_GE(128)
-template <>
-class Interpolator<kInterpolatorLoFi, float>
-{
-public:
-    static inline float process(const float* values, float coeff, float mod)
-    {
-        if (mod <= 0.5f)
-            coeff = std::pow(coeff, std::pow(2.0f / mod, 0.5f));
-        simde__m128 x = simde_mm_sub_ps(simde_mm_setr_ps(-1, 0, 1, 2), simde_mm_set1_ps(coeff));
-        simde__m128 h = hermite3x4(x);
-        simde__m128 y = simde_mm_mul_ps(h, simde_mm_loadu_ps(values - 1));
-        return simde_vaddvq_f32(simde__m128_to_simde_float32x4(y));
-    }
-};
-#endif
-
-//------------------------------------------------------------------------------
-// Lo-Fi, generic
-
-template <class R>
-class Interpolator<kInterpolatorLoFi, R>
-{
-public:
-    static inline R process(const R* values, R coeff, float mod)
-    {
-        if (mod <= 0.5f)
-            coeff = std::pow(coeff, std::pow(2.0f / mod, 0.5f));
-        R y = 0;
-        for (int i = -1; i < 3; ++i) {
-            R h = hermite3<R>(i - coeff);
-            y += h * values[i];
-        }
-        return y;
-    }
-};
 
 } // namespace sfz
