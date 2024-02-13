@@ -1159,7 +1159,6 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
     { // Main render block
         ScopedTiming logger { callbackBreakdown.renderMethod, ScopedTiming::Operation::addToDuration };
-        tempMixSpan->fill(0.0f);
 
         for (auto& voice : impl.voiceManager_) {
             if (voice.isFree())
@@ -1197,6 +1196,7 @@ void Synth::renderBlock(AudioSpan<float> buffer) noexcept
 
         const int numChannels = static_cast<int>(buffer.getNumChannels());
         for (int i = 0; i < impl.numOutputs_; ++i) {
+            tempMixSpan->fill(0.0f);
             const auto outputStart = numChannels == 0 ? 0 : (2 * i) % numChannels;
             auto outputSpan = buffer.getStereoSpan(outputStart);
             const auto& effectBuses = impl.getEffectBusesForOutput(i);
