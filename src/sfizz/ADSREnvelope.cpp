@@ -56,10 +56,7 @@ void ADSREnvelope::reset(const EGDescription& desc, const Region& region, int de
         || (region.loopMode == LoopMode::one_shot && region.isOscillator())
     );
     currentValue = this->start;
-    attackCount = 0;
-    decayCount = 1;
-    releaseCount = 1;
-    releaseValue = currentValue;
+    releaseValue = 0;
 }
 
 void ADSREnvelope::updateValues(int delay) noexcept
@@ -116,6 +113,8 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
                 // release takes effect this frame
                 currentState = State::Release;
                 releaseDelay = -1;
+                releaseValue = currentValue;
+                releaseCount = 1;
             }
         }
 
@@ -123,6 +122,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
 
         switch (currentState) {
         case State::Delay:
+            attackCount = 0;
             while (count < size && delay-- > 0) {
                 currentValue = start;
                 output[count++] = currentValue;
@@ -148,6 +148,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             }
             break;
         case State::Hold:
+            decayCount = 1;
             while (count < size && hold-- > 0)
             {
                 output[count++] = currentValue;
@@ -212,13 +213,17 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             break;
         default:
             count = size;
-            currentValue = 0.0;
+            releaseValue = currentValue = 0.0;
             sfz::fill(output, currentValue);
             break;
         }
 
         if (shouldRelease)
+        {
             releaseDelay = std::max(-1, releaseDelay - static_cast<int>(count));
+            releaseValue = currentValue;
+            releaseCount = 1;
+        }
 
         output.remove_prefix(count);
     }
