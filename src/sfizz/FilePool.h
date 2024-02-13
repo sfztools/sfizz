@@ -67,7 +67,7 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileData
 {
-    enum class Status { Invalid, Preloaded, Streaming, Done };
+    enum class Status { Invalid, Preloaded, Streaming, Done, FullLoaded };
     FileData() = default;
     FileData(FileAudioBuffer preloaded, FileInformation info)
     : preloadedData(std::move(preloaded)), information(std::move(info))

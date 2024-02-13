@@ -332,11 +332,14 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
 
     const auto existingFile = preloadedFiles.find(fileId);
     if (existingFile != preloadedFiles.end()) {
-        if (framesToLoad > existingFile->second.preloadedData.getNumFrames()) {
+        auto& fileData = existingFile->second;
+        if (framesToLoad > fileData.preloadedData.getNumFrames()) {
             preloadedFiles[fileId].information.maxOffset = maxOffset;
             preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad);
+            if (fileData.status == FileData::Status::Preloaded)
+                fileData.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
         }
-        existingFile->second.preloadCallCount++;
+        fileData.preloadCallCount++;
     } else {
         fileInformation->sampleRate = static_cast<double>(reader->sampleRate());
         auto insertedPair = preloadedFiles.insert_or_assign(fileId, {
@@ -344,7 +347,7 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
             *fileInformation
         });
 
-        insertedPair.first->second.status = FileData::Status::Preloaded;
+        insertedPair.first->second.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
         insertedPair.first->second.preloadCallCount++;
     }
 
@@ -399,7 +402,7 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
         readFromFile(*reader, frames),
         *fileInformation
     });
-    insertedPair.first->second.status = FileData::Status::Preloaded;
+    insertedPair.first->second.status = FileData::Status::FullLoaded;
     insertedPair.first->second.preloadCallCount++;
     return { &insertedPair.first->second };
 }
@@ -417,7 +420,7 @@ sfz::FileDataHolder sfz::FilePool::loadFromRam(const FileId& fileId, const std::
         readFromFile(*reader, frames),
         *fileInformation
     });
-    insertedPair.first->second.status = FileData::Status::Preloaded;
+    insertedPair.first->second.status = FileData::Status::FullLoaded;
     insertedPair.first->second.preloadCallCount++;
     DBG("Added a file " << fileId.filename());
     return { &insertedPair.first->second };
@@ -435,8 +438,9 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
         return {};
     }
 
-    if (!loadInRam) {
-        QueuedFileData queuedData { fileId, &preloaded->second };
+    auto& fileData = preloaded->second;
+    if (fileData.status != FileData::Status::FullLoaded) {
+        QueuedFileData queuedData { fileId, &fileData };
         if (!filesToLoad->try_push(queuedData)) {
             DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
             return {};
@@ -458,10 +462,19 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
 
     // Update all the preloaded sizes
     for (auto& preloadedFile : preloadedFiles) {
-        const auto maxOffset = preloadedFile.second.information.maxOffset;
-        fs::path file { rootDirectory / preloadedFile.first.filename() };
-        AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
-        preloadedFile.second.preloadedData = readFromFile(*reader, preloadSize + maxOffset);
+        auto& fileId = preloadedFile.first;
+        auto& fileData = preloadedFile.second;
+        const uint32_t maxOffset = fileData.information.maxOffset;
+        fs::path file { rootDirectory / fileId.filename() };
+        AudioReaderPtr reader = createAudioReader(file, fileId.isReverse());
+        const uint32_t frames = static_cast<uint32_t>(reader->frames());
+        const uint32_t framesToLoad = min(frames, maxOffset + preloadSize);
+        fileData.preloadedData = readFromFile(*reader, framesToLoad);
+
+        const FileData::Status status = fileData.status;
+        if (status == FileData::Status::FullLoaded || status == FileData::Status::Preloaded) {
+            fileData.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
+        }
     }
 }
 
@@ -619,10 +632,12 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
         for (auto& preloadedFile : preloadedFiles) {
             fs::path file { rootDirectory / preloadedFile.first.filename() };
             AudioReaderPtr reader = createAudioReader(file, preloadedFile.first.isReverse());
-            preloadedFile.second.preloadedData = readFromFile(
+            auto& fileData = preloadedFile.second;
+            fileData.preloadedData = readFromFile(
                 *reader,
-                preloadedFile.second.information.end
+                fileData.information.end
             );
+            fileData.status = FileData::Status::FullLoaded;
         }
     } else {
         setPreloadSize(preloadSize);
