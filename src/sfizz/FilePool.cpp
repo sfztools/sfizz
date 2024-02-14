@@ -336,8 +336,9 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
         if (framesToLoad > fileData.preloadedData.getNumFrames()) {
             preloadedFiles[fileId].information.maxOffset = maxOffset;
             preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad);
-            if (fileData.status == FileData::Status::Preloaded)
-                fileData.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
+            if (frames == framesToLoad && fileData.status != FileData::Status::FullLoaded)
+                // Forced overwrite status
+                fileData.status = FileData::Status::FullLoaded;
         }
         fileData.preloadCallCount++;
     } else {
@@ -347,6 +348,7 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
             *fileInformation
         });
 
+        // Initially set status
         insertedPair.first->second.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
         insertedPair.first->second.preloadCallCount++;
     }
@@ -402,6 +404,7 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
         readFromFile(*reader, frames),
         *fileInformation
     });
+    // Initially set status
     insertedPair.first->second.status = FileData::Status::FullLoaded;
     insertedPair.first->second.preloadCallCount++;
     return { &insertedPair.first->second };
@@ -420,6 +423,7 @@ sfz::FileDataHolder sfz::FilePool::loadFromRam(const FileId& fileId, const std::
         readFromFile(*reader, frames),
         *fileInformation
     });
+    // Initially set status
     insertedPair.first->second.status = FileData::Status::FullLoaded;
     insertedPair.first->second.preloadCallCount++;
     DBG("Added a file " << fileId.filename());
@@ -471,9 +475,15 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
         const uint32_t framesToLoad = min(frames, maxOffset + preloadSize);
         fileData.preloadedData = readFromFile(*reader, framesToLoad);
 
-        const FileData::Status status = fileData.status;
-        if (status == FileData::Status::FullLoaded || status == FileData::Status::Preloaded) {
-            fileData.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
+        FileData::Status status = fileData.status;
+        bool fullLoaded = frames == framesToLoad;
+        if (fullLoaded && status != FileData::Status::FullLoaded) {
+            // Forced overwrite status
+            fileData.status = FileData::Status::FullLoaded;
+        }
+        else if (!fullLoaded && status == FileData::Status::FullLoaded) {
+            // Exchange status
+            fileData.status.compare_exchange_strong(status, FileData::Status::Preloaded);
         }
     }
 }
@@ -522,7 +532,10 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
 
     streamFromFile(*reader, data.data->fileData, &data.data->availableFrames);
 
-    data.data->status = FileData::Status::Done;
+    currentStatus = data.data->status.load();
+    if (currentStatus == FileData::Status::Streaming) {
+        data.data->status.compare_exchange_strong(currentStatus, FileData::Status::Done);
+    }
 
     std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
     if (absl::c_find(lastUsedFiles, *id) == lastUsedFiles.end())
@@ -637,6 +650,7 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
                 *reader,
                 fileData.information.end
             );
+            // Initially set status
             fileData.status = FileData::Status::FullLoaded;
         }
     } else {
@@ -663,10 +677,13 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
         }
 
         sfz::FileData& data = it->second;
-        if (data.status == FileData::Status::Preloaded)
-            return true;
 
-        if (data.status != FileData::Status::Done)
+        auto status = data.status.load();
+        if (data.availableFrames == 0) {
+            return status == FileData::Status::Preloaded || status == FileData::Status::FullLoaded;
+        }
+
+        if (status != FileData::Status::Done)
             return false;
 
         if (data.readerCount != 0)
@@ -676,8 +693,12 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
         if (secondsIdle < config::fileClearingPeriod)
             return false;
 
+        // Queue garbage collection
+        // At first set availableFromes to 0
+        // Then forced set status
         data.availableFrames = 0;
-        data.status = FileData::Status::Preloaded;
+        if (status != FileData::Status::FullLoaded)
+            data.status = FileData::Status::Preloaded;
         garbageToCollect.push_back(std::move(data.fileData));
         return true;
     });
