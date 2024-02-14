@@ -683,8 +683,13 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
             return status == FileData::Status::Preloaded || status == FileData::Status::FullLoaded;
         }
 
-        if (status != FileData::Status::Done)
-            return false;
+        switch (status) {
+            case FileData::Status::Invalid:
+            case FileData::Status::Streaming:
+                return false;
+            default:
+                break;
+        }
 
         if (data.readerCount != 0)
             return false;
