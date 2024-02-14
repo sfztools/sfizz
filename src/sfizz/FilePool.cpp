@@ -678,21 +678,21 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
 
         sfz::FileData& data = it->second;
 
+        if (data.readerCount != 0)
+            return false;
+
         auto status = data.status.load();
         if (data.availableFrames == 0) {
             return status == FileData::Status::Preloaded || status == FileData::Status::FullLoaded;
         }
 
-        switch (status) {
+        switch(status) {
             case FileData::Status::Invalid:
             case FileData::Status::Streaming:
                 return false;
             default:
                 break;
         }
-
-        if (data.readerCount != 0)
-            return false;
 
         const auto secondsIdle = std::chrono::duration_cast<std::chrono::seconds>(now - data.lastViewerLeftAt).count();
         if (secondsIdle < config::fileClearingPeriod)
