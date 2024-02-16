@@ -467,12 +467,12 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
     for (auto& preloadedFile : preloadedFiles) {
         auto& fileId = preloadedFile.first;
         auto& fileData = preloadedFile.second;
-        const uint32_t maxOffset = fileData.information.maxOffset;
+        const auto maxOffset = fileData.information.maxOffset;
         fs::path file { rootDirectory / fileId.filename() };
         AudioReaderPtr reader = createAudioReader(file, fileId.isReverse());
-        const uint32_t frames = static_cast<uint32_t>(reader->frames());
-        const uint32_t framesToLoad = min(frames, maxOffset + preloadSize);
-        fileData.preloadedData = readFromFile(*reader, framesToLoad);
+        const auto frames = reader->frames();
+        const auto framesToLoad = min(frames, maxOffset + preloadSize);
+        fileData.preloadedData = readFromFile(*reader, static_cast<uint32_t>(framesToLoad));
         fileData.fullyLoaded = frames == framesToLoad;
     }
 }
