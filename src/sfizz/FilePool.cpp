@@ -334,11 +334,9 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
     if (existingFile != preloadedFiles.end()) {
         auto& fileData = existingFile->second;
         if (framesToLoad > fileData.preloadedData.getNumFrames()) {
-            preloadedFiles[fileId].information.maxOffset = maxOffset;
-            preloadedFiles[fileId].preloadedData = readFromFile(*reader, framesToLoad);
-            if (frames == framesToLoad && fileData.status != FileData::Status::FullLoaded)
-                // Forced overwrite status
-                fileData.status = FileData::Status::FullLoaded;
+            fileData.information.maxOffset = maxOffset;
+            fileData.preloadedData = readFromFile(*reader, framesToLoad);
+            fileData.fullyLoaded = frames == framesToLoad;
         }
         fileData.preloadCallCount++;
     } else {
@@ -348,9 +346,9 @@ bool sfz::FilePool::preloadFile(const FileId& fileId, uint32_t maxOffset) noexce
             *fileInformation
         });
 
-        // Initially set status
-        insertedPair.first->second.status = frames == framesToLoad ? FileData::Status::FullLoaded : FileData::Status::Preloaded;
         insertedPair.first->second.preloadCallCount++;
+        insertedPair.first->second.status = FileData::Status::Preloaded;
+        insertedPair.first->second.fullyLoaded = framesToLoad == frames;
     }
 
     return true;
@@ -404,9 +402,9 @@ sfz::FileDataHolder sfz::FilePool::loadFile(const FileId& fileId) noexcept
         readFromFile(*reader, frames),
         *fileInformation
     });
-    // Initially set status
-    insertedPair.first->second.status = FileData::Status::FullLoaded;
     insertedPair.first->second.preloadCallCount++;
+    insertedPair.first->second.status = FileData::Status::Preloaded;
+    insertedPair.first->second.fullyLoaded = true;
     return { &insertedPair.first->second };
 }
 
@@ -423,9 +421,9 @@ sfz::FileDataHolder sfz::FilePool::loadFromRam(const FileId& fileId, const std::
         readFromFile(*reader, frames),
         *fileInformation
     });
-    // Initially set status
-    insertedPair.first->second.status = FileData::Status::FullLoaded;
     insertedPair.first->second.preloadCallCount++;
+    insertedPair.first->second.status = FileData::Status::Preloaded;
+    insertedPair.first->second.fullyLoaded = true;
     DBG("Added a file " << fileId.filename());
     return { &insertedPair.first->second };
 }
@@ -443,7 +441,7 @@ sfz::FileDataHolder sfz::FilePool::getFilePromise(const std::shared_ptr<FileId>&
     }
 
     auto& fileData = preloaded->second;
-    if (fileData.status != FileData::Status::FullLoaded) {
+    if (!fileData.fullyLoaded) {
         QueuedFileData queuedData { fileId, &fileData };
         if (!filesToLoad->try_push(queuedData)) {
             DBG("[sfizz] Could not enqueue the file to load for " << fileId << " (queue capacity " << filesToLoad->capacity() << ")");
@@ -474,17 +472,7 @@ void sfz::FilePool::setPreloadSize(uint32_t preloadSize) noexcept
         const uint32_t frames = static_cast<uint32_t>(reader->frames());
         const uint32_t framesToLoad = min(frames, maxOffset + preloadSize);
         fileData.preloadedData = readFromFile(*reader, framesToLoad);
-
-        FileData::Status status = fileData.status;
-        bool fullLoaded = frames == framesToLoad;
-        if (fullLoaded && status != FileData::Status::FullLoaded) {
-            // Forced overwrite status
-            fileData.status = FileData::Status::FullLoaded;
-        }
-        else if (!fullLoaded && status == FileData::Status::FullLoaded) {
-            // Exchange status
-            fileData.status.compare_exchange_strong(status, FileData::Status::Preloaded);
-        }
+        fileData.fullyLoaded = frames == framesToLoad;
     }
 }
 
@@ -507,35 +495,40 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
         return;
     }
 
-    FileData::Status currentStatus = data.data->status.load();
+    FileData::Status currentStatus;
 
     unsigned spinCounter { 0 };
-    while (currentStatus == FileData::Status::Invalid) {
-        // Spin until the state changes
-        if (spinCounter > 1024) {
-            DBG("[sfizz] " << *id << " is stuck on Invalid? Leaving the load");
-            return;
-        }
 
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    while (1) {
         currentStatus = data.data->status.load();
-        spinCounter += 1;
+        while (currentStatus == FileData::Status::Invalid) {
+            // Spin until the state changes
+            if (spinCounter > 1024) {
+                DBG("[sfizz] " << *id << " is stuck on Invalid? Leaving the load");
+                return;
+            }
+
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            currentStatus = data.data->status.load();
+            spinCounter += 1;
+        }
+        // wait for garbage collection
+        if (currentStatus == FileData::Status::GarbageCollecting) {
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
+            continue;
+        }
+        // Already loading or loaded
+        if (currentStatus != FileData::Status::Preloaded)
+            return;
+
+        // go outside loop if this gets token
+        if (data.data->status.compare_exchange_strong(currentStatus, FileData::Status::Streaming))
+            break;
     }
-
-    // Already loading or loaded
-    if (currentStatus != FileData::Status::Preloaded)
-        return;
-
-    // Someone else got the token
-    if (!data.data->status.compare_exchange_strong(currentStatus, FileData::Status::Streaming))
-        return;
 
     streamFromFile(*reader, data.data->fileData, &data.data->availableFrames);
 
-    currentStatus = data.data->status.load();
-    if (currentStatus == FileData::Status::Streaming) {
-        data.data->status.compare_exchange_strong(currentStatus, FileData::Status::Done);
-    }
+    data.data->status = FileData::Status::Done;
 
     std::lock_guard<SpinMutex> guard { garbageAndLastUsedMutex };
     if (absl::c_find(lastUsedFiles, *id) == lastUsedFiles.end())
@@ -650,8 +643,7 @@ void sfz::FilePool::setRamLoading(bool loadInRam) noexcept
                 *reader,
                 fileData.information.end
             );
-            // Initially set status
-            fileData.status = FileData::Status::FullLoaded;
+            fileData.fullyLoaded = true;
         }
     } else {
         setPreloadSize(preloadSize);
@@ -681,31 +673,29 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
         if (data.readerCount != 0)
             return false;
 
-        auto status = data.status.load();
-        if (data.availableFrames == 0) {
-            return status == FileData::Status::Preloaded || status == FileData::Status::FullLoaded;
-        }
-
-        switch(status) {
-            case FileData::Status::Invalid:
-            case FileData::Status::Streaming:
-                return false;
-            default:
-                break;
-        }
-
         const auto secondsIdle = std::chrono::duration_cast<std::chrono::seconds>(now - data.lastViewerLeftAt).count();
         if (secondsIdle < config::fileClearingPeriod)
             return false;
 
-        // Queue garbage collection
-        // At first set availableFromes to 0
-        // Then forced set status
-        data.availableFrames = 0;
-        if (status != FileData::Status::FullLoaded)
+        auto status = data.status.load();
+        if (status == FileData::Status::Preloaded) {
+            // do the garbage collection when availableFrames != 0
+            if (data.availableFrames == 0) {
+                return true;
+            }
+        }
+        else if (status != FileData::Status::Done) {
+            return false;
+        }
+
+        // do garbage collection when changing the status is success
+        if (data.status.compare_exchange_strong(status, FileData::Status::GarbageCollecting)) {
+            data.availableFrames = 0;
+            garbageToCollect.push_back(std::move(data.fileData));
             data.status = FileData::Status::Preloaded;
-        garbageToCollect.push_back(std::move(data.fileData));
-        return true;
+            return true;
+        }
+        return false;
     });
 
     std::error_code ec;
