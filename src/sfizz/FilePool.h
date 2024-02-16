@@ -76,7 +76,8 @@ struct FileData
     }
     AudioSpan<const float> getData()
     {
-        if (availableFrames > preloadedData.getNumFrames())
+        ASSERT(readerCount > 0);
+        if (status != Status::GarbageCollecting && availableFrames > preloadedData.getNumFrames())
             return AudioSpan<const float>(fileData).first(availableFrames);
         else
             return AudioSpan<const float>(preloadedData);
