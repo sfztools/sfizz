@@ -67,7 +67,7 @@ struct FileInformation {
 // Strict C++11 disallows member initialization if aggregate initialization is to be used...
 struct FileData
 {
-    enum class Status { Invalid, Preloaded, Streaming, Done, FullLoaded };
+    enum class Status { Invalid, Preloaded, Streaming, Done, GarbageCollecting };
     FileData() = default;
     FileData(FileAudioBuffer preloaded, FileInformation info)
     : preloadedData(std::move(preloaded)), information(std::move(info))
@@ -113,6 +113,7 @@ struct FileData
     FileAudioBuffer fileData {};
     int preloadCallCount { 0 };
     std::atomic<Status> status { Status::Invalid };
+    bool fullyLoaded { false };
     std::atomic<size_t> availableFrames { 0 };
     std::atomic<int> readerCount { 0 };
     std::chrono::time_point<std::chrono::high_resolution_clock> lastViewerLeftAt;
