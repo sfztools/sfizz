@@ -39,6 +39,7 @@
 #include <memory>
 #include <thread>
 #include <system_error>
+#include <atomic_queue/defs.h>
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -514,7 +515,10 @@ void sfz::FilePool::loadingJob(const QueuedFileData& data) noexcept
         }
         // wait for garbage collection
         if (currentStatus == FileData::Status::GarbageCollecting) {
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
+            atomic_queue::spin_loop_pause();
+            atomic_queue::spin_loop_pause();
+            atomic_queue::spin_loop_pause();
+            atomic_queue::spin_loop_pause();
             continue;
         }
         // Already loading or loaded
