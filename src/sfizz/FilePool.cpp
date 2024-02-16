@@ -699,6 +699,7 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
             if (readerCount == 0) {
                 data.availableFrames = 0;
                 garbageToCollect.push_back(std::move(data.fileData));
+                data.status = FileData::Status::Preloaded;
                 return true;
             }
             data.status = status;
