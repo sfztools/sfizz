@@ -694,10 +694,14 @@ void sfz::FilePool::triggerGarbageCollection() noexcept
 
         // do garbage collection when changing the status is success
         if (data.status.compare_exchange_strong(status, FileData::Status::GarbageCollecting)) {
-            data.availableFrames = 0;
-            garbageToCollect.push_back(std::move(data.fileData));
-            data.status = FileData::Status::Preloaded;
-            return true;
+            // recheck readerCount
+            auto readerCount = data.readerCount.load();
+            if (readerCount == 0) {
+                data.availableFrames = 0;
+                garbageToCollect.push_back(std::move(data.fileData));
+                return true;
+            }
+            data.status = status;
         }
         return false;
     });
