@@ -23,6 +23,7 @@ env:
 jobs:
   clang_tidy:
     name: Clang Tidy
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-20.04
     timeout-minutes: 10
     steps:
