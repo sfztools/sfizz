@@ -101,7 +101,7 @@ void ADSREnvelope::getBlockInternal(absl::Span<Float> output) noexcept
             if (releaseDelay > 0) {
                 // prevent computing the segment further than release point
                 size = std::min<size_t>(size, releaseDelay);
-            } else if (releaseDelay == 0 && delay < 0) {
+            } else if (releaseDelay == 0 && delay <= 0) {
                 // release takes effect this frame
                 currentState = State::Release;
                 releaseDelay = -1;

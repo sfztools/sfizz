@@ -2160,3 +2160,46 @@ TEST_CASE("[Synth] Reuse offed voices in the last case scenario for new notes")
         REQUIRE( notes == std::vector<int> { i - 1, i } );
     }
 }
+
+TEST_CASE("[Synth] Note on and off at the maximum delay")
+{
+    sfz::Synth synth;
+    synth.setSampleRate(12800);
+    synth.setSamplesPerBlock(128);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/noteonoff.sfz", R"(
+        <region> loop_start=4 loop_end=124 ampeg_release=0.5 sample=looped_flute.wav
+    )");
+    synth.setNumVoices(128);
+    synth.noteOn(127, 64, 64);
+    CHECK(synth.getNumActiveVoices() == 1);
+    synth.noteOff(127, 64, 0);
+    CHECK(synth.getNumActiveVoices() == 1);
+    // Render for a while
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+    CHECK(synth.getNumActiveVoices() == 0);
+}
+
+TEST_CASE("[Synth] Note on and off with delay")
+{
+    sfz::Synth synth;
+    synth.setSampleRate(12800);
+    synth.setSamplesPerBlock(128);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/noteonoff.sfz", R"(
+        <region> loop_start=4 loop_end=124 ampeg_release=0.5 sample=looped_flute.wav
+    )");
+    synth.setNumVoices(128);
+
+    int i;
+    for (i = 0; i < 127; ++i) {
+        synth.noteOn(i, i, 64);
+        synth.noteOff(i+1, i, 0);
+    }
+    CHECK(synth.getNumActiveVoices() == 127);
+    // Render for a while
+    for (int i = 0; i < 100; ++i)
+        synth.renderBlock(buffer);
+    CHECK(synth.getNumActiveVoices() == 0);
+}
