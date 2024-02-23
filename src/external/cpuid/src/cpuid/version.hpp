@@ -11,7 +11,7 @@ namespace cpuid
 {
 /// Here we define the STEINWURF_CPUID_VERSION this should be updated on each
 /// release
-#define STEINWURF_CPUID_VERSION v8_0_0
+#define STEINWURF_CPUID_VERSION v9_0_0
 
 inline namespace STEINWURF_CPUID_VERSION
 {
