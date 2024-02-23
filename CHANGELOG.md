@@ -6,9 +6,31 @@ This project tries to adhere to [Semantic Versioning][2].
 
 ## [Unreleased]
 
+### Added
+
+- [invoke.hpp](https://github.com/BlackMATov/invoke.hpp/) dependency/Git submodule.
+- CI: build timeouts.
+- C++20 Support (#1235 by @KKQ-KKQ)
+
+### Changed
+
+- Refactor the messaging system
+  Trading off complexity when parsing/replying to the messages for complexity
+  in some templated and overloaded code blocks.
+- Truncate MIDI values when denormalizing (by @essej).
+- Improved note-on performance (#1232 by @KKQ-KKQ)
+- Updated abseil-cpp to 20240116.0.
+- Usual little CI improvements.
+
+### Fixed
+
+- Tweak SynthMessaging (#1241)
+- Fix a ModMatrix bug (#1242)
+- Fixed a bug that causes invalid effect output (#1243 by @KKQ-KKQ)
+
 ## [1.2.3] - 2024-01-15
 
-### Added 
+### Added
 
 - Support for curvecc opcodes on v1 EGs (@PythonBlue)
 - Support for `lotimer/hitimer` (@essej)
@@ -813,7 +835,8 @@ becoming a library to be used in other projects, plus a LV2 plugin.
 [1]: https://keepachangelog.com/en/1.0.0/
 [2]: https://semver.org/spec/v2.0.0.html
 
-[Unreleased]: https://github.com/sfztools/sfizz/compare/1.2.2...HEAD
+[Unreleased]: https://github.com/sfztools/sfizz/compare/1.2.3...HEAD
+[1.2.3]:  https://github.com/sfztools/sfizz/compare/1.2.2...1.2.3
 [1.2.2]:  https://github.com/sfztools/sfizz/compare/1.2.1...1.2.2
 [1.2.1]:  https://github.com/sfztools/sfizz/compare/1.2.0...1.2.1
 [1.2.0]:  https://github.com/sfztools/sfizz/compare/1.1.1...1.2.0
