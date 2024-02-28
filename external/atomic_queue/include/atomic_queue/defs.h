@@ -31,6 +31,12 @@ static inline void spin_loop_pause() noexcept {
      defined(__ARM_ARCH_8A__) || \
      defined(__aarch64__))
     asm volatile ("yield" ::: "memory");
+#elif defined(__riscv)
+#if defined(__riscv_zihintpause)
+    asm volatile ("pause" ::: "memory");
+#else
+    /* Encoding of the pause instruction, will be treated as nop if not supported by hardware */
+    asm volatile (".4byte 0x100000F");
 #else
     asm volatile ("nop" ::: "memory");
 #endif

@@ -55,6 +55,10 @@
 #define PLATFORM_MIPS 1
 #define PLATFORM_CLANG_MIPS 1
 #define PLATFORM_GCC_COMPATIBLE_MIPS 1
+#elif defined(__riscv)
+#define PLATFORM_RISCV 1
+#define PLATFORM_CLANG_RISCV 1
+#define PLATFORM_GCC_COMPATIBLE_RISCV 1
 #elif defined(__asmjs__)
 #define PLATFORM_ASMJS 1
 #define PLATFORM_CLANG_ASMJS 1
@@ -75,6 +79,10 @@
 #define PLATFORM_MIPS 1
 #define PLATFORM_GCC_MIPS 1
 #define PLATFORM_GCC_COMPATIBLE_MIPS 1
+#elif defined(__riscv)
+#define PLATFORM_RISCV 1
+#define PLATFORM_GCC_RISCV 1
+#define PLATFORM_GCC_COMPATIBLE_RISCV 1
 #endif
 #elif defined(_MSC_VER)
 #define PLATFORM_MSVC 1
