@@ -425,22 +425,22 @@ jobs:
       - archive_source_code
     steps:
       - name: macOS download
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: macOS tarball
 
       - name: Windows 32 download
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: Win32 zip package
 
       - name: Windows 64 download
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: Win64 zip package
 
       - name: Source code download
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: Source code tarball
 
