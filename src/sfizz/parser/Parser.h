@@ -12,6 +12,9 @@
 #include <absl/container/flat_hash_set.h>
 #include <string>
 #include <memory>
+#if defined(SFIZZ_FILEOPENPREEXEC)
+#include "../FileOpenPreexec.h"
+#endif
 
 namespace sfz {
 
@@ -32,6 +35,12 @@ public:
 
     void addExternalDefinition(absl::string_view id, absl::string_view value);
     void clearExternalDefinitions();
+
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    void parseFile(const fs::path& path, FileOpenPreexec &preexec);
+    void parseString(const fs::path& path, absl::string_view sfzView, FileOpenPreexec &preexec);
+    void parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader, FileOpenPreexec &preexec);
+#endif
 
     void parseFile(const fs::path& path);
     void parseString(const fs::path& path, absl::string_view sfzView);
@@ -56,10 +65,19 @@ public:
     void setListener(Listener* listener) noexcept { _listener = listener; }
 
 private:
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    void includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange, FileOpenPreexec &preexec);
+#else
     void includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange);
+#endif
     void addDefinition(absl::string_view id, absl::string_view value);
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    void processTopLevel(FileOpenPreexec& preexec);
+    void processDirective(FileOpenPreexec& preexec);
+#else
     void processTopLevel();
     void processDirective();
+#endif
     void processHeader();
     void processOpcode();
 

@@ -7,6 +7,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <set>
 
 namespace sfz {
 struct SourceRange;
@@ -24,6 +25,9 @@ public:
 
     // high-level parsing
     virtual void onParseFullBlock(const std::string& /*header*/, const std::vector<Opcode>& /*opcodes*/) {}
+#if defined(SFIZZ_BLOCKLIST_OPCODES)
+    virtual const std::set<std::string> *getOpcodesToBlock() { return nullptr; }
+#endif
 };
 
 } // namespace sfz

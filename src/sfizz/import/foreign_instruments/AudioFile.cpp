@@ -31,7 +31,12 @@ const char* AudioFileInstrumentFormat::name() const noexcept
 
 bool AudioFileInstrumentFormat::matchesFilePath(const fs::path& path) const
 {
+#if __cplusplus >= 202002L
+    auto ext_u8 = path.extension().u8string();
+    auto ext = (const char*)ext_u8.c_str();
+#else
     const std::string ext = path.extension().u8string();
+#endif
 
     for (absl::string_view knownExt : kRecognizedAudioExtensions) {
         if (absl::EqualsIgnoreCase(ext, knownExt))
@@ -51,7 +56,11 @@ std::string AudioFileInstrumentImporter::convertToSfz(const fs::path& path) cons
 {
     std::ostringstream os;
     os.imbue(std::locale::classic());
+#if __cplusplus >= 202002L
+    os << "<region>sample=" << (const char*)path.filename().u8string().c_str();
+#else
     os << "<region>sample=" << path.filename().u8string();
+#endif
     return os.str();
 }
 

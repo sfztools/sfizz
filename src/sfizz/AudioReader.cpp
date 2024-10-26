@@ -11,6 +11,9 @@
 #if defined(SFIZZ_USE_SNDFILE)
 #include <sndfile.h>
 #endif
+#if defined(SFIZZ_FILEOPENPREEXEC)
+#include "FileOpenPreexec.h"
+#endif
 #include <algorithm>
 
 namespace sfz {
@@ -388,12 +391,26 @@ static AudioReaderPtr createAudioReaderWithHandle(ST_AudioFile handle, std::uniq
 }
 
 AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, std::error_code* ec)
+#if defined(SFIZZ_FILEOPENPREEXEC)
+{
+    FileOpenPreexec preexec;
+    return createAudioReader(path, reverse, preexec, ec);
+}
+
+AudioReaderPtr createAudioReader(const fs::path& path, bool reverse, FileOpenPreexec& preexec, std::error_code* ec)
+#endif
 {
     ST_AudioFile handle;
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    preexec.executeFileOpen(path, [&handle](const fs::path& path) {
+#endif
 #if defined(_WIN32)
     handle.open_file_w(path.wstring().c_str());
 #else
     handle.open_file(path.c_str());
+#endif
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    });
 #endif
     return createAudioReaderWithHandle(std::move(handle),
         absl::make_unique<FileMetadataReader>(path), reverse, ec);

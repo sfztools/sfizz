@@ -29,7 +29,12 @@ const char* DecentSamplerInstrumentFormat::name() const noexcept
 
 bool DecentSamplerInstrumentFormat::matchesFilePath(const fs::path& path) const
 {
+#if __cplusplus >= 202002L
+    auto ext_u8 = path.extension().u8string();
+    auto ext = (const char*)ext_u8.c_str();
+#else
     const std::string ext = path.extension().u8string();
+#endif
     return absl::EqualsIgnoreCase(ext, ".dspreset");
 }
 

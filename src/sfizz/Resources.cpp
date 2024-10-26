@@ -19,6 +19,9 @@
 namespace sfz {
 
 struct Resources::Impl {
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    Impl(FileOpenPreexec& preexec_in) : filePool(preexec_in) {}
+#endif
     SynthConfig synthConfig;
     BufferPool bufferPool;
     MidiState midiState;
@@ -32,8 +35,13 @@ struct Resources::Impl {
     Metronome metronome;
 };
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+Resources::Resources(FileOpenPreexec& preexec_in)
+: impl_(new Impl(preexec_in))
+#else
 Resources::Resources()
-    : impl_(new Impl)
+: impl_(new Impl)
+#endif
 {
 }
 

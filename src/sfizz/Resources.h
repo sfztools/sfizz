@@ -21,11 +21,18 @@ class StretchTuning;
 class ModMatrix;
 class BeatClock;
 class Metronome;
+#if defined(SFIZZ_FILEOPENPREEXEC)
+class FileOpenPreexec;
+#endif
 
 class Resources
 {
 public:
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    Resources(FileOpenPreexec& preexec);
+#else
     Resources();
+#endif
     ~Resources();
 
     void setSampleRate(float samplerate);

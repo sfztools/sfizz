@@ -107,6 +107,16 @@ struct Opcode {
             category == kOpcodeStepCcN || category == kOpcodeSmoothCcN;
     }
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    /**
+     * @brief Compare the name
+     * 
+     * @param string string to compare to
+     * @return true if the name is equal to string, otherwise false
+     */
+    bool nameIsEqualToString(std::string_view string) const;
+#endif
+
     ///
     template <class T>
     absl::optional<T> readOptional(OpcodeSpec<T> spec) const { return readOptional(spec, value); }

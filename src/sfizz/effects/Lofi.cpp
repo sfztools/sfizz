@@ -66,7 +66,7 @@ namespace fx {
         }
     }
 
-    void Lofi::process(const float* const inputs[2], float* const outputs[2], unsigned nframes)
+    void Lofi::process(const float* const inputs[], float* const outputs[], unsigned nframes)
     {
         for (unsigned c = 0; c < EffectChannels; ++c) {
             _bitred[c].setDepth(_bitred_depth);

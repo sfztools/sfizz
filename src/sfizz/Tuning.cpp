@@ -145,9 +145,7 @@ Tunings::KeyboardMapping Tuning::Impl::mappingFromParameters(int rootKey, float 
     // root note is the start of next octave. like Sforzando
     rootKey = std::max(0, rootKey - 12);
 #endif
-    // fixed frequency of the root note
-    const double rootFrequency = tuningFrequency * std::exp2((rootKey - 69) / 12.0);
-    return Tunings::tuneNoteTo(rootKey, rootFrequency);
+    return Tunings::startScaleOnAndTuneNoteTo(rootKey, 69, tuningFrequency);
 }
 
 ///
@@ -256,6 +254,17 @@ bool Tuning::shouldReloadScala()
 {
     return impl_->shouldReloadScala();
 }
+
+::Tunings::Scale Tuning::getScale()
+{
+    return impl_->tuning().scale;
+}
+
+void Tuning::setScale(const ::Tunings::Scale &scale)
+{
+    impl_->updateScale(scale);
+}
+
 
 ///
 float StretchTuning::getRatioForIntegralKey(int key) const noexcept

@@ -8,6 +8,8 @@
 #if !defined(ST_AUDIO_FILE_USE_SNDFILE)
 #include "st_audiofile_libs.h"
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -23,6 +25,7 @@ struct st_audio_file {
         drmp3 *mp3;
         stb_vorbis* ogg;
         WavpackContext* wv;
+        FILE* fp;
     };
 
     union {
@@ -30,6 +33,7 @@ struct st_audio_file {
         struct { uint64_t frames; } mp3;
         struct { uint32_t channels; float sample_rate; uint64_t frames; } ogg;
         struct { uint32_t channels; float sample_rate; uint64_t frames; int bitrate; int mode; } wv;
+        struct { uint32_t channels; float sample_rate; uint64_t frames; uint32_t bytespersample; } pcmle;
     } cache;
 
     union {
@@ -37,23 +41,14 @@ struct st_audio_file {
     } alloc;
 };
 
-static st_audio_file* st_generic_open_file(const void* filename, int widepath)
+static int st_open_file_wav(const void* filename, int widepath, st_audio_file* af)
 {
-#if !defined(_WIN32)
-    if (widepath)
-        return NULL;
-#endif
-
-    st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
-    if (!af)
-        return NULL;
-
     // Try WAV
     {
         af->wav = (drwav*)malloc(sizeof(drwav));
         if (!af->wav) {
             free(af);
-            return NULL;
+            return 0;
         }
         drwav_bool32 ok =
 #if defined(_WIN32)
@@ -64,10 +59,14 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
             free(af->wav);
         else {
             af->type = st_audio_file_wav;
-            return af;
+            return 1;
         }
     }
+    return 0;
+}
 
+static int st_open_file_flac(const void* filename, int widepath, st_audio_file* af)
+{
     // Try FLAC
     {
         af->flac =
@@ -77,10 +76,14 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
             drflac_open_file((const char*)filename, NULL);
         if (af->flac) {
             af->type = st_audio_file_flac;
-            return af;
+            return 1;
         }
     }
+    return 0;
+}
 
+static int st_open_file_aiff(const void* filename, int widepath, st_audio_file* af)
+{
     // Try AIFF
     {
         af->aiff =
@@ -95,16 +98,20 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
             if (AIFF_GetAudioFormat(af->aiff, &frames, &channels, &sample_rate, NULL, NULL) == -1) {
                 AIFF_CloseFile(af->aiff);
                 free(af);
-                return NULL;
+                return 0;
             }
             af->cache.aiff.channels = (uint32_t)channels;
             af->cache.aiff.sample_rate = (float)sample_rate;
             af->cache.aiff.frames = frames;
             af->type = st_audio_file_aiff;
-            return af;
+            return 1;
         }
     }
+    return 0;
+}
 
+static int st_open_file_ogg(const void* filename, int widepath, st_audio_file* af)
+{
     // Try OGG
     {
         int err = 0;
@@ -144,22 +151,26 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
                 stb_vorbis_close(af->ogg);
                 free(alloc_buffer);
                 free(af);
-                return NULL;
+                return 0;
             }
             stb_vorbis_info info = stb_vorbis_get_info(af->ogg);
             af->cache.ogg.channels = info.channels;
             af->cache.ogg.sample_rate = info.sample_rate;
             af->type = st_audio_file_ogg;
-            return af;
+            return 1;
         }
     }
+    return 0;
+}
 
+static int st_open_file_mp3(const void* filename, int widepath, st_audio_file* af)
+{
     // Try MP3
     {
         af->mp3 = (drmp3*)malloc(sizeof(drmp3));
         if (!af->mp3) {
             free(af);
-            return NULL;
+            return 0;
         }
         drmp3_bool32 ok =
 #if defined(_WIN32)
@@ -173,25 +184,32 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
             if (af->cache.mp3.frames == 0) {
                 free(af->mp3);
                 free(af);
-                return NULL;
+                return 0;
             }
             af->type = st_audio_file_mp3;
-            return af;
+            return 1;
         }
     }
+    return 0;
+}
 
+static int st_open_file_wv(const void* filename, int widepath, st_audio_file* af)
+{
     // Try WV
     {
 #if defined(_WIN32)
-        // WavPack expects an UTF8 input and has no widechar api, so we convert the filename back...
-        unsigned wsize = wcslen(filename);
-        unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, NULL, NULL);
-        char *buffer = (char*)malloc((size+1) * sizeof(char));
-        WideCharToMultiByte(CP_UTF8, 0, filename, wsize, buffer, size, NULL, NULL);
-        buffer[size] = '\0';
-        af->wv =
+        if (widepath) {
+            // WavPack expects an UTF8 input and has no widechar api, so we convert the filename back...
+            unsigned wsize = wcslen(filename);
+            unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, NULL, NULL);
+            char *buffer = (char*)malloc((size+1) * sizeof(char));
+            WideCharToMultiByte(CP_UTF8, 0, filename, wsize, buffer, size, NULL, NULL);
+            buffer[size] = '\0';
+            af->wv =
             WavpackOpenFileInput(buffer, NULL, OPEN_FILE_UTF8, 0);
-        free(buffer);
+            free(buffer);
+        }
+        else
 #else
         af->wv =
             WavpackOpenFileInput((const char*)filename, NULL, 0, 0);
@@ -203,6 +221,319 @@ static st_audio_file* st_generic_open_file(const void* filename, int widepath)
             af->cache.wv.bitrate = WavpackGetBitsPerSample(af->wv);
             af->cache.wv.mode = WavpackGetMode(af->wv);
             af->type = st_audio_file_wv;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int st_open_file_ariaaudio(const void* filename, int widepath, st_audio_file* af)
+{
+    // Try ARIA raw audio
+    FILE *fp;
+    struct stat stbuf;
+    const char* ascii_path;
+    uint32_t bytespersample;
+    uint32_t channels;
+    uint64_t frames;
+    float samplerate;
+#if defined(_WIN32)
+    if (widepath) {
+        unsigned wsize = wcslen(filename);
+        unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, NULL, NULL);
+        char *buffer = (char*)malloc((size+1) * sizeof(char));
+        WideCharToMultiByte(CP_UTF8, 0, filename, wsize, buffer, size, NULL, NULL);
+        buffer[size] = '\0';
+        ascii_path = buffer;
+    }
+    else
+#endif
+    {
+        ascii_path = filename;
+    }
+    {
+        uint32_t term = 0;
+        size_t pathlen = strlen(ascii_path);
+        if (pathlen < 16 || strcmp(".audio", &ascii_path[pathlen - 6]) != 0 || ascii_path[pathlen - 15] != '_') {
+#if defined(_WIN32)
+            if (widepath) {
+                free(ascii_path);
+            }
+#endif
+            return 0;
+        }
+        for (int i = 0; i < 8; ++i) {
+            term <<= 4;
+            int c = ascii_path[pathlen + i - 14];
+            if (c >= '0' && c <= '9') {
+                term |= c - '0';
+            }
+            else if (c >= 'A' && c <= 'F') {
+                term |= c + (0xa - 'A');
+            }
+            else if (c >= 'a' && c <= 'f') {
+                term |= c + (0xa - 'a');
+            }
+            else {
+#if defined(_WIN32)
+                if (widepath) {
+                    free(ascii_path);
+                }
+#endif
+                return 0;
+            }
+        }
+#if defined(_WIN32)
+        if (widepath) {
+            free(ascii_path);
+        }
+#endif
+        switch (term & 0xff) {
+            case 44:
+                samplerate = 44100.f;
+                break;
+            case 48:
+                samplerate = 48000.f;
+                break;
+            case 88:
+                samplerate = 88200.f;
+                break;
+            case 96:
+                samplerate = 96000.f;
+                break;
+            case 192:
+                samplerate = 192000.f;
+                break;
+            default:
+                return 0;
+        }
+        switch ((term >> 8) & 0xff) {
+            case 16:
+                bytespersample = 2;
+                break;
+            case 24:
+                bytespersample = 3;
+                break;
+            default:
+                return 0;
+        }
+        switch (term >> 16) {
+            case 0x0001:
+                channels = 1;
+                break;
+            case 0x0002:
+                channels = 2;
+                break;
+            default:
+                return 0;
+        }
+    }
+#if defined(_WIN32)
+    if (widepath) {
+        fp = _wfopen((const wchar_t*)filename, L"rb");
+    }
+    else
+#endif
+    fp = fopen((const char*)filename, "rb");
+    if (!fp) {
+        return 0;
+    }
+    if (fstat(fileno(fp), &stbuf) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    frames = stbuf.st_size / (channels * bytespersample);
+    if (frames * (channels * bytespersample) != stbuf.st_size) {
+        fclose(fp);
+        return 0;
+    }
+    af->fp = fp;
+    af->cache.pcmle.channels = channels;
+    af->cache.pcmle.sample_rate = samplerate;
+    af->cache.pcmle.frames = frames;
+    af->cache.pcmle.bytespersample = bytespersample;
+    af->type = st_audio_file_pcmle;
+    return 1;
+}
+
+static const char* get_path_extension(const char* path)
+{
+    size_t path_len = strlen(path);
+    if (path_len > 0) {
+        size_t i = path_len - 1;
+        while (1) {
+            if (path[i] == '.') {
+                return &path[i];
+            }
+            if (i == 0) {
+                break;
+            }
+            i--;
+        }
+    }
+    return NULL;
+}
+
+static st_audio_file* st_generic_open_file(const void* filename, int widepath)
+{
+    int success;
+    unsigned int flag = 0;
+
+#if !defined(_WIN32)
+    if (widepath)
+        return NULL;
+#endif
+
+    st_audio_file* af = (st_audio_file*)malloc(sizeof(st_audio_file));
+    if (!af)
+        return NULL;
+
+    {
+        const char *filenameext = NULL;
+#if defined(_WIN32)
+        char *buffer = NULL;
+        if (widepath) {
+            unsigned wsize = wcslen(filename);
+            unsigned size = WideCharToMultiByte(CP_UTF8, 0, filename, wsize, NULL, 0, NULL, NULL);
+            buffer = (char*)malloc((size+1) * sizeof(char));
+            WideCharToMultiByte(CP_UTF8, 0, filename, wsize, buffer, size, NULL, NULL);
+            buffer[size] = '\0';
+            filenameext = get_path_extension(buffer);
+        }
+        else
+#endif
+        filenameext = get_path_extension((const char*)filename);
+        if (filenameext) {
+            if (strcmp(filenameext, ".wav") == 0) {
+                flag |= (1 << st_audio_file_wav);
+                success = st_open_file_wav(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+            else if (strcmp(filenameext, ".flac") == 0) {
+                flag |= (1 << st_audio_file_flac);
+                success = st_open_file_flac(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+            else if (strcmp(filenameext, ".aiff") == 0 || strcmp(filenameext, ".aif") == 0 || strcmp(filenameext, ".aifc") == 0) {
+                flag |= (1 << st_audio_file_aiff);
+                success = st_open_file_aiff(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+            else if (strcmp(filenameext, ".ogg") == 0) {
+                flag |= (1 << st_audio_file_ogg);
+                success = st_open_file_ogg(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+            else if (strcmp(filenameext, ".mp3") == 0) {
+                flag |= (1 << st_audio_file_mp3);
+                success = st_open_file_mp3(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+            else if (strcmp(filenameext, ".wv") == 0) {
+                flag |= (1 << st_audio_file_wv);
+                success = st_open_file_wv(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+            else if (strcmp(filenameext, ".audio") == 0) {
+                flag |= (1 << st_audio_file_pcmle);
+                success = st_open_file_ariaaudio(filename, widepath, af);
+                if (success) {
+#if defined(_WIN32)
+                    if (buffer) {
+                        free(buffer);
+                    }
+#endif
+                    return af;
+                }
+            }
+        }
+#if defined(_WIN32)
+        if (buffer) {
+            free(buffer);
+        }
+#endif
+    }
+
+    if ((flag & (1 << st_audio_file_wav)) == 0) {
+        success = st_open_file_wav(filename, widepath, af);
+        if (success) {
+            return af;
+        }
+    }
+
+    if ((flag & (1 << st_audio_file_flac)) == 0) {
+        success = st_open_file_flac(filename, widepath, af);
+        if (success) {
+            return af;
+        }
+    }
+
+    if ((flag & (1 << st_audio_file_aiff)) == 0) {
+        success = st_open_file_aiff(filename, widepath, af);
+        if (success) {
+            return af;
+        }
+    }
+
+    if ((flag & (1 << st_audio_file_ogg)) == 0) {
+        success = st_open_file_ogg(filename, widepath, af);
+        if (success) {
+            return af;
+        }
+    }
+
+    if ((flag & (1 << st_audio_file_mp3)) == 0) {
+        success = st_open_file_mp3(filename, widepath, af);
+        if (success) {
+            return af;
+        }
+    }
+
+    if ((flag & (1 << st_audio_file_wv)) == 0) {
+        success = st_open_file_wv(filename, widepath, af);
+        if (success) {
             return af;
         }
     }
@@ -363,6 +694,9 @@ void st_close(st_audio_file* af)
     case st_audio_file_wv:
         WavpackCloseFile(af->wv);
         break;
+    case st_audio_file_pcmle:
+        fclose(af->fp);
+        break;
     }
 
     free(af);
@@ -396,6 +730,9 @@ uint32_t st_get_channels(st_audio_file* af)
     case st_audio_file_wv:
         channels = af->cache.wv.channels;
         break;
+    case st_audio_file_pcmle:
+        channels = af->cache.pcmle.channels;
+        break;
     }
 
     return channels;
@@ -423,6 +760,9 @@ float st_get_sample_rate(st_audio_file* af)
         break;
     case st_audio_file_wv:
         sample_rate = af->cache.wv.sample_rate;
+        break;
+    case st_audio_file_pcmle:
+        sample_rate = af->cache.pcmle.sample_rate;
         break;
     }
 
@@ -452,6 +792,9 @@ uint64_t st_get_frame_count(st_audio_file* af)
     case st_audio_file_wv:
         frames = af->cache.wv.frames;
         break;
+    case st_audio_file_pcmle:
+        frames = af->cache.pcmle.frames;
+        break;
     }
 
     return frames;
@@ -479,6 +822,9 @@ bool st_seek(st_audio_file* af, uint64_t frame)
         break;
     case st_audio_file_wv:
         success = WavpackSeekSample64(af->wv, (int64_t)frame);
+        break;
+    case st_audio_file_pcmle:
+        success = fseek(af->fp, (int)(frame * af->cache.pcmle.channels * af->cache.pcmle.bytespersample), SEEK_SET) == 0;
         break;
     }
 
@@ -516,16 +862,54 @@ uint64_t st_read_s16(st_audio_file* af, int16_t* buffer, uint64_t count)
             if (!buf_i32) {
                 return 0;
             }
-            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            count = WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            uint64_t buf_size = channels * count;
             if (af->cache.wv.mode & MODE_FLOAT) {
-                drwav_f32_to_s16((drwav_int16*)buffer, (float*)buf_i32, (size_t)count);
+                drwav_f32_to_s16((drwav_int16*)buffer, (float*)buf_i32, (size_t)buf_size);
             } else {
                 int d = af->cache.wv.bitrate - 16;
-                for (uint64_t i = 0; i < count; i++) {
+                for (uint64_t i = 0; i < buf_size; i++) {
                     buffer[i] = (int16_t)(buf_i32[i] >> d);
                 }
             }
             free(buf_i32);
+        }
+        break;
+    case st_audio_file_pcmle:
+        {
+            uint32_t channels = af->cache.pcmle.channels;
+            uint32_t bytespersamples = af->cache.pcmle.bytespersample;
+            uint32_t size = bytespersamples * channels * count;
+            if (bytespersamples == 2) {
+                if (fread(buffer, size, 1, af->fp) != 1) {
+                    count = 0;
+                }
+            }
+            else {
+                char* cbuf = (char*)malloc(size);
+                if (!cbuf) {
+                    return 0;
+                }
+                if (fread(cbuf, size, 1, af->fp) != 1) {
+                    count = 0;
+                }
+                else if (bytespersamples <= 4) {
+                    uint32_t shift = (4 - bytespersamples);
+                    uint32_t pos = 0;
+                    for (uint32_t i = 0; i < count; ++i) {
+                        for (uint32_t j = 0; j < channels; ++j) {
+                            int32_t value = 0;
+                            memcpy((char*)&value + shift, &cbuf[pos * bytespersamples], bytespersamples);
+                            buffer[pos] = value >> 16;
+                            pos++;
+                        }
+                    }
+                }
+                else {
+                    count = 0;
+                }
+                free(cbuf);
+            }
         }
         break;
     }
@@ -566,17 +950,48 @@ uint64_t st_read_f32(st_audio_file* af, float* buffer, uint64_t count)
             if (!buf_i32) {
                 return 0;
             }
-            count = channels * WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
-            if (!(af->cache.wv.mode & MODE_FLOAT)) {
+            count = WavpackUnpackSamples(af->wv, buf_i32, (uint32_t)count);
+            {
+                uint64_t buf_size = count * channels;
                 if (af->cache.wv.bitrate < 32) {
                     int d = 32 - af->cache.wv.bitrate;
-                    for (uint64_t i = 0; i < count; i++) {
+                    for (uint64_t i = 0; i < buf_size; i++) {
                         buf_i32[i] <<= d;
                     }
                 }
-                drwav_s32_to_f32(buffer, (drwav_int32*)buf_i32, (size_t)count);
+                drwav_s32_to_f32(buffer, (drwav_int32*)buf_i32, (size_t)buf_size);
             }
             free(buf_i32);
+        }
+        break;
+    case st_audio_file_pcmle:
+        {
+            uint32_t channels = af->cache.pcmle.channels;
+            uint32_t bytespersamples = af->cache.pcmle.bytespersample;
+            uint32_t size = bytespersamples * channels * count;
+            char* cbuf = (char*)malloc(size);
+            if (!cbuf) {
+                return 0;
+            }
+            if (fread(cbuf, size, 1, af->fp) != 1) {
+                count = 0;
+            }
+            else if (bytespersamples <= 4) {
+                uint32_t shift = (4 - bytespersamples);
+                uint32_t pos = 0;
+                for (uint32_t i = 0; i < count; ++i) {
+                    for (uint32_t j = 0; j < channels; ++j) {
+                        int32_t value = 0;
+                        memcpy((char*)&value + shift, &cbuf[pos * bytespersamples], bytespersamples);
+                        buffer[pos] = value * (1.f/2147483648);
+                        pos++;
+                    }
+                }
+            }
+            else {
+                count = 0;
+            }
+            free(cbuf);
         }
         break;
     }

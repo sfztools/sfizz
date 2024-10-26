@@ -76,6 +76,35 @@ std::string Opcode::getLetterOnlyName() const
     return letterOnlyName;
 }
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+bool Opcode::nameIsEqualToString(std::string_view string) const
+{
+    auto pos1 = name.begin();
+    auto pos2 = string.begin();
+    while (pos1 != name.end() && pos2 != string.end()) {
+        if (*pos2 == '&') {
+            bool charIsDigit = absl::ascii_isdigit(*pos1);
+            if (!charIsDigit) {
+                return false;
+            }
+            ++pos1;
+            while (pos1 != name.end() && absl::ascii_isdigit(*pos1)) {
+                ++pos1;
+            }
+            ++pos2;
+        }
+        else {
+            if (absl::ascii_tolower(*pos1) != absl::ascii_tolower(*pos2)) {
+                return false;
+            }
+            ++pos1;
+            ++pos2;
+        }
+    }
+    return pos1 == name.end() && pos2 == string.end();
+}
+#endif
+
 std::string Opcode::getDerivedName(OpcodeCategory newCategory, unsigned number) const
 {
     std::string derivedName(name);
@@ -271,11 +300,10 @@ absl::optional<uint8_t> readNoteValue(absl::string_view value)
     ///
     std::pair<absl::string_view, int> flatSharpPrefixes[] = {
         {   "#", +1 },
-        { u8"♯", +1 },
+        { (const char*)u8"♯", +1 },
         {   "b", -1 },
-        { u8"♭", -1 },
+        { (const char*)u8"♭", -1 },
     };
-
     for (const auto& prefix : flatSharpPrefixes) {
         if (absl::StartsWith(value, prefix.first)) {
             if (prefix.second == +1) {

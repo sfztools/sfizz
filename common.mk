@@ -383,8 +383,6 @@ SFIZZ_SOURCES += \
 
 SFIZZ_CXX_FLAGS += \
 	-I$(SFIZZ_DIR)/src/external/tunings/include
-SFIZZ_SOURCES += \
-	src/external/tunings/src/Tunings.cpp
 
 ### jsl dependency
 

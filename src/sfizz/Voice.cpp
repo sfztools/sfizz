@@ -977,6 +977,10 @@ void Voice::Impl::panStageMono(AudioSpan<float> buffer) noexcept
             (*modulationSpan)[i] += mod[i];
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
+
+    // add +3dB to compensate for the pan stage (-3dB per stage)
+    applyGain1(1.41421356f, leftBuffer);
+    applyGain1(1.41421356f, rightBuffer);
 }
 
 void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
@@ -1017,9 +1021,9 @@ void Voice::Impl::panStageStereo(AudioSpan<float> buffer) noexcept
     }
     pan(*modulationSpan, leftBuffer, rightBuffer);
 
-    // add +3dB to compensate for the 2 pan stages (-3dB each stage)
-    applyGain1(1.4125375446227544f, leftBuffer);
-    applyGain1(1.4125375446227544f, rightBuffer);
+    // add +6dB to compensate for the 2 pan stages (-3dB per stage)
+    applyGain1(2.0f, leftBuffer);
+    applyGain1(2.0f, rightBuffer);
 }
 
 void Voice::Impl::filterStageMono(AudioSpan<float> buffer) noexcept

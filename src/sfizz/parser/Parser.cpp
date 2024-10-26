@@ -9,6 +9,9 @@
 #include "ParserPrivate.h"
 #include "absl/memory/memory.h"
 #include <cassert>
+#if defined(SFIZZ_FILEOPENPREEXEC)
+#include "../FileOpenPreexec.h"
+#endif
 
 namespace sfz {
 
@@ -41,31 +44,73 @@ void Parser::clearExternalDefinitions()
 }
 
 void Parser::parseFile(const fs::path& path)
+#if defined(SFIZZ_FILEOPENPREEXEC)
+{
+    FileOpenPreexec preexec;
+    parseFile(path, preexec);
+}
+
+void Parser::parseFile(const fs::path& path, FileOpenPreexec &preexec)
+{
+    parseVirtualFile(path, nullptr, preexec);
+}
+#else
 {
     parseVirtualFile(path, nullptr);
 }
+#endif
 
 void Parser::parseString(const fs::path& path, absl::string_view sfzView)
+#if defined(SFIZZ_FILEOPENPREEXEC)
+{
+    FileOpenPreexec preexec;
+    parseString(path, sfzView, preexec);
+}
+
+void Parser::parseString(const fs::path& path, absl::string_view sfzView, FileOpenPreexec &preexec)
+{
+    parseVirtualFile(path, absl::make_unique<StringViewReader>(path, sfzView), preexec);
+}
+#else
 {
     parseVirtualFile(path, absl::make_unique<StringViewReader>(path, sfzView));
 }
+#endif
 
 void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader)
+#if defined(SFIZZ_FILEOPENPREEXEC)
+{
+    FileOpenPreexec preexec;
+    parseVirtualFile(path, std::move(reader), preexec);
+}
+
+void Parser::parseVirtualFile(const fs::path& path, std::unique_ptr<Reader> reader, FileOpenPreexec &preexec)
+#else
+#endif
 {
     clear();
 
     if (_listener)
         _listener->onParseBegin();
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+    includeNewFile(path, std::move(reader), {}, preexec);
+    processTopLevel(preexec);
+#else
     includeNewFile(path, std::move(reader), {});
     processTopLevel();
+#endif
     flushCurrentHeader();
 
     if (_listener)
         _listener->onParseEnd();
 }
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange, FileOpenPreexec &preexec)
+#else
 void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader, const SourceRange& includeStmtRange)
+#endif
 {
     fs::path fullPath =
         (path.empty() || path.is_absolute()) ? path : _originalDirectory / path;
@@ -92,6 +137,9 @@ void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader
     }
 
     if (!reader) {
+#if defined(SFIZZ_FILEOPENPREEXEC)
+        preexec.executeFileOpen(fullPath, [this, &reader, &makeErrorRange](const fs::path &fullPath) {
+#endif
         auto fileReader = absl::make_unique<FileReader>(fullPath);
         if (fileReader->hasError()) {
             SourceLocation loc = fileReader->location();
@@ -99,6 +147,12 @@ void Parser::includeNewFile(const fs::path& path, std::unique_ptr<Reader> reader
             return;
         }
         reader = std::move(fileReader);
+#if defined(SFIZZ_FILEOPENPREEXEC)
+        });
+        if (!reader) {
+            return;
+        }
+#endif
     }
 
     _pathsIncluded.insert(fullPath.string());
@@ -110,7 +164,11 @@ void Parser::addDefinition(absl::string_view id, absl::string_view value)
     _currentDefinitions[id] = std::string(value);
 }
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+void Parser::processTopLevel(FileOpenPreexec& preexec)
+#else
 void Parser::processTopLevel()
+#endif
 {
     while (!_included.empty()) {
         Reader& reader = *_included.back();
@@ -122,7 +180,11 @@ void Parser::processTopLevel()
             _included.pop_back();
             break;
         case '#':
+#if defined(SFIZZ_FILEOPENPREEXEC)
+            processDirective(preexec);
+#else
             processDirective();
+#endif
             break;
         case '<':
             processHeader();
@@ -134,7 +196,11 @@ void Parser::processTopLevel()
     }
 }
 
+#if defined(SFIZZ_FILEOPENPREEXEC)
+void Parser::processDirective(FileOpenPreexec& preexec)
+#else
 void Parser::processDirective()
+#endif
 {
     Reader& reader = *_included.back();
     SourceLocation start = reader.location();
@@ -206,7 +272,11 @@ void Parser::processDirective()
         path = expandDollarVars({ valueStart, valueEnd }, path);
 
         std::replace(path.begin(), path.end(), '\\', '/');
+#if defined(SFIZZ_FILEOPENPREEXEC)
+        includeNewFile(path, nullptr, { start, end }, preexec);
+#else
         includeNewFile(path, nullptr, { start, end });
+#endif
     }
     else {
         SourceLocation end = reader.location();
@@ -300,7 +370,22 @@ void Parser::processOpcode()
             return true;
         });
         SourceLocation valueEnd = reader.location();
+#if defined(SFIZZ_BLOCKLIST_OPCODES)
+        auto opcode = Opcode(nameExpanded, valueRaw);
+        if (_listener) {
+            auto *blockList = _listener->getOpcodesToBlock();
+            if (blockList) {
+                for (const auto &str : *blockList) {
+                    if (opcode.nameIsEqualToString(str)) {
+                        return;
+                    }
+                }
+            }
+        }
+        _currentOpcodes.emplace_back(std::move(opcode));
+#else
         _currentOpcodes.emplace_back(nameExpanded, valueRaw);
+#endif
 
         if (_listener)
             _listener->onParseOpcode({ opcodeStart, opcodeEnd }, { valueStart, valueEnd }, nameExpanded, valueRaw);
@@ -370,7 +455,22 @@ void Parser::processOpcode()
         emitWarning({ opcodeStart, valueEnd }, "The opcode is not under any header.");
 
     std::string valueExpanded = expandDollarVars({ valueStart, valueEnd }, valueRaw);
+#if defined(SFIZZ_BLOCKLIST_OPCODES)
+    auto opcode = Opcode(nameExpanded, valueExpanded);
+    if (_listener) {
+        auto *blockList = _listener->getOpcodesToBlock();
+        if (blockList) {
+            for (const auto &str : *blockList) {
+                if (opcode.nameIsEqualToString(str)) {
+                    return;
+                }
+            }
+        }
+    }
+    _currentOpcodes.emplace_back(std::move(opcode));
+#else
     _currentOpcodes.emplace_back(nameExpanded, valueExpanded);
+#endif
 
     if (_listener)
         _listener->onParseOpcode({ opcodeStart, opcodeEnd }, { valueStart, valueEnd }, nameExpanded, valueExpanded);

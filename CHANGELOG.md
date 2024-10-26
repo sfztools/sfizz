@@ -34,7 +34,7 @@ This project tries to adhere to [Semantic Versioning][2].
 - Fixed build on Windows
 - Fixed modulation matrix when CC modulations are per voice (#1173 #1179 by @PythonBlue)
 - Fixed and reenabled tests
-- modifications to support univeral x86_64/ARM builds on macOS (#1183 by @essej)
+- Modifications to support universal x86_64/ARM builds on macOS (#1183 by @essej)
 
 ### Removed
 

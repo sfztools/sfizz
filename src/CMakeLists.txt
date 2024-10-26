@@ -222,6 +222,29 @@ set(SFIZZ_PARSER_SOURCES
 set(SFIZZ_PARSER_OTHER sfizz/OpcodeCleanup.re)
 source_group("Other Files" FILES ${SFIZZ_PARSER_OTHER})
 
+# Enable Preopen File
+if (SFIZZ_FILEOPENPREEXEC)
+    list(APPEND SFIZZ_HEADERS
+        sfizz/FileOpenPreexec.h
+    )
+    add_compile_options("-DSFIZZ_FILEOPENPREEXEC=1")
+endif()
+
+# Disable hint_ram_based
+if (SFIZZ_DISABLE_HINTRAMBASED)
+    add_compile_options("-DSFIZZ_DISABLE_HINTRAMBASED=1")
+endif()
+
+# Add an expression option
+if (SFIZZ_ADD_EXPRESSION_OPT)
+    add_compile_options("-DSFIZZ_ADD_EXPRESSION_OPTION=1")
+endif()
+
+# Enable a deny list of opcodes
+if (SFIZZ_BLOCKLIST_OPCODES)
+    add_compile_options("-DSFIZZ_BLOCKLIST_OPCODES=1")
+endif()
+
 # Sfizz parser library
 add_library(sfizz_parser STATIC)
 add_library(sfizz::parser ALIAS sfizz_parser)

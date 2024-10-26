@@ -192,9 +192,9 @@ add_library(sfizz::spline ALIAS sfizz_spline)
 target_include_directories(sfizz_spline PUBLIC "src/external/spline")
 
 # The tunings library
-add_library(sfizz_tunings STATIC "src/external/tunings/src/Tunings.cpp")
+add_library(sfizz_tunings INTERFACE)
 add_library(sfizz::tunings ALIAS sfizz_tunings)
-target_include_directories(sfizz_tunings PUBLIC "src/external/tunings/include")
+target_include_directories(sfizz_tunings INTERFACE "src/external/tunings/include")
 
 # The hiir library
 add_library(sfizz_hiir INTERFACE)
