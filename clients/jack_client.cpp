@@ -26,6 +26,7 @@
 #include "MidiHelpers.h"
 #include <absl/flags/parse.h>
 #include <absl/flags/flag.h>
+#include <absl/strings/str_format.h>
 #include <absl/types/span.h>
 #include <SpinMutex.h>
 #include <atomic>
@@ -44,13 +45,15 @@
 #include <algorithm>
 #include <vector>
 
+#define MAX_NUM_OUTPUTS 1024
+
 sfz::Sfizz synth;
 
 static jack_port_t* midiInputPort;
-static jack_port_t* outputPort1;
-static jack_port_t* outputPort2;
+static jack_port_t* outputPort[MAX_NUM_OUTPUTS];
 static jack_client_t* client;
 static SpinMutex processMutex;
+static uint32_t numOutputs;
 
 int process(jack_nframes_t numFrames, void* arg)
 {
@@ -59,13 +62,16 @@ int process(jack_nframes_t numFrames, void* arg)
     auto* buffer = jack_port_get_buffer(midiInputPort, numFrames);
     assert(buffer);
 
-    auto* leftOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort1, numFrames));
-    auto* rightOutput = reinterpret_cast<float*>(jack_port_get_buffer(outputPort2, numFrames));
+    float* output[numOutputs];
+    for (uint32_t i = 0; i < numOutputs; ++i) {
+        output[i] = reinterpret_cast<float*>(jack_port_get_buffer(outputPort[i], numFrames));
+    }
 
     std::unique_lock<SpinMutex> lock { processMutex, std::try_to_lock };
     if (!lock.owns_lock()) {
-        std::fill_n(leftOutput, numFrames, 0.0f);
-        std::fill_n(rightOutput, numFrames, 0.0f);
+        for (uint32_t i = 0; i < numOutputs; ++i) {
+            std::fill_n(output[i], numFrames, 0.0f);
+        }
         return 0;
     }
 
@@ -110,8 +116,7 @@ int process(jack_nframes_t numFrames, void* arg)
         }
     }
 
-    float* stereoOutput[] = { leftOutput, rightOutput };
-    synth->renderBlock(stereoOutput, numFrames);
+    synth->renderBlock(output, numFrames, numOutputs / 2);
 
     return 0;
 }
@@ -273,6 +278,7 @@ ABSL_FLAG(std::string, client_name, "sfizz", "Jack client name");
 ABSL_FLAG(std::string, oversampling, "1x", "Internal oversampling factor (value values are x1, x2, x4, x8)");
 ABSL_FLAG(uint32_t, preload_size, 8192, "Preloaded size");
 ABSL_FLAG(uint32_t, num_voices, 32, "Num of voices");
+ABSL_FLAG(uint32_t, num_outputs, 1, "Num of stereo outputs");
 ABSL_FLAG(bool, jack_autoconnect, false, "Autoconnect audio output");
 ABSL_FLAG(bool, state, false, "Output the synth state in the jack loop");
 
@@ -285,6 +291,7 @@ int main(int argc, char** argv)
     const std::string oversampling = absl::GetFlag(FLAGS_oversampling);
     const uint32_t preload_size = absl::GetFlag(FLAGS_preload_size);
     const uint32_t num_voices = absl::GetFlag(FLAGS_num_voices);
+    const uint32_t num_outputs = absl::GetFlag(FLAGS_num_outputs);
     const bool jack_autoconnect = absl::GetFlag(FLAGS_jack_autoconnect);
     const bool verboseState = absl::GetFlag(FLAGS_state);
 
@@ -293,6 +300,7 @@ int main(int argc, char** argv)
     std::cout << "- Oversampling: " << oversampling << '\n';
     std::cout << "- Preloaded size: " << preload_size << '\n';
     std::cout << "- Num of voices: " << num_voices << '\n';
+    std::cout << "- Num of stereo outputs: " << num_outputs << '\n';
     std::cout << "- Audio Autoconnect: " << jack_autoconnect << '\n';
     std::cout << "- Verbose State: " << verboseState << '\n';
 
@@ -309,9 +317,12 @@ int main(int argc, char** argv)
         std::cout << " " << file << ',';
     std::cout << '\n';
 
+
     synth.setOversamplingFactor(factor);
     synth.setPreloadSize(preload_size);
     synth.setNumVoices(num_voices);
+
+    numOutputs = num_outputs * 2;
 
     jack_status_t status;
     client = jack_client_open(clientName.c_str(), JackNullOption, &status);
@@ -342,11 +353,13 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    outputPort1 = jack_port_register(client, "output_1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-    outputPort2 = jack_port_register(client, "output_2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-    if (outputPort1 == nullptr || outputPort2 == nullptr) {
-        std::cerr << "Could not open output ports" << '\n';
-        return 1;
+    for (uint32_t i = 0; i < numOutputs; ++i) {
+        std::string name = absl::StrFormat("output_%d", i + 1);
+        outputPort[i] = jack_port_register(client, name.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        if (outputPort[i] == nullptr) {
+            std::cerr << "Could not open output port " << name << '\n';
+            return 1;
+        }
     }
 
     if (jack_activate(client) != 0) {
@@ -361,13 +374,12 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        if (jack_connect(client, jack_port_name(outputPort1), systemPorts[0])) {
-            std::cerr << "Cannot connect to physical output ports (0)" << '\n';
+        for (uint32_t i = 0; (i < numOutputs) && (systemPorts[i] != nullptr); ++i) {
+            if (jack_connect(client, jack_port_name(outputPort[i]), systemPorts[i])) {
+                std::cerr << "Cannot connect to physical output ports (" << i << ")" << '\n';
+            }
         }
 
-        if (jack_connect(client, jack_port_name(outputPort2), systemPorts[1])) {
-            std::cerr << "Cannot connect to physical output ports (1)" << '\n';
-        }
         jack_free(systemPorts);
     }
 
