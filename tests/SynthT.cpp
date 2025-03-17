@@ -24,7 +24,7 @@ TEST_CASE("[Synth] Play and check active voices")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.loadSfzFile(fs::path(SFIZZ_TEST_FILES) / "groups_avl.sfz");
 
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
@@ -40,7 +40,7 @@ TEST_CASE("[Synth] All sound off")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.loadSfzFile(fs::path(SFIZZ_TEST_FILES) / "groups_avl.sfz");
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
     synth.renderBlock(buffer);
@@ -54,7 +54,7 @@ TEST_CASE("[Synth] Change the number of voice while playing")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.loadSfzFile(fs::path(SFIZZ_TEST_FILES) / "groups_avl.sfz");
 
     synth.noteOn(0, 36, 24);
     synth.noteOn(0, 36, 89);
@@ -101,7 +101,7 @@ TEST_CASE("[Synth] Check that we can change the size of the preload before and a
     sfz::Synth synth;
     synth.setPreloadSize(512);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzFile(fs::current_path() / "tests/TestFiles/groups_avl.sfz");
+    synth.loadSfzFile(fs::path(SFIZZ_TEST_FILES) / "groups_avl.sfz");
     synth.setPreloadSize(1024);
 
     synth.noteOn(0, 36, 24);
@@ -116,7 +116,7 @@ TEST_CASE("[Synth] All notes offs/all sounds off")
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.setNumVoices(8);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sound_off.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sound_off.sfz", R"(
         <region> key=60 sample=*noise
         <region> key=62 sample=*noise
     )");
@@ -155,7 +155,7 @@ TEST_CASE("[Synth] Releasing before the EG started smoothing (initial delay) kil
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/delay_release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "delay_release.sfz", R"(
         <region> ampeg_delay=0.005 ampeg_release=1 sample=*noise
     )");
     synth.noteOn(0, 60, 63);
@@ -173,7 +173,7 @@ TEST_CASE("[Synth] Releasing after the initial and normal mode does not trigger 
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer{ 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/delay_release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "delay_release.sfz", R"(
         <region> ampeg_delay=0.005 ampeg_release=1 sample=*noise
     )");
     synth.noteOn(200, 60, 63);
@@ -191,7 +191,7 @@ TEST_CASE("[Synth] Trigger=release and an envelope properly kills the voice at t
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_trigger_release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "envelope_trigger_release.sfz", R"(
         <group> lovel=0 hivel=127
         <region> sample=*silence
         <region> trigger=release sample=*noise loop_mode=one_shot
@@ -219,7 +219,7 @@ TEST_CASE("[Synth] Trigger=release_key and an envelope properly kills the voice 
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_trigger_release_key.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "envelope_trigger_release_key.sfz", R"(
         <group> lovel=0 hivel=127
         <region> trigger=release_key sample=*noise loop_mode=one_shot
                  ampeg_attack=0.02 ampeg_decay=0.02 ampeg_release=0.1 ampeg_sustain=0
@@ -246,7 +246,7 @@ TEST_CASE("[Synth] loopmode=one_shot and an envelope properly kills the voice at
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer(2, 480);
     synth.setNumVoices(1);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/envelope_one_shot.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "envelope_one_shot.sfz", R"(
         <group> lovel=0 hivel=127
         <region> sample=*noise loop_mode=one_shot
                  ampeg_attack=0.02 ampeg_decay=0.02 ampeg_release=0.1 ampeg_sustain=0
@@ -271,7 +271,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
     REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
@@ -279,7 +279,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     for (int i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_2.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10
     )");
@@ -289,7 +289,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     for (int i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
     REQUIRE( synth.getEffectBusView(0) != nullptr); // We have a main bus
@@ -298,7 +298,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
     for (int i = 0; i < 100; ++i)
         synth.renderBlock(buffer);
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_3.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx3tomain=50 type=lofi bus=fx3 bitred=90 decim=10
     )");
@@ -315,7 +315,7 @@ TEST_CASE("[Synth] Number of effect buses and resetting behavior")
 TEST_CASE("[Synth] No effect in the main bus")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/base.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/base.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
     )");
     auto bus = synth.getEffectBusView(0);
@@ -328,7 +328,7 @@ TEST_CASE("[Synth] No effect in the main bus")
 TEST_CASE("[Synth] One effect")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_1.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_1.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine
         <effect> type=lofi bitred=90 decim=10
     )");
@@ -342,7 +342,7 @@ TEST_CASE("[Synth] One effect")
 TEST_CASE("[Synth] Effect on a second bus")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_2.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10
     )");
@@ -362,7 +362,7 @@ TEST_CASE("[Synth] Effect on a second bus")
 TEST_CASE("[Synth] Effect on a third bus")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_3.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_3.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> directtomain=50 fx3tomain=50 type=lofi bus=fx3 bitred=90 decim=10
     )");
@@ -381,7 +381,7 @@ TEST_CASE("[Synth] Effect on a third bus")
 TEST_CASE("[Synth] Gain to mix")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/to_mix.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/to_mix.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <effect> fx1tomix=50 bus=fx1 type=lofi bitred=90 decim=10
     )");
@@ -400,7 +400,7 @@ TEST_CASE("[Synth] Gain to mix")
 TEST_CASE("[Synth] Effect with two outputs")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_2.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <region> lokey=0 hikey=127 sample=*sine effect1=100 output=1
         <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10
@@ -427,7 +427,7 @@ TEST_CASE("[Synth] Effect with two outputs")
 TEST_CASE("[Synth] Effect on the second output, with two outputs")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/Effects/bitcrusher_2.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "Effects/bitcrusher_2.sfz", R"(
         <region> lokey=0 hikey=127 sample=*sine effect1=100
         <region> lokey=0 hikey=127 sample=*sine effect1=100 output=1
         <effect> directtomain=50 fx1tomain=50 type=lofi bus=fx1 bitred=90 decim=10 output=1
@@ -455,7 +455,7 @@ TEST_CASE("[Synth] Basic curves")
 {
     sfz::Synth synth;
     const sfz::CurveSet& curves = synth.getResources().getCurves();
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/curves.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "curves.sfz", R"(
         <region> sample=*sine
         <curve>curve_index=18 v000=0 v095=0.5 v127=1
         <curve>curve_index=17 v000=0 v095=0.5 v100=1
@@ -472,7 +472,7 @@ TEST_CASE("[Synth] Basic curves")
 TEST_CASE("[Synth] Velocity points")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/velocity_endpoints.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "velocity_endpoints.sfz", R"(
         <region> amp_velcurve_064=1 sample=*sine
         <region> amp_velcurve_064=1 amp_veltrack=-100 sample=*sine
     )");
@@ -512,7 +512,7 @@ TEST_CASE("[Synth] sample quality")
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
 
-    synth.loadSfzString("tests/TestFiles/sampleQuality.sfz", R"(
+    synth.loadSfzString(SFIZZ_TEST_FILES "/sampleQuality.sfz", R"(
         <region> sample=kick.wav key=60
         <region> sample=kick.wav key=61 sample_quality=5
     )");
@@ -573,7 +573,7 @@ TEST_CASE("[Synth] Sister voices")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sister_voices.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sister_voices.sfz", R"(
         <region> key=61 sample=*sine
         <region> key=62 sample=*sine
         <region> key=62 sample=*sine
@@ -613,7 +613,7 @@ TEST_CASE("[Synth] Apply function on sisters")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sister_voices.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sister_voices.sfz", R"(
         <region> key=63 sample=*saw
         <region> key=63 sample=*saw
         <region> key=63 sample=*saw
@@ -632,7 +632,7 @@ TEST_CASE("[Synth] Sisters and off-by")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sister_voices.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sister_voices.sfz", R"(
         <region> key=62 sample=*sine
         <group> group=1 off_by=2 <region> key=62 sample=*sine
         <group> group=2 <region> key=63 sample=*saw
@@ -655,7 +655,7 @@ TEST_CASE("[Synth] Release (basic behavior with sample)")
     sfz::Synth synth;
     synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release_key_sample.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release_key_sample.sfz", R"(
         <region> key=62 sample=*sine
         <region> key=62 sample=closedhat.wav trigger=release_key
     )");
@@ -671,7 +671,7 @@ TEST_CASE("[Synth] Release key (basic behavior with sample)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release_key_sample.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release_key_sample.sfz", R"(
         <region> key=62 sample=closedhat.wav trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
@@ -684,7 +684,7 @@ TEST_CASE("[Synth] Release key (pedal)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release_key_pedal.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release_key_pedal.sfz", R"(
         <region> key=62 sample=*sine trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
@@ -698,7 +698,7 @@ TEST_CASE("[Synth] Release")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
     )");
@@ -716,7 +716,7 @@ TEST_CASE("[Synth] Release (pedal was already down)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
     )");
@@ -734,7 +734,7 @@ TEST_CASE("[Synth] Release samples don't play unless there is another playing re
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> key=62 sample=*sine trigger=release
     )");
     synth.noteOn(0, 62, 85);
@@ -753,7 +753,7 @@ TEST_CASE("[Synth] Release key (Different sustain CC)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global> sustain_cc=54
         <region> key=62 sample=*sine trigger=release_key
     )");
@@ -768,7 +768,7 @@ TEST_CASE("[Synth] Release (Different sustain CC)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global> sustain_cc=54
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -787,7 +787,7 @@ TEST_CASE("[Synth] Release (don't check sustain)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global>sustain_cc=54 sustain_sw=off
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -803,7 +803,7 @@ TEST_CASE("[Synth] Release key (Different sostenuto CC)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global> sostenuto_cc=54
         <region> key=62 sample=*sine trigger=release_key
     )");
@@ -818,7 +818,7 @@ TEST_CASE("[Synth] Release (don't check sostenuto)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global> sostenuto_cc=54 sostenuto_sw=off
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -834,7 +834,7 @@ TEST_CASE("[Synth] Release (Different sostenuto CC)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global> sostenuto_cc=54
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -871,7 +871,7 @@ TEST_CASE("[Synth] Release (sustain + sostenuto)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
         <region> key=64 sample=*silence
@@ -913,7 +913,7 @@ TEST_CASE("[Synth] One shot regions with sustain + sostenuto")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/one_shot_sustain.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "one_shot_sustain.sfz", R"(
         <region> key=60 sample=kick.wav loop_mode=one_shot
     )");
     SECTION("Sustain")
@@ -959,7 +959,7 @@ TEST_CASE("[Synth] Sustain threshold default")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> key=62 sample=*sine trigger=release
     )");
     synth.noteOn(0, 62, 85);
@@ -973,7 +973,7 @@ TEST_CASE("[Synth] Sustain threshold")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <global> sustain_lo=63
         <region> key=62 sample=*silence
         <region> key=62 sample=*sine trigger=release
@@ -1000,7 +1000,7 @@ TEST_CASE("[Synth] Sustain")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sostenuto.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sostenuto.sfz", R"(
         <region> sample=*sine
     )");
 
@@ -1063,7 +1063,7 @@ TEST_CASE("[Synth] Sostenuto")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sostenuto.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sostenuto.sfz", R"(
         <region> sample=*sine
     )");
 
@@ -1119,7 +1119,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release_key ignores the pedal)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*sine trigger=release_key
     )");
     synth.noteOn(0, 62, 85);
@@ -1137,7 +1137,7 @@ TEST_CASE("[Synth] Release (Multiple notes, release, cleared the delayed voices 
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*silence
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -1163,7 +1163,7 @@ TEST_CASE("[Synth] Release (Multiple notes after pedal is down, release, cleared
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*silence
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -1189,7 +1189,7 @@ TEST_CASE("[Synth] Release (Multiple note ons during pedal down)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> lokey=62 hikey=64 sample=*silence
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -1215,7 +1215,7 @@ TEST_CASE("[Synth] No release sample after the main sample stopped sounding by d
     synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> lokey=62 hikey=64 sample=closedhat.wav loop_mode=one_shot
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -1255,7 +1255,7 @@ TEST_CASE("[Synth] If rt_dead is active the release sample can sound after the a
     synth.setSamplesPerBlock(4096);
     sfz::AudioBuffer<float> buffer { 2, 4096 };
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/release.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "release.sfz", R"(
         <region> lokey=62 hikey=64 sample=closedhat.wav loop_mode=one_shot
         <region> lokey=62 hikey=64 sample=*sine trigger=release
             loopmode=one_shot ampeg_attack=0.02 ampeg_release=0.1
@@ -1817,7 +1817,7 @@ TEST_CASE("[Keyswitches] Trigger from aftertouch extended CC")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/aftertouch_trigger.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "aftertouch_trigger.sfz", R"(
         <region> start_locc129=100 start_hicc129=127 sample=*saw
     )");
     synth.renderBlock(buffer);
@@ -1840,7 +1840,7 @@ TEST_CASE("[Synth] Short empty files are turned into *silence")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/aftertouch_trigger.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "aftertouch_trigger.sfz", R"(
         <region> sample=silence.wav
     )");
     synth.dispatchMessage(client, 0, "/region0/sample", "", nullptr);
@@ -1854,7 +1854,7 @@ TEST_CASE("[Synth] Sustain cancels release (Flex EG)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <control> hint_sustain_cancels_release=1
         <region> sample=*sine
             eg01_ampeg=1 eg01_sustain=2
@@ -1879,7 +1879,7 @@ TEST_CASE("[Synth] Sustain cancels release (Flex EG) is off by default")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*sine
             eg01_ampeg=1 eg01_sustain=2
             eg01_time1=0 eg01_level1=0.00
@@ -1903,7 +1903,7 @@ TEST_CASE("[Synth] Sustain cancels release")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <control> hint_sustain_cancels_release=1
         <region> sample=*sine ampeg_release=10
     )");
@@ -1924,7 +1924,7 @@ TEST_CASE("[Synth] Sustain cancels release is off by default")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*sine ampeg_release=10
     )");
     synth.noteOn(0, 60, 63 );
@@ -1947,7 +1947,7 @@ TEST_CASE("[Synth] Resets all controllers to default values")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/default_cc.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "default_cc.sfz", R"(
         <control> set_cc56=64
         <region> sample=*sine
     )");
@@ -1972,7 +1972,7 @@ TEST_CASE("[Synth] Sequences also work on cc triggers")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sequence_cc_triggers.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sequence_cc_triggers.sfz", R"(
         <global> seq_length=3
         <region> sample=*sine hikey=-1 start_locc61=0 start_hicc61=64 seq_position=1
         <region> sample=*saw hikey=-1 start_locc61=0 start_hicc61=64 seq_position=2
@@ -1998,13 +1998,13 @@ TEST_CASE("[Synth] Loading resets note and octave offsets")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/octave_offset.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "octave_offset.sfz", R"(
         <control> note_offset=1 octave_offset=-1
         <region> sample=*sine
     )");
     synth.dispatchMessage(client, 0, "/note_offset", "", nullptr);
     synth.dispatchMessage(client, 0, "/octave_offset", "", nullptr);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/octave_offset.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "octave_offset.sfz", R"(
         <region> sample=*sine
     )");
     synth.dispatchMessage(client, 0, "/note_offset", "", nullptr);
@@ -2026,7 +2026,7 @@ TEST_CASE("[Synth] Default CC values")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/default.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "default.sfz", R"(
         <region> sample=*sine
     )");
     synth.renderBlock(buffer);
@@ -2049,7 +2049,7 @@ TEST_CASE("[Synth] Loading a new file doesn't reset the midi state")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sine.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sine.sfz", R"(
         <region> sample=*sine
     )");
 
@@ -2069,7 +2069,7 @@ TEST_CASE("[Synth] Loading a new file doesn't reset the midi state")
     synth.dispatchMessage(client, 0, "/poly_aftertouch/64", "", nullptr);
     synth.dispatchMessage(client, 0, "/pitch_bend", "", nullptr);
 
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/saw.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "saw.sfz", R"(
         <region> sample=*saw
     )");
     synth.renderBlock(buffer);
@@ -2107,7 +2107,7 @@ TEST_CASE("[Synth] Reloading a file ignores the `set_ccN` opcodes")
     sfz::Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sine.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sine.sfz", R"(
         <control> set_cc1=0
         <region> sample=*sine
     )");
@@ -2117,7 +2117,7 @@ TEST_CASE("[Synth] Reloading a file ignores the `set_ccN` opcodes")
     synth.dispatchMessage(client, 0, "/cc1/value", "", nullptr);
 
     // Same file
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sine.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sine.sfz", R"(
         <control> set_cc1=0
         <region> sample=*sine
     )");
@@ -2125,7 +2125,7 @@ TEST_CASE("[Synth] Reloading a file ignores the `set_ccN` opcodes")
     synth.dispatchMessage(client, 0, "/cc1/value", "", nullptr);
 
     // Different file
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/saw.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "saw.sfz", R"(
         <control> set_cc1=0
         <region> sample=*saw
     )");
@@ -2146,7 +2146,7 @@ TEST_CASE("[Synth] Reuse offed voices in the last case scenario for new notes")
     sfz::Synth synth;
     synth.setNumVoices(2);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*sine ampeg_release=10
     )");
     synth.noteOn(0, 60, 63);
@@ -2167,7 +2167,7 @@ TEST_CASE("[Synth] Note on and off at the maximum delay")
     synth.setSampleRate(12800);
     synth.setSamplesPerBlock(128);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/noteonoff.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "noteonoff.sfz", R"(
         <region> loop_start=4 loop_end=124 ampeg_release=0.5 sample=looped_flute.wav
     )");
     synth.setNumVoices(128);
@@ -2187,7 +2187,7 @@ TEST_CASE("[Synth] Note on and off with delay")
     synth.setSampleRate(12800);
     synth.setSamplesPerBlock(128);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/noteonoff.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "noteonoff.sfz", R"(
         <region> loop_start=4 loop_end=124 ampeg_release=0.5 sample=looped_flute.wav
     )");
     synth.setNumVoices(128);

@@ -249,7 +249,7 @@ TEST_CASE("[Triggers] sw_vel, basic")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> key=60 sample=kick.wav
         <region> key=62 sw_previous=60 sw_vel=previous sample=snare.wav
     )");
@@ -274,7 +274,7 @@ TEST_CASE("[Triggers] sw_vel, without sw_previous")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> key=60 sample=kick.wav
         <region> key=62 sw_vel=previous sample=snare.wav
     )");
@@ -299,7 +299,7 @@ TEST_CASE("[Triggers] sw_vel, with a note in between")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> key=60 sample=kick.wav
         <region> key=62 sw_vel=previous sample=snare.wav
         <region> key=64 sample=closedhat.wav
@@ -328,7 +328,7 @@ TEST_CASE("[Triggers] sw_vel, with a note in between and sw_previous")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> key=60 sample=kick.wav
         <region> key=62 sw_previous=60 sw_vel=previous sample=snare.wav
         <region> key=64 sample=closedhat.wav
@@ -355,7 +355,7 @@ TEST_CASE("[Triggers] sw_vel, consider the previous velocity for triggers")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> key=60 sample=kick.wav
         <region> key=62 sw_previous=60 sw_vel=previous sample=snare.wav lovel=63
     )");
@@ -397,7 +397,7 @@ TEST_CASE("[Triggers] Honor lorand/hirand on CC triggers")
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> sample=*sine hikey=-1 start_locc64=63 start_hicc64=127 lorand=0 hirand=0.5
         <region> sample=*saw hikey=-1 start_locc64=63 start_hicc64=127 lorand=0.5 hirand=1
     )");
@@ -415,7 +415,7 @@ TEST_CASE("[Triggers] Offed voices with CC triggers do not activate release trig
     std::vector<std::string> messageList;
     Client client(&messageList);
     client.setReceiveCallback(&simpleMessageReceiver);
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> sample=*sine hikey=-1 start_locc64=63 start_hicc64=127 group=1 off_by=2
         <region> sample=*saw hikey=-1 start_locc64=0 start_hicc64=62 group=2
         <region> sample=*noise trigger=release_key
@@ -433,7 +433,7 @@ TEST_CASE("[Triggers] lotimer")
     synth.setSampleRate(48000);
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer { 2, 480 };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> key=40 lotimer=0.1 sample=kick.wav loop_mode=one_shot
     )");
 
@@ -472,7 +472,7 @@ TEST_CASE("[Triggers] lotimer on CC")
     synth.setSampleRate(48000);
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer { 2, 480 };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> start_locc4=100 start_hicc4=100 lotimer=0.1 sample=kick.wav loop_mode=one_shot
     )");
 
@@ -512,7 +512,7 @@ TEST_CASE("[Triggers] hitimer (with group)")
     synth.setSampleRate(48000);
     synth.setSamplesPerBlock(480);
     sfz::AudioBuffer<float> buffer { 2, 480 };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_vel.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_vel.sfz", R"(
         <region> group=1 key=40 sample=snare.wav loop_mode=one_shot
         <region> group=1 key=41 hitimer=0.1 sample=kick.wav loop_mode=one_shot
     )");
@@ -544,8 +544,8 @@ TEST_CASE("[Triggers] hitimer (with group)")
     // Advance time (it has to be 0.1s because playing the kick resets the timer)
     for (int i = 0; i < 10; ++i)
         synth.renderBlock(buffer);
-    
-    // t = 0.25s, not triggering a new kick 
+
+    // t = 0.25s, not triggering a new kick
     REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav", "kick.wav" });
     synth.noteOn(0, 41, 100);
     REQUIRE(playingSamples(synth) == std::vector<std::string> { "snare.wav", "kick.wav", "kick.wav" });
@@ -554,7 +554,7 @@ TEST_CASE("[Triggers] hitimer (with group)")
 TEST_CASE("[Triggers] Respect poly-aftertouch note values when triggering on cc130")
 {
     Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/poly_at_trigger.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "poly_at_trigger.sfz", R"(
         <region> key=55 on_locc130=127 on_hicc130=127 sample=*saw
         <region> key=57 on_locc130=127 on_hicc130=127 sample=*sine
     )");

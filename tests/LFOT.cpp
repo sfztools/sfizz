@@ -77,10 +77,10 @@ static constexpr double mseThreshold = 1e-3;
 TEST_CASE("[LFO] Waves")
 {
     DataPoints ref;
-    REQUIRE(load_txt_file(ref, "tests/lfo/lfo_waves_reference.dat"));
+    REQUIRE(load_txt_file(ref, SFIZZ_TEST_DIR "/lfo/lfo_waves_reference.dat"));
 
     DataPoints cur;
-    REQUIRE(computeLFO(cur, "tests/lfo/lfo_waves.sfz", 100.0, ref.rows));
+    REQUIRE(computeLFO(cur, SFIZZ_TEST_DIR "/lfo/lfo_waves.sfz", 100.0, ref.rows));
 
     REQUIRE(ref.rows == cur.rows);
     REQUIRE(ref.cols == cur.cols);
@@ -94,10 +94,10 @@ TEST_CASE("[LFO] Waves")
 TEST_CASE("[LFO] Subwave")
 {
     DataPoints ref;
-    REQUIRE(load_txt_file(ref, "tests/lfo/lfo_subwave_reference.dat"));
+    REQUIRE(load_txt_file(ref, SFIZZ_TEST_DIR "/lfo/lfo_subwave_reference.dat"));
 
     DataPoints cur;
-    REQUIRE(computeLFO(cur, "tests/lfo/lfo_subwave.sfz", 100.0, ref.rows));
+    REQUIRE(computeLFO(cur, SFIZZ_TEST_DIR "/lfo/lfo_subwave.sfz", 100.0, ref.rows));
 
     REQUIRE(ref.rows == cur.rows);
     REQUIRE(ref.cols == cur.cols);
@@ -111,10 +111,10 @@ TEST_CASE("[LFO] Subwave")
 TEST_CASE("[LFO] Fade and delay")
 {
     DataPoints ref;
-    REQUIRE(load_txt_file(ref, "tests/lfo/lfo_fade_and_delay_reference.dat"));
+    REQUIRE(load_txt_file(ref, SFIZZ_TEST_DIR "/lfo/lfo_fade_and_delay_reference.dat"));
 
     DataPoints cur;
-    REQUIRE(computeLFO(cur, "tests/lfo/lfo_fade_and_delay.sfz", 100.0, ref.rows));
+    REQUIRE(computeLFO(cur, SFIZZ_TEST_DIR "/lfo/lfo_fade_and_delay.sfz", 100.0, ref.rows));
 
     REQUIRE(ref.rows == cur.rows);
     REQUIRE(ref.cols == cur.cols);

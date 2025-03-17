@@ -6,7 +6,7 @@ include(GNUWarnings)
 
 # C++14 is the minimum standard version required by Abseil LTS 20230125.1 and later, see
 # https://github.com/abseil/abseil-cpp/releases/tag/20230125.1
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to be used")
 set(CMAKE_C_STANDARD 99 CACHE STRING "C standard to be used")
 
 # Export the compile_commands.json file
@@ -197,6 +197,7 @@ VST3 destination directory:    ${VST3_PLUGIN_INSTALL_DIR}")
         endif()
         message(STATUS "
 Install prefix:                ${CMAKE_INSTALL_PREFIX}
+ASM includes:                ${CMAKE_ASM_STANDARD_INCLUDE_DIRECTORIES}
 ")
     endif()
 endfunction()

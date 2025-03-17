@@ -36,15 +36,15 @@ void compareFiles(const fs::path& lFile, const fs::path& rFile)
 
 TEST_CASE("[AudioFiles] Compare Flac and WAV")
 {
-    compareFiles(fs::current_path() / "tests/TestFiles/kick.wav",
-        fs::current_path() / "tests/TestFiles/kick.flac");
+    compareFiles(fs::path(SFIZZ_TEST_FILES) / "kick.wav",
+        fs::path(SFIZZ_TEST_FILES) / "kick.flac");
 }
 
 #if !defined(SFIZZ_USE_SNDFILE)
 TEST_CASE("[AudioFiles] Compare WV and WAV")
 {
-    compareFiles(fs::current_path() / "tests/TestFiles/kick.wav",
-        fs::current_path() / "tests/TestFiles/kick.wv");
+    compareFiles(fs::path(SFIZZ_TEST_FILES) / "kick.wav",
+        fs::path(SFIZZ_TEST_FILES) / "kick.wv");
 }
 #endif
 
@@ -78,8 +78,8 @@ void compareOutputs(const std::string& lFile, const std::string& rFile, CompareO
     sfz::AudioBuffer<float> rBuffer { 2, static_cast<unsigned>(rSynth.getSamplesPerBlock()) };
     sfz::AudioSpan<float> lSpan { lBuffer };
     sfz::AudioSpan<float> rSpan { rBuffer };
-    lSynth.loadSfzString(fs::current_path() / "tests/TestFiles/l.sfz", lFile);
-    rSynth.loadSfzString(fs::current_path() / "tests/TestFiles/r.sfz", rFile);
+    lSynth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "l.sfz", lFile);
+    rSynth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "r.sfz", rFile);
     lSynth.noteOn(opts.delay, opts.note, opts.velocity);
     rSynth.noteOn(opts.delay, opts.note, opts.velocity);
     lSynth.renderBlock(lSpan);
@@ -159,8 +159,8 @@ TEST_CASE("[Files] Embedded sample data")
     synth1.setSamplesPerBlock(256);
     synth2.setSamplesPerBlock(256);
 
-    synth1.loadSfzFile(fs::current_path() / "tests/TestFiles/kick.sfz");
-    synth2.loadSfzFile(fs::current_path() / "tests/TestFiles/kick_embedded.sfz");
+    synth1.loadSfzFile(fs::path(SFIZZ_TEST_FILES) / "kick.sfz");
+    synth2.loadSfzFile(fs::path(SFIZZ_TEST_FILES) / "kick_embedded.sfz");
 
     REQUIRE(synth1.getNumPreloadedSamples() == 1);
     REQUIRE(synth2.getNumPreloadedSamples() == 1);
