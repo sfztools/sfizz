@@ -1,0 +1,69 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+      "major": 3,
+      "minor": 23,
+      "patch": 0
+    },
+    "configurePresets": [
+    {
+        "name": "base",
+        "hidden": true,
+        "displayName": "Base Configuration",
+        "description": "Default build using Ninja generator",
+        "generator": "Ninja Multi-Config",
+        "binaryDir": "${sourceDir}/build/${presetName}",
+        "cacheVariables": {
+            "SFIZZ_TESTS": "OFF",
+            "SFIZZ_JACK": "OFF",
+            "SFIZZ_RENDER": "ON"
+        }
+    },
+    {
+        "name": "ci",
+        "hidden": true,
+        "displayName": "Base Configuration",
+        "description": "Common CI configurations",
+        "cacheVariables": {
+            "SFIZZ_USE_SYSTEM_ABSEIL": "ON"
+        }
+    },
+    {
+        "name": "windows",
+        "displayName": "Windows",
+        "description": "Windows builds",
+        "inherits": "base",
+        "toolchainFile": "${sourceDir}/cmake/Windows.MSVC.toolchain.cmake"
+    },
+    {
+        "name": "windows-test",
+        "displayName": "Windows Tests",
+        "description": "Windows builds with tests",
+        "inherits": "windows",
+        "cacheVariables": {
+            "SFIZZ_TESTS": "ON"
+        }
+    },
+    {
+        "name": "linux",
+        "displayName": "Linux",
+        "description": "Linux builds",
+        "inherits": "base"
+    },
+    {
+        "name": "linux-test",
+        "displayName": "Linux Tests",
+        "description": "Linux builds with tests",
+        "inherits": "linux",
+        "cacheVariables": {
+            "SFIZZ_TESTS": "ON"
+        }
+    },
+    {
+        "name": "linux-ci",
+        "displayName": "Linux CI",
+        "description": "Linux CI builds",
+        "inherits": ["linux-test" , "ci"]
+    }
+    ]
+  }

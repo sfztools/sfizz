@@ -651,7 +651,7 @@ TEST_CASE("[Parsing] Expanded value of #include")
         sfz::Parser parser;
         ParsingMocker mock;
         parser.setListener(&mock);
-        parser.parseFile(fs::current_path() / "tests/TestFiles/dollar_include_main.sfz");
+        parser.parseFile(fs::path(SFIZZ_TEST_FILES) / "dollar_include_main.sfz");
 
         std::vector<std::vector<sfz::Opcode>> expectedMembers = {
             {{"sample", "*sine"}},

@@ -65,7 +65,7 @@ struct SynthDiscussion
 
     void load(absl::string_view sfz)
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/discussion.sfz", sfz);
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "discussion.sfz", sfz);
     }
 
     void send(absl::string_view path, int32_t value)

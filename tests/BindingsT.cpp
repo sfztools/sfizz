@@ -12,7 +12,7 @@
 TEST_CASE("[Bindings] Midnam C++")
 {
     sfz::Sfizz synth;
-    const auto path = fs::current_path() / "tests/TestFiles/labels.sfz";
+    const auto path = fs::path(SFIZZ_TEST_FILES) / "labels.sfz";
     synth.loadSfzFile(path.string());
     const std::string xmlMidnam = synth.exportMidnam("");
     REQUIRE(xmlMidnam.find("<Note Number=\"12\" Name=\"Cymbals\" />") != xmlMidnam.npos);
@@ -24,7 +24,7 @@ TEST_CASE("[Bindings] Midnam C++")
 TEST_CASE("[Bindings] Midnam C")
 {
     sfizz_synth_t* synth = sfizz_create_synth();
-    const auto path = fs::current_path() / "tests/TestFiles/labels.sfz";
+    const auto path = fs::path(SFIZZ_TEST_FILES) / "labels.sfz";
     const auto strPath = path.string();
     sfizz_load_file(synth, strPath.c_str());
     char* midnamChar = sfizz_export_midnam(synth, "");

@@ -192,7 +192,7 @@ TEST_CASE("[Keyswitches] Normal lastKeyswitch range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=40 sw_hikey=42 sw_default=40
         <region> sw_last=40 key=60 sample=*sine
         <region> sw_last=41 key=62 sample=*saw
@@ -216,7 +216,7 @@ TEST_CASE("[Keyswitches] No lastKeyswitch range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <region> sw_last=40 key=60 sample=*sine
         <region> sw_last=41 key=62 sample=*saw
     )");
@@ -246,7 +246,7 @@ TEST_CASE("[Keyswitches] Out of lastKeyswitch range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=40 sw_hikey=42 sw_default=40
         <region> sw_last=40 key=60 sample=*sine
         <region> sw_last=43 key=62 sample=*saw
@@ -270,7 +270,7 @@ TEST_CASE("[Keyswitches] Overlapping key and lastKeyswitch range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=1 sw_hikey=127 sw_default=40
         <region> sw_last=40 key=60 sample=*sine
         <region> sw_last=41 key=62 sample=*saw
@@ -301,7 +301,7 @@ TEST_CASE("[Keyswitches] sw_down, in range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=1 sw_hikey=127 sw_default=40
         <region> sw_down=40 key=60 sample=*sine
     )");
@@ -322,7 +322,7 @@ TEST_CASE("[Keyswitches] sw_down, out of range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=1 sw_hikey=10 sw_default=40
         <region> sw_down=40 key=60 sample=*sine
     )");
@@ -343,7 +343,7 @@ TEST_CASE("[Keyswitches] sw_up, in range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=1 sw_hikey=127 sw_default=40
         <region> sw_up=40 key=60 sample=*sine
     )");
@@ -364,7 +364,7 @@ TEST_CASE("[Keyswitches] sw_up, out of range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/keyswitches.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "keyswitches.sfz", R"(
         <global> sw_lokey=1 sw_hikey=127 sw_default=40
         <region> sw_up=40 key=60 sample=*sine
     )");
@@ -385,7 +385,7 @@ TEST_CASE("[Keyswitches] sw_default")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_default.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_default.sfz", R"(
         <global> sw_lokey=30 sw_hikey=50 sw_default=40
         <region> sw_last=41 key=51 sample=*sine
         <region> sw_last=40 key=52 sample=*sine
@@ -403,7 +403,7 @@ TEST_CASE("[Keyswitches] sw_default and playing with switches")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_default.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_default.sfz", R"(
         <global> sw_lokey=30 sw_hikey=50 sw_default=40
         <region> sw_last=41 key=51 sample=*sine
         <region> sw_last=40 key=52 sample=*sine
@@ -435,7 +435,7 @@ TEST_CASE("[Keyswitches] sw_previous in range")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <region> sample=*saw sw_previous=60 lokey=50 hikey=70
     )");
     // Note: sforzando seems to activate by default if sw_previous is indeed 60,
@@ -468,7 +468,7 @@ TEST_CASE("[Keyswitches] sw_previous out of range")
     // The behavior is the same in this case, regardless of the keyrange
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <region> sample=*saw sw_previous=60 lokey=50 hikey=55
     )");
     REQUIRE(!synth.getLayerView(0)->isSwitchedOn());
@@ -496,7 +496,7 @@ TEST_CASE("[Keyswitches] sw_lolast and sw_hilast")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <region> sw_lolast=57 sw_hilast=59 key=70 sample=*saw
         <region> sw_lolast=60 sw_hilast=62 key=72 sample=*sine
     )");
@@ -536,7 +536,7 @@ TEST_CASE("[Keyswitches] sw_lolast and sw_hilast with sw_last")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <region> sw_last=40 sw_lolast=57 sw_hilast=59 key=70 sample=*saw
         <region> sw_lolast=60 sw_hilast=62 sw_last=41 key=72 sample=*sine
     )");
@@ -572,7 +572,7 @@ TEST_CASE("[Keyswitches] sw_lolast and sw_hilast with sw_default")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <global> sw_default=58
         <region> sw_lolast=57 sw_hilast=59 key=70 sample=*saw
         <region> sw_lolast=60 sw_hilast=62 key=72 sample=*sine
@@ -585,7 +585,7 @@ TEST_CASE("[Keyswitches] Multiple sw_default")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <global> sw_default=60
         <region> sw_last=60 key=70 sample=*saw
         <group> sw_default=58
@@ -603,7 +603,7 @@ TEST_CASE("[Keyswitches] Multiple sw_default, in region")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
         <global> sw_default=60
         <region> sw_last=58 key=70 sample=*saw
         <region> sw_default=58 sw_last=59 key=72 sample=*saw
@@ -617,7 +617,7 @@ TEST_CASE("[Region activation] Polyphonic aftertouch")
     sfz::Synth synth;
     SECTION("Basic sequence, note on")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyaft.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyaft.sfz", R"(
             <region> sample=*saw lokey=48 hikey=60
             <region> lopolyaft=50 hipolyaft=100 sample=*sine lokey=36 hikey=47
         )");
@@ -632,7 +632,7 @@ TEST_CASE("[Region activation] Polyphonic aftertouch")
 
     SECTION("Basic sequence, note off, no polyaft set")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyaft.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyaft.sfz", R"(
             <region> sample=*saw
             <region> lopolyaft=50 hipolyaft=100 sample=*sine trigger=release
         )");
@@ -644,7 +644,7 @@ TEST_CASE("[Region activation] Polyphonic aftertouch")
 
     SECTION("Basic sequence, note off")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyaft.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyaft.sfz", R"(
             <region> sample=*saw
             <region> lopolyaft=50 hipolyaft=100 sample=*sine trigger=release
         )");
@@ -668,7 +668,7 @@ TEST_CASE("[Keyswitches] sw_default with octave_offset")
     };
 
     SECTION("In <global>") {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
             <control> octave_offset=1 note_offset=-1
             <global> sw_default=48
             <region> sample=*sine
@@ -678,7 +678,7 @@ TEST_CASE("[Keyswitches] sw_default with octave_offset")
     }
 
     SECTION("In <master>") {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
             <control> octave_offset=1 note_offset=-1
             <master> sw_default=48
             <region> sample=*sine
@@ -688,7 +688,7 @@ TEST_CASE("[Keyswitches] sw_default with octave_offset")
     }
 
     SECTION("In <group>") {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
             <control> octave_offset=1 note_offset=-1
             <group> sw_default=48
             <region> sample=*sine
@@ -698,7 +698,7 @@ TEST_CASE("[Keyswitches] sw_default with octave_offset")
     }
 
     SECTION("In <region>") {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
             <control> octave_offset=1 note_offset=-1
             <region> sample=*sine sw_default=48
         )");
@@ -713,7 +713,7 @@ TEST_CASE("[Region activation] Program change")
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
 
     SECTION("Default value") {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
             <region> sample=*saw
         )");
         REQUIRE(synth.getLayerView(0)->isSwitchedOn());
@@ -728,7 +728,7 @@ TEST_CASE("[Region activation] Program change")
     }
 
     SECTION("Change range") {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/sw_previous.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "sw_previous.sfz", R"(
             <region> sample=*saw hiprog=2
             <region> sample=*sine loprog=1 hiprog=126
             <region> sample=*tri loprog=-1 hiprog=200

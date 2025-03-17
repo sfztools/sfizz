@@ -1,4 +1,5 @@
 include(CheckCXXSourceCompiles)
+include(cmake/CPM.cmake)
 
 # Find system threads
 find_package(Threads REQUIRED)
@@ -98,16 +99,12 @@ if(SFIZZ_USE_SYSTEM_CXXOPTS)
     find_path(CXXOPTS_INCLUDE_DIR "cxxopts.hpp")
     if(NOT CXXOPTS_INCLUDE_DIR)
         message(FATAL_ERROR "Cannot find cxxopts")
-    else()
-        message(STATUS "Found system cxxopts")
     endif()
-    add_library(sfizz_cxxopts INTERFACE)
-    target_include_directories(sfizz_cxxopts INTERFACE "${CXXOPTS_INCLUDE_DIR}")
 else()
-    add_library(sfizz_cxxopts INTERFACE)
-    add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
-    target_include_directories(sfizz_cxxopts INTERFACE "external/cxxopts")
+    set(CXXOPTS_INCLUDE_DIR "external/cxxopts")
 endif()
+add_library(sfizz_cxxopts INTERFACE)
+target_include_directories(sfizz_cxxopts INTERFACE "${CXXOPTS_INCLUDE_DIR}")
 add_library(sfizz::cxxopts ALIAS sfizz_cxxopts)
 
 # The sndfile library
@@ -145,13 +142,12 @@ add_subdirectory("external/st_audiofile" EXCLUDE_FROM_ALL)
 # The simde library
 add_library(sfizz_simde INTERFACE)
 add_library(sfizz::simde ALIAS sfizz_simde)
-if(SFIZZ_USE_SYSTEM_SIMDE)
-    find_path(SIMDE_INCLUDE_DIR "simde/simde-features.h")
-    if(NOT SIMDE_INCLUDE_DIR)
-        message(FATAL_ERROR "Cannot find simde")
-    endif()
-    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIR}")
 
+if (SFIZZ_USE_SYSTEM_SIMDE)
+    find_package(SIMDE)
+    if (NOT SIMDE_FOUND)
+        message(FATAL_ERROR "Couldn't find SIMDE on the system")
+    endif()
     function(sfizz_ensure_simde_version result major minor micro)
         set(CMAKE_REQUIRED_INCLUDES "${SIMDE_INCLUDE_DIR}")
         check_cxx_source_compiles(
@@ -166,10 +162,11 @@ int main() { return 0; }"
     sfizz_ensure_simde_version(SFIZZ_SIMDE_AT_LEAST_0_7_3 0 7 3)
     if(NOT SFIZZ_SIMDE_AT_LEAST_0_7_3)
         message(WARNING "The version of SIMDe on this system has known issues. \
-It is recommended to either update if a newer version is available, or use the \
-version bundled with this package. Refer to following issues: \
-simd-everywhere/simde#704, simd-everywhere/simde#706")
+        It is recommended to either update if a newer version is available, or use the \
+        version bundled with this package. Refer to following issues: \
+        simd-everywhere/simde#704, simd-everywhere/simde#706")
     endif()
+    target_include_directories(sfizz_simde INTERFACE "${SIMDE_INCLUDE_DIR}")
 else()
     target_include_directories(sfizz_simde INTERFACE "external/simde")
 endif()
@@ -177,20 +174,11 @@ if(TARGET sfizz::openmp)
     target_link_libraries(sfizz_simde INTERFACE sfizz::openmp)
 endif()
 
-# The pugixml library
 if(SFIZZ_USE_SYSTEM_PUGIXML)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(PUGIXML "pugixml" REQUIRED)
-    add_library(sfizz_pugixml INTERFACE)
-    target_include_directories(sfizz_pugixml INTERFACE ${PUGIXML_INCLUDE_DIRS})
-    target_link_libraries(sfizz_pugixml INTERFACE ${PUGIXML_LIBRARIES})
-    link_directories(${PUGIXML_LIBRARY_DIRS})
+    find_package(pugixml REQUIRED)
 else()
-    add_library(sfizz_pugixml STATIC "src/external/pugixml/src/pugixml.cpp")
-    target_include_directories(sfizz_pugixml PUBLIC "src/external/pugixml/src")
-endif()
-add_library(sfizz::pugixml ALIAS sfizz_pugixml)
-
+    add_subdirectory("src/external/pugixml" EXCLUDE_FROM_ALL)
+end()
 # The spline library
 add_library(sfizz_spline STATIC "src/external/spline/spline/spline.cpp")
 add_library(sfizz::spline ALIAS sfizz_spline)

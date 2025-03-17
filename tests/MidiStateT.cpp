@@ -143,7 +143,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC131 - Note on velocity")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> key=60 delay_cc131=1 sample=kick.wav
             <region> key=61 offset_cc131=100 sample=snare.wav
         )");
@@ -166,7 +166,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC132 - Note off velocity")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> key=60 sample=*silence
             <region> key=60 delay_cc132=1 sample=kick.wav trigger=release
             <region> key=61 sample=snare.wav
@@ -195,7 +195,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC133 - Note number")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> delay_cc133=1 offset_cc133=100 sample=kick.wav
         )");
         synth.hdNoteOn(0, 0, 1.0f);
@@ -215,7 +215,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC134 - Note gate")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> delay_cc134=1 offset_cc134=100 sample=kick.wav
         )");
         synth.hdNoteOn(0, 60, 1.0f);
@@ -247,7 +247,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC137 - Alternate")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> delay_cc137=1 offset_cc137=100 sample=kick.wav
         )");
         synth.hdNoteOn(0, 60, 1.0f);
@@ -277,7 +277,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC140 - Keydelta")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> delay=2 offset=200 delay_cc140=1 offset_cc140=100 sample=kick.wav
         )");
         synth.hdNoteOn(0, 60, 1.0f);
@@ -302,7 +302,7 @@ TEST_CASE("[CC] Extended CCs on offset and delay")
 
     SECTION("CC141 - Absolute Keydelta")
     {
-        synth.loadSfzString(fs::current_path() / "tests/TestFiles/extended_ccs.sfz", R"(
+        synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "extended_ccs.sfz", R"(
             <region> delay=2 offset=200 delay_cc141=1 offset_cc141=100 sample=kick.wav
         )");
         synth.hdNoteOn(0, 60, 1.0f);

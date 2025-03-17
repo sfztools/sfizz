@@ -53,7 +53,7 @@ TEST_CASE("[Wavetables] Frequency ranges")
 
 TEST_CASE("[Wavetables] Wavetable sound files: Surge")
 {
-    sfz::FileMetadataReader reader { "tests/TestFiles/wavetables/surge.wav" };
+    sfz::FileMetadataReader reader { SFIZZ_TEST_FILES "/wavetables/surge.wav" };
     sfz::WavetableInfo wt;
 
     REQUIRE(reader.open());
@@ -64,7 +64,7 @@ TEST_CASE("[Wavetables] Wavetable sound files: Surge")
 
 TEST_CASE("[Wavetables] Wavetable sound files: Clm")
 {
-    sfz::FileMetadataReader reader { "tests/TestFiles/wavetables/clm.wav" };
+    sfz::FileMetadataReader reader { SFIZZ_TEST_FILES "/wavetables/clm.wav" };
     sfz::WavetableInfo wt;
 
     REQUIRE(reader.open());
@@ -75,7 +75,7 @@ TEST_CASE("[Wavetables] Wavetable sound files: Clm")
 
 TEST_CASE("[Wavetables] Non-wavetable sound files")
 {
-    sfz::FileMetadataReader reader { "tests/TestFiles/snare.wav" };
+    sfz::FileMetadataReader reader { SFIZZ_TEST_FILES "/snare.wav" };
     sfz::WavetableInfo wt;
 
     REQUIRE(reader.open());
@@ -98,7 +98,7 @@ std::vector<char> readWholeFile(const fs::path& path)
 
 TEST_CASE("[Wavetables] Wavetable sound files: Surge, from memory")
 {
-    auto file = readWholeFile("tests/TestFiles/wavetables/surge.wav");
+    auto file = readWholeFile(SFIZZ_TEST_FILES "/wavetables/surge.wav");
     sfz::MemoryMetadataReader reader { file.data(), file.size() };
     sfz::WavetableInfo wt;
 
@@ -110,7 +110,7 @@ TEST_CASE("[Wavetables] Wavetable sound files: Surge, from memory")
 
 TEST_CASE("[Wavetables] Wavetable sound files: Clm, from memory")
 {
-    auto file = readWholeFile("tests/TestFiles/wavetables/clm.wav");
+    auto file = readWholeFile(SFIZZ_TEST_FILES "/wavetables/clm.wav");
     sfz::MemoryMetadataReader reader { file.data(), file.size() };
     sfz::WavetableInfo wt;
 
@@ -122,7 +122,7 @@ TEST_CASE("[Wavetables] Wavetable sound files: Clm, from memory")
 
 TEST_CASE("[Wavetables] Non-wavetable sound files, from memory")
 {
-    auto file = readWholeFile("tests/TestFiles/snare.wav");
+    auto file = readWholeFile(SFIZZ_TEST_FILES "/snare.wav");
     sfz::MemoryMetadataReader reader { file.data(), file.size() };
     sfz::WavetableInfo wt;
 

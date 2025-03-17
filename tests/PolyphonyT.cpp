@@ -20,7 +20,7 @@ using namespace sfz::literals;
 TEST_CASE("[Polyphony] Polyphony in hierarchy")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=61 sample=*sine polyphony=2
         <group> polyphony=2
         <region> key=62 sample=*sine
@@ -47,7 +47,7 @@ TEST_CASE("[Polyphony] Polyphony in hierarchy")
 TEST_CASE("[Polyphony] Polyphony groups")
 {
     sfz::Synth synth;
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <group> polyphony=2
         <region> key=62 sample=*sine
         <group> group=1 polyphony=3
@@ -75,7 +75,7 @@ TEST_CASE("[Polyphony] group polyphony limits")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <group> group=1 polyphony=2
         <region> sample=*sine key=65
     )");
@@ -91,7 +91,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <group> polyphony=2
         <region> sample=*sine key=65
     )");
@@ -107,7 +107,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (group)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <group> polyphony=2
         <region> sample=*sine key=65
     )");
@@ -123,7 +123,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (master)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <master> polyphony=2
         <group> polyphony=5
         <region> sample=*sine key=65
@@ -140,7 +140,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (limit in another master)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <master> polyphony=2
         <region> sample=*saw key=65
         <master>
@@ -162,7 +162,7 @@ TEST_CASE("[Polyphony] Hierarchy polyphony limits (global)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <global> polyphony=2
         <group> polyphony=5
         <region> sample=*sine key=65
@@ -179,7 +179,7 @@ TEST_CASE("[Polyphony] Polyphony in master")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <master> polyphony=2
         <group> group=2
         <region> sample=*sine key=65
@@ -219,7 +219,7 @@ TEST_CASE("[Polyphony] Self-masking")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*sine key=64 note_polyphony=2
     )");
     synth.noteOn(0, 64, 63);
@@ -240,7 +240,7 @@ TEST_CASE("[Polyphony] Not self-masking")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*sine key=66 note_polyphony=2 note_selfmask=off
     )");
     synth.noteOn(0, 66, 63 );
@@ -282,7 +282,7 @@ TEST_CASE("[Polyphony] Self-masking only works from low to high")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*sine key=64 note_polyphony=1
     )");
     synth.noteOn(0, 64, 63 );
@@ -300,7 +300,7 @@ TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same po
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*saw key=64 note_polyphony=1
         <region> sample=*sine key=64 note_polyphony=1
     )");
@@ -322,7 +322,7 @@ TEST_CASE("[Polyphony] Note polyphony checks works across regions in the same po
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <global> sw_lokey=36 sw_hikey=37 sw_default=36
         <region> sw_last=36 key=48 note_polyphony=1 sample=*saw
         <region> sw_last=37 key=48 transpose=12 note_polyphony=1 sample=*tri
@@ -348,7 +348,7 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> group=1 sample=*saw key=64 note_polyphony=1
         <region> group=2 sample=*sine key=64 note_polyphony=1
     )");
@@ -371,7 +371,7 @@ TEST_CASE("[Polyphony] Note polyphony do not operate across polyphony groups (wi
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <global> sw_lokey=36 sw_hikey=37 sw_default=36
         <region> group=1 sw_last=36 key=48 note_polyphony=1 sample=*saw
         <region> group=2 sw_last=37 key=48 transpose=12 note_polyphony=1 sample=*tri
@@ -396,7 +396,7 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=48 note_polyphony=1 sample=*saw trigger=release_key ampeg_attack=1 ampeg_decay=1
     )");
     synth.noteOn(0, 48, 63 );
@@ -418,7 +418,7 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices (masking works 
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=48 note_polyphony=1 sample=*saw trigger=release_key ampeg_attack=1 ampeg_decay=1
     )");
     synth.noteOn(0, 48, 63 );
@@ -441,7 +441,7 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain ped
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=48 sample=*sine
         <region> key=48 note_polyphony=1 sample=*saw trigger=release ampeg_attack=1 ampeg_decay=1
     )");
@@ -467,7 +467,7 @@ TEST_CASE("[Polyphony] Note polyphony operates on release voices and sustain ped
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=48 sample=*sine
         <region> key=48 note_polyphony=1 sample=*saw trigger=release ampeg_attack=1 ampeg_decay=1
     )");
@@ -493,7 +493,7 @@ TEST_CASE("[Polyphony] Bi-directional choking (with polyphony)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <group> key=60 polyphony=1
         <region> sample=kick.wav loop_mode=one_shot
         <region> sample=snare.wav trigger=release
@@ -513,7 +513,7 @@ TEST_CASE("[Polyphony] Bi-directional choking (with note_polyphony)")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <group> key=60 note_polyphony=1
         <region> sample=kick.wav loop_mode=one_shot
         <region> sample=snare.wav trigger=release
@@ -533,7 +533,7 @@ TEST_CASE("[Polyphony] Choke long release tails")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*saw ampeg_attack=0.1 ampeg_release=10 polyphony=1
     )");
     int attackBlocks = static_cast<int>(0.1f / synth.getSamplesPerBlock() * 48000.0f) + 1;
@@ -554,7 +554,7 @@ TEST_CASE("[Polyphony] Choke long release tails with note_polyphony")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> sample=*saw ampeg_attack=0.1 ampeg_release=10 note_polyphony=1
     )");
     int attackBlocks = static_cast<int>(0.1f / synth.getSamplesPerBlock() * 48000.0f) + 1;
@@ -575,7 +575,7 @@ TEST_CASE("[Polyphony] Choke same group and note if the region is switched off (
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <global> group=1 off_by=1
         <region> locc1=0 hicc1=63 sample=*saw
         <region> locc1=64 hicc1=127 sample=*sine
@@ -593,7 +593,7 @@ TEST_CASE("[Polyphony] Choking on poly-aftertouch respects the note number")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyat_choke.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyat_choke.sfz", R"(
         <region> key=55 group=1 off_by=2 sample=*saw
         <region> key=55 group=2 on_locc130=127 on_hicc130=127 trigger=release sample=*sine
     )");
@@ -618,7 +618,7 @@ TEST_CASE("[Polyphony] A note coming at the same time as another can choke it")
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=69 off_by=2 off_mode=normal tune=-3200 ampeg_release=1 sample=snare.wav
         <region> key=81 group=2 sample=kick.wav
     )");
@@ -633,7 +633,7 @@ TEST_CASE("[Polyphony] A note coming one sample after another note can choke it"
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=69 off_by=2 off_mode=normal tune=-3200 ampeg_release=1 sample=snare.wav
         <region> key=81 group=2 sample=kick.wav
     )");
@@ -648,7 +648,7 @@ TEST_CASE("[Polyphony] A note coming one sample before another note cannot choke
 {
     sfz::Synth synth;
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/TestFiles/polyphony.sfz", R"(
+    synth.loadSfzString(fs::path(SFIZZ_TEST_FILES) / "polyphony.sfz", R"(
         <region> key=69 off_by=2 off_mode=normal tune=-3200 ampeg_release=1 sample=snare.wav
         <region> key=81 group=2 sample=kick.wav
     )");

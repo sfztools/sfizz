@@ -25,7 +25,7 @@ endif()
 if(SFIZZ_RENDER)
     add_executable(sfizz_render MidiHelpers.h sfizz_render.cpp)
     target_link_libraries(sfizz_render PRIVATE
-        sfizz::cxxopts
+        cxxopts::cxxopts
         sfizz::fmidi
         sfizz::internal
         st_audiofile_formats
