@@ -221,7 +221,7 @@ std::vector<std::string> stringTokenize(const std::string& str)
 
 void cliThreadProc()
 {
-    while (!shouldClose) {
+    while (!shouldClose && std::cin) {
         std::cout << "\n> ";
 
         std::string command;
