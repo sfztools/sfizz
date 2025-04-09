@@ -1369,6 +1369,8 @@ void Voice::Impl::fillInterpolated(
     auto left = dest.getChannel(0);
     if (source.getNumChannels() == 1) {
         while (ind < indices.end()) {
+            if ((size_t)*ind >= leftSource.size())
+                break;
             auto output = interpolate<M>(&leftSource[*ind], *coeff);
             IF_CONSTEXPR(Adding) {
                 float g = *addingGain++;
@@ -1382,6 +1384,8 @@ void Voice::Impl::fillInterpolated(
         auto right = dest.getChannel(1);
         auto rightSource = source.getConstSpan(1);
         while (ind < indices.end()) {
+            if ((size_t)*ind >= leftSource.size() || (size_t)*ind >= rightSource.size())
+                break;
             auto leftOutput = interpolate<M>(&leftSource[*ind], *coeff);
             auto rightOutput = interpolate<M>(&rightSource[*ind], *coeff);
             IF_CONSTEXPR(Adding) {
