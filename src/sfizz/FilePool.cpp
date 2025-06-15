@@ -42,6 +42,8 @@
 #include <atomic_queue/defs.h>
 #if defined(_WIN32)
 #include <windows.h>
+#elif defined(__ANDROID__)
+#include <sys/resource.h>
 #else
 #include <pthread.h>
 #endif
@@ -608,6 +610,13 @@ void sfz::FilePool::raiseCurrentThreadPriority() noexcept
     if (!SetThreadPriority(thread, priority)) {
         std::system_error error(GetLastError(), std::system_category());
         DBG("[sfizz] Cannot set current thread priority: " << error.what());
+    }
+#elif defined(__ANDROID__)
+    int tid = gettid(); // Android specific function to get thread ID
+    int priority = -2;  // android.os.Process.THREAD_PRIORITY_FOREGROUND
+    if (setpriority(PRIO_PROCESS, tid, priority) != 0) {
+        // setpriority sets errno on failure
+        DBG("[sfizz] Cannot set current thread priority: " << strerror(errno));
     }
 #else
     pthread_t thread = pthread_self();
