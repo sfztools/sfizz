@@ -1307,8 +1307,12 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
         return;
 
     selectedVoice->reset();
-    if (selectedVoice->startVoice(layer, delay, triggerEvent))
+    if (selectedVoice->startVoice(layer, delay, triggerEvent)) {
         ring.addVoiceToRing(selectedVoice);
+    } else {
+        // Clean up immediately, so the main render loop doesn't try to process it (and it's also available again)
+        selectedVoice->reset();
+    }
 }
 
 void Synth::Impl::checkOffGroups(const Region* region, int delay, int number, bool chokedByCC)
