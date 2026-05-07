@@ -88,23 +88,27 @@ void sfz::MidiState::advanceTime(int numSamples) noexcept
 void sfz::MidiState::flushEvents() noexcept
 {
     auto flushEventVector = [] (EventVector& events) {
-        ASSERT(!events.empty()); // CC event vectors should never be empty
+        if (events.empty())
+            return;
         events.front().value = events.back().value;
         events.front().delay = 0;
         events.resize(1);
     };
 
-    // M1: only master channel is populated; M3 will iterate over all
-    // channels that received events this block.
-    auto& cs = channelStates[masterChannel];
-    for (auto& events : cs.ccEvents)
-        flushEventVector(events);
+    // Master always carries its initialised sentinel event vectors, so its
+    // flush is unconditional. Member channels are populated lazily on
+    // first write, so most of their event vectors stay empty under
+    // non-MPE input — flushEventVector skips empties cheaply.
+    for (auto& cs : channelStates) {
+        for (auto& events : cs.ccEvents)
+            flushEventVector(events);
 
-    for (auto& events: cs.polyAftertouchEvents)
-        flushEventVector(events);
+        for (auto& events : cs.polyAftertouchEvents)
+            flushEventVector(events);
 
-    flushEventVector(cs.pitchEvents);
-    flushEventVector(cs.channelAftertouchEvents);
+        flushEventVector(cs.pitchEvents);
+        flushEventVector(cs.channelAftertouchEvents);
+    }
 }
 
 
@@ -366,8 +370,10 @@ const sfz::EventVector& sfz::MidiState::getCCEvents(int channel, int ccIdx) cons
         return nullEvent;
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
-
-    return channelStates[channel].ccEvents[ccIdx];
+    const auto& events = channelStates[channel].ccEvents[ccIdx];
+    if (events.empty())
+        return nullEvent;
+    return events;
 }
 
 const sfz::EventVector& sfz::MidiState::getPitchEvents() const noexcept
@@ -379,8 +385,10 @@ const sfz::EventVector& sfz::MidiState::getPitchEvents(int channel) const noexce
 {
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
-
-    return channelStates[channel].pitchEvents;
+    const auto& events = channelStates[channel].pitchEvents;
+    if (events.empty())
+        return nullEvent;
+    return events;
 }
 
 const sfz::EventVector& sfz::MidiState::getChannelAftertouchEvents() const noexcept
@@ -392,8 +400,10 @@ const sfz::EventVector& sfz::MidiState::getChannelAftertouchEvents(int channel) 
 {
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
-
-    return channelStates[channel].channelAftertouchEvents;
+    const auto& events = channelStates[channel].channelAftertouchEvents;
+    if (events.empty())
+        return nullEvent;
+    return events;
 }
 
 const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int noteNumber) const noexcept
@@ -407,8 +417,10 @@ const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int channel, int
         return nullEvent;
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
-
-    return channelStates[channel].polyAftertouchEvents[noteNumber];
+    const auto& events = channelStates[channel].polyAftertouchEvents[noteNumber];
+    if (events.empty())
+        return nullEvent;
+    return events;
 }
 
 int sfz::MidiState::getProgram() const noexcept

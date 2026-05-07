@@ -31,6 +31,7 @@ set(SFIZZ_TEST_SOURCES
     SIMDHelpersT.cpp
     FilesT.cpp
     MidiStateT.cpp
+    MPET.cpp
     InterpolatorsT.cpp
     SmoothersT.cpp
     PolyphonyT.cpp
