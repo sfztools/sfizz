@@ -1323,7 +1323,11 @@ void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& trigge
 {
     const Region& region = layer->getRegion();
 
-    voiceManager_.checkPolyphony(&region, delay, triggerEvent);
+    // Bias voice stealing toward same-channel candidates only when MPE is
+    // enabled. With MPE off, preferredChannel = -1 reproduces the
+    // pre-MPE-fork stealing behavior exactly.
+    const int preferredChannel = mpeEnabled_ ? triggerEvent.channel : -1;
+    voiceManager_.checkPolyphony(&region, delay, triggerEvent, preferredChannel);
     Voice* selectedVoice = voiceManager_.findFreeVoice();
     if (selectedVoice == nullptr)
         return;

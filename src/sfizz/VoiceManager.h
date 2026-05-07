@@ -107,7 +107,7 @@ struct VoiceManager final : public Voice::StateListener
      * @param delay
      * @param triggerEvent
      */
-    void checkPolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept;
+    void checkPolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent, int preferredChannel = -1) noexcept;
 
     /**
      * @brief Get the number of active voices
@@ -164,7 +164,7 @@ private:
      * @param region
      * @param delay
      */
-    void checkRegionPolyphony(const Region* region, int delay) noexcept;
+    void checkRegionPolyphony(const Region* region, int delay, int preferredChannel = -1) noexcept;
 
     /**
      * @brief Check the note polyphony, releasing voices if necessary
@@ -181,7 +181,7 @@ private:
      * @param region
      * @param delay
      */
-    void checkGroupPolyphony(const Region* region, int delay) noexcept;
+    void checkGroupPolyphony(const Region* region, int delay, int preferredChannel = -1) noexcept;
 
     /**
      * @brief Check the region set polyphony at all levels, releasing voices if necessary
@@ -189,14 +189,14 @@ private:
      * @param region
      * @param delay
      */
-    void checkSetPolyphony(const Region* region, int delay) noexcept;
+    void checkSetPolyphony(const Region* region, int delay, int preferredChannel = -1) noexcept;
 
     /**
      * @brief Check the engine polyphony, fast releasing voices if necessary
      *
      * @param delay
      */
-    void checkEnginePolyphony(int delay) noexcept;
+    void checkEnginePolyphony(int delay, int preferredChannel = -1) noexcept;
 
 public:
     // Vector shortcuts

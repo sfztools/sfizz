@@ -144,13 +144,13 @@ void VoiceManager::setStealingAlgorithm(StealingAlgorithm algorithm)
     }
 }
 
-void VoiceManager::checkPolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent) noexcept
+void VoiceManager::checkPolyphony(const Region* region, int delay, const TriggerEvent& triggerEvent, int preferredChannel) noexcept
 {
     checkNotePolyphony(region, delay, triggerEvent);
-    checkRegionPolyphony(region, delay);
-    checkGroupPolyphony(region, delay);
-    checkSetPolyphony(region, delay);
-    checkEnginePolyphony(delay);
+    checkRegionPolyphony(region, delay, preferredChannel);
+    checkGroupPolyphony(region, delay, preferredChannel);
+    checkSetPolyphony(region, delay, preferredChannel);
+    checkEnginePolyphony(delay, preferredChannel);
 }
 
 Voice* VoiceManager::findFreeVoice() noexcept
@@ -193,9 +193,9 @@ void VoiceManager::requireNumVoices(int numVoices, Resources& resources)
     }
 }
 
-void VoiceManager::checkRegionPolyphony(const Region* region, int delay) noexcept
+void VoiceManager::checkRegionPolyphony(const Region* region, int delay, int preferredChannel) noexcept
 {
-    Voice* candidate = stealer_->checkRegionPolyphony(region, absl::MakeSpan(activeVoices_));
+    Voice* candidate = stealer_->checkRegionPolyphony(region, absl::MakeSpan(activeVoices_), preferredChannel);
     SisterVoiceRing::offAllSisters(candidate, delay);
 }
 
@@ -254,29 +254,29 @@ bool VoiceManager::withinValidTimerRange(const Region* region, unsigned timestam
     return true;
 }
 
-void VoiceManager::checkGroupPolyphony(const Region* region, int delay) noexcept
+void VoiceManager::checkGroupPolyphony(const Region* region, int delay, int preferredChannel) noexcept
 {
     auto& group = polyphonyGroups_[region->group];
     Voice* candidate = stealer_->checkPolyphony(
-        absl::MakeSpan(group.getActiveVoices()), group.getPolyphonyLimit());
+        absl::MakeSpan(group.getActiveVoices()), group.getPolyphonyLimit(), preferredChannel);
     SisterVoiceRing::offAllSisters(candidate, delay);
 }
 
-void VoiceManager::checkSetPolyphony(const Region* region, int delay) noexcept
+void VoiceManager::checkSetPolyphony(const Region* region, int delay, int preferredChannel) noexcept
 {
     auto parent = region->parent;
     while (parent != nullptr) {
         Voice* candidate = stealer_->checkPolyphony(
-            absl::MakeSpan(parent->getActiveVoices()), parent->getPolyphonyLimit());
+            absl::MakeSpan(parent->getActiveVoices()), parent->getPolyphonyLimit(), preferredChannel);
         SisterVoiceRing::offAllSisters(candidate, delay);
         parent = parent->getParent();
     }
 }
 
-void VoiceManager::checkEnginePolyphony(int delay) noexcept
+void VoiceManager::checkEnginePolyphony(int delay, int preferredChannel) noexcept
 {
     Voice* candidate = stealer_->checkPolyphony(
-        absl::MakeSpan(activeVoices_), numRequiredVoices_);
+        absl::MakeSpan(activeVoices_), numRequiredVoices_, preferredChannel);
     SisterVoiceRing::offAllSisters(candidate, delay, true);
 }
 

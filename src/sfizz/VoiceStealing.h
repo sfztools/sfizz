@@ -31,39 +31,45 @@ public:
      *
      * @param region
      * @param candidates
+     * @param preferredChannel  if >= 0, the stealer prefers a victim
+     *        whose triggering MIDI channel matches this value, and only
+     *        falls back to a cross-channel victim if no same-channel
+     *        candidate is suitable. -1 means "no preference" (default —
+     *        preserves pre-MPE-fork stealing behavior).
      * @return Voice* a non-null voice if the region polyphony is not respected
      */
-    virtual Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) = 0;
+    virtual Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates, int preferredChannel = -1) = 0;
     /**
-     * @brief Check that then polyphony is respected.
+     * @brief Check that the polyphony is respected.
      *
-     * @param region
      * @param candidates
-     * @return Voice* a non-null voice if the region polyphony is not respected
+     * @param maxPolyphony
+     * @param preferredChannel  see checkRegionPolyphony.
+     * @return Voice* a non-null voice if the polyphony is not respected
      */
-    virtual Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) = 0;
+    virtual Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony, int preferredChannel = -1) = 0;
 };
 
 class FirstStealer final : public VoiceStealer
 {
 public:
-    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
-    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
+    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates, int preferredChannel = -1) final;
+    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony, int preferredChannel = -1) final;
 };
 
 class OldestStealer final : public VoiceStealer
 {
 public:
-    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
-    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
+    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates, int preferredChannel = -1) final;
+    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony, int preferredChannel = -1) final;
 };
 
 class EnvelopeAndAgeStealer final : public VoiceStealer
 {
 public:
     EnvelopeAndAgeStealer();
-    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates) final;
-    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony) final;
+    Voice* checkRegionPolyphony(const Region* region, absl::Span<Voice*> candidates, int preferredChannel = -1) final;
+    Voice* checkPolyphony(absl::Span<Voice*> candidates, unsigned maxPolyphony, int preferredChannel = -1) final;
 private:
     std::vector<Voice*> temp_;
 };
