@@ -172,8 +172,16 @@ void sfz::MidiState::pitchBendEvent(int delay, float pitchBendValue) noexcept
 
 float sfz::MidiState::getPitchBend() const noexcept
 {
-    const auto& events = channelStates[masterChannel].pitchEvents;
-    ASSERT(events.size() > 0);
+    return getPitchBend(masterChannel);
+}
+
+float sfz::MidiState::getPitchBend(int channel) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return 0.0f;
+    const auto& events = channelStates[channel].pitchEvents;
+    if (events.empty())
+        return 0.0f;
     return events.back().value;
 }
 
@@ -195,18 +203,34 @@ void sfz::MidiState::polyAftertouchEvent(int delay, int noteNumber, float aftert
 
 float sfz::MidiState::getChannelAftertouch() const noexcept
 {
-    const auto& events = channelStates[masterChannel].channelAftertouchEvents;
-    ASSERT(events.size() > 0);
+    return getChannelAftertouch(masterChannel);
+}
+
+float sfz::MidiState::getChannelAftertouch(int channel) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return 0.0f;
+    const auto& events = channelStates[channel].channelAftertouchEvents;
+    if (events.empty())
+        return 0.0f;
     return events.back().value;
 }
 
 float sfz::MidiState::getPolyAftertouch(int noteNumber) const noexcept
 {
+    return getPolyAftertouch(masterChannel, noteNumber);
+}
+
+float sfz::MidiState::getPolyAftertouch(int channel, int noteNumber) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return 0.0f;
     if (noteNumber < 0 || noteNumber > 127)
         return 0.0f;
 
-    const auto& events = channelStates[masterChannel].polyAftertouchEvents[noteNumber];
-    ASSERT(events.size() > 0);
+    const auto& events = channelStates[channel].polyAftertouchEvents[noteNumber];
+    if (events.empty())
+        return 0.0f;
     return events.back().value;
 }
 
@@ -217,14 +241,33 @@ void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 
 float sfz::MidiState::getCCValue(int ccNumber) const noexcept
 {
+    return getCCValue(masterChannel, ccNumber);
+}
+
+float sfz::MidiState::getCCValue(int channel, int ccNumber) const noexcept
+{
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
-    return channelStates[masterChannel].ccEvents[ccNumber].back().value;
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return 0.0f;
+    const auto& events = channelStates[channel].ccEvents[ccNumber];
+    if (events.empty())
+        return 0.0f;
+    return events.back().value;
 }
 
 float sfz::MidiState::getCCValueAt(int ccNumber, int delay) const noexcept
 {
+    return getCCValueAt(masterChannel, ccNumber, delay);
+}
+
+float sfz::MidiState::getCCValueAt(int channel, int ccNumber, int delay) const noexcept
+{
     ASSERT(ccNumber >= 0 && ccNumber < config::numCCs);
-    const auto& events = channelStates[masterChannel].ccEvents[ccNumber];
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return 0.0f;
+    const auto& events = channelStates[channel].ccEvents[ccNumber];
+    if (events.empty())
+        return 0.0f;
     const auto ccEvent = absl::c_lower_bound(
         events, delay, MidiEventDelayComparator {});
     if (ccEvent != events.end())
@@ -284,28 +327,58 @@ void sfz::MidiState::resetEventStates() noexcept
 
 const sfz::EventVector& sfz::MidiState::getCCEvents(int ccIdx) const noexcept
 {
+    return getCCEvents(masterChannel, ccIdx);
+}
+
+const sfz::EventVector& sfz::MidiState::getCCEvents(int channel, int ccIdx) const noexcept
+{
     if (ccIdx < 0 || ccIdx >= config::numCCs)
         return nullEvent;
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return nullEvent;
 
-    return channelStates[masterChannel].ccEvents[ccIdx];
+    return channelStates[channel].ccEvents[ccIdx];
 }
 
 const sfz::EventVector& sfz::MidiState::getPitchEvents() const noexcept
 {
-    return channelStates[masterChannel].pitchEvents;
+    return getPitchEvents(masterChannel);
+}
+
+const sfz::EventVector& sfz::MidiState::getPitchEvents(int channel) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return nullEvent;
+
+    return channelStates[channel].pitchEvents;
 }
 
 const sfz::EventVector& sfz::MidiState::getChannelAftertouchEvents() const noexcept
 {
-    return channelStates[masterChannel].channelAftertouchEvents;
+    return getChannelAftertouchEvents(masterChannel);
+}
+
+const sfz::EventVector& sfz::MidiState::getChannelAftertouchEvents(int channel) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return nullEvent;
+
+    return channelStates[channel].channelAftertouchEvents;
 }
 
 const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int noteNumber) const noexcept
 {
+    return getPolyAftertouchEvents(masterChannel, noteNumber);
+}
+
+const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int channel, int noteNumber) const noexcept
+{
     if (noteNumber < 0 || noteNumber > 127)
         return nullEvent;
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return nullEvent;
 
-    return channelStates[masterChannel].polyAftertouchEvents[noteNumber];
+    return channelStates[channel].polyAftertouchEvents[noteNumber];
 }
 
 int sfz::MidiState::getProgram() const noexcept

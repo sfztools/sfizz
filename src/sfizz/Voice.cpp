@@ -231,6 +231,15 @@ struct Voice::Impl
     SostenutoState sostenutoState_ { SostenutoState::Up };
 
     TriggerEvent triggerEvent_;
+    /**
+     * @brief MIDI channel (0..15) the voice was triggered on. Used to
+     * route per-voice modulation reads to the correct channel slot in
+     * MidiState. Default 0 (master) until channel-aware noteOn dispatch
+     * is added; populating this will let voices respond independently
+     * to per-note pitch bend / CC / aftertouch when MPE input is split
+     * across member channels.
+     */
+    int triggerChannel_ { 0 };
     absl::optional<int> triggerDelay_;
 
     float speedRatio_ { 1.0 };
@@ -419,6 +428,12 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.region_ = &region;
 
     impl.triggerEvent_ = event;
+    // M2: channel field is plumbed but always master until channel-aware
+    // noteOn dispatch is wired (M3). When MPE input lands on member
+    // channels, this should be set from the dispatched channel so the
+    // voice's pitch/CC/aftertouch reads route to the right slot in
+    // MidiState's per-channel state.
+    impl.triggerChannel_ = 0;
     if (impl.triggerEvent_.type == TriggerEventType::CC)
         impl.triggerEvent_.number = region.pitchKeycenter;
 
@@ -519,7 +534,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
-    impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend()));
+    impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend(impl.triggerChannel_)));
 
     ModMatrix& modMatrix = resources.getModMatrix();
     modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
@@ -839,12 +854,12 @@ void Voice::Impl::resetCrossfades() noexcept
     MidiState& midiState = resources_.getMidiState();
 
     for (const auto& mod : region_->crossfadeCCInRange) {
-        const auto value = midiState.getCCValue(mod.cc);
+        const auto value = midiState.getCCValue(triggerChannel_, mod.cc);
         xfadeValue *= crossfadeIn(mod.data, value, xfCurve);
     }
 
     for (const auto& mod : region_->crossfadeCCOutRange) {
-        const auto value = midiState.getCCValue(mod.cc);
+        const auto value = midiState.getCCValue(triggerChannel_, mod.cc);
         xfadeValue *= crossfadeOut(mod.data, value, xfCurve);
     }
 
@@ -869,7 +884,7 @@ void Voice::Impl::applyCrossfades(absl::Span<float> modulationSpan) noexcept
 
     bool canShortcut = true;
     for (const auto& mod : region_->crossfadeCCInRange) {
-        const auto& events = midiState.getCCEvents(mod.cc);
+        const auto& events = midiState.getCCEvents(triggerChannel_, mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeIn(mod.data, x, xfCurve);
@@ -878,7 +893,7 @@ void Voice::Impl::applyCrossfades(absl::Span<float> modulationSpan) noexcept
     }
 
     for (const auto& mod : region_->crossfadeCCOutRange) {
-        const auto& events = midiState.getCCEvents(mod.cc);
+        const auto& events = midiState.getCCEvents(triggerChannel_, mod.cc);
         canShortcut &= (events.size() == 1);
         linearEnvelope(events, *tempSpan, [&](float x) {
             return crossfadeOut(mod.data, x, xfCurve);
@@ -1982,7 +1997,7 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
     const size_t numFrames = pitchSpan.size();
 
     const MidiState& midiState = resources_.getMidiState();
-    const EventVector& events = midiState.getPitchEvents();
+    const EventVector& events = midiState.getPitchEvents(triggerChannel_);
     const auto bendLambda = [this](float bend) {
         return region_->getBendInCents(bend);
     };

@@ -107,6 +107,15 @@ public:
     float getPitchBend() const noexcept;
 
     /**
+     * @brief Get the pitch bend status for a specific MIDI channel.
+     * Out-of-range channels return 0.0f. Used by per-voice consumers
+     * (Voice etc.) to read modulation events scoped to the voice's
+     * originating channel; master-channel reads via the no-arg overload
+     * are unchanged.
+     */
+    float getPitchBend(int channel) const noexcept;
+
+    /**
      * @brief Register a channel aftertouch event
      *
      * @param aftertouch
@@ -128,11 +137,23 @@ public:
     float getChannelAftertouch() const noexcept;
 
     /**
+     * @brief Get the channel aftertouch status for a specific MIDI
+     * channel. Out-of-range channels return 0.0f.
+     */
+    float getChannelAftertouch(int channel) const noexcept;
+
+    /**
      * @brief Get the polyphonic aftertouch status
 
      * @return int
      */
     float getPolyAftertouch(int noteNumber) const noexcept;
+
+    /**
+     * @brief Get the polyphonic aftertouch status for a specific MIDI
+     * channel and note. Out-of-range channels or notes return 0.0f.
+     */
+    float getPolyAftertouch(int channel, int noteNumber) const noexcept;
 
     /**
      * @brief Get the current midi program
@@ -195,6 +216,12 @@ public:
     float getCCValue(int ccNumber) const noexcept;
 
     /**
+     * @brief Get the last CC value for CC number on a specific MIDI
+     * channel. Out-of-range channels return 0.0f.
+     */
+    float getCCValue(int channel, int ccNumber) const noexcept;
+
+    /**
      * @brief Get the CC value for CC number
      *
      * @param ccNumber
@@ -204,15 +231,25 @@ public:
     float getCCValueAt(int ccNumber, int delay) const noexcept;
 
     /**
+     * @brief Get the CC value for CC number on a specific MIDI channel
+     * at a given delay. Out-of-range channels return 0.0f.
+     */
+    float getCCValueAt(int channel, int ccNumber, int delay) const noexcept;
+
+    /**
      * @brief Reset the midi note states
      *
      */
     void resetNoteStates() noexcept;
 
     const EventVector& getCCEvents(int ccIdx) const noexcept;
+    const EventVector& getCCEvents(int channel, int ccIdx) const noexcept;
     const EventVector& getPolyAftertouchEvents(int noteNumber) const noexcept;
+    const EventVector& getPolyAftertouchEvents(int channel, int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
+    const EventVector& getPitchEvents(int channel) const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
+    const EventVector& getChannelAftertouchEvents(int channel) const noexcept;
     /**
      * @brief Reset the midi event states (CC, AT, and pitch bend)
      *
