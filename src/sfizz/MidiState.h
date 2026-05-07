@@ -269,31 +269,36 @@ private:
     int lastNotePlayed { -1 };
 
     /**
-     * @brief Current known values for the CCs.
-     *
+     * @brief Per-channel event state. Holds the pitch/CC/aftertouch event
+     * vectors for one MIDI channel. Introduced so MPE-aware callers can
+     * route events to a specific member channel without colliding with
+     * other channels' modulation. M1 wires only the master channel; M3
+     * will add channel-aware public API methods that target channels
+     * 1..15. Until then, all events resolve to channelStates[masterChannel]
+     * and behavior is byte-for-byte identical to the pre-refactor code.
      */
-    std::array<EventVector, config::numCCs> ccEvents;
+    struct ChannelState {
+        std::array<EventVector, config::numCCs> ccEvents;
+        std::array<EventVector, 128> polyAftertouchEvents;
+        EventVector pitchEvents;
+        EventVector channelAftertouchEvents;
+    };
+
+    /**
+     * @brief Per-channel pitch/CC/aftertouch state. Indexed 0..15 to match
+     * MIDI channels 1..16 (0-indexed). The master channel for non-MPE
+     * input is index 0; MPE member channels occupy 1..15 (or 0..14 with
+     * channel 16 as master, depending on zone configuration — currently
+     * fixed at master=0 pending M3).
+     */
+    static constexpr int masterChannel = 0;
+    std::array<ChannelState, 16> channelStates;
 
     /**
      * @brief Null event
      *
      */
     const EventVector nullEvent { { 0, 0.0f } };
-
-    /**
-     * @brief Pitch bend status
-     */
-    EventVector pitchEvents;
-
-    /**
-     * @brief Aftertouch status
-     */
-    EventVector channelAftertouchEvents;
-
-    /**
-     * @brief Polyphonic aftertouch status.
-     */
-    std::array<EventVector, 128> polyAftertouchEvents;
 
     /**
      * @brief Current midi program
