@@ -19,6 +19,14 @@ struct TriggerEvent
     TriggerEventType type;
     int number;
     float value;
+    /**
+     * @brief MIDI channel (0..15) the event was sent on. Defaults to 0
+     * (master), so existing call sites that brace-initialize with
+     * three fields keep their previous behavior. The value flows down
+     * to the triggered Voice so per-voice modulation reads can route
+     * to the correct slot in MidiState's per-channel storage.
+     */
+    int channel { 0 };
 };
 
 }

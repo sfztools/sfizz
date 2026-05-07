@@ -1257,6 +1257,17 @@ void Synth::noteOn(int delay, int noteNumber, int velocity) noexcept
 
 void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexcept
 {
+    hdNoteOnMPE(delay, 0, noteNumber, normalizedVelocity);
+}
+
+void Synth::noteOnMPE(int delay, int channel, int noteNumber, int velocity) noexcept
+{
+    const float normalizedVelocity = normalizeVelocity(velocity);
+    hdNoteOnMPE(delay, channel, noteNumber, normalizedVelocity);
+}
+
+void Synth::hdNoteOnMPE(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept
+{
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
@@ -1265,7 +1276,7 @@ void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexce
     if (impl.lastKeyswitchLists_[noteNumber].empty())
         impl.resources_.getMidiState().noteOnEvent(delay, noteNumber, normalizedVelocity);
 
-    impl.noteOnDispatch(delay, noteNumber, normalizedVelocity);
+    impl.noteOnDispatch(delay, channel, noteNumber, normalizedVelocity);
 }
 
 void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
@@ -1275,6 +1286,17 @@ void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
 }
 
 void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexcept
+{
+    hdNoteOffMPE(delay, 0, noteNumber, normalizedVelocity);
+}
+
+void Synth::noteOffMPE(int delay, int channel, int noteNumber, int velocity) noexcept
+{
+    const float normalizedVelocity = normalizeVelocity(velocity);
+    hdNoteOffMPE(delay, channel, noteNumber, normalizedVelocity);
+}
+
+void Synth::hdNoteOffMPE(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
@@ -1294,7 +1316,7 @@ void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexc
     for (auto& voice : impl.voiceManager_)
         voice.registerNoteOff(delay, noteNumber, replacedVelocity);
 
-    impl.noteOffDispatch(delay, noteNumber, replacedVelocity);
+    impl.noteOffDispatch(delay, channel, noteNumber, replacedVelocity);
 }
 
 void Synth::Impl::startVoice(Layer* layer, int delay, const TriggerEvent& triggerEvent, SisterVoiceRingBuilder& ring) noexcept
@@ -1317,16 +1339,16 @@ void Synth::Impl::checkOffGroups(const Region* region, int delay, int number, bo
         if (voice.checkOffGroup(region, delay, number)) {
             const TriggerEvent& event = voice.getTriggerEvent();
             if (event.type == TriggerEventType::NoteOn && !chokedByCC)
-                noteOffDispatch(delay, event.number, event.value);
+                noteOffDispatch(delay, event.channel, event.number, event.value);
         }
     }
 }
 
-void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noexcept
+void Synth::Impl::noteOffDispatch(int delay, int channel, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
-    const TriggerEvent triggerEvent { TriggerEventType::NoteOff, noteNumber, velocity };
+    const TriggerEvent triggerEvent { TriggerEventType::NoteOff, noteNumber, velocity, channel };
 
     for (Layer* layer : upKeyswitchLists_[noteNumber])
         layer->keySwitched_ = true;
@@ -1346,7 +1368,7 @@ void Synth::Impl::noteOffDispatch(int delay, int noteNumber, float velocity) noe
     }
 }
 
-void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noexcept
+void Synth::Impl::noteOnDispatch(int delay, int channel, int noteNumber, float velocity) noexcept
 {
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
     SisterVoiceRingBuilder ring;
@@ -1376,7 +1398,7 @@ void Synth::Impl::noteOnDispatch(int delay, int noteNumber, float velocity) noex
                 continue;
 
             checkOffGroups(&region, delay, noteNumber);
-            TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity };
+            TriggerEvent triggerEvent { TriggerEventType::NoteOn, noteNumber, velocity, channel };
             startVoice(layer, delay, triggerEvent, ring);
         }
     }
@@ -1426,10 +1448,10 @@ void Synth::cc(int delay, int ccNumber, int ccValue) noexcept
     hdcc(delay, ccNumber, normalizedCC);
 }
 
-void Synth::Impl::ccDispatch(int delay, int ccNumber, float value, int extendedArg) noexcept
+void Synth::Impl::ccDispatch(int delay, int channel, int ccNumber, float value, int extendedArg) noexcept
 {
     SisterVoiceRingBuilder ring;
-    TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value };
+    TriggerEvent triggerEvent { TriggerEventType::CC, ccNumber, value, channel };
     const auto randValue = randNoteDistribution_(Random::randomGenerator);
     MidiState& midiState = resources_.getMidiState();
     for (Layer* layer : ccActivationLists_[ccNumber]) {
@@ -1461,17 +1483,28 @@ void Synth::Impl::ccDispatch(int delay, int ccNumber, float value, int extendedA
 
 void Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 {
+    hdccMPE(delay, 0, ccNumber, normValue);
+}
+
+void Synth::ccMPE(int delay, int channel, int ccNumber, int ccValue) noexcept
+{
+    const auto normalizedCC = normalizeCC(ccValue);
+    hdccMPE(delay, channel, ccNumber, normalizedCC);
+}
+
+void Synth::hdccMPE(int delay, int channel, int ccNumber, float normValue) noexcept
+{
     Impl& impl = *impl_;
-    impl.performHdcc(delay, ccNumber, normValue, true);
+    impl.performHdcc(delay, channel, ccNumber, normValue, true);
 }
 
 void Synth::automateHdcc(int delay, int ccNumber, float normValue) noexcept
 {
     Impl& impl = *impl_;
-    impl.performHdcc(delay, ccNumber, normValue, false);
+    impl.performHdcc(delay, 0, ccNumber, normValue, false);
 }
 
-void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asMidi, int extendedArg) noexcept
+void Synth::Impl::performHdcc(int delay, int channel, int ccNumber, float normValue, bool asMidi, int extendedArg) noexcept
 {
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
@@ -1499,8 +1532,8 @@ void Synth::Impl::performHdcc(int delay, int ccNumber, float normValue, bool asM
     for (auto& voice : voiceManager_)
         voice.registerCC(delay, ccNumber, normValue);
 
-    ccDispatch(delay, ccNumber, normValue, extendedArg);
-    midiState.ccEvent(delay, ccNumber, normValue);
+    ccDispatch(delay, channel, ccNumber, normValue, extendedArg);
+    midiState.ccEvent(delay, channel, ccNumber, normValue);
 }
 
 void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
@@ -1534,20 +1567,35 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
 
 void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
 {
+    hdPitchWheelMPE(delay, 0, normalizedPitch);
+}
+
+void Synth::pitchWheelMPE(int delay, int channel, int pitch) noexcept
+{
+    const float normalizedPitch = normalizeBend(float(pitch));
+    hdPitchWheelMPE(delay, channel, normalizedPitch);
+}
+
+void Synth::hdPitchWheelMPE(int delay, int channel, float normalizedPitch) noexcept
+{
     Impl& impl = *impl_;
 
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
-    impl.resources_.getMidiState().pitchBendEvent(delay, normalizedPitch);
+    impl.resources_.getMidiState().pitchBendEvent(delay, channel, normalizedPitch);
 
-    for (const Impl::LayerPtr& layer : impl.layers_) {
+    // M3b: layer- and voice-side registration of pitch bend stays
+    // channel-agnostic for now. Voices read the channel-correct value
+    // via per-voice triggerChannel_-aware MidiState reads, so the
+    // master-channel registerPitchWheel call is harmless cross-talk
+    // bookkeeping. A follow-up commit can filter these to voices on
+    // the matching channel when MPE is enabled.
+    for (const Impl::LayerPtr& layer : impl.layers_)
         layer->registerPitchWheel(normalizedPitch);
-    }
 
-    for (auto& voice : impl.voiceManager_) {
+    for (auto& voice : impl.voiceManager_)
         voice.registerPitchWheel(delay, normalizedPitch);
-    }
 
-    impl.performHdcc(delay, ExtendedCCs::pitchBend, normalizedPitch, false);
+    impl.performHdcc(delay, channel, ExtendedCCs::pitchBend, normalizedPitch, false);
 }
 
 void Synth::programChange(int delay, int program) noexcept
@@ -1567,20 +1615,29 @@ void Synth::channelAftertouch(int delay, int aftertouch) noexcept
 
 void Synth::hdChannelAftertouch(int delay, float normAftertouch) noexcept
 {
+    hdChannelAftertouchMPE(delay, 0, normAftertouch);
+}
+
+void Synth::channelAftertouchMPE(int delay, int channel, int aftertouch) noexcept
+{
+    const float normalizedAftertouch = normalize7Bits(aftertouch);
+    hdChannelAftertouchMPE(delay, channel, normalizedAftertouch);
+}
+
+void Synth::hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept
+{
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.getMidiState().channelAftertouchEvent(delay, normAftertouch);
+    impl.resources_.getMidiState().channelAftertouchEvent(delay, channel, normAftertouch);
 
-    for (const Impl::LayerPtr& layerPtr : impl.layers_) {
+    for (const Impl::LayerPtr& layerPtr : impl.layers_)
         layerPtr->registerAftertouch(normAftertouch);
-    }
 
-    for (auto& voice : impl.voiceManager_) {
+    for (auto& voice : impl.voiceManager_)
         voice.registerAftertouch(delay, normAftertouch);
-    }
 
-    impl.performHdcc(delay, ExtendedCCs::channelAftertouch, normAftertouch, false);
+    impl.performHdcc(delay, channel, ExtendedCCs::channelAftertouch, normAftertouch, false);
 }
 
 void Synth::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept
@@ -1591,15 +1648,52 @@ void Synth::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept
 
 void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) noexcept
 {
+    hdPolyAftertouchMPE(delay, 0, noteNumber, normAftertouch);
+}
+
+void Synth::polyAftertouchMPE(int delay, int channel, int noteNumber, int aftertouch) noexcept
+{
+    const float normalizedAftertouch = normalize7Bits(aftertouch);
+    hdPolyAftertouchMPE(delay, channel, noteNumber, normalizedAftertouch);
+}
+
+void Synth::hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept
+{
     Impl& impl = *impl_;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
-    impl.resources_.getMidiState().polyAftertouchEvent(delay, noteNumber, normAftertouch);
+    impl.resources_.getMidiState().polyAftertouchEvent(delay, channel, noteNumber, normAftertouch);
 
     for (auto& voice : impl.voiceManager_)
         voice.registerPolyAftertouch(delay, noteNumber, normAftertouch);
 
-    impl.performHdcc(delay, ExtendedCCs::polyphonicAftertouch, normAftertouch, false, noteNumber);
+    impl.performHdcc(delay, channel, ExtendedCCs::polyphonicAftertouch, normAftertouch, false, noteNumber);
+}
+
+void Synth::setMPEEnabled(bool enabled) noexcept
+{
+    impl_->mpeEnabled_ = enabled;
+}
+
+bool Synth::getMPEEnabled() const noexcept
+{
+    return impl_->mpeEnabled_;
+}
+
+void Synth::setMPEPitchBendRange(float masterSemitones, float perNoteSemitones) noexcept
+{
+    impl_->mpeMasterPitchBendRange_ = masterSemitones;
+    impl_->mpePerNotePitchBendRange_ = perNoteSemitones;
+}
+
+float Synth::getMPEMasterPitchBendRange() const noexcept
+{
+    return impl_->mpeMasterPitchBendRange_;
+}
+
+float Synth::getMPEPerNotePitchBendRange() const noexcept
+{
+    return impl_->mpePerNotePitchBendRange_;
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept

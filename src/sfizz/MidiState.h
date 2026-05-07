@@ -100,6 +100,13 @@ public:
     void pitchBendEvent(int delay, float pitchBendValue) noexcept;
 
     /**
+     * @brief Register a pitch bend event on a specific MIDI channel.
+     * Out-of-range channels are silently ignored. The single-arg
+     * overload forwards to this with channel = masterChannel.
+     */
+    void pitchBendEvent(int delay, int channel, float pitchBendValue) noexcept;
+
+    /**
      * @brief Get the pitch bend status
 
      * @return int
@@ -123,11 +130,23 @@ public:
     void channelAftertouchEvent(int delay, float aftertouch) noexcept;
 
     /**
+     * @brief Register a channel aftertouch event on a specific MIDI
+     * channel. Out-of-range channels are silently ignored.
+     */
+    void channelAftertouchEvent(int delay, int channel, float aftertouch) noexcept;
+
+    /**
      * @brief Register a channel aftertouch event
      *
      * @param aftertouch
      */
     void polyAftertouchEvent(int delay, int noteNumber, float aftertouch) noexcept;
+
+    /**
+     * @brief Register a polyphonic aftertouch event on a specific MIDI
+     * channel. Out-of-range channels or notes are silently ignored.
+     */
+    void polyAftertouchEvent(int delay, int channel, int noteNumber, float aftertouch) noexcept;
 
     /**
      * @brief Get the channel aftertouch status
@@ -176,6 +195,12 @@ public:
      * @param ccValue
      */
     void ccEvent(int delay, int ccNumber, float ccValue) noexcept;
+
+    /**
+     * @brief Register a CC event on a specific MIDI channel.
+     * Out-of-range channels are silently ignored.
+     */
+    void ccEvent(int delay, int channel, int ccNumber, float ccValue) noexcept;
 
     /**
      * @brief Advances the internal clock of a given amount of samples.

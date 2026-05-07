@@ -482,6 +482,9 @@ inline bool sisterVoices(const Voice* lhs, const Voice* rhs)
     if (lhsTrigger.type != rhsTrigger.type)
         return false;
 
+    if (lhsTrigger.channel != rhsTrigger.channel)
+        return false;
+
     return true;
 }
 
@@ -501,6 +504,9 @@ inline bool voiceOrdering(const Voice* lhs, const Voice* rhs)
 
     if (lhsTrigger.type != rhsTrigger.type)
         return lhsTrigger.type > rhsTrigger.type;
+
+    if (lhsTrigger.channel != rhsTrigger.channel)
+        return lhsTrigger.channel < rhsTrigger.channel;
 
     return false;
 }

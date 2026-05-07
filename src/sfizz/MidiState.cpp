@@ -166,8 +166,15 @@ void sfz::MidiState::insertEventInVector(EventVector& events, int delay, float v
 
 void sfz::MidiState::pitchBendEvent(int delay, float pitchBendValue) noexcept
 {
+    pitchBendEvent(delay, masterChannel, pitchBendValue);
+}
+
+void sfz::MidiState::pitchBendEvent(int delay, int channel, float pitchBendValue) noexcept
+{
     ASSERT(pitchBendValue >= -1.0f && pitchBendValue <= 1.0f);
-    insertEventInVector(channelStates[masterChannel].pitchEvents, delay, pitchBendValue);
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return;
+    insertEventInVector(channelStates[channel].pitchEvents, delay, pitchBendValue);
 }
 
 float sfz::MidiState::getPitchBend() const noexcept
@@ -187,14 +194,28 @@ float sfz::MidiState::getPitchBend(int channel) const noexcept
 
 void sfz::MidiState::channelAftertouchEvent(int delay, float aftertouch) noexcept
 {
+    channelAftertouchEvent(delay, masterChannel, aftertouch);
+}
+
+void sfz::MidiState::channelAftertouchEvent(int delay, int channel, float aftertouch) noexcept
+{
     ASSERT(aftertouch >= -1.0f && aftertouch <= 1.0f);
-    insertEventInVector(channelStates[masterChannel].channelAftertouchEvents, delay, aftertouch);
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return;
+    insertEventInVector(channelStates[channel].channelAftertouchEvents, delay, aftertouch);
 }
 
 void sfz::MidiState::polyAftertouchEvent(int delay, int noteNumber, float aftertouch) noexcept
 {
+    polyAftertouchEvent(delay, masterChannel, noteNumber, aftertouch);
+}
+
+void sfz::MidiState::polyAftertouchEvent(int delay, int channel, int noteNumber, float aftertouch) noexcept
+{
     ASSERT(aftertouch >= 0.0f && aftertouch <= 1.0f);
-    auto& events = channelStates[masterChannel].polyAftertouchEvents;
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return;
+    auto& events = channelStates[channel].polyAftertouchEvents;
     if (noteNumber < 0 || noteNumber >= static_cast<int>(events.size()))
         return;
 
@@ -236,7 +257,16 @@ float sfz::MidiState::getPolyAftertouch(int channel, int noteNumber) const noexc
 
 void sfz::MidiState::ccEvent(int delay, int ccNumber, float ccValue) noexcept
 {
-    insertEventInVector(channelStates[masterChannel].ccEvents[ccNumber], delay, ccValue);
+    ccEvent(delay, masterChannel, ccNumber, ccValue);
+}
+
+void sfz::MidiState::ccEvent(int delay, int channel, int ccNumber, float ccValue) noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return;
+    if (ccNumber < 0 || ccNumber >= config::numCCs)
+        return;
+    insertEventInVector(channelStates[channel].ccEvents[ccNumber], delay, ccValue);
 }
 
 float sfz::MidiState::getCCValue(int ccNumber) const noexcept

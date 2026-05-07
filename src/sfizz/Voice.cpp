@@ -428,12 +428,7 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.region_ = &region;
 
     impl.triggerEvent_ = event;
-    // M2: channel field is plumbed but always master until channel-aware
-    // noteOn dispatch is wired (M3). When MPE input lands on member
-    // channels, this should be set from the dispatched channel so the
-    // voice's pitch/CC/aftertouch reads route to the right slot in
-    // MidiState's per-channel state.
-    impl.triggerChannel_ = 0;
+    impl.triggerChannel_ = event.channel;
     if (impl.triggerEvent_.type == TriggerEventType::CC)
         impl.triggerEvent_.number = region.pitchKeycenter;
 

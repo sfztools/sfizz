@@ -133,16 +133,19 @@ struct Synth::Impl final: public Parser::Listener {
      * @param noteNumber
      * @param velocity
      */
-    void noteOnDispatch(int delay, int noteNumber, float velocity) noexcept;
+    void noteOnDispatch(int delay, int channel, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Check all regions and start voices for note off events
      *
      * @param delay
+     * @param channel  the MIDI channel the note-off arrived on (0..15);
+     *                 propagates into the TriggerEvent so voices spawned
+     *                 by release-trigger regions inherit the channel
      * @param noteNumber
      * @param velocity
      */
-    void noteOffDispatch(int delay, int noteNumber, float velocity) noexcept;
+    void noteOffDispatch(int delay, int channel, int noteNumber, float velocity) noexcept;
 
     /**
      * @brief Check all regions and start voices for cc events
@@ -152,7 +155,7 @@ struct Synth::Impl final: public Parser::Listener {
      * @param value
      * @param extendedArg used for some extendedCC (eg. polyaftertouch note num, etc)
      */
-    void ccDispatch(int delay, int ccNumber, float value, int extendedArg=-1) noexcept;
+    void ccDispatch(int delay, int channel, int ccNumber, float value, int extendedArg=-1) noexcept;
 
     /**
      * @brief Start a voice for a specific region.
@@ -242,7 +245,7 @@ struct Synth::Impl final: public Parser::Listener {
      * @param asMidi     Whether to process as a MIDI event
      * @param extendedArg for some extendedCC (eg. polyaftertouch: note num, etc)
      */
-    void performHdcc(int delay, int ccNumber, float normValue, bool asMidi, int extendedArg=-1) noexcept;
+    void performHdcc(int delay, int channel, int ccNumber, float normValue, bool asMidi, int extendedArg=-1) noexcept;
 
     /**
      * @brief Set the default value for a CC
@@ -388,6 +391,14 @@ struct Synth::Impl final: public Parser::Listener {
     }
 
     bool playheadMoved_ { false };
+
+    // MPE state. Storage only — the Synth dispatch path handles per-channel
+    // event routing whether or not mpeEnabled_ is set; the flag is consumed
+    // by features that need zone awareness (RPN-driven pitch-bend range
+    // application, MPE-aware voice stealing) added in follow-up commits.
+    bool mpeEnabled_ { false };
+    float mpeMasterPitchBendRange_ { 2.0f };
+    float mpePerNotePitchBendRange_ { 48.0f };
 };
 
 } // namespace sfz
