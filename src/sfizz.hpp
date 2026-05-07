@@ -666,6 +666,59 @@ public:
      */
     void hdPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept;
 
+    // === MPE (MIDI Polyphonic Expression) support ============================
+    //
+    // Channel-aware variants of the input API. They populate per-channel
+    // modulation state in the underlying engine so voices triggered on a
+    // member channel respond independently to per-note pitch bend, per-note
+    // CC, and per-note aftertouch. Hosts that don't care about MPE can keep
+    // using the existing single-channel methods; they are equivalent to
+    // calling the corresponding *MPE method with channel = 0 (master).
+    //
+    // setMPEEnabled() is informational for the engine: it gates same-channel-
+    // preference voice stealing. Per-channel input dispatch works regardless
+    // of the flag — calling pitchWheelMPE(channel=2, ...) always lands in
+    // the channel-2 modulation slot.
+
+    /** @brief Send a note on event on a specific MIDI channel (0..15). */
+    void noteOnMPE(int delay, int channel, int noteNumber, int velocity) noexcept;
+    /** @brief High-precision note on on a specific MIDI channel. */
+    void hdNoteOnMPE(int delay, int channel, int noteNumber, float velocity) noexcept;
+    /** @brief Send a note off event on a specific MIDI channel (0..15). */
+    void noteOffMPE(int delay, int channel, int noteNumber, int velocity) noexcept;
+    /** @brief High-precision note off on a specific MIDI channel. */
+    void hdNoteOffMPE(int delay, int channel, int noteNumber, float velocity) noexcept;
+    /** @brief Send a CC event on a specific MIDI channel (0..15). */
+    void ccMPE(int delay, int channel, int ccNumber, int ccValue) noexcept;
+    /** @brief High-precision CC on a specific MIDI channel. */
+    void hdccMPE(int delay, int channel, int ccNumber, float normValue) noexcept;
+    /** @brief Send a pitch bend event on a specific MIDI channel (0..15). */
+    void pitchWheelMPE(int delay, int channel, int pitch) noexcept;
+    /** @brief High-precision pitch bend on a specific MIDI channel. */
+    void hdPitchWheelMPE(int delay, int channel, float pitch) noexcept;
+    /** @brief Send a channel aftertouch event on a specific MIDI channel. */
+    void channelAftertouchMPE(int delay, int channel, int aftertouch) noexcept;
+    /** @brief High-precision channel aftertouch on a specific MIDI channel. */
+    void hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept;
+    /** @brief Send a polyphonic aftertouch event on a specific MIDI channel. */
+    void polyAftertouchMPE(int delay, int channel, int noteNumber, int aftertouch) noexcept;
+    /** @brief High-precision polyphonic aftertouch on a specific MIDI channel. */
+    void hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept;
+
+    /** @brief Enable or disable MPE mode (gates same-channel voice stealing). */
+    void setMPEEnabled(bool enabled) noexcept;
+    /** @brief Get the current MPE mode flag. */
+    bool getMPEEnabled() const noexcept;
+    /**
+     * @brief Set the MPE pitch bend range, in semitones (master / per-note).
+     * MPE 1.0 conventions: master 2 semitones, per-note 48 semitones.
+     */
+    void setMPEPitchBendRange(float masterSemitones, float perNoteSemitones) noexcept;
+    float getMPEMasterPitchBendRange() const noexcept;
+    float getMPEPerNotePitchBendRange() const noexcept;
+
+    // =========================================================================
+
     /**
      * @brief Send a tempo event to the synth.
      *
