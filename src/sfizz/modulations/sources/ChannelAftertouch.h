@@ -20,6 +20,7 @@ public:
 
 private:
     MidiState& midiState_;
+    VoiceManager& manager_;
 };
 
 } // namespace sfz

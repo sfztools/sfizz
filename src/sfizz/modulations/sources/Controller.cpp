@@ -186,13 +186,17 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
         }
     case ExtendedCCs::pitchBend: // fallthrough
     case ExtendedCCs::channelAftertouch: {
-            const EventVector& events = ms.getCCEvents(p.cc);
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const int channel = voice ? voice->getTriggerEvent().channel : 0;
+            const EventVector& events = ms.getCCEvents(channel, p.cc);
             linearEnvelope(events, buffer, [](float x) { return x; }, p.step);
             canShortcut = events.size() == 1;
             break;
         }
     default: {
-            const EventVector& events = ms.getCCEvents(p.cc);
+            const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
+            const int channel = voice ? voice->getTriggerEvent().channel : 0;
+            const EventVector& events = ms.getCCEvents(channel, p.cc);
             linearEnvelope(events, buffer, transformValue, p.step);
             canShortcut = events.size() == 1;
         }

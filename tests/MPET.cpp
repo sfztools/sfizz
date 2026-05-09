@@ -130,6 +130,63 @@ TEST_CASE("[MPE] MidiState out-of-range channels are no-ops on write and 0 on re
     REQUIRE(state.getPitchBend(99) == 0.0f);
 }
 
+TEST_CASE("[MPE] Empty member channels inherit master CC / pitch / aftertouch state")
+{
+    // Regression: hit during Osmose hand-test. sfizz seeds default values
+    // for CC7 (Volume@~0.79), CC10 (Pan@0.5), CC11 (Expression@1.0) into
+    // the master channel only. Without inheritance, voices on member
+    // channels saw CC7=0 / CC11=0 and rendered near-silent — the user
+    // perceived "first note plays at low volume, then mutes".
+    sfz::MidiState state;
+    state.ccEvent(0, /*channel=*/0, 7, 0.79f);
+    state.ccEvent(0, /*channel=*/0, 11, 1.0f);
+    state.pitchBendEvent(0, /*channel=*/0, 0.25f);
+    state.channelAftertouchEvent(0, /*channel=*/0, 0.6f);
+    state.polyAftertouchEvent(0, /*channel=*/0, 60, 0.4f);
+
+    // Member channel 5 has never received its own values.
+    REQUIRE(state.getCCEvents(5, 7).back().value == 0.79f);
+    REQUIRE(state.getCCEvents(5, 11).back().value == 1.0f);
+    REQUIRE(state.getPitchEvents(5).back().value == 0.25f);
+    REQUIRE(state.getChannelAftertouchEvents(5).back().value == 0.6f);
+    REQUIRE(state.getPolyAftertouchEvents(5, 60).back().value == 0.4f);
+
+    // Once the member channel writes its own value, it overrides master.
+    state.ccEvent(0, /*channel=*/5, 7, 0.3f);
+    REQUIRE(state.getCCEvents(5, 7).back().value == 0.3f);
+    // Master is unchanged.
+    REQUIRE(state.getCCEvents(0, 7).back().value == 0.79f);
+}
+
+TEST_CASE("[MPE] First member-channel event at delay>0 keeps the delay-0 sentinel")
+{
+    // Regression: hit during Osmose hand-test. linearEnvelope ASSERTs the
+    // event vector starts at delay 0; member channels are populated lazily
+    // so before this fix a first write at delay>0 produced a vector whose
+    // first entry was {delay, value}, tripping the ASSERT and SIGTRAP'ing
+    // the audio thread on the very first MPE pitch-bend / CC event.
+    sfz::MidiState state;
+
+    state.pitchBendEvent(/*delay=*/42, /*channel=*/3, 0.5f);
+    state.ccEvent(/*delay=*/17, /*channel=*/4, 74, 0.7f);
+    state.channelAftertouchEvent(/*delay=*/9, /*channel=*/5, 0.4f);
+    state.polyAftertouchEvent(/*delay=*/3, /*channel=*/6, 60, 0.6f);
+
+    auto firstDelayIsZero = [] (const sfz::EventVector& v) {
+        return ! v.empty() && v.front().delay == 0;
+    };
+
+    REQUIRE(firstDelayIsZero(state.getPitchEvents(3)));
+    REQUIRE(firstDelayIsZero(state.getCCEvents(4, 74)));
+    REQUIRE(firstDelayIsZero(state.getChannelAftertouchEvents(5)));
+    REQUIRE(firstDelayIsZero(state.getPolyAftertouchEvents(6, 60)));
+
+    // The original event is still there, just preceded by the sentinel.
+    REQUIRE(state.getPitchEvents(3).size() == 2);
+    REQUIRE(state.getPitchEvents(3).back().delay == 42);
+    REQUIRE(state.getPitchEvents(3).back().value == 0.5f);
+}
+
 // =============================================================================
 // Synth: *MPE public API routes events to the right channel slot
 // =============================================================================

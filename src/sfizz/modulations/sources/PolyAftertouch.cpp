@@ -33,8 +33,9 @@ void PolyAftertouchSource::generate(const ModKey& sourceKey, NumericId<Voice> vo
     }
 
     const int noteNumber = voice->getTriggerEvent().number;
+    const int channel    = voice->getTriggerEvent().channel;
 
-    const EventVector& events = midiState_.getPolyAftertouchEvents(noteNumber);
+    const EventVector& events = midiState_.getPolyAftertouchEvents(channel, noteNumber);
     linearEnvelope(events, buffer, [](float x) { return x; });
 }
 

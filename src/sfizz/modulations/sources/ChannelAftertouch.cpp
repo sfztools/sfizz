@@ -11,9 +11,8 @@
 namespace sfz {
 
 ChannelAftertouchSource::ChannelAftertouchSource(VoiceManager& manager, MidiState& state)
-    : midiState_(state)
+    : midiState_(state), manager_(manager)
 {
-    (void)manager;
 }
 
 void ChannelAftertouchSource::init(const ModKey& sourceKey, NumericId<Voice> voiceId, unsigned delay)
@@ -26,8 +25,9 @@ void ChannelAftertouchSource::init(const ModKey& sourceKey, NumericId<Voice> voi
 void ChannelAftertouchSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceId, absl::Span<float> buffer)
 {
     UNUSED(sourceKey);
-    UNUSED(voiceId);
-    const EventVector& events = midiState_.getChannelAftertouchEvents();
+    Voice* voice = manager_.getVoiceById(voiceId);
+    const int channel = voice ? voice->getTriggerEvent().channel : 0;
+    const EventVector& events = midiState_.getChannelAftertouchEvents(channel);
     linearEnvelope(events, buffer, [](float x) { return x; });
 }
 

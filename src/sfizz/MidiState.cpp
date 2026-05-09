@@ -161,6 +161,15 @@ float sfz::MidiState::getVelocityOverride() const noexcept
 
 void sfz::MidiState::insertEventInVector(EventVector& events, int delay, float value)
 {
+    // Member channels are populated lazily — their vectors start empty and
+    // only grow on first write. linearEnvelope downstream ASSERTs the
+    // vector starts at delay 0, so seed the centre-value sentinel before
+    // inserting if this is the first ever event on this channel/CC slot.
+    // Master channels are pre-seeded at construction so this is a no-op
+    // for them.
+    if (events.empty())
+        events.push_back({ 0, 0.0f });
+
     const auto insertionPoint = absl::c_lower_bound(events, delay, MidiEventDelayComparator {});
     if (insertionPoint == events.end() || insertionPoint->delay != delay)
         events.insert(insertionPoint, { delay, value });
@@ -371,8 +380,15 @@ const sfz::EventVector& sfz::MidiState::getCCEvents(int channel, int ccIdx) cons
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
     const auto& events = channelStates[channel].ccEvents[ccIdx];
-    if (events.empty())
+    if (events.empty()) {
+        // MPE 1.0 inheritance: a member channel that has never received its
+        // own CC value reads the master channel's value. Without this the
+        // engine's defaults (CC7=Volume@~0.79, CC10=Pan@0.5, CC11=Expression
+        // @1.0) collapse to 0 on member channels and voices play near-silent.
+        if (channel != masterChannel)
+            return channelStates[masterChannel].ccEvents[ccIdx];
         return nullEvent;
+    }
     return events;
 }
 
@@ -386,8 +402,11 @@ const sfz::EventVector& sfz::MidiState::getPitchEvents(int channel) const noexce
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
     const auto& events = channelStates[channel].pitchEvents;
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return channelStates[masterChannel].pitchEvents;
         return nullEvent;
+    }
     return events;
 }
 
@@ -401,8 +420,11 @@ const sfz::EventVector& sfz::MidiState::getChannelAftertouchEvents(int channel) 
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
     const auto& events = channelStates[channel].channelAftertouchEvents;
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return channelStates[masterChannel].channelAftertouchEvents;
         return nullEvent;
+    }
     return events;
 }
 
@@ -418,8 +440,11 @@ const sfz::EventVector& sfz::MidiState::getPolyAftertouchEvents(int channel, int
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return nullEvent;
     const auto& events = channelStates[channel].polyAftertouchEvents[noteNumber];
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return channelStates[masterChannel].polyAftertouchEvents[noteNumber];
         return nullEvent;
+    }
     return events;
 }
 
