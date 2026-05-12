@@ -40,6 +40,7 @@
 #include <absl/types/span.h>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <random>
 #include <utility>
@@ -1531,6 +1532,8 @@ void Synth::Impl::performHdcc(int delay, int channel, int ccNumber, float normVa
             midiState.allNotesOff(delay);
             return;
         }
+
+        handleRpnControlCC(channel, ccNumber, normValue);
     }
 
     for (auto& voice : voiceManager_)
@@ -1538,6 +1541,89 @@ void Synth::Impl::performHdcc(int delay, int channel, int ccNumber, float normVa
 
     ccDispatch(delay, channel, ccNumber, normValue, extendedArg);
     midiState.ccEvent(delay, channel, ccNumber, normValue);
+}
+
+void Synth::Impl::handleRpnControlCC(int channel, int ccNumber, float normValue) noexcept
+{
+    if (channel < 0 || channel >= 16)
+        return;
+
+    RpnParserState& state = rpnParsers_[channel];
+    const auto to7Bit = [](float v) {
+        return static_cast<int>(std::lround(std::min(std::max(v, 0.0f), 1.0f) * 127.0f));
+    };
+
+    switch (ccNumber) {
+    case 99: { // NRPN MSB
+        const int data7 = to7Bit(normValue);
+        state.selectedRpn = static_cast<uint16_t>(
+            (state.selectedRpn & 0x007F) | ((data7 & 0x7F) << 7));
+        state.nrpnMode = true;
+        return;
+    }
+    case 98: { // NRPN LSB
+        const int data7 = to7Bit(normValue);
+        state.selectedRpn = static_cast<uint16_t>(
+            (state.selectedRpn & 0x3F80) | (data7 & 0x7F));
+        state.nrpnMode = true;
+        return;
+    }
+    case 101: { // RPN MSB
+        const int data7 = to7Bit(normValue);
+        state.selectedRpn = static_cast<uint16_t>(
+            (state.selectedRpn & 0x007F) | ((data7 & 0x7F) << 7));
+        state.nrpnMode = false;
+        return;
+    }
+    case 100: { // RPN LSB
+        const int data7 = to7Bit(normValue);
+        state.selectedRpn = static_cast<uint16_t>(
+            (state.selectedRpn & 0x3F80) | (data7 & 0x7F));
+        state.nrpnMode = false;
+        return;
+    }
+    case 6: { // Data Entry MSB — dispatch RPN 0 / RPN 6 handlers
+        if (state.nrpnMode || state.selectedRpn == RpnParserState::kNullRpn)
+            return;
+        const int data7 = to7Bit(normValue);
+        if (state.selectedRpn == 6) {
+            // MPE Configuration Message. Lower Zone master only — channel 0
+            // in sfizz's 0-indexed convention (MIDI channel 1 on the wire).
+            // Upper Zone (channel 15 / MIDI 16) is deferred per the story's
+            // open-questions section; no commercial MPE controller in our
+            // target set uses it. data7 == 0 disables MPE, 1..15 enables
+            // and announces member-channel count (informational — sfizz
+            // already accepts events on all 16 channels regardless).
+            if (channel != 0)
+                return;
+            mpeEnabled_ = (data7 >= 1 && data7 <= 15);
+        } else if (state.selectedRpn == 0) {
+            // Pitch Bend Sensitivity. Master-channel RPN updates the
+            // master range; member-channel RPN updates the per-note range
+            // applied to all members (commercial controllers send the
+            // same value on every member channel).
+            const float newRange = static_cast<float>(data7);
+            if (channel == 0) {
+                if (!mpeMasterBendAutoConfigEnabled_)
+                    return;
+                mpeMasterPitchBendRange_ = newRange;
+                resources_.getMidiState().setMPEPitchBendRange(
+                    newRange, mpePerNotePitchBendRange_);
+            } else {
+                if (!mpePerNoteBendAutoConfigEnabled_)
+                    return;
+                mpePerNotePitchBendRange_ = newRange;
+                resources_.getMidiState().setMPEPitchBendRange(
+                    mpeMasterPitchBendRange_, newRange);
+            }
+        }
+        return;
+    }
+    case 38: // Data Entry LSB — cents fraction for RPN 0, deferred to v2.
+        return;
+    default:
+        return;
+    }
 }
 
 void Synth::Impl::setDefaultHdcc(int ccNumber, float value)
@@ -1701,6 +1787,26 @@ float Synth::getMPEMasterPitchBendRange() const noexcept
 float Synth::getMPEPerNotePitchBendRange() const noexcept
 {
     return impl_->mpePerNotePitchBendRange_;
+}
+
+void Synth::setMPEMasterBendAutoConfigEnabled(bool enabled) noexcept
+{
+    impl_->mpeMasterBendAutoConfigEnabled_ = enabled;
+}
+
+bool Synth::getMPEMasterBendAutoConfigEnabled() const noexcept
+{
+    return impl_->mpeMasterBendAutoConfigEnabled_;
+}
+
+void Synth::setMPEPerNoteBendAutoConfigEnabled(bool enabled) noexcept
+{
+    impl_->mpePerNoteBendAutoConfigEnabled_ = enabled;
+}
+
+bool Synth::getMPEPerNoteBendAutoConfigEnabled() const noexcept
+{
+    return impl_->mpePerNoteBendAutoConfigEnabled_;
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept

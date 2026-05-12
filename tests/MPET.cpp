@@ -368,3 +368,165 @@ TEST_CASE("[MPE] Voice stealing prefers same-channel candidates when MPE enabled
             channel2Count++;
     REQUIRE(channel2Count == 3);
 }
+
+// =============================================================================
+// MPE auto-config: RPN 6 (MCM) + RPN 0 (Pitch Bend Sensitivity) parsing
+// =============================================================================
+//
+// MPE 1.0 §2 lets controllers self-announce their zone (RPN 6) and bend
+// ranges (RPN 0). The engine parses these RPN sequences inside performHdcc
+// and reacts automatically. The CCs themselves still propagate to MidiState
+// so SFZ *_oncc bindings on CC 6/100/101/etc. remain functional.
+//
+// Lower-Zone master in sfizz's 0-indexed channel convention is channel 0
+// (MIDI channel 1 on the wire); members are channels 1..15.
+
+namespace {
+
+void sendMCM(sfz::Synth& synth, int channel, int memberCount)
+{
+    synth.ccMPE(0, channel, 101, 0);          // RPN MSB
+    synth.ccMPE(0, channel, 100, 6);          // RPN LSB → RPN 6
+    synth.ccMPE(0, channel, 6,   memberCount); // Data Entry MSB
+    synth.ccMPE(0, channel, 101, 127);        // Null RPN MSB
+    synth.ccMPE(0, channel, 100, 127);        // Null RPN LSB
+}
+
+void sendPitchBendSensitivity(sfz::Synth& synth, int channel, int semitones)
+{
+    synth.ccMPE(0, channel, 101, 0);          // RPN MSB
+    synth.ccMPE(0, channel, 100, 0);          // RPN LSB → RPN 0
+    synth.ccMPE(0, channel, 6,   semitones);  // Data Entry MSB
+    synth.ccMPE(0, channel, 101, 127);        // Null RPN MSB
+    synth.ccMPE(0, channel, 100, 127);        // Null RPN LSB
+}
+
+} // namespace
+
+TEST_CASE("[MPE] RPN 6 (MCM) on master channel enables MPE")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEEnabled() == false);
+    sendMCM(synth, /*channel=*/0, /*memberCount=*/8);
+    REQUIRE(synth.getMPEEnabled() == true);
+}
+
+TEST_CASE("[MPE] RPN 6 (MCM) with N=0 disables MPE")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    sendMCM(synth, /*channel=*/0, /*memberCount=*/0);
+    REQUIRE(synth.getMPEEnabled() == false);
+}
+
+TEST_CASE("[MPE] RPN 6 (MCM) on non-master channel is rejected")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEEnabled() == false);
+    sendMCM(synth, /*channel=*/5, /*memberCount=*/8);
+    REQUIRE(synth.getMPEEnabled() == false);
+}
+
+TEST_CASE("[MPE] RPN 0 on master channel updates master bend range")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEMasterPitchBendRange() == 2.0_a);
+    sendPitchBendSensitivity(synth, /*channel=*/0, /*semitones=*/12);
+    REQUIRE(synth.getMPEMasterPitchBendRange() == 12.0_a);
+    // Per-note range untouched.
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 48.0_a);
+}
+
+TEST_CASE("[MPE] RPN 0 on member channel updates per-note bend range")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 48.0_a);
+    sendPitchBendSensitivity(synth, /*channel=*/2, /*semitones=*/24);
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 24.0_a);
+    // Master range untouched.
+    REQUIRE(synth.getMPEMasterPitchBendRange() == 2.0_a);
+}
+
+TEST_CASE("[MPE] Null RPN followed by CC 6 does not trigger MPE handlers")
+{
+    sfz::Synth synth;
+    // Deselect any pending RPN first.
+    synth.ccMPE(0, 0, 101, 127);
+    synth.ccMPE(0, 0, 100, 127);
+    // A bare Data Entry with no RPN selected must not flip MPE state.
+    synth.ccMPE(0, 0, 6, 8);
+    REQUIRE(synth.getMPEEnabled() == false);
+}
+
+TEST_CASE("[MPE] NRPN sequence followed by CC 6 does not trigger MPE handlers")
+{
+    sfz::Synth synth;
+    // Select NRPN (0, 6) on the master channel — same data values as RPN 6
+    // but via CC 99 / CC 98 instead of CC 101 / CC 100. The parser must not
+    // mistake this for an MCM.
+    synth.ccMPE(0, 0, 99, 0);
+    synth.ccMPE(0, 0, 98, 6);
+    synth.ccMPE(0, 0, 6, 8);
+    REQUIRE(synth.getMPEEnabled() == false);
+}
+
+TEST_CASE("[MPE] Opt-out: master-bend auto-config disabled blocks RPN 0 on master")
+{
+    sfz::Synth synth;
+    synth.setMPEMasterBendAutoConfigEnabled(false);
+    sendPitchBendSensitivity(synth, /*channel=*/0, /*semitones=*/12);
+    REQUIRE(synth.getMPEMasterPitchBendRange() == 2.0_a);
+    // The per-note opt-out is still on, so a member-channel RPN still lands.
+    sendPitchBendSensitivity(synth, /*channel=*/2, /*semitones=*/24);
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 24.0_a);
+}
+
+TEST_CASE("[MPE] Opt-out: per-note-bend auto-config disabled blocks RPN 0 on members")
+{
+    sfz::Synth synth;
+    synth.setMPEPerNoteBendAutoConfigEnabled(false);
+    sendPitchBendSensitivity(synth, /*channel=*/2, /*semitones=*/24);
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 48.0_a);
+    // The master opt-out is still on, so a master-channel RPN still lands.
+    sendPitchBendSensitivity(synth, /*channel=*/0, /*semitones=*/12);
+    REQUIRE(synth.getMPEMasterPitchBendRange() == 12.0_a);
+}
+
+TEST_CASE("[MPE] MCM enable is unconditional (not gated by the bend-range opt-outs)")
+{
+    sfz::Synth synth;
+    synth.setMPEMasterBendAutoConfigEnabled(false);
+    synth.setMPEPerNoteBendAutoConfigEnabled(false);
+    sendMCM(synth, /*channel=*/0, /*memberCount=*/8);
+    // MCM enable is part of the MPE 1.0 spec contract — UIs gate only the
+    // bend-range updates, not the MPE-enable flag.
+    REQUIRE(synth.getMPEEnabled() == true);
+}
+
+TEST_CASE("[MPE] RPN control CCs still propagate to MidiState (parser is a tap)")
+{
+    sfz::Synth synth;
+    synth.ccMPE(0, 0, 101, 0);
+    synth.ccMPE(0, 0, 100, 6);
+    synth.ccMPE(0, 0, 6,   8);
+
+    auto& mid = synth.getResources().getMidiState();
+    // The parser must not swallow the CCs — SFZ instruments can bind
+    // *_oncc6 / *_oncc100 / *_oncc101 and those bindings rely on the
+    // MidiState slot being updated.
+    REQUIRE(mid.getCCValue(0, 101) == 0.0_a);
+    REQUIRE(mid.getCCValue(0, 100) == 6_norm);
+    REQUIRE(mid.getCCValue(0, 6)   == 8_norm);
+}
+
+TEST_CASE("[MPE] Opt-out flag round-trip getters")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEMasterBendAutoConfigEnabled() == true);
+    REQUIRE(synth.getMPEPerNoteBendAutoConfigEnabled() == true);
+    synth.setMPEMasterBendAutoConfigEnabled(false);
+    REQUIRE(synth.getMPEMasterBendAutoConfigEnabled() == false);
+    REQUIRE(synth.getMPEPerNoteBendAutoConfigEnabled() == true);
+    synth.setMPEPerNoteBendAutoConfigEnabled(false);
+    REQUIRE(synth.getMPEPerNoteBendAutoConfigEnabled() == false);
+}

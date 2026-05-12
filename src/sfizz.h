@@ -846,6 +846,43 @@ SFIZZ_EXPORTED_API float sfizz_get_mpe_master_pitch_bend_range(sfizz_synth_t* sy
  */
 SFIZZ_EXPORTED_API float sfizz_get_mpe_per_note_pitch_bend_range(sfizz_synth_t* synth);
 
+/**
+ * @brief Toggle whether incoming MPE Pitch Bend Sensitivity (RPN 0)
+ * messages on the master channel update the master bend range. The
+ * MPE Configuration Message (RPN 6) is processed unconditionally —
+ * this gate covers only the bend range updates. Default is true.
+ *
+ * @param synth   The synth.
+ * @param enabled true to accept the messages, false to ignore them.
+ */
+SFIZZ_EXPORTED_API void sfizz_set_mpe_master_bend_auto_config_enabled(sfizz_synth_t* synth, bool enabled);
+
+/**
+ * @brief Get whether master-channel Pitch Bend Sensitivity messages
+ * update the master bend range.
+ *
+ * @param synth  The synth.
+ */
+SFIZZ_EXPORTED_API bool sfizz_get_mpe_master_bend_auto_config_enabled(sfizz_synth_t* synth);
+
+/**
+ * @brief Toggle whether incoming MPE Pitch Bend Sensitivity (RPN 0)
+ * messages on member channels update the per-note bend range. Default
+ * is true.
+ *
+ * @param synth   The synth.
+ * @param enabled true to accept the messages, false to ignore them.
+ */
+SFIZZ_EXPORTED_API void sfizz_set_mpe_per_note_bend_auto_config_enabled(sfizz_synth_t* synth, bool enabled);
+
+/**
+ * @brief Get whether member-channel Pitch Bend Sensitivity messages
+ * update the per-note bend range.
+ *
+ * @param synth  The synth.
+ */
+SFIZZ_EXPORTED_API bool sfizz_get_mpe_per_note_bend_auto_config_enabled(sfizz_synth_t* synth);
+
 /** @} */
 
 /**

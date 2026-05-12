@@ -248,6 +248,19 @@ struct Synth::Impl final: public Parser::Listener {
     void performHdcc(int delay, int channel, int ccNumber, float normValue, bool asMidi, int extendedArg=-1) noexcept;
 
     /**
+     * @brief Tap on the CCs that drive MIDI RPN/NRPN selection and data
+     *        entry (CCs 6, 38, 98, 99, 100, 101). Called from performHdcc
+     *        before the normal dispatch so the CCs continue through to
+     *        MidiState and SFZ *_oncc bindings untouched. When a complete
+     *        MPE Configuration Message (RPN 6) or Pitch Bend Sensitivity
+     *        (RPN 0) sequence is detected on the relevant channel, drives
+     *        the MPE auto-config handlers (per-direction opt-out via the
+     *        mpeMasterBendAutoConfigEnabled_ / mpePerNoteBendAutoConfigEnabled_
+     *        flags; MCM enable/disable is unconditional per MPE 1.0).
+     */
+    void handleRpnControlCC(int channel, int ccNumber, float normValue) noexcept;
+
+    /**
      * @brief Set the default value for a CC
      *
      * @param ccNumber
@@ -399,6 +412,29 @@ struct Synth::Impl final: public Parser::Listener {
     bool mpeEnabled_ { false };
     float mpeMasterPitchBendRange_ { 2.0f };
     float mpePerNotePitchBendRange_ { 48.0f };
+
+    // MPE auto-config (RPN 6 + RPN 0). The engine listens for the MPE
+    // Configuration Message and Pitch Bend Sensitivity sequences per
+    // MPE 1.0 §2 and updates mpeEnabled_ / the bend-range fields
+    // without host intervention. The bend-range updates are gated by the
+    // two flags below so UIs can opt out per direction; MCM enable/disable
+    // always drives mpeEnabled_ because that is the spec contract.
+    bool mpeMasterBendAutoConfigEnabled_ { true };
+    bool mpePerNoteBendAutoConfigEnabled_ { true };
+
+    // Per-channel RPN parser state. RPN selection is per-channel per the
+    // MIDI spec, so 16 instances. selectedRpn is a 14-bit value composed
+    // of CC 101 (MSB, bits 7..13) and CC 100 (LSB, bits 0..6); the
+    // initial / null/deselect sentinel is 0x3FFF (both at 127). nrpnMode
+    // tracks whether the last CC 98/99 vs CC 100/101 message set NRPN
+    // vs RPN, so that a CC 6 following an NRPN selection isn't
+    // misinterpreted as RPN data entry.
+    struct RpnParserState {
+        static constexpr uint16_t kNullRpn = 0x3FFF;
+        uint16_t selectedRpn { kNullRpn };
+        bool nrpnMode { false };
+    };
+    std::array<RpnParserState, 16> rpnParsers_;
 };
 
 } // namespace sfz

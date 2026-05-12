@@ -632,6 +632,33 @@ public:
      */
     float getMPEPerNotePitchBendRange() const noexcept;
 
+    /**
+     * @brief Toggle whether incoming Pitch Bend Sensitivity (RPN 0)
+     * sequences on the master channel update the master bend range.
+     * Disabling this pins the master range to whatever the host last
+     * set via setMPEPitchBendRange. MPE Configuration Messages (RPN 6)
+     * are processed unconditionally — this gate covers only the bend
+     * range. Defaults to true.
+     */
+    void setMPEMasterBendAutoConfigEnabled(bool enabled) noexcept;
+    /**
+     * @brief Get whether master-channel Pitch Bend Sensitivity messages
+     * update the master bend range.
+     */
+    bool getMPEMasterBendAutoConfigEnabled() const noexcept;
+
+    /**
+     * @brief Toggle whether incoming Pitch Bend Sensitivity (RPN 0)
+     * sequences on member channels update the per-note bend range.
+     * Disabling this pins the per-note range. Defaults to true.
+     */
+    void setMPEPerNoteBendAutoConfigEnabled(bool enabled) noexcept;
+    /**
+     * @brief Get whether member-channel Pitch Bend Sensitivity messages
+     * update the per-note bend range.
+     */
+    bool getMPEPerNoteBendAutoConfigEnabled() const noexcept;
+
     // =========================================================================
 
     /**

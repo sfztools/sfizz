@@ -242,6 +242,22 @@ float sfizz_get_mpe_per_note_pitch_bend_range(sfizz_synth_t* synth)
 {
     return synth->synth.getMPEPerNotePitchBendRange();
 }
+void sfizz_set_mpe_master_bend_auto_config_enabled(sfizz_synth_t* synth, bool enabled)
+{
+    synth->synth.setMPEMasterBendAutoConfigEnabled(enabled);
+}
+bool sfizz_get_mpe_master_bend_auto_config_enabled(sfizz_synth_t* synth)
+{
+    return synth->synth.getMPEMasterBendAutoConfigEnabled();
+}
+void sfizz_set_mpe_per_note_bend_auto_config_enabled(sfizz_synth_t* synth, bool enabled)
+{
+    synth->synth.setMPEPerNoteBendAutoConfigEnabled(enabled);
+}
+bool sfizz_get_mpe_per_note_bend_auto_config_enabled(sfizz_synth_t* synth)
+{
+    return synth->synth.getMPEPerNoteBendAutoConfigEnabled();
+}
 void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter)
 {
     synth->synth.tempo(delay, seconds_per_quarter);

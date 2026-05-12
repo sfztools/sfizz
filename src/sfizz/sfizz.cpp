@@ -325,6 +325,26 @@ float sfz::Sfizz::getMPEPerNotePitchBendRange() const noexcept
     return synth->synth.getMPEPerNotePitchBendRange();
 }
 
+void sfz::Sfizz::setMPEMasterBendAutoConfigEnabled(bool enabled) noexcept
+{
+    synth->synth.setMPEMasterBendAutoConfigEnabled(enabled);
+}
+
+bool sfz::Sfizz::getMPEMasterBendAutoConfigEnabled() const noexcept
+{
+    return synth->synth.getMPEMasterBendAutoConfigEnabled();
+}
+
+void sfz::Sfizz::setMPEPerNoteBendAutoConfigEnabled(bool enabled) noexcept
+{
+    synth->synth.setMPEPerNoteBendAutoConfigEnabled(enabled);
+}
+
+bool sfz::Sfizz::getMPEPerNoteBendAutoConfigEnabled() const noexcept
+{
+    return synth->synth.getMPEPerNoteBendAutoConfigEnabled();
+}
+
 void sfz::Sfizz::tempo(int delay, float secondsPerBeat) noexcept
 {
     synth->synth.tempo(delay, secondsPerBeat);
