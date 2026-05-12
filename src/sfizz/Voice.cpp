@@ -2030,7 +2030,9 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
         //                    + per_note_bend × per_note_range.
         // Read the two channels separately (no fallback) so the master
         // contribution is preserved even after the member channel's events
-        // were populated by an earlier per-note bend.
+        // were populated by an earlier per-note bend. Either vector may be
+        // empty (member channels are populated lazily on first write), so
+        // guard the linearEnvelope calls — it asserts events.size() > 0.
         const float perNoteCents =
             midiState.getMPEBendRangeForChannel(triggerChannel_) * 100.0f;
         const float masterCents =
@@ -2040,28 +2042,35 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
         const EventVector& masterEvents = midiState.getPitchEventsRaw(0);
 
         // Per-note contribution into pitchSpan.
-        const auto perNoteLambda = [perNoteCents](float bend) {
-            return bend * perNoteCents;
-        };
-        if (region_->bendStep > 1.0f)
-            linearEnvelope(perNoteEvents, pitchSpan, perNoteLambda, region_->bendStep);
-        else
-            linearEnvelope(perNoteEvents, pitchSpan, perNoteLambda);
-
-        // Master contribution into a scratch buffer, then summed onto pitchSpan.
-        auto& bufferPool = resources_.getBufferPool();
-        auto scratch = bufferPool.getBuffer(numFrames);
-        if (scratch) {
-            absl::Span<float> masterSpan = *scratch;
-            const auto masterLambda = [masterCents](float bend) {
-                return bend * masterCents;
+        if (!perNoteEvents.empty()) {
+            const auto perNoteLambda = [perNoteCents](float bend) {
+                return bend * perNoteCents;
             };
             if (region_->bendStep > 1.0f)
-                linearEnvelope(masterEvents, masterSpan, masterLambda, region_->bendStep);
+                linearEnvelope(perNoteEvents, pitchSpan, perNoteLambda, region_->bendStep);
             else
-                linearEnvelope(masterEvents, masterSpan, masterLambda);
-            for (size_t i = 0; i < numFrames; ++i)
-                pitchSpan[i] += masterSpan[i];
+                linearEnvelope(perNoteEvents, pitchSpan, perNoteLambda);
+        }
+        else {
+            std::fill(pitchSpan.begin(), pitchSpan.end(), 0.0f);
+        }
+
+        // Master contribution into a scratch buffer, then summed onto pitchSpan.
+        if (!masterEvents.empty()) {
+            auto& bufferPool = resources_.getBufferPool();
+            auto scratch = bufferPool.getBuffer(numFrames);
+            if (scratch) {
+                absl::Span<float> masterSpan = *scratch;
+                const auto masterLambda = [masterCents](float bend) {
+                    return bend * masterCents;
+                };
+                if (region_->bendStep > 1.0f)
+                    linearEnvelope(masterEvents, masterSpan, masterLambda, region_->bendStep);
+                else
+                    linearEnvelope(masterEvents, masterSpan, masterLambda);
+                for (size_t i = 0; i < numFrames; ++i)
+                    pitchSpan[i] += masterSpan[i];
+            }
         }
     }
     bendSmoother_.process(pitchSpan, pitchSpan);
