@@ -897,6 +897,23 @@ SFIZZ_EXPORTED_API bool sfizz_get_mpe_per_note_bend_auto_config_enabled(sfizz_sy
  */
 SFIZZ_EXPORTED_API int sfizz_get_dropped_poly_kp_on_member_count(sfizz_synth_t* synth);
 
+/**
+ * @brief Diagnostic count of Manager-only CC messages the engine dropped
+ * because they arrived on a Member Channel while MPE was enabled.
+ *
+ * MPE 1.0 §2.3.1 / §2.3.3 (Appendix E Table 5) require pedal CCs (64-69),
+ * mode/reset CCs (120-125 excluding 122) and Bank Select (CC 0 / CC 32)
+ * to be honoured only on the Manager Channel. The engine drops such
+ * events at the `sfizz_send_*cc` entry and increments this counter so
+ * hosts can observe spec-violating traffic. Program Change is filtered
+ * host-side because `sfizz_send_program_change` does not carry a channel.
+ * Counter is not reset by `sfizz_set_mpe_enabled`, polyphony changes, or
+ * SFZ reloads.
+ *
+ * @param synth  The synth.
+ */
+SFIZZ_EXPORTED_API int sfizz_get_dropped_manager_only_message_count(sfizz_synth_t* synth);
+
 /** @} */
 
 /**

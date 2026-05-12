@@ -442,6 +442,15 @@ struct Synth::Impl final: public Parser::Listener {
     // drops such events at the hdPolyAftertouchMPE entry and increments this
     // counter so hosts / tests can observe how often it fired.
     int droppedPolyKpOnMember_ { 0 };
+
+    // Spec-violation diagnostic: Manager-only CC messages (pedal CCs, mode
+    // and reset CCs, Bank Select) arriving on a Member Channel while MPE
+    // is enabled are dropped at the top of performHdcc per MPE 1.0 §2.3.1
+    // / §2.3.3 (Appendix E Table 5). This counter is incremented per drop
+    // so hosts / tests can observe spec-violating traffic. Program Change
+    // on Member Channels is filtered host-side because the engine
+    // programChange API does not carry a channel argument.
+    int droppedManagerOnlyCCs_ { 0 };
 };
 
 } // namespace sfz

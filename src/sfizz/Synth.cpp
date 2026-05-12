@@ -50,6 +50,38 @@ namespace sfz {
 // unless set to permissive, the loader rejects sfz files with errors
 static constexpr bool loaderParsesPermissively = true;
 
+// MPE 1.0 §2.3.1 / §2.3.3 (Appendix E Table 5): CCs whose effect is
+// zone-wide and that should therefore only be honoured on the Manager
+// Channel. Damper / Portamento / Sostenuto / Soft / Legato Footswitch /
+// Hold 2 (CCs 64-69), All Sounds Off / Reset All Controllers / All Notes
+// Off / Omni Off / Omni On (CCs 120-125, excluding 122 — Local Control is
+// irrelevant for a software synth and the spec doesn't class it here),
+// and Bank Select MSB/LSB (CCs 0 and 32, which queue state for a later
+// Program Change). CC#7 (Volume), CC#10 (Pan) and CC#11 (Expression) are
+// intentionally NOT listed — the spec marks them optional on both channel
+// types so we leave them on the per-channel path.
+static constexpr bool isManagerOnlyCC(int ccNumber) noexcept
+{
+    switch (ccNumber) {
+    case 0:
+    case 32:
+    case 64:
+    case 65:
+    case 66:
+    case 67:
+    case 68:
+    case 69:
+    case 120:
+    case 121:
+    case 123:
+    case 124:
+    case 125:
+        return true;
+    default:
+        return false;
+    }
+}
+
 Synth::Synth()
 : impl_(new Impl) // NOLINT: (paul) I don't get why clang-tidy complains here
 {
@@ -1514,6 +1546,20 @@ void Synth::Impl::performHdcc(int delay, int channel, int ccNumber, float normVa
     ASSERT(ccNumber < config::numCCs);
     ASSERT(ccNumber >= 0);
 
+    // MPE 1.0 §2.3.1 / §2.3.3: zone-wide messages (pedal CCs, mode/reset,
+    // Bank Select) must only be honoured on the Manager Channel. Drop on
+    // Member Channels before any side effects — the global early-returns
+    // for All-Notes-Off / Reset-All-Controllers further down would otherwise
+    // fire on a Member-Channel arrival, and Bank Select on a Member Channel
+    // would queue a bank for a Program Change that the host then has to
+    // filter separately. Gate on asMidi so internal automation paths
+    // (which conceptually target the Manager Channel) keep working.
+    // Lower Zone only (Manager = channel 0); revisit when Upper Zone lands.
+    if (asMidi && mpeEnabled_ && channel != 0 && isManagerOnlyCC(ccNumber)) {
+        ++droppedManagerOnlyCCs_;
+        return;
+    }
+
     ScopedTiming logger { dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     changedCCsThisCycle_.set(ccNumber);
@@ -1826,6 +1872,11 @@ bool Synth::getMPEPerNoteBendAutoConfigEnabled() const noexcept
 int Synth::getDroppedPolyKpOnMemberCount() const noexcept
 {
     return impl_->droppedPolyKpOnMember_;
+}
+
+int Synth::getDroppedManagerOnlyMessageCount() const noexcept
+{
+    return impl_->droppedManagerOnlyCCs_;
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept

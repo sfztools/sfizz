@@ -742,6 +742,17 @@ public:
      */
     int getDroppedPolyKpOnMemberCount() const noexcept;
 
+    /**
+     * @brief Diagnostic count of Manager-only CC messages the engine
+     * dropped because they arrived on a Member Channel while MPE was
+     * enabled. MPE 1.0 §2.3.1 / §2.3.3 (Appendix E Table 5) require pedal
+     * CCs (64-69), mode/reset CCs (120-125 excluding 122) and Bank Select
+     * (CC 0 / CC 32) to be honoured only on the Manager Channel; the
+     * engine silently drops them and increments this counter so hosts /
+     * tests can observe spec-violating traffic.
+     */
+    int getDroppedManagerOnlyMessageCount() const noexcept;
+
     // =========================================================================
 
     /**

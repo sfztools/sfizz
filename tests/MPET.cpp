@@ -581,3 +581,97 @@ TEST_CASE("[MPE] Poly KP on any channel is accepted when MPE is disabled")
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getPolyAftertouch(/*channel=*/5, /*note=*/72) == 80_norm);
 }
+
+// =============================================================================
+// Manager-only message filtering (MPE 1.0 §2.3.1 / §2.3.3 / Appendix E Table 5)
+// =============================================================================
+//
+// Pedal CCs (64-69), mode/reset CCs (120-125 excluding 122) and Bank Select
+// (CC 0 / CC 32) are zone-wide and must be honoured only on the Manager
+// Channel when MPE is enabled. The engine drops such events at the top of
+// performHdcc and reports the drop via getDroppedManagerOnlyMessageCount.
+// RPN data CCs (6/38/98/99/100/101) are NOT zone-wide — they are per-channel
+// state machines — and must continue to flow on Member Channels so the
+// SMPL-46 RPN auto-config keeps working.
+
+TEST_CASE("[MPE] Damper on the Manager Channel is registered when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    synth.ccMPE(0, /*channel=*/0, /*ccNumber=*/64, 127);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 0);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getCCValue(/*channel=*/0, 64) == 127_norm);
+}
+
+TEST_CASE("[MPE] Damper on a Member Channel is dropped when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/64, 127);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 1);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getCCValue(/*channel=*/2, 64) == 0.0_a);
+}
+
+TEST_CASE("[MPE] All pedal CCs 64-69 drop on Member Channels under MPE")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    for (int cc : {64, 65, 66, 67, 68, 69})
+        synth.ccMPE(0, /*channel=*/3, cc, 127);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 6);
+}
+
+TEST_CASE("[MPE] All Notes Off on a Member Channel is dropped when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/123, 0);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 1);
+    // The CC must not reach MidiState even though All-Notes-Off normally
+    // hits a global early-return path in performHdcc.
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getCCValue(/*channel=*/2, 123) == 0.0_a);
+}
+
+TEST_CASE("[MPE] Reset All Controllers on a Member Channel is dropped when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    synth.ccMPE(0, /*channel=*/4, /*ccNumber=*/121, 0);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 1);
+}
+
+TEST_CASE("[MPE] Bank Select MSB/LSB on a Member Channel is dropped when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/0, 5);   // Bank MSB
+    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/32, 3);  // Bank LSB
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 2);
+}
+
+TEST_CASE("[MPE] Manager-only filter is inert when MPE is disabled")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEEnabled() == false);
+    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/64, 127);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 0);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getCCValue(/*channel=*/2, 64) == 127_norm);
+}
+
+TEST_CASE("[MPE] Manager-only filter does not touch RPN data CCs on Member Channels")
+{
+    // Regression for SMPL-46: the per-note bend range auto-config must
+    // keep working when MPE is enabled and the RPN sequence arrives on a
+    // Member Channel. CCs 6 / 38 / 98 / 99 / 100 / 101 must remain off
+    // the Manager-only list.
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 48.0_a);
+    sendPitchBendSensitivity(synth, /*channel=*/2, /*semitones=*/24);
+    REQUIRE(synth.getMPEPerNotePitchBendRange() == 24.0_a);
+    REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 0);
+}
