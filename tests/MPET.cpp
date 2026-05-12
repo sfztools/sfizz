@@ -256,10 +256,13 @@ TEST_CASE("[MPE] Existing single-channel API forwards to master-channel slot")
     REQUIRE(mid.getPitchBend(0) == 1.0_a);
     REQUIRE(mid.getCCValue(0, 74) == 90_norm);
     REQUIRE(mid.getChannelAftertouch(0) == 100_norm);
-    // Other channels untouched.
-    REQUIRE(mid.getPitchBend(1) == 0.0_a);
-    REQUIRE(mid.getCCValue(1, 74) == 0.0_a);
-    REQUIRE(mid.getChannelAftertouch(1) == 0.0_a);
+    // Member channels with no events of their own inherit master state
+    // via the MidiState fallback (b117153f) — voices triggered on a member
+    // channel before that channel sees any per-note modulation read the
+    // master scalars so global bend / pressure / CC values still apply.
+    REQUIRE(mid.getPitchBend(1) == 1.0_a);
+    REQUIRE(mid.getCCValue(1, 74) == 90_norm);
+    REQUIRE(mid.getChannelAftertouch(1) == 100_norm);
 }
 
 // =============================================================================
