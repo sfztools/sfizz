@@ -200,8 +200,11 @@ float sfz::MidiState::getPitchBend(int channel) const noexcept
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return 0.0f;
     const auto& events = channelStates[channel].pitchEvents;
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return getPitchBend(masterChannel);
         return 0.0f;
+    }
     return events.back().value;
 }
 
@@ -245,8 +248,11 @@ float sfz::MidiState::getChannelAftertouch(int channel) const noexcept
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return 0.0f;
     const auto& events = channelStates[channel].channelAftertouchEvents;
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return getChannelAftertouch(masterChannel);
         return 0.0f;
+    }
     return events.back().value;
 }
 
@@ -263,8 +269,11 @@ float sfz::MidiState::getPolyAftertouch(int channel, int noteNumber) const noexc
         return 0.0f;
 
     const auto& events = channelStates[channel].polyAftertouchEvents[noteNumber];
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return getPolyAftertouch(masterChannel, noteNumber);
         return 0.0f;
+    }
     return events.back().value;
 }
 
@@ -293,8 +302,11 @@ float sfz::MidiState::getCCValue(int channel, int ccNumber) const noexcept
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return 0.0f;
     const auto& events = channelStates[channel].ccEvents[ccNumber];
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return getCCValue(masterChannel, ccNumber);
         return 0.0f;
+    }
     return events.back().value;
 }
 
@@ -309,8 +321,11 @@ float sfz::MidiState::getCCValueAt(int channel, int ccNumber, int delay) const n
     if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
         return 0.0f;
     const auto& events = channelStates[channel].ccEvents[ccNumber];
-    if (events.empty())
+    if (events.empty()) {
+        if (channel != masterChannel)
+            return getCCValueAt(masterChannel, ccNumber, delay);
         return 0.0f;
+    }
     const auto ccEvent = absl::c_lower_bound(
         events, delay, MidiEventDelayComparator {});
     if (ccEvent != events.end())
