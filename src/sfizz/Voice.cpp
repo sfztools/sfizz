@@ -630,7 +630,7 @@ void Voice::Impl::off(int delay, bool fast) noexcept
     release(delay);
 }
 
-void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
+void Voice::registerNoteOff(int delay, int channel, int noteNumber, float velocity) noexcept
 {
     ASSERT(velocity >= 0.0 && velocity <= 1.0);
     UNUSED(velocity);
@@ -642,7 +642,9 @@ void Voice::registerNoteOff(int delay, int noteNumber, float velocity) noexcept
     if (impl.state_ != State::playing)
         return;
 
-    if (impl.triggerEvent_.number == noteNumber && impl.triggerEvent_.type == TriggerEventType::NoteOn) {
+    if (impl.triggerEvent_.number == noteNumber
+        && impl.triggerEvent_.channel == channel
+        && impl.triggerEvent_.type == TriggerEventType::NoteOn) {
         impl.noteIsOff_ = true;
 
         if (impl.region_->loopMode == LoopMode::one_shot)

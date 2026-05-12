@@ -1314,7 +1314,7 @@ void Synth::hdNoteOffMPE(int delay, int channel, int noteNumber, float normalize
     const auto replacedVelocity = midiState.getNoteVelocity(noteNumber);
 
     for (auto& voice : impl.voiceManager_)
-        voice.registerNoteOff(delay, noteNumber, replacedVelocity);
+        voice.registerNoteOff(delay, channel, noteNumber, replacedVelocity);
 
     impl.noteOffDispatch(delay, channel, noteNumber, replacedVelocity);
 }

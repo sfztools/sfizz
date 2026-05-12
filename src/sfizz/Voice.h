@@ -134,10 +134,15 @@ public:
      * @brief Register a note-off event; this may trigger a release.
      *
      * @param delay
+     * @param channel  MPE / MIDI channel of the note-off (0 for master /
+     *                 legacy single-channel). Only voices that started on the
+     *                 matching channel are released; voices on other channels
+     *                 are unaffected. This is what keeps overlapping notes on
+     *                 different MPE member channels independent.
      * @param noteNumber
      * @param velocity
      */
-    void registerNoteOff(int delay, int noteNumber, float velocity) noexcept;
+    void registerNoteOff(int delay, int channel, int noteNumber, float velocity) noexcept;
     /**
      * @brief Register a CC event; this may trigger a release. If the voice is playing and its
      * region has CC modifiers, it will use this value to compute the CC envelope to apply to the
