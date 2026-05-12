@@ -529,7 +529,25 @@ bool Voice::startVoice(Layer* layer, int delay, const TriggerEvent& event) noexc
     impl.sampleEnd_ = int(sampleEnd(region, midiState));
     impl.sampleSize_ = impl.sampleEnd_- impl.sourcePosition_ - 1;
     impl.bendSmoother_.setSmoothing(region.bendSmooth, impl.sampleRate_);
-    impl.bendSmoother_.reset(region.getBendInCents(midiState.getPitchBend(impl.triggerChannel_)));
+    {
+        // Same master vs. member channel distinction as in pitchEnvelope:
+        // master uses region bend_up/down. Member channels combine their own
+        // bend (per-note range) with master bend (master range) per MPE 1.0.
+        float initialCents;
+        if (impl.triggerChannel_ == 0) {
+            initialCents = region.getBendInCents(midiState.getPitchBend(0));
+        }
+        else {
+            const float perNoteBend = midiState.getPitchBendRaw(impl.triggerChannel_);
+            const float masterBend = midiState.getPitchBendRaw(0);
+            const float perNoteCents =
+                midiState.getMPEBendRangeForChannel(impl.triggerChannel_) * 100.0f;
+            const float masterCents =
+                midiState.getMPEBendRangeForChannel(0) * 100.0f;
+            initialCents = perNoteBend * perNoteCents + masterBend * masterCents;
+        }
+        impl.bendSmoother_.reset(initialCents);
+    }
 
     ModMatrix& modMatrix = resources.getModMatrix();
     modMatrix.initVoice(impl.id_, region.getId(), impl.initialDelay_);
@@ -1994,15 +2012,58 @@ void Voice::Impl::pitchEnvelope(absl::Span<float> pitchSpan) noexcept
     const size_t numFrames = pitchSpan.size();
 
     const MidiState& midiState = resources_.getMidiState();
-    const EventVector& events = midiState.getPitchEvents(triggerChannel_);
-    const auto bendLambda = [this](float bend) {
-        return region_->getBendInCents(bend);
-    };
+    const bool isMaster = (triggerChannel_ == 0);
 
-    if (region_->bendStep > 1.0f)
-        linearEnvelope(events, pitchSpan, bendLambda, region_->bendStep);
-    else
-        linearEnvelope(events, pitchSpan, bendLambda);
+    if (isMaster) {
+        // Legacy / non-MPE path: single events vector, region bend_up/down.
+        const EventVector& events = midiState.getPitchEvents(triggerChannel_);
+        const auto bendLambda = [this](float bend) {
+            return region_->getBendInCents(bend);
+        };
+        if (region_->bendStep > 1.0f)
+            linearEnvelope(events, pitchSpan, bendLambda, region_->bendStep);
+        else
+            linearEnvelope(events, pitchSpan, bendLambda);
+    }
+    else {
+        // MPE 1.0: total bend = master_bend × master_range
+        //                    + per_note_bend × per_note_range.
+        // Read the two channels separately (no fallback) so the master
+        // contribution is preserved even after the member channel's events
+        // were populated by an earlier per-note bend.
+        const float perNoteCents =
+            midiState.getMPEBendRangeForChannel(triggerChannel_) * 100.0f;
+        const float masterCents =
+            midiState.getMPEBendRangeForChannel(0) * 100.0f;
+
+        const EventVector& perNoteEvents = midiState.getPitchEventsRaw(triggerChannel_);
+        const EventVector& masterEvents = midiState.getPitchEventsRaw(0);
+
+        // Per-note contribution into pitchSpan.
+        const auto perNoteLambda = [perNoteCents](float bend) {
+            return bend * perNoteCents;
+        };
+        if (region_->bendStep > 1.0f)
+            linearEnvelope(perNoteEvents, pitchSpan, perNoteLambda, region_->bendStep);
+        else
+            linearEnvelope(perNoteEvents, pitchSpan, perNoteLambda);
+
+        // Master contribution into a scratch buffer, then summed onto pitchSpan.
+        auto& bufferPool = resources_.getBufferPool();
+        auto scratch = bufferPool.getBuffer(numFrames);
+        if (scratch) {
+            absl::Span<float> masterSpan = *scratch;
+            const auto masterLambda = [masterCents](float bend) {
+                return bend * masterCents;
+            };
+            if (region_->bendStep > 1.0f)
+                linearEnvelope(masterEvents, masterSpan, masterLambda, region_->bendStep);
+            else
+                linearEnvelope(masterEvents, masterSpan, masterLambda);
+            for (size_t i = 0; i < numFrames; ++i)
+                pitchSpan[i] += masterSpan[i];
+        }
+    }
     bendSmoother_.process(pitchSpan, pitchSpan);
 
     ModMatrix& mm = resources_.getModMatrix();

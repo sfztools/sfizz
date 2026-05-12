@@ -1688,6 +1688,9 @@ void Synth::setMPEPitchBendRange(float masterSemitones, float perNoteSemitones) 
 {
     impl_->mpeMasterPitchBendRange_ = masterSemitones;
     impl_->mpePerNotePitchBendRange_ = perNoteSemitones;
+    // Mirror into MidiState so per-voice bend application can pick up the
+    // configured range without reaching back into Synth::Impl.
+    impl_->resources_.getMidiState().setMPEPitchBendRange(masterSemitones, perNoteSemitones);
 }
 
 float Synth::getMPEMasterPitchBendRange() const noexcept

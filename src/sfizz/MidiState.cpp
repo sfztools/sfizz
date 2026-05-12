@@ -363,6 +363,32 @@ void sfz::MidiState::resetNoteStates() noexcept
     absl::c_fill(noteOffTimes, 0);
 }
 
+const sfz::EventVector& sfz::MidiState::getPitchEventsRaw(int channel) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return nullEvent;
+    return channelStates[channel].pitchEvents;
+}
+
+float sfz::MidiState::getPitchBendRaw(int channel) const noexcept
+{
+    if (channel < 0 || channel >= static_cast<int>(channelStates.size()))
+        return 0.0f;
+    const auto& events = channelStates[channel].pitchEvents;
+    return events.empty() ? 0.0f : events.back().value;
+}
+
+void sfz::MidiState::setMPEPitchBendRange(float masterSemitones, float perNoteSemitones) noexcept
+{
+    mpeMasterPitchBendRange_ = masterSemitones;
+    mpePerNotePitchBendRange_ = perNoteSemitones;
+}
+
+float sfz::MidiState::getMPEBendRangeForChannel(int channel) const noexcept
+{
+    return (channel == masterChannel) ? mpeMasterPitchBendRange_ : mpePerNotePitchBendRange_;
+}
+
 void sfz::MidiState::resetEventStates() noexcept
 {
     auto clearEvents = [] (EventVector& events) {

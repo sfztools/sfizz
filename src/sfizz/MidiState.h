@@ -273,6 +273,21 @@ public:
     const EventVector& getPolyAftertouchEvents(int channel, int noteNumber) const noexcept;
     const EventVector& getPitchEvents() const noexcept;
     const EventVector& getPitchEvents(int channel) const noexcept;
+    /**
+     * @brief Return the pitch-bend events for the given channel, with no
+     *        master fallback. The vector may be empty if that channel has
+     *        never received its own bend events. Use this when combining
+     *        member and master bend contributions separately for MPE.
+     */
+    const EventVector& getPitchEventsRaw(int channel) const noexcept;
+
+    /**
+     * @brief Return the latest pitch bend value for the given channel, with
+     *        no master fallback. Returns 0 if the channel has never received
+     *        its own bend. Pair with getMPEBendRangeForChannel to compute a
+     *        per-channel bend contribution.
+     */
+    float getPitchBendRaw(int channel) const noexcept;
     const EventVector& getChannelAftertouchEvents() const noexcept;
     const EventVector& getChannelAftertouchEvents(int channel) const noexcept;
     /**
@@ -280,6 +295,23 @@ public:
      *
      */
     void resetEventStates() noexcept;
+
+    /**
+     * @brief Configure the MPE pitch bend ranges used when computing the
+     *        bend amount applied to a voice. Master and member channels
+     *        carry independent ranges per MPE 1.0; SFZ regions only have
+     *        a single bend_up / bend_down pair, so member channels can't
+     *        rely on the region opcodes and need this synth-level setting.
+     */
+    void setMPEPitchBendRange(float masterSemitones, float perNoteSemitones) noexcept;
+
+    /**
+     * @brief Return the bend range (in semitones) the given channel should
+     *        use to scale a normalized [-1, +1] pitch bend value. Master
+     *        channel returns the master range, member channels return the
+     *        per-note range.
+     */
+    float getMPEBendRangeForChannel(int channel) const noexcept;
 
 private:
 
@@ -355,6 +387,10 @@ private:
      */
     static constexpr int masterChannel = 0;
     std::array<ChannelState, 16> channelStates;
+
+    // MPE 1.0 defaults: master = 2 st, per-note = 48 st.
+    float mpeMasterPitchBendRange_ { 2.0f };
+    float mpePerNotePitchBendRange_ { 48.0f };
 
     /**
      * @brief Null event
