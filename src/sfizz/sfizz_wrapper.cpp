@@ -258,6 +258,10 @@ bool sfizz_get_mpe_per_note_bend_auto_config_enabled(sfizz_synth_t* synth)
 {
     return synth->synth.getMPEPerNoteBendAutoConfigEnabled();
 }
+int sfizz_get_dropped_poly_kp_on_member_count(sfizz_synth_t* synth)
+{
+    return synth->synth.getDroppedPolyKpOnMemberCount();
+}
 void sfizz_send_tempo(sfizz_synth_t* synth, int delay, float seconds_per_quarter)
 {
     synth->synth.tempo(delay, seconds_per_quarter);

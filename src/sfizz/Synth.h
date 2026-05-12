@@ -659,6 +659,17 @@ public:
      */
     bool getMPEPerNoteBendAutoConfigEnabled() const noexcept;
 
+    /**
+     * @brief Diagnostic count of Polyphonic Key Pressure events the engine
+     * dropped because they arrived on a Member Channel while MPE was
+     * enabled. MPE 1.0 §2.2.7 / Appendix E Table 5 mark Poly KP on Member
+     * Channels as prohibited; the engine silently drops them at the
+     * hdPolyAftertouchMPE entry and increments this counter so hosts /
+     * tests can observe spec-violating traffic. Counter is not reset by
+     * setMPEEnabled, polyphony changes, or SFZ reloads.
+     */
+    int getDroppedPolyKpOnMemberCount() const noexcept;
+
     // =========================================================================
 
     /**

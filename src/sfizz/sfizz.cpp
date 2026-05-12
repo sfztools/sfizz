@@ -345,6 +345,11 @@ bool sfz::Sfizz::getMPEPerNoteBendAutoConfigEnabled() const noexcept
     return synth->synth.getMPEPerNoteBendAutoConfigEnabled();
 }
 
+int sfz::Sfizz::getDroppedPolyKpOnMemberCount() const noexcept
+{
+    return synth->synth.getDroppedPolyKpOnMemberCount();
+}
+
 void sfz::Sfizz::tempo(int delay, float secondsPerBeat) noexcept
 {
     synth->synth.tempo(delay, secondsPerBeat);

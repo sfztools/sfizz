@@ -1750,6 +1750,20 @@ void Synth::polyAftertouchMPE(int delay, int channel, int noteNumber, int aftert
 void Synth::hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
+
+    // MPE 1.0 §2.2.7 / Appendix E Table 5: Polyphonic Key Pressure is
+    // prohibited on Member Channels (per-note pressure flows through Channel
+    // Pressure under MPE; Poly KP on Member Channels would compound it).
+    // Manager Channel (Lower Zone: channel 0) Poly KP is permitted at the
+    // discretion of the implementer for compatibility with non-MPE-aware
+    // devices. Drop early so dropped events neither update MidiState nor
+    // reach the mod-matrix; the polyphonicAftertouch ExtendedCC path further
+    // down runs only on accepted events.
+    if (impl.mpeEnabled_ && channel != 0) {
+        ++impl.droppedPolyKpOnMember_;
+        return;
+    }
+
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     impl.resources_.getMidiState().polyAftertouchEvent(delay, channel, noteNumber, normAftertouch);
@@ -1807,6 +1821,11 @@ void Synth::setMPEPerNoteBendAutoConfigEnabled(bool enabled) noexcept
 bool Synth::getMPEPerNoteBendAutoConfigEnabled() const noexcept
 {
     return impl_->mpePerNoteBendAutoConfigEnabled_;
+}
+
+int Synth::getDroppedPolyKpOnMemberCount() const noexcept
+{
+    return impl_->droppedPolyKpOnMember_;
 }
 
 void Synth::tempo(int delay, float secondsPerBeat) noexcept

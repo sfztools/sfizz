@@ -530,3 +530,54 @@ TEST_CASE("[MPE] Opt-out flag round-trip getters")
     synth.setMPEPerNoteBendAutoConfigEnabled(false);
     REQUIRE(synth.getMPEPerNoteBendAutoConfigEnabled() == false);
 }
+
+// =============================================================================
+// Polyphonic Key Pressure asymmetry (MPE 1.0 §2.2.7 / Appendix E Table 5)
+// =============================================================================
+//
+// Poly KP is prohibited on Member Channels under MPE — per-note pressure
+// flows through Channel Pressure, and Poly KP on a Member Channel would
+// compound the response. The engine drops such events at hdPolyAftertouchMPE
+// and reports the drop via getDroppedPolyKpOnMemberCount. Manager-Channel
+// Poly KP remains permitted (spec leaves this to the implementer for
+// compatibility with non-MPE-aware devices) and still routes to MidiState.
+
+TEST_CASE("[MPE] Poly KP on a Member Channel is dropped when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
+
+    synth.polyAftertouchMPE(0, /*channel=*/2, /*note=*/60, 100);
+
+    REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 1);
+    // The dropped event must not reach MidiState — the slot stays at the
+    // default 0 / master-fallback value.
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getPolyAftertouch(/*channel=*/2, /*note=*/60) == 0.0_a);
+}
+
+TEST_CASE("[MPE] Poly KP on the Manager Channel still routes through when MPE is enabled")
+{
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
+
+    synth.polyAftertouchMPE(0, /*channel=*/0, /*note=*/60, 127);
+
+    REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getPolyAftertouch(/*channel=*/0, /*note=*/60) == 127_norm);
+}
+
+TEST_CASE("[MPE] Poly KP on any channel is accepted when MPE is disabled")
+{
+    sfz::Synth synth;
+    REQUIRE(synth.getMPEEnabled() == false);
+
+    synth.polyAftertouchMPE(0, /*channel=*/5, /*note=*/72, 80);
+
+    REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getPolyAftertouch(/*channel=*/5, /*note=*/72) == 80_norm);
+}
