@@ -187,7 +187,11 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
     case ExtendedCCs::pitchBend: // fallthrough
     case ExtendedCCs::channelAftertouch: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
-            const int channel = voice ? voice->getTriggerEvent().channel : 0;
+            // MPE 1.0 §2.2.6 / §2.2.7: a released note must stop reacting
+            // to Member-Channel pitch bend / channel pressure (the
+            // controller reallocates the channel to the next finger);
+            // Manager-Channel traffic continues to reach the release tail.
+            const int channel = voice ? voice->expressionChannel() : 0;
             const EventVector& events = ms.getCCEvents(channel, p.cc);
             linearEnvelope(events, buffer, [](float x) { return x; }, p.step);
             canShortcut = events.size() == 1;
@@ -195,7 +199,14 @@ void ControllerSource::generate(const ModKey& sourceKey, NumericId<Voice> voiceI
         }
     default: {
             const auto voice = impl_->voiceManager_->getVoiceById(voiceId);
-            const int channel = voice ? voice->getTriggerEvent().channel : 0;
+            // MPE 1.0 §2.2.8 (and the same channel-reuse argument that
+            // applies to PB / CP): a released note must stop reacting to
+            // Member-Channel CC traffic — CC#74 in particular, but the
+            // engine doesn't know a priori which CCs a patch uses for
+            // per-note expression, so all CCs are gated uniformly. The
+            // Manager-only filter from MPE 1.0 §2.3 (in Synth) already
+            // drops pedal / mode / Bank Select before they reach here.
+            const int channel = voice ? voice->expressionChannel() : 0;
             const EventVector& events = ms.getCCEvents(channel, p.cc);
             linearEnvelope(events, buffer, transformValue, p.step);
             canShortcut = events.size() == 1;

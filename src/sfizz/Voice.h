@@ -218,6 +218,18 @@ public:
      */
     bool released() const noexcept;
     /**
+     * @brief MPE 1.0 §2.2.6 / §2.2.7 / §2.2.8 released-note expression
+     * filter. Returns 0 (Lower Zone Manager Channel) once the voice is
+     * released if it was triggered on a Member Channel, otherwise the
+     * voice's trigger channel. Per-block expression readers (pitch bend,
+     * channel pressure, CC routes) should consult this rather than the
+     * raw trigger channel so a released voice stops responding to traffic
+     * on its old Member Channel — which the controller has by now
+     * reallocated to a fresh finger — while Manager Channel events still
+     * reach the release tail.
+     */
+    int expressionChannel() const noexcept;
+    /**
      * @brief Can the voice be reused (i.e. is it releasing after being killed or free)
      *
      * @return true

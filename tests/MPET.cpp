@@ -664,14 +664,197 @@ TEST_CASE("[MPE] Manager-only filter is inert when MPE is disabled")
 
 TEST_CASE("[MPE] Manager-only filter does not touch RPN data CCs on Member Channels")
 {
-    // Regression for SMPL-46: the per-note bend range auto-config must
-    // keep working when MPE is enabled and the RPN sequence arrives on a
-    // Member Channel. CCs 6 / 38 / 98 / 99 / 100 / 101 must remain off
-    // the Manager-only list.
+    // Regression for the RPN parser tap: the per-note bend range
+    // auto-config must keep working when MPE is enabled and the RPN
+    // sequence arrives on a Member Channel. CCs 6 / 38 / 98 / 99 / 100 /
+    // 101 must remain off the Manager-only list.
     sfz::Synth synth;
     synth.setMPEEnabled(true);
     REQUIRE(synth.getMPEPerNotePitchBendRange() == 48.0_a);
     sendPitchBendSensitivity(synth, /*channel=*/2, /*semitones=*/24);
     REQUIRE(synth.getMPEPerNotePitchBendRange() == 24.0_a);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 0);
+}
+
+// =============================================================================
+// Released-note expression filter (MPE 1.0 §2.2.6 / §2.2.7 / §2.2.8)
+// =============================================================================
+//
+// Per the spec, a Released Note stops reacting to per-finger Pitch Bend,
+// Channel Pressure and CC#74 on its Member Channel after the Note Off
+// message occurs — because the controller will recycle that Member Channel
+// for the next finger. Manager-Channel traffic still reaches the release
+// tail (§A.4.1). Voice::expressionChannel() returns the channel that
+// expression reads should consult: the trigger channel for active voices
+// (and for any voice triggered on the Manager Channel), and channel 0
+// (Lower Zone Manager) for released voices that were triggered on a
+// Member Channel. Every per-block read site (pitch envelope, the CC /
+// Channel Pressure / Poly Aftertouch mod sources, and region crossfades)
+// routes through this helper so the redirect applies uniformly.
+
+TEST_CASE("[MPE] expressionChannel: active voice on Member Channel uses its trigger channel")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->released() == false);
+    REQUIRE(active[0]->expressionChannel() == 2);
+}
+
+TEST_CASE("[MPE] expressionChannel: released voice on Member Channel redirects to Manager")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->released() == true);
+    REQUIRE(active[0]->expressionChannel() == 0);
+    // The trigger channel itself is unchanged — only the expression read
+    // channel redirects. Useful invariant for voice stealing / debugging.
+    REQUIRE(active[0]->getTriggerEvent().channel == 2);
+}
+
+TEST_CASE("[MPE] expressionChannel: voice on Manager Channel always reads Manager")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/0, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->expressionChannel() == 0);
+
+    synth.noteOffMPE(0, /*channel=*/0, /*note=*/60, 0);
+    synth.renderBlock(buffer);
+    REQUIRE(active[0]->released() == true);
+    REQUIRE(active[0]->expressionChannel() == 0);
+}
+
+TEST_CASE("[MPE] Pitch Bend on released Member Channel doesn't reach the voice's expression read")
+{
+    // The released voice's expression reads route through Manager (ch 0),
+    // so a per-finger Pitch Bend that lands in MidiState's ch 2 slot
+    // doesn't influence the released voice. Manager-Channel PB still does.
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->expressionChannel() == 0);
+
+    synth.hdPitchWheelMPE(0, /*channel=*/2, 0.5f);
+    auto& mid = synth.getResources().getMidiState();
+    // PB lands in MidiState ch 2 ...
+    REQUIRE(mid.getPitchBendRaw(2) == 0.5f);
+    // ... but the voice now reads from ch 0 (master), where no PB lives.
+    REQUIRE(mid.getPitchBendRaw(0) == 0.0f);
+    REQUIRE(active[0]->expressionChannel() == 0);
+}
+
+TEST_CASE("[MPE] Channel Pressure on released Member Channel doesn't reach the voice's expression read")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->expressionChannel() == 0);
+
+    synth.channelAftertouchMPE(0, /*channel=*/2, 100);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getChannelAftertouch(/*channel=*/2) == 100_norm);
+    REQUIRE(mid.getChannelAftertouch(/*channel=*/0) == 0.0_a);
+    REQUIRE(active[0]->expressionChannel() == 0);
+}
+
+TEST_CASE("[MPE] CC74 on released Member Channel doesn't reach the voice's expression read")
+{
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->expressionChannel() == 0);
+
+    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/74, 90);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getCCValue(/*channel=*/2, 74) == 90_norm);
+    REQUIRE(mid.getCCValue(/*channel=*/0, 74) == 0.0_a);
+    REQUIRE(active[0]->expressionChannel() == 0);
+}
+
+TEST_CASE("[MPE] Active voice on Member Channel still responds to per-finger expression")
+{
+    // Regression: the released-note gate must not bleed into active
+    // voices. The expression channel of an active member-channel voice
+    // is its trigger channel; PB / CP / CC74 sent on that channel reach
+    // the voice as today.
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.setMPEEnabled(true);
+    synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
+        <region> sample=*sine ampeg_release=1
+    )");
+    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.renderBlock(buffer);
+
+    auto active = synth.getActiveVoices();
+    REQUIRE(active.size() == 1);
+    REQUIRE(active[0]->released() == false);
+    REQUIRE(active[0]->expressionChannel() == 2);
+
+    synth.hdPitchWheelMPE(0, /*channel=*/2, 0.25f);
+    synth.channelAftertouchMPE(0, /*channel=*/2, 80);
+    synth.ccMPE(0, /*channel=*/2, 74, 70);
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getPitchBendRaw(2) == 0.25f);
+    REQUIRE(mid.getChannelAftertouch(2) == 80_norm);
+    REQUIRE(mid.getCCValue(2, 74) == 70_norm);
+    REQUIRE(active[0]->expressionChannel() == 2);
 }
