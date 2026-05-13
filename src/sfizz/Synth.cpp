@@ -1304,6 +1304,14 @@ void Synth::hdNoteOnMPE(int delay, int channel, int noteNumber, float normalized
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
+    // When MPE is disabled, collapse all incoming channels to the Manager
+    // Channel so the legacy and *MPE API surfaces behave identically — all
+    // events land in MidiState channel-0 storage and voices get
+    // triggerChannel_=0. The legacy non-MPE API already passes channel=0
+    // here, so this only affects callers that reached the *MPE entry directly
+    // with a non-zero channel while MPE was off.
+    if (!impl.mpeEnabled_)
+        channel = 0;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     if (impl.lastKeyswitchLists_[noteNumber].empty())
@@ -1334,6 +1342,8 @@ void Synth::hdNoteOffMPE(int delay, int channel, int noteNumber, float normalize
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
     Impl& impl = *impl_;
+    if (!impl.mpeEnabled_)
+        channel = 0;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     // FIXME: Some keyboards (e.g. Casio PX5S) can send a real note-off velocity. In this case, do we have a
@@ -1582,6 +1592,16 @@ void Synth::Impl::performHdcc(int delay, int channel, int ccNumber, float normVa
         handleRpnControlCC(channel, ccNumber, normValue);
     }
 
+    // Normalize channel AFTER the RPN parser. The parser needs the real
+    // channel to distinguish Manager-vs-Member MCM messages and route
+    // RPN 0 (Pitch Bend Sensitivity) updates to the correct zone (master
+    // bend range vs per-note bend range). The MidiState write + voice CC
+    // updates that follow are the channel-aware storage path, and with
+    // MPE off they should land in channel-0 storage so consumers don't
+    // need to gate dispatch themselves.
+    if (!mpeEnabled_)
+        channel = 0;
+
     for (auto& voice : voiceManager_)
         voice.registerCC(delay, ccNumber, normValue);
 
@@ -1715,6 +1735,8 @@ void Synth::pitchWheelMPE(int delay, int channel, int pitch) noexcept
 void Synth::hdPitchWheelMPE(int delay, int channel, float normalizedPitch) noexcept
 {
     Impl& impl = *impl_;
+    if (!impl.mpeEnabled_)
+        channel = 0;
 
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
     impl.resources_.getMidiState().pitchBendEvent(delay, channel, normalizedPitch);
@@ -1763,6 +1785,8 @@ void Synth::channelAftertouchMPE(int delay, int channel, int aftertouch) noexcep
 void Synth::hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
+    if (!impl.mpeEnabled_)
+        channel = 0;
     ScopedTiming logger { impl.dispatchDuration_, ScopedTiming::Operation::addToDuration };
 
     impl.resources_.getMidiState().channelAftertouchEvent(delay, channel, normAftertouch);
@@ -1796,6 +1820,8 @@ void Synth::polyAftertouchMPE(int delay, int channel, int noteNumber, int aftert
 void Synth::hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
+    if (!impl.mpeEnabled_)
+        channel = 0;
 
     // MPE 1.0 §2.2.7 / Appendix E Table 5: Polyphonic Key Pressure is
     // prohibited on Member Channels (per-note pressure flows through Channel
@@ -1822,7 +1848,18 @@ void Synth::hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float no
 
 void Synth::setMPEEnabled(bool enabled) noexcept
 {
-    impl_->mpeEnabled_ = enabled;
+    Impl& impl = *impl_;
+    const bool wasEnabled = impl.mpeEnabled_;
+    impl.mpeEnabled_ = enabled;
+    // On the MPE on→off transition, flush active voices. Voices triggered
+    // while MPE was enabled carry triggerChannel_ > 0, and after the flip
+    // all subsequent *MPE / legacy calls normalize channel to 0 — so
+    // matching note-offs can no longer reach them. allSoundOff() resets
+    // all voices; brief silence on a manual toggle flip is acceptable.
+    // off→on needs no flush: channel-0 voices match the new master channel
+    // semantics, and new notes pick up incoming channels naturally.
+    if (wasEnabled && !enabled)
+        allSoundOff();
 }
 
 bool Synth::getMPEEnabled() const noexcept

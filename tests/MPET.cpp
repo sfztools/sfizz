@@ -194,6 +194,7 @@ TEST_CASE("[MPE] First member-channel event at delay>0 keeps the delay-0 sentine
 TEST_CASE("[MPE] Synth::pitchWheelMPE lands in the per-channel pitch slot")
 {
     sfz::Synth synth;
+    synth.setMPEEnabled(true); // *MPE methods honor the channel arg only when MPE is on
     synth.pitchWheelMPE(0, 1, 4096);
     synth.pitchWheelMPE(0, 2, -4096);
 
@@ -211,6 +212,7 @@ TEST_CASE("[MPE] Synth::pitchWheelMPE lands in the per-channel pitch slot")
 TEST_CASE("[MPE] Synth::ccMPE lands in the per-channel CC slot")
 {
     sfz::Synth synth;
+    synth.setMPEEnabled(true);
     synth.ccMPE(0, 1, 74, 64);
     synth.ccMPE(0, 2, 74, 127);
 
@@ -223,6 +225,7 @@ TEST_CASE("[MPE] Synth::ccMPE lands in the per-channel CC slot")
 TEST_CASE("[MPE] Synth::channelAftertouchMPE lands in the per-channel slot")
 {
     sfz::Synth synth;
+    synth.setMPEEnabled(true);
     synth.channelAftertouchMPE(0, 1, 64);
     synth.channelAftertouchMPE(0, 2, 127);
 
@@ -232,16 +235,20 @@ TEST_CASE("[MPE] Synth::channelAftertouchMPE lands in the per-channel slot")
     REQUIRE(mid.getChannelAftertouch(0) == 0.0_a);
 }
 
-TEST_CASE("[MPE] Synth::polyAftertouchMPE lands in the per-channel slot")
+TEST_CASE("[MPE] Synth::polyAftertouchMPE on Manager Channel lands in the per-channel slot")
 {
+    // Member-channel Poly KP is dropped by the MPE 1.0 §2.2.7 filter, so the
+    // per-channel storage path is only exercisable through the Manager
+    // Channel (channel 0) under MPE on. The MidiState-direct test above
+    // covers raw per-channel writes for channels 1..15.
     sfz::Synth synth;
-    synth.polyAftertouchMPE(0, 1, 60, 64);
-    synth.polyAftertouchMPE(0, 2, 60, 127);
+    synth.setMPEEnabled(true);
+    synth.polyAftertouchMPE(0, 0, 60, 64);
+    synth.polyAftertouchMPE(0, 0, 64, 127);
 
     auto& mid = synth.getResources().getMidiState();
-    REQUIRE(mid.getPolyAftertouch(1, 60) == 64_norm);
-    REQUIRE(mid.getPolyAftertouch(2, 60) == 127_norm);
-    REQUIRE(mid.getPolyAftertouch(0, 60) == 0.0_a);
+    REQUIRE(mid.getPolyAftertouch(0, 60) == 64_norm);
+    REQUIRE(mid.getPolyAftertouch(0, 64) == 127_norm);
 }
 
 TEST_CASE("[MPE] Existing single-channel API forwards to master-channel slot")
@@ -265,50 +272,75 @@ TEST_CASE("[MPE] Existing single-channel API forwards to master-channel slot")
     REQUIRE(mid.getChannelAftertouch(1) == 100_norm);
 }
 
-TEST_CASE("[MPE] Voices triggered via the legacy API are isolated from MPE per-channel writes")
+TEST_CASE("[MPE] When MPE is disabled, *MPE methods collapse channel to 0 (single-channel contract)")
 {
-    // Defensive regression for the MPE-off compatibility contract: in a
-    // mixed-API session, a voice triggered through the channel-less legacy
-    // API gets triggerChannel_=0 and must read modulation from the master
-    // channel only — non-master channel writes via the *MPE API must not
-    // affect it. This is the property hosts rely on when they call the
-    // legacy API to opt out of MPE routing (the wrapper-side behaviour
-    // shipped for the sfizz-ui MPE-off toggle).
+    // With MPE off, the *MPE API surface and the legacy channel-less API
+    // are equivalent: both land in channel-0 storage and both trigger
+    // voices with triggerChannel_=0. Consumers (sfizz-ui's VST3 wrapper,
+    // sample-machine's PlayerEngine) can therefore call *MPE unconditionally
+    // without an MPE-off vs MPE-on dispatch branch, and the engine takes
+    // sole responsibility for what "MPE off" means.
     sfz::Synth synth;
+    REQUIRE(synth.getMPEEnabled() == false);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
-    synth.loadSfzString(fs::current_path() / "tests/MPE_legacy_isolation.sfz", R"(
+    synth.loadSfzString(fs::current_path() / "tests/MPE_off_normalization.sfz", R"(
         <region> sample=*sine
     )");
 
-    // Trigger via the legacy API — voice gets triggerChannel_=0.
-    synth.noteOn(0, 60, 100);
+    // *MPE noteOn on a non-zero channel — voice should still get
+    // triggerChannel_=0 because MPE is off.
+    synth.noteOnMPE(0, /*channel=*/5, 60, 100);
     synth.renderBlock(buffer);
 
     auto activeVoices = synth.getActiveVoices();
     REQUIRE(activeVoices.size() == 1);
     REQUIRE(activeVoices[0]->getTriggerEvent().channel == 0);
 
-    // Per-channel writes via the *MPE API on non-master channels must NOT
-    // touch the master channel that the legacy-triggered voice reads from.
+    // *MPE modulation writes on non-zero channels also land in channel 0.
     synth.pitchWheelMPE(0, /*channel=*/5, 4096);
     synth.ccMPE(0, /*channel=*/5, 74, 90);
     synth.channelAftertouchMPE(0, /*channel=*/5, 100);
     synth.renderBlock(buffer);
 
     auto& mid = synth.getResources().getMidiState();
-    REQUIRE(mid.getPitchBendRaw(0) == 0.0_a);            // master untouched
-    REQUIRE(mid.getCCValue(0, 74) == 0_norm);            // master CC slot untouched
-    REQUIRE(mid.getChannelAftertouch(0) == 0_norm);      // master pressure untouched
-    // Channel 5 has the writes; the voice doesn't read from there.
-    REQUIRE(mid.getPitchBendRaw(5) == Approx(0.5).margin(0.001));
+    REQUIRE(mid.getPitchBendRaw(0) == Approx(0.5).margin(0.001));
+    REQUIRE(mid.getCCValue(0, 74) == 90_norm);
+    REQUIRE(mid.getChannelAftertouch(0) == 100_norm);
+    // Channel 5 should NOT have any of these writes — they were normalized.
+    REQUIRE(mid.getPitchBendRaw(5) == 0.0_a);
 
-    // A legacy note-off (channel-less → forwards to channel 0) must release
-    // the voice. registerNoteOff matches on channel; triggerChannel_=0 and
-    // channel-0 noteOff match → voice releases. This is the path the sfizz-ui
-    // wrapper uses when the MPE toggle is off.
-    synth.noteOff(0, 60, 0);
+    // *MPE noteOff on a non-zero channel also collapses to channel 0 and
+    // matches the voice (which has triggerChannel_=0).
+    synth.noteOffMPE(0, /*channel=*/5, 60, 0);
     synth.renderBlock(buffer);
     REQUIRE((activeVoices[0]->released() || activeVoices[0]->isFree()));
+}
+
+TEST_CASE("[MPE] setMPEEnabled(false) flushes active voices triggered while MPE was on")
+{
+    // On→off transition has to clear voices that carry triggerChannel_>0,
+    // otherwise their channel-aware modulation reads stay pinned to the
+    // member channel that no longer receives input under the new contract
+    // (everything collapses to channel 0 after the flip).
+    sfz::Synth synth;
+    synth.setMPEEnabled(true);
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/MPE_off_transition.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    synth.noteOnMPE(0, /*channel=*/3, 60, 100);
+    synth.noteOnMPE(0, /*channel=*/4, 64, 100);
+    synth.renderBlock(buffer);
+    REQUIRE(synth.getActiveVoices().size() == 2);
+
+    synth.setMPEEnabled(false);
+    synth.renderBlock(buffer);
+
+    // All voices should have been released by allSoundOff() in setMPEEnabled.
+    for (const sfz::Voice* v : synth.getActiveVoices()) {
+        REQUIRE(v->isFree());
+    }
 }
 
 // =============================================================================
@@ -318,6 +350,7 @@ TEST_CASE("[MPE] Voices triggered via the legacy API are isolated from MPE per-c
 TEST_CASE("[MPE] noteOnMPE tags TriggerEvent with the dispatched channel")
 {
     sfz::Synth synth;
+    synth.setMPEEnabled(true);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_basic.sfz", R"(
         <region> sample=*sine
