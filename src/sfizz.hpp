@@ -666,19 +666,21 @@ public:
      */
     void hdPolyAftertouch(int delay, int noteNumber, float aftertouch) noexcept;
 
-    // === MPE (MIDI Polyphonic Expression) support ============================
+    // === Channel-aware input API (MPE / multitimbral) ========================
     //
-    // Channel-aware variants of the input API. They populate per-channel
+    // Overloads that take a MIDI channel argument. They populate per-channel
     // modulation state in the underlying engine so voices triggered on a
     // member channel respond independently to per-note pitch bend, per-note
     // CC, and per-note aftertouch. Hosts that don't care about MPE can keep
-    // using the existing single-channel methods; they are equivalent to
-    // calling the corresponding *MPE method with channel = 0 (master).
+    // using the existing single-channel overloads; they are equivalent to
+    // calling the channel-taking overload with channel = 0 (master).
     //
-    // setMPEEnabled() is informational for the engine: it gates same-channel-
-    // preference voice stealing. Per-channel input dispatch works regardless
-    // of the flag — calling pitchWheel(channel=2, ...) always lands in
-    // the channel-2 modulation slot.
+    // setMPEEnabled() gates channel routing engine-wide: with MPE disabled,
+    // the channel-taking overloads collapse channel to 0 internally so both
+    // API surfaces behave identically (single-channel, pre-MPE semantics).
+    // With MPE enabled, the channel argument is honoured end-to-end and
+    // the MPE 1.0 spec-compliance filters (Manager-only CCs, member-channel
+    // Poly KP) apply.
 
     /** @brief Send a note on event on a specific MIDI channel (0..15). */
     void noteOn(int delay, int channel, int noteNumber, int velocity) noexcept;

@@ -619,13 +619,14 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int 
  * member channel respond independently to per-note pitch bend, per-note
  * CC, and per-note aftertouch. Hosts that don't care about MPE can keep
  * using the existing single-channel methods; they are equivalent to
- * calling the corresponding `_mpe` method with channel = 0 (master).
+ * calling the corresponding `_channel` method with channel = 0 (master).
  *
- * sfizz_set_mpe_enabled() is informational for the engine: it gates
- * same-channel-preference voice stealing. Per-channel input dispatch
- * works regardless of the flag — calling
- * sfizz_send_pitch_wheel_channel(channel=2, ...) always lands in the
- * channel-2 modulation slot.
+ * sfizz_set_mpe_enabled() gates channel routing engine-wide. With MPE
+ * disabled, the `_channel` methods collapse channel to 0 internally so
+ * both API surfaces behave identically (single-channel, pre-MPE
+ * semantics). With MPE enabled, the channel argument is honoured
+ * end-to-end and the MPE 1.0 spec-compliance filters (Manager-only
+ * CCs, member-channel Poly KP) apply.
  *
  * @{
  */
