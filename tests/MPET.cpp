@@ -265,6 +265,52 @@ TEST_CASE("[MPE] Existing single-channel API forwards to master-channel slot")
     REQUIRE(mid.getChannelAftertouch(1) == 100_norm);
 }
 
+TEST_CASE("[MPE] Voices triggered via the legacy API are isolated from MPE per-channel writes")
+{
+    // Defensive regression for the MPE-off compatibility contract: in a
+    // mixed-API session, a voice triggered through the channel-less legacy
+    // API gets triggerChannel_=0 and must read modulation from the master
+    // channel only — non-master channel writes via the *MPE API must not
+    // affect it. This is the property hosts rely on when they call the
+    // legacy API to opt out of MPE routing (the wrapper-side behaviour
+    // shipped for the sfizz-ui MPE-off toggle).
+    sfz::Synth synth;
+    sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
+    synth.loadSfzString(fs::current_path() / "tests/MPE_legacy_isolation.sfz", R"(
+        <region> sample=*sine
+    )");
+
+    // Trigger via the legacy API — voice gets triggerChannel_=0.
+    synth.noteOn(0, 60, 100);
+    synth.renderBlock(buffer);
+
+    auto activeVoices = synth.getActiveVoices();
+    REQUIRE(activeVoices.size() == 1);
+    REQUIRE(activeVoices[0]->getTriggerEvent().channel == 0);
+
+    // Per-channel writes via the *MPE API on non-master channels must NOT
+    // touch the master channel that the legacy-triggered voice reads from.
+    synth.pitchWheelMPE(0, /*channel=*/5, 4096);
+    synth.ccMPE(0, /*channel=*/5, 74, 90);
+    synth.channelAftertouchMPE(0, /*channel=*/5, 100);
+    synth.renderBlock(buffer);
+
+    auto& mid = synth.getResources().getMidiState();
+    REQUIRE(mid.getPitchBendRaw(0) == 0.0_a);            // master untouched
+    REQUIRE(mid.getCCValue(0, 74) == 0_norm);            // master CC slot untouched
+    REQUIRE(mid.getChannelAftertouch(0) == 0_norm);      // master pressure untouched
+    // Channel 5 has the writes; the voice doesn't read from there.
+    REQUIRE(mid.getPitchBendRaw(5) == Approx(0.5).margin(0.001));
+
+    // A legacy note-off (channel-less → forwards to channel 0) must release
+    // the voice. registerNoteOff matches on channel; triggerChannel_=0 and
+    // channel-0 noteOff match → voice releases. This is the path the sfizz-ui
+    // wrapper uses when the MPE toggle is off.
+    synth.noteOff(0, 60, 0);
+    synth.renderBlock(buffer);
+    REQUIRE((activeVoices[0]->released() || activeVoices[0]->isFree()));
+}
+
 // =============================================================================
 // Synth: noteOnMPE tags spawned voices with the originating channel
 // =============================================================================
