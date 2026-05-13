@@ -624,7 +624,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int 
  * sfizz_set_mpe_enabled() is informational for the engine: it gates
  * same-channel-preference voice stealing. Per-channel input dispatch
  * works regardless of the flag — calling
- * sfizz_send_pitch_wheel_mpe(channel=2, ...) always lands in the
+ * sfizz_send_pitch_wheel_channel(channel=2, ...) always lands in the
  * channel-2 modulation slot.
  *
  * @{
@@ -642,7 +642,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int 
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_note_on_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity);
+SFIZZ_EXPORTED_API void sfizz_send_note_on_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity);
 
 /**
  * @brief Send a high-precision note on event on a specific MIDI channel.
@@ -656,7 +656,7 @@ SFIZZ_EXPORTED_API void sfizz_send_note_on_mpe(sfizz_synth_t* synth, int delay, 
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hd_note_on_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity);
+SFIZZ_EXPORTED_API void sfizz_send_hd_note_on_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity);
 
 /**
  * @brief Send a note off event on a specific MIDI channel (0..15).
@@ -670,7 +670,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_note_on_mpe(sfizz_synth_t* synth, int dela
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_note_off_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity);
+SFIZZ_EXPORTED_API void sfizz_send_note_off_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity);
 
 /**
  * @brief Send a high-precision note off event on a specific MIDI channel.
@@ -684,7 +684,7 @@ SFIZZ_EXPORTED_API void sfizz_send_note_off_mpe(sfizz_synth_t* synth, int delay,
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hd_note_off_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity);
+SFIZZ_EXPORTED_API void sfizz_send_hd_note_off_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity);
 
 /**
  * @brief Send a CC event on a specific MIDI channel (0..15).
@@ -698,7 +698,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_note_off_mpe(sfizz_synth_t* synth, int del
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_cc_mpe(sfizz_synth_t* synth, int delay, int channel, int cc_number, int cc_value);
+SFIZZ_EXPORTED_API void sfizz_send_cc_channel(sfizz_synth_t* synth, int delay, int channel, int cc_number, int cc_value);
 
 /**
  * @brief Send a high-precision CC event on a specific MIDI channel.
@@ -712,7 +712,7 @@ SFIZZ_EXPORTED_API void sfizz_send_cc_mpe(sfizz_synth_t* synth, int delay, int c
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hdcc_mpe(sfizz_synth_t* synth, int delay, int channel, int cc_number, float norm_value);
+SFIZZ_EXPORTED_API void sfizz_send_hdcc_channel(sfizz_synth_t* synth, int delay, int channel, int cc_number, float norm_value);
 
 /**
  * @brief Send a pitch wheel event on a specific MIDI channel (0..15).
@@ -725,7 +725,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hdcc_mpe(sfizz_synth_t* synth, int delay, int
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel_mpe(sfizz_synth_t* synth, int delay, int channel, int pitch);
+SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel_channel(sfizz_synth_t* synth, int delay, int channel, int pitch);
 
 /**
  * @brief Send a high-precision pitch wheel event on a specific MIDI channel.
@@ -738,7 +738,7 @@ SFIZZ_EXPORTED_API void sfizz_send_pitch_wheel_mpe(sfizz_synth_t* synth, int del
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel_mpe(sfizz_synth_t* synth, int delay, int channel, float pitch);
+SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel_channel(sfizz_synth_t* synth, int delay, int channel, float pitch);
 
 /**
  * @brief Send a channel aftertouch (channel pressure) event on a specific MIDI channel.
@@ -751,7 +751,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_pitch_wheel_mpe(sfizz_synth_t* synth, int 
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_channel_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, int aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_channel_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, int aftertouch);
 
 /**
  * @brief Send a high-precision channel aftertouch event on a specific MIDI channel.
@@ -764,7 +764,7 @@ SFIZZ_EXPORTED_API void sfizz_send_channel_aftertouch_mpe(sfizz_synth_t* synth, 
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hd_channel_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, float aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_hd_channel_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, float aftertouch);
 
 /**
  * @brief Send a polyphonic aftertouch event on a specific MIDI channel.
@@ -778,7 +778,7 @@ SFIZZ_EXPORTED_API void sfizz_send_hd_channel_aftertouch_mpe(sfizz_synth_t* synt
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, int aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, int aftertouch);
 
 /**
  * @brief Send a high-precision polyphonic aftertouch event on a specific MIDI channel.
@@ -792,7 +792,7 @@ SFIZZ_EXPORTED_API void sfizz_send_poly_aftertouch_mpe(sfizz_synth_t* synth, int
  * @par Thread-safety constraints
  * - @b RT: the function must be invoked from the Real-time thread
  */
-SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, float aftertouch);
+SFIZZ_EXPORTED_API void sfizz_send_hd_poly_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, float aftertouch);
 
 /**
  * @brief Enable or disable MPE mode.

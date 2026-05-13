@@ -34,7 +34,7 @@ void PolyAftertouchSource::generate(const ModKey& sourceKey, NumericId<Voice> vo
 
     const int noteNumber = voice->getTriggerEvent().number;
     // Defense-in-depth: MPE 1.0 §2.2.7 prohibits Poly Key Pressure on
-    // Member Channels (Synth::hdPolyAftertouchMPE drops it before it
+    // Member Channels (Synth::hdPolyAftertouch drops it before it
     // reaches MidiState), and once released a voice should not be reading
     // its old Member Channel anyway since the controller will have
     // reallocated it. Route through the released-note channel gate so

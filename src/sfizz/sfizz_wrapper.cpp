@@ -174,53 +174,53 @@ void sfizz_send_hd_poly_aftertouch(sfizz_synth_t* synth, int delay, int note_num
 {
     synth->synth.hdPolyAftertouch(delay, note_number, aftertouch);
 }
-void sfizz_send_note_on_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity)
+void sfizz_send_note_on_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity)
 {
-    synth->synth.noteOnMPE(delay, channel, note_number, velocity);
+    synth->synth.noteOn(delay, channel, note_number, velocity);
 }
-void sfizz_send_hd_note_on_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity)
+void sfizz_send_hd_note_on_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity)
 {
-    synth->synth.hdNoteOnMPE(delay, channel, note_number, velocity);
+    synth->synth.hdNoteOn(delay, channel, note_number, velocity);
 }
-void sfizz_send_note_off_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity)
+void sfizz_send_note_off_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, int velocity)
 {
-    synth->synth.noteOffMPE(delay, channel, note_number, velocity);
+    synth->synth.noteOff(delay, channel, note_number, velocity);
 }
-void sfizz_send_hd_note_off_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity)
+void sfizz_send_hd_note_off_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, float velocity)
 {
-    synth->synth.hdNoteOffMPE(delay, channel, note_number, velocity);
+    synth->synth.hdNoteOff(delay, channel, note_number, velocity);
 }
-void sfizz_send_cc_mpe(sfizz_synth_t* synth, int delay, int channel, int cc_number, int cc_value)
+void sfizz_send_cc_channel(sfizz_synth_t* synth, int delay, int channel, int cc_number, int cc_value)
 {
-    synth->synth.ccMPE(delay, channel, cc_number, cc_value);
+    synth->synth.cc(delay, channel, cc_number, cc_value);
 }
-void sfizz_send_hdcc_mpe(sfizz_synth_t* synth, int delay, int channel, int cc_number, float norm_value)
+void sfizz_send_hdcc_channel(sfizz_synth_t* synth, int delay, int channel, int cc_number, float norm_value)
 {
-    synth->synth.hdccMPE(delay, channel, cc_number, norm_value);
+    synth->synth.hdcc(delay, channel, cc_number, norm_value);
 }
-void sfizz_send_pitch_wheel_mpe(sfizz_synth_t* synth, int delay, int channel, int pitch)
+void sfizz_send_pitch_wheel_channel(sfizz_synth_t* synth, int delay, int channel, int pitch)
 {
-    synth->synth.pitchWheelMPE(delay, channel, pitch);
+    synth->synth.pitchWheel(delay, channel, pitch);
 }
-void sfizz_send_hd_pitch_wheel_mpe(sfizz_synth_t* synth, int delay, int channel, float pitch)
+void sfizz_send_hd_pitch_wheel_channel(sfizz_synth_t* synth, int delay, int channel, float pitch)
 {
-    synth->synth.hdPitchWheelMPE(delay, channel, pitch);
+    synth->synth.hdPitchWheel(delay, channel, pitch);
 }
-void sfizz_send_channel_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, int aftertouch)
+void sfizz_send_channel_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, int aftertouch)
 {
-    synth->synth.channelAftertouchMPE(delay, channel, aftertouch);
+    synth->synth.channelAftertouch(delay, channel, aftertouch);
 }
-void sfizz_send_hd_channel_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, float aftertouch)
+void sfizz_send_hd_channel_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, float aftertouch)
 {
-    synth->synth.hdChannelAftertouchMPE(delay, channel, aftertouch);
+    synth->synth.hdChannelAftertouch(delay, channel, aftertouch);
 }
-void sfizz_send_poly_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, int aftertouch)
+void sfizz_send_poly_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, int aftertouch)
 {
-    synth->synth.polyAftertouchMPE(delay, channel, note_number, aftertouch);
+    synth->synth.polyAftertouch(delay, channel, note_number, aftertouch);
 }
-void sfizz_send_hd_poly_aftertouch_mpe(sfizz_synth_t* synth, int delay, int channel, int note_number, float aftertouch)
+void sfizz_send_hd_poly_aftertouch_channel(sfizz_synth_t* synth, int delay, int channel, int note_number, float aftertouch)
 {
-    synth->synth.hdPolyAftertouchMPE(delay, channel, note_number, aftertouch);
+    synth->synth.hdPolyAftertouch(delay, channel, note_number, aftertouch);
 }
 void sfizz_set_mpe_enabled(sfizz_synth_t* synth, bool enabled)
 {

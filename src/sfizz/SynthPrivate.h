@@ -439,7 +439,7 @@ struct Synth::Impl final: public Parser::Listener {
     // Spec-violation diagnostic: Polyphonic Key Pressure on a Member Channel
     // is prohibited by MPE 1.0 §2.2.7 ("Polyphonic Key Pressure shall not be
     // sent on other Member Channels"). When mpeEnabled_ is set, the engine
-    // drops such events at the hdPolyAftertouchMPE entry and increments this
+    // drops such events at the hdPolyAftertouch entry and increments this
     // counter so hosts / tests can observe how often it fired.
     int droppedPolyKpOnMember_ { 0 };
 

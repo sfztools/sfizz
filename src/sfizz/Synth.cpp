@@ -1290,16 +1290,16 @@ void Synth::noteOn(int delay, int noteNumber, int velocity) noexcept
 
 void Synth::hdNoteOn(int delay, int noteNumber, float normalizedVelocity) noexcept
 {
-    hdNoteOnMPE(delay, 0, noteNumber, normalizedVelocity);
+    hdNoteOn(delay, 0, noteNumber, normalizedVelocity);
 }
 
-void Synth::noteOnMPE(int delay, int channel, int noteNumber, int velocity) noexcept
+void Synth::noteOn(int delay, int channel, int noteNumber, int velocity) noexcept
 {
     const float normalizedVelocity = normalizeVelocity(velocity);
-    hdNoteOnMPE(delay, channel, noteNumber, normalizedVelocity);
+    hdNoteOn(delay, channel, noteNumber, normalizedVelocity);
 }
 
-void Synth::hdNoteOnMPE(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept
+void Synth::hdNoteOn(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
@@ -1328,16 +1328,16 @@ void Synth::noteOff(int delay, int noteNumber, int velocity) noexcept
 
 void Synth::hdNoteOff(int delay, int noteNumber, float normalizedVelocity) noexcept
 {
-    hdNoteOffMPE(delay, 0, noteNumber, normalizedVelocity);
+    hdNoteOff(delay, 0, noteNumber, normalizedVelocity);
 }
 
-void Synth::noteOffMPE(int delay, int channel, int noteNumber, int velocity) noexcept
+void Synth::noteOff(int delay, int channel, int noteNumber, int velocity) noexcept
 {
     const float normalizedVelocity = normalizeVelocity(velocity);
-    hdNoteOffMPE(delay, channel, noteNumber, normalizedVelocity);
+    hdNoteOff(delay, channel, noteNumber, normalizedVelocity);
 }
 
-void Synth::hdNoteOffMPE(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept
+void Synth::hdNoteOff(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept
 {
     ASSERT(noteNumber < 128);
     ASSERT(noteNumber >= 0);
@@ -1530,16 +1530,16 @@ void Synth::Impl::ccDispatch(int delay, int channel, int ccNumber, float value, 
 
 void Synth::hdcc(int delay, int ccNumber, float normValue) noexcept
 {
-    hdccMPE(delay, 0, ccNumber, normValue);
+    hdcc(delay, 0, ccNumber, normValue);
 }
 
-void Synth::ccMPE(int delay, int channel, int ccNumber, int ccValue) noexcept
+void Synth::cc(int delay, int channel, int ccNumber, int ccValue) noexcept
 {
     const auto normalizedCC = normalizeCC(ccValue);
-    hdccMPE(delay, channel, ccNumber, normalizedCC);
+    hdcc(delay, channel, ccNumber, normalizedCC);
 }
 
-void Synth::hdccMPE(int delay, int channel, int ccNumber, float normValue) noexcept
+void Synth::hdcc(int delay, int channel, int ccNumber, float normValue) noexcept
 {
     Impl& impl = *impl_;
     impl.performHdcc(delay, channel, ccNumber, normValue, true);
@@ -1723,16 +1723,16 @@ void Synth::pitchWheel(int delay, int pitch) noexcept
 
 void Synth::hdPitchWheel(int delay, float normalizedPitch) noexcept
 {
-    hdPitchWheelMPE(delay, 0, normalizedPitch);
+    hdPitchWheel(delay, 0, normalizedPitch);
 }
 
-void Synth::pitchWheelMPE(int delay, int channel, int pitch) noexcept
+void Synth::pitchWheel(int delay, int channel, int pitch) noexcept
 {
     const float normalizedPitch = normalizeBend(float(pitch));
-    hdPitchWheelMPE(delay, channel, normalizedPitch);
+    hdPitchWheel(delay, channel, normalizedPitch);
 }
 
-void Synth::hdPitchWheelMPE(int delay, int channel, float normalizedPitch) noexcept
+void Synth::hdPitchWheel(int delay, int channel, float normalizedPitch) noexcept
 {
     Impl& impl = *impl_;
     if (!impl.mpeEnabled_)
@@ -1773,16 +1773,16 @@ void Synth::channelAftertouch(int delay, int aftertouch) noexcept
 
 void Synth::hdChannelAftertouch(int delay, float normAftertouch) noexcept
 {
-    hdChannelAftertouchMPE(delay, 0, normAftertouch);
+    hdChannelAftertouch(delay, 0, normAftertouch);
 }
 
-void Synth::channelAftertouchMPE(int delay, int channel, int aftertouch) noexcept
+void Synth::channelAftertouch(int delay, int channel, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
-    hdChannelAftertouchMPE(delay, channel, normalizedAftertouch);
+    hdChannelAftertouch(delay, channel, normalizedAftertouch);
 }
 
-void Synth::hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept
+void Synth::hdChannelAftertouch(int delay, int channel, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
     if (!impl.mpeEnabled_)
@@ -1808,16 +1808,16 @@ void Synth::polyAftertouch(int delay, int noteNumber, int aftertouch) noexcept
 
 void Synth::hdPolyAftertouch(int delay, int noteNumber, float normAftertouch) noexcept
 {
-    hdPolyAftertouchMPE(delay, 0, noteNumber, normAftertouch);
+    hdPolyAftertouch(delay, 0, noteNumber, normAftertouch);
 }
 
-void Synth::polyAftertouchMPE(int delay, int channel, int noteNumber, int aftertouch) noexcept
+void Synth::polyAftertouch(int delay, int channel, int noteNumber, int aftertouch) noexcept
 {
     const float normalizedAftertouch = normalize7Bits(aftertouch);
-    hdPolyAftertouchMPE(delay, channel, noteNumber, normalizedAftertouch);
+    hdPolyAftertouch(delay, channel, noteNumber, normalizedAftertouch);
 }
 
-void Synth::hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept
+void Synth::hdPolyAftertouch(int delay, int channel, int noteNumber, float normAftertouch) noexcept
 {
     Impl& impl = *impl_;
     if (!impl.mpeEnabled_)

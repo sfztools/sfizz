@@ -550,57 +550,57 @@ public:
     // setMPEEnabled() is informational for now: it gates how the engine will
     // interpret RPN-derived pitch-bend ranges and how voice stealing prefers
     // same-channel candidates (follow-up commits). Per-channel input dispatch
-    // works regardless of the flag — calling pitchWheelMPE(channel=2, ...)
+    // works regardless of the flag — calling pitchWheel(channel=2, ...)
     // always lands in MidiState's channel-2 slot.
 
     /**
      * @brief Send a note on event on a specific MIDI channel (0..15).
      */
-    void noteOnMPE(int delay, int channel, int noteNumber, int velocity) noexcept;
+    void noteOn(int delay, int channel, int noteNumber, int velocity) noexcept;
     /**
      * @brief High-precision note on on a specific MIDI channel.
      */
-    void hdNoteOnMPE(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept;
+    void hdNoteOn(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept;
     /**
      * @brief Send a note off event on a specific MIDI channel (0..15).
      */
-    void noteOffMPE(int delay, int channel, int noteNumber, int velocity) noexcept;
+    void noteOff(int delay, int channel, int noteNumber, int velocity) noexcept;
     /**
      * @brief High-precision note off on a specific MIDI channel.
      */
-    void hdNoteOffMPE(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept;
+    void hdNoteOff(int delay, int channel, int noteNumber, float normalizedVelocity) noexcept;
     /**
      * @brief Send a CC event on a specific MIDI channel (0..15).
      */
-    void ccMPE(int delay, int channel, int ccNumber, int ccValue) noexcept;
+    void cc(int delay, int channel, int ccNumber, int ccValue) noexcept;
     /**
      * @brief High-precision CC on a specific MIDI channel.
      */
-    void hdccMPE(int delay, int channel, int ccNumber, float normValue) noexcept;
+    void hdcc(int delay, int channel, int ccNumber, float normValue) noexcept;
     /**
      * @brief Send a pitch bend event on a specific MIDI channel (0..15).
      */
-    void pitchWheelMPE(int delay, int channel, int pitch) noexcept;
+    void pitchWheel(int delay, int channel, int pitch) noexcept;
     /**
      * @brief High-precision pitch bend on a specific MIDI channel.
      */
-    void hdPitchWheelMPE(int delay, int channel, float normalizedPitch) noexcept;
+    void hdPitchWheel(int delay, int channel, float normalizedPitch) noexcept;
     /**
      * @brief Send a channel aftertouch event on a specific MIDI channel.
      */
-    void channelAftertouchMPE(int delay, int channel, int aftertouch) noexcept;
+    void channelAftertouch(int delay, int channel, int aftertouch) noexcept;
     /**
      * @brief High-precision channel aftertouch on a specific MIDI channel.
      */
-    void hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept;
+    void hdChannelAftertouch(int delay, int channel, float normAftertouch) noexcept;
     /**
      * @brief Send a polyphonic aftertouch event on a specific MIDI channel.
      */
-    void polyAftertouchMPE(int delay, int channel, int noteNumber, int aftertouch) noexcept;
+    void polyAftertouch(int delay, int channel, int noteNumber, int aftertouch) noexcept;
     /**
      * @brief High-precision polyphonic aftertouch on a specific MIDI channel.
      */
-    void hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept;
+    void hdPolyAftertouch(int delay, int channel, int noteNumber, float normAftertouch) noexcept;
 
     /**
      * @brief Enable or disable MPE mode. The flag is stored on the synth and
@@ -664,7 +664,7 @@ public:
      * dropped because they arrived on a Member Channel while MPE was
      * enabled. MPE 1.0 §2.2.7 / Appendix E Table 5 mark Poly KP on Member
      * Channels as prohibited; the engine silently drops them at the
-     * hdPolyAftertouchMPE entry and increments this counter so hosts /
+     * hdPolyAftertouch entry and increments this counter so hosts /
      * tests can observe spec-violating traffic. Counter is not reset by
      * setMPEEnabled, polyphony changes, or SFZ reloads.
      */

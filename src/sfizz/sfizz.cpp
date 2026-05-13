@@ -240,64 +240,64 @@ void sfz::Sfizz::hdPolyAftertouch(int delay, int noteNumber, float aftertouch) n
     synth->synth.hdPolyAftertouch(delay, noteNumber, aftertouch);
 }
 
-void sfz::Sfizz::noteOnMPE(int delay, int channel, int noteNumber, int velocity) noexcept
+void sfz::Sfizz::noteOn(int delay, int channel, int noteNumber, int velocity) noexcept
 {
-    synth->synth.noteOnMPE(delay, channel, noteNumber, velocity);
+    synth->synth.noteOn(delay, channel, noteNumber, velocity);
 }
 
-void sfz::Sfizz::hdNoteOnMPE(int delay, int channel, int noteNumber, float velocity) noexcept
+void sfz::Sfizz::hdNoteOn(int delay, int channel, int noteNumber, float velocity) noexcept
 {
-    synth->synth.hdNoteOnMPE(delay, channel, noteNumber, velocity);
+    synth->synth.hdNoteOn(delay, channel, noteNumber, velocity);
 }
 
-void sfz::Sfizz::noteOffMPE(int delay, int channel, int noteNumber, int velocity) noexcept
+void sfz::Sfizz::noteOff(int delay, int channel, int noteNumber, int velocity) noexcept
 {
-    synth->synth.noteOffMPE(delay, channel, noteNumber, velocity);
+    synth->synth.noteOff(delay, channel, noteNumber, velocity);
 }
 
-void sfz::Sfizz::hdNoteOffMPE(int delay, int channel, int noteNumber, float velocity) noexcept
+void sfz::Sfizz::hdNoteOff(int delay, int channel, int noteNumber, float velocity) noexcept
 {
-    synth->synth.hdNoteOffMPE(delay, channel, noteNumber, velocity);
+    synth->synth.hdNoteOff(delay, channel, noteNumber, velocity);
 }
 
-void sfz::Sfizz::ccMPE(int delay, int channel, int ccNumber, int ccValue) noexcept
+void sfz::Sfizz::cc(int delay, int channel, int ccNumber, int ccValue) noexcept
 {
-    synth->synth.ccMPE(delay, channel, ccNumber, ccValue);
+    synth->synth.cc(delay, channel, ccNumber, ccValue);
 }
 
-void sfz::Sfizz::hdccMPE(int delay, int channel, int ccNumber, float normValue) noexcept
+void sfz::Sfizz::hdcc(int delay, int channel, int ccNumber, float normValue) noexcept
 {
-    synth->synth.hdccMPE(delay, channel, ccNumber, normValue);
+    synth->synth.hdcc(delay, channel, ccNumber, normValue);
 }
 
-void sfz::Sfizz::pitchWheelMPE(int delay, int channel, int pitch) noexcept
+void sfz::Sfizz::pitchWheel(int delay, int channel, int pitch) noexcept
 {
-    synth->synth.pitchWheelMPE(delay, channel, pitch);
+    synth->synth.pitchWheel(delay, channel, pitch);
 }
 
-void sfz::Sfizz::hdPitchWheelMPE(int delay, int channel, float pitch) noexcept
+void sfz::Sfizz::hdPitchWheel(int delay, int channel, float pitch) noexcept
 {
-    synth->synth.hdPitchWheelMPE(delay, channel, pitch);
+    synth->synth.hdPitchWheel(delay, channel, pitch);
 }
 
-void sfz::Sfizz::channelAftertouchMPE(int delay, int channel, int aftertouch) noexcept
+void sfz::Sfizz::channelAftertouch(int delay, int channel, int aftertouch) noexcept
 {
-    synth->synth.channelAftertouchMPE(delay, channel, aftertouch);
+    synth->synth.channelAftertouch(delay, channel, aftertouch);
 }
 
-void sfz::Sfizz::hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept
+void sfz::Sfizz::hdChannelAftertouch(int delay, int channel, float normAftertouch) noexcept
 {
-    synth->synth.hdChannelAftertouchMPE(delay, channel, normAftertouch);
+    synth->synth.hdChannelAftertouch(delay, channel, normAftertouch);
 }
 
-void sfz::Sfizz::polyAftertouchMPE(int delay, int channel, int noteNumber, int aftertouch) noexcept
+void sfz::Sfizz::polyAftertouch(int delay, int channel, int noteNumber, int aftertouch) noexcept
 {
-    synth->synth.polyAftertouchMPE(delay, channel, noteNumber, aftertouch);
+    synth->synth.polyAftertouch(delay, channel, noteNumber, aftertouch);
 }
 
-void sfz::Sfizz::hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept
+void sfz::Sfizz::hdPolyAftertouch(int delay, int channel, int noteNumber, float normAftertouch) noexcept
 {
-    synth->synth.hdPolyAftertouchMPE(delay, channel, noteNumber, normAftertouch);
+    synth->synth.hdPolyAftertouch(delay, channel, noteNumber, normAftertouch);
 }
 
 void sfz::Sfizz::setMPEEnabled(bool enabled) noexcept

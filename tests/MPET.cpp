@@ -191,12 +191,12 @@ TEST_CASE("[MPE] First member-channel event at delay>0 keeps the delay-0 sentine
 // Synth: *MPE public API routes events to the right channel slot
 // =============================================================================
 
-TEST_CASE("[MPE] Synth::pitchWheelMPE lands in the per-channel pitch slot")
+TEST_CASE("[MPE] Synth::pitchWheel lands in the per-channel pitch slot")
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true); // *MPE methods honor the channel arg only when MPE is on
-    synth.pitchWheelMPE(0, 1, 4096);
-    synth.pitchWheelMPE(0, 2, -4096);
+    synth.pitchWheel(0, 1, 4096);
+    synth.pitchWheel(0, 2, -4096);
 
     // pitchWheel takes a 14-bit centered-zero value (-8192..+8191 effective)
     // normalized to roughly -1..+1. The exact divisor differs by sign in
@@ -209,12 +209,12 @@ TEST_CASE("[MPE] Synth::pitchWheelMPE lands in the per-channel pitch slot")
     REQUIRE(mid.getPitchBend(0) == Approx(0.0).margin(0.001));
 }
 
-TEST_CASE("[MPE] Synth::ccMPE lands in the per-channel CC slot")
+TEST_CASE("[MPE] Synth::cc lands in the per-channel CC slot")
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.ccMPE(0, 1, 74, 64);
-    synth.ccMPE(0, 2, 74, 127);
+    synth.cc(0, 1, 74, 64);
+    synth.cc(0, 2, 74, 127);
 
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getCCValue(1, 74) == 64_norm);
@@ -222,12 +222,12 @@ TEST_CASE("[MPE] Synth::ccMPE lands in the per-channel CC slot")
     REQUIRE(mid.getCCValue(0, 74) == 0.0_a);
 }
 
-TEST_CASE("[MPE] Synth::channelAftertouchMPE lands in the per-channel slot")
+TEST_CASE("[MPE] Synth::channelAftertouch lands in the per-channel slot")
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.channelAftertouchMPE(0, 1, 64);
-    synth.channelAftertouchMPE(0, 2, 127);
+    synth.channelAftertouch(0, 1, 64);
+    synth.channelAftertouch(0, 2, 127);
 
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getChannelAftertouch(1) == 64_norm);
@@ -235,7 +235,7 @@ TEST_CASE("[MPE] Synth::channelAftertouchMPE lands in the per-channel slot")
     REQUIRE(mid.getChannelAftertouch(0) == 0.0_a);
 }
 
-TEST_CASE("[MPE] Synth::polyAftertouchMPE on Manager Channel lands in the per-channel slot")
+TEST_CASE("[MPE] Synth::polyAftertouch on Manager Channel lands in the per-channel slot")
 {
     // Member-channel Poly KP is dropped by the MPE 1.0 §2.2.7 filter, so the
     // per-channel storage path is only exercisable through the Manager
@@ -243,8 +243,8 @@ TEST_CASE("[MPE] Synth::polyAftertouchMPE on Manager Channel lands in the per-ch
     // covers raw per-channel writes for channels 1..15.
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.polyAftertouchMPE(0, 0, 60, 64);
-    synth.polyAftertouchMPE(0, 0, 64, 127);
+    synth.polyAftertouch(0, 0, 60, 64);
+    synth.polyAftertouch(0, 0, 64, 127);
 
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getPolyAftertouch(0, 60) == 64_norm);
@@ -289,7 +289,7 @@ TEST_CASE("[MPE] When MPE is disabled, *MPE methods collapse channel to 0 (singl
 
     // *MPE noteOn on a non-zero channel — voice should still get
     // triggerChannel_=0 because MPE is off.
-    synth.noteOnMPE(0, /*channel=*/5, 60, 100);
+    synth.noteOn(0, /*channel=*/5, 60, 100);
     synth.renderBlock(buffer);
 
     auto activeVoices = synth.getActiveVoices();
@@ -297,9 +297,9 @@ TEST_CASE("[MPE] When MPE is disabled, *MPE methods collapse channel to 0 (singl
     REQUIRE(activeVoices[0]->getTriggerEvent().channel == 0);
 
     // *MPE modulation writes on non-zero channels also land in channel 0.
-    synth.pitchWheelMPE(0, /*channel=*/5, 4096);
-    synth.ccMPE(0, /*channel=*/5, 74, 90);
-    synth.channelAftertouchMPE(0, /*channel=*/5, 100);
+    synth.pitchWheel(0, /*channel=*/5, 4096);
+    synth.cc(0, /*channel=*/5, 74, 90);
+    synth.channelAftertouch(0, /*channel=*/5, 100);
     synth.renderBlock(buffer);
 
     auto& mid = synth.getResources().getMidiState();
@@ -311,7 +311,7 @@ TEST_CASE("[MPE] When MPE is disabled, *MPE methods collapse channel to 0 (singl
 
     // *MPE noteOff on a non-zero channel also collapses to channel 0 and
     // matches the voice (which has triggerChannel_=0).
-    synth.noteOffMPE(0, /*channel=*/5, 60, 0);
+    synth.noteOff(0, /*channel=*/5, 60, 0);
     synth.renderBlock(buffer);
     REQUIRE((activeVoices[0]->released() || activeVoices[0]->isFree()));
 }
@@ -329,8 +329,8 @@ TEST_CASE("[MPE] setMPEEnabled(false) flushes active voices triggered while MPE 
         <region> sample=*sine
     )");
 
-    synth.noteOnMPE(0, /*channel=*/3, 60, 100);
-    synth.noteOnMPE(0, /*channel=*/4, 64, 100);
+    synth.noteOn(0, /*channel=*/3, 60, 100);
+    synth.noteOn(0, /*channel=*/4, 64, 100);
     synth.renderBlock(buffer);
     REQUIRE(synth.getActiveVoices().size() == 2);
 
@@ -344,10 +344,10 @@ TEST_CASE("[MPE] setMPEEnabled(false) flushes active voices triggered while MPE 
 }
 
 // =============================================================================
-// Synth: noteOnMPE tags spawned voices with the originating channel
+// Synth: noteOn tags spawned voices with the originating channel
 // =============================================================================
 
-TEST_CASE("[MPE] noteOnMPE tags TriggerEvent with the dispatched channel")
+TEST_CASE("[MPE] noteOn tags TriggerEvent with the dispatched channel")
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
@@ -356,8 +356,8 @@ TEST_CASE("[MPE] noteOnMPE tags TriggerEvent with the dispatched channel")
         <region> sample=*sine
     )");
 
-    synth.noteOnMPE(0, /*channel=*/1, 60, 100);
-    synth.noteOnMPE(0, /*channel=*/3, 64, 100);
+    synth.noteOn(0, /*channel=*/1, 60, 100);
+    synth.noteOn(0, /*channel=*/3, 64, 100);
     synth.renderBlock(buffer);
 
     auto activeVoices = synth.getActiveVoices();
@@ -432,13 +432,13 @@ TEST_CASE("[MPE] Voice stealing prefers same-channel candidates when MPE enabled
         <region> sample=*sine
     )");
 
-    synth.noteOnMPE(0, 2, 60, 100); synth.renderBlock(buffer);
-    synth.noteOnMPE(0, 2, 62, 100); synth.renderBlock(buffer);
-    synth.noteOnMPE(0, 2, 64, 100); synth.renderBlock(buffer);
-    synth.noteOnMPE(0, 1, 67, 100); synth.renderBlock(buffer);
+    synth.noteOn(0, 2, 60, 100); synth.renderBlock(buffer);
+    synth.noteOn(0, 2, 62, 100); synth.renderBlock(buffer);
+    synth.noteOn(0, 2, 64, 100); synth.renderBlock(buffer);
+    synth.noteOn(0, 1, 67, 100); synth.renderBlock(buffer);
     REQUIRE(synth.getNumActiveVoices() == 4);
 
-    synth.noteOnMPE(0, 1, 69, 100);
+    synth.noteOn(0, 1, 69, 100);
     synth.renderBlock(buffer);
 
     int channel2Count = 0;
@@ -464,20 +464,20 @@ namespace {
 
 void sendMCM(sfz::Synth& synth, int channel, int memberCount)
 {
-    synth.ccMPE(0, channel, 101, 0);          // RPN MSB
-    synth.ccMPE(0, channel, 100, 6);          // RPN LSB → RPN 6
-    synth.ccMPE(0, channel, 6,   memberCount); // Data Entry MSB
-    synth.ccMPE(0, channel, 101, 127);        // Null RPN MSB
-    synth.ccMPE(0, channel, 100, 127);        // Null RPN LSB
+    synth.cc(0, channel, 101, 0);          // RPN MSB
+    synth.cc(0, channel, 100, 6);          // RPN LSB → RPN 6
+    synth.cc(0, channel, 6,   memberCount); // Data Entry MSB
+    synth.cc(0, channel, 101, 127);        // Null RPN MSB
+    synth.cc(0, channel, 100, 127);        // Null RPN LSB
 }
 
 void sendPitchBendSensitivity(sfz::Synth& synth, int channel, int semitones)
 {
-    synth.ccMPE(0, channel, 101, 0);          // RPN MSB
-    synth.ccMPE(0, channel, 100, 0);          // RPN LSB → RPN 0
-    synth.ccMPE(0, channel, 6,   semitones);  // Data Entry MSB
-    synth.ccMPE(0, channel, 101, 127);        // Null RPN MSB
-    synth.ccMPE(0, channel, 100, 127);        // Null RPN LSB
+    synth.cc(0, channel, 101, 0);          // RPN MSB
+    synth.cc(0, channel, 100, 0);          // RPN LSB → RPN 0
+    synth.cc(0, channel, 6,   semitones);  // Data Entry MSB
+    synth.cc(0, channel, 101, 127);        // Null RPN MSB
+    synth.cc(0, channel, 100, 127);        // Null RPN LSB
 }
 
 } // namespace
@@ -530,10 +530,10 @@ TEST_CASE("[MPE] Null RPN followed by CC 6 does not trigger MPE handlers")
 {
     sfz::Synth synth;
     // Deselect any pending RPN first.
-    synth.ccMPE(0, 0, 101, 127);
-    synth.ccMPE(0, 0, 100, 127);
+    synth.cc(0, 0, 101, 127);
+    synth.cc(0, 0, 100, 127);
     // A bare Data Entry with no RPN selected must not flip MPE state.
-    synth.ccMPE(0, 0, 6, 8);
+    synth.cc(0, 0, 6, 8);
     REQUIRE(synth.getMPEEnabled() == false);
 }
 
@@ -543,9 +543,9 @@ TEST_CASE("[MPE] NRPN sequence followed by CC 6 does not trigger MPE handlers")
     // Select NRPN (0, 6) on the master channel — same data values as RPN 6
     // but via CC 99 / CC 98 instead of CC 101 / CC 100. The parser must not
     // mistake this for an MCM.
-    synth.ccMPE(0, 0, 99, 0);
-    synth.ccMPE(0, 0, 98, 6);
-    synth.ccMPE(0, 0, 6, 8);
+    synth.cc(0, 0, 99, 0);
+    synth.cc(0, 0, 98, 6);
+    synth.cc(0, 0, 6, 8);
     REQUIRE(synth.getMPEEnabled() == false);
 }
 
@@ -585,9 +585,9 @@ TEST_CASE("[MPE] MCM enable is unconditional (not gated by the bend-range opt-ou
 TEST_CASE("[MPE] RPN control CCs still propagate to MidiState (parser is a tap)")
 {
     sfz::Synth synth;
-    synth.ccMPE(0, 0, 101, 0);
-    synth.ccMPE(0, 0, 100, 6);
-    synth.ccMPE(0, 0, 6,   8);
+    synth.cc(0, 0, 101, 0);
+    synth.cc(0, 0, 100, 6);
+    synth.cc(0, 0, 6,   8);
 
     auto& mid = synth.getResources().getMidiState();
     // The parser must not swallow the CCs — SFZ instruments can bind
@@ -616,7 +616,7 @@ TEST_CASE("[MPE] Opt-out flag round-trip getters")
 //
 // Poly KP is prohibited on Member Channels under MPE — per-note pressure
 // flows through Channel Pressure, and Poly KP on a Member Channel would
-// compound the response. The engine drops such events at hdPolyAftertouchMPE
+// compound the response. The engine drops such events at hdPolyAftertouch
 // and reports the drop via getDroppedPolyKpOnMemberCount. Manager-Channel
 // Poly KP remains permitted (spec leaves this to the implementer for
 // compatibility with non-MPE-aware devices) and still routes to MidiState.
@@ -627,7 +627,7 @@ TEST_CASE("[MPE] Poly KP on a Member Channel is dropped when MPE is enabled")
     synth.setMPEEnabled(true);
     REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
 
-    synth.polyAftertouchMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.polyAftertouch(0, /*channel=*/2, /*note=*/60, 100);
 
     REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 1);
     // The dropped event must not reach MidiState — the slot stays at the
@@ -642,7 +642,7 @@ TEST_CASE("[MPE] Poly KP on the Manager Channel still routes through when MPE is
     synth.setMPEEnabled(true);
     REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
 
-    synth.polyAftertouchMPE(0, /*channel=*/0, /*note=*/60, 127);
+    synth.polyAftertouch(0, /*channel=*/0, /*note=*/60, 127);
 
     REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
     auto& mid = synth.getResources().getMidiState();
@@ -654,7 +654,7 @@ TEST_CASE("[MPE] Poly KP on any channel is accepted when MPE is disabled")
     sfz::Synth synth;
     REQUIRE(synth.getMPEEnabled() == false);
 
-    synth.polyAftertouchMPE(0, /*channel=*/5, /*note=*/72, 80);
+    synth.polyAftertouch(0, /*channel=*/5, /*note=*/72, 80);
 
     REQUIRE(synth.getDroppedPolyKpOnMemberCount() == 0);
     auto& mid = synth.getResources().getMidiState();
@@ -677,7 +677,7 @@ TEST_CASE("[MPE] Damper on the Manager Channel is registered when MPE is enabled
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.ccMPE(0, /*channel=*/0, /*ccNumber=*/64, 127);
+    synth.cc(0, /*channel=*/0, /*ccNumber=*/64, 127);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 0);
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getCCValue(/*channel=*/0, 64) == 127_norm);
@@ -687,7 +687,7 @@ TEST_CASE("[MPE] Damper on a Member Channel is dropped when MPE is enabled")
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/64, 127);
+    synth.cc(0, /*channel=*/2, /*ccNumber=*/64, 127);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 1);
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getCCValue(/*channel=*/2, 64) == 0.0_a);
@@ -698,7 +698,7 @@ TEST_CASE("[MPE] All pedal CCs 64-69 drop on Member Channels under MPE")
     sfz::Synth synth;
     synth.setMPEEnabled(true);
     for (int cc : {64, 65, 66, 67, 68, 69})
-        synth.ccMPE(0, /*channel=*/3, cc, 127);
+        synth.cc(0, /*channel=*/3, cc, 127);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 6);
 }
 
@@ -706,7 +706,7 @@ TEST_CASE("[MPE] All Notes Off on a Member Channel is dropped when MPE is enable
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/123, 0);
+    synth.cc(0, /*channel=*/2, /*ccNumber=*/123, 0);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 1);
     // The CC must not reach MidiState even though All-Notes-Off normally
     // hits a global early-return path in performHdcc.
@@ -718,7 +718,7 @@ TEST_CASE("[MPE] Reset All Controllers on a Member Channel is dropped when MPE i
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.ccMPE(0, /*channel=*/4, /*ccNumber=*/121, 0);
+    synth.cc(0, /*channel=*/4, /*ccNumber=*/121, 0);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 1);
 }
 
@@ -726,8 +726,8 @@ TEST_CASE("[MPE] Bank Select MSB/LSB on a Member Channel is dropped when MPE is 
 {
     sfz::Synth synth;
     synth.setMPEEnabled(true);
-    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/0, 5);   // Bank MSB
-    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/32, 3);  // Bank LSB
+    synth.cc(0, /*channel=*/2, /*ccNumber=*/0, 5);   // Bank MSB
+    synth.cc(0, /*channel=*/2, /*ccNumber=*/32, 3);  // Bank LSB
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 2);
 }
 
@@ -735,7 +735,7 @@ TEST_CASE("[MPE] Manager-only filter is inert when MPE is disabled")
 {
     sfz::Synth synth;
     REQUIRE(synth.getMPEEnabled() == false);
-    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/64, 127);
+    synth.cc(0, /*channel=*/2, /*ccNumber=*/64, 127);
     REQUIRE(synth.getDroppedManagerOnlyMessageCount() == 0);
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getCCValue(/*channel=*/2, 64) == 127_norm);
@@ -779,7 +779,7 @@ TEST_CASE("[MPE] expressionChannel: active voice on Member Channel uses its trig
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/2, /*note=*/60, 100);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
@@ -796,9 +796,9 @@ TEST_CASE("[MPE] expressionChannel: released voice on Member Channel redirects t
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/2, /*note=*/60, 100);
     synth.renderBlock(buffer);
-    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.noteOff(0, /*channel=*/2, /*note=*/60, 0);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
@@ -818,14 +818,14 @@ TEST_CASE("[MPE] expressionChannel: voice on Manager Channel always reads Manage
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/0, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/0, /*note=*/60, 100);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
     REQUIRE(active.size() == 1);
     REQUIRE(active[0]->expressionChannel() == 0);
 
-    synth.noteOffMPE(0, /*channel=*/0, /*note=*/60, 0);
+    synth.noteOff(0, /*channel=*/0, /*note=*/60, 0);
     synth.renderBlock(buffer);
     REQUIRE(active[0]->released() == true);
     REQUIRE(active[0]->expressionChannel() == 0);
@@ -842,16 +842,16 @@ TEST_CASE("[MPE] Pitch Bend on released Member Channel doesn't reach the voice's
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/2, /*note=*/60, 100);
     synth.renderBlock(buffer);
-    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.noteOff(0, /*channel=*/2, /*note=*/60, 0);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
     REQUIRE(active.size() == 1);
     REQUIRE(active[0]->expressionChannel() == 0);
 
-    synth.hdPitchWheelMPE(0, /*channel=*/2, 0.5f);
+    synth.hdPitchWheel(0, /*channel=*/2, 0.5f);
     auto& mid = synth.getResources().getMidiState();
     // PB lands in MidiState ch 2 ...
     REQUIRE(mid.getPitchBendRaw(2) == 0.5f);
@@ -868,16 +868,16 @@ TEST_CASE("[MPE] Channel Pressure on released Member Channel doesn't reach the v
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/2, /*note=*/60, 100);
     synth.renderBlock(buffer);
-    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.noteOff(0, /*channel=*/2, /*note=*/60, 0);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
     REQUIRE(active.size() == 1);
     REQUIRE(active[0]->expressionChannel() == 0);
 
-    synth.channelAftertouchMPE(0, /*channel=*/2, 100);
+    synth.channelAftertouch(0, /*channel=*/2, 100);
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getChannelAftertouch(/*channel=*/2) == 100_norm);
     REQUIRE(mid.getChannelAftertouch(/*channel=*/0) == 0.0_a);
@@ -892,16 +892,16 @@ TEST_CASE("[MPE] CC74 on released Member Channel doesn't reach the voice's expre
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/2, /*note=*/60, 100);
     synth.renderBlock(buffer);
-    synth.noteOffMPE(0, /*channel=*/2, /*note=*/60, 0);
+    synth.noteOff(0, /*channel=*/2, /*note=*/60, 0);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
     REQUIRE(active.size() == 1);
     REQUIRE(active[0]->expressionChannel() == 0);
 
-    synth.ccMPE(0, /*channel=*/2, /*ccNumber=*/74, 90);
+    synth.cc(0, /*channel=*/2, /*ccNumber=*/74, 90);
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getCCValue(/*channel=*/2, 74) == 90_norm);
     REQUIRE(mid.getCCValue(/*channel=*/0, 74) == 0.0_a);
@@ -920,7 +920,7 @@ TEST_CASE("[MPE] Active voice on Member Channel still responds to per-finger exp
     synth.loadSfzString(fs::current_path() / "tests/TestFiles/mpe_released.sfz", R"(
         <region> sample=*sine ampeg_release=1
     )");
-    synth.noteOnMPE(0, /*channel=*/2, /*note=*/60, 100);
+    synth.noteOn(0, /*channel=*/2, /*note=*/60, 100);
     synth.renderBlock(buffer);
 
     auto active = synth.getActiveVoices();
@@ -928,9 +928,9 @@ TEST_CASE("[MPE] Active voice on Member Channel still responds to per-finger exp
     REQUIRE(active[0]->released() == false);
     REQUIRE(active[0]->expressionChannel() == 2);
 
-    synth.hdPitchWheelMPE(0, /*channel=*/2, 0.25f);
-    synth.channelAftertouchMPE(0, /*channel=*/2, 80);
-    synth.ccMPE(0, /*channel=*/2, 74, 70);
+    synth.hdPitchWheel(0, /*channel=*/2, 0.25f);
+    synth.channelAftertouch(0, /*channel=*/2, 80);
+    synth.cc(0, /*channel=*/2, 74, 70);
     auto& mid = synth.getResources().getMidiState();
     REQUIRE(mid.getPitchBendRaw(2) == 0.25f);
     REQUIRE(mid.getChannelAftertouch(2) == 80_norm);

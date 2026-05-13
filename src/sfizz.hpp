@@ -677,33 +677,33 @@ public:
     //
     // setMPEEnabled() is informational for the engine: it gates same-channel-
     // preference voice stealing. Per-channel input dispatch works regardless
-    // of the flag — calling pitchWheelMPE(channel=2, ...) always lands in
+    // of the flag — calling pitchWheel(channel=2, ...) always lands in
     // the channel-2 modulation slot.
 
     /** @brief Send a note on event on a specific MIDI channel (0..15). */
-    void noteOnMPE(int delay, int channel, int noteNumber, int velocity) noexcept;
+    void noteOn(int delay, int channel, int noteNumber, int velocity) noexcept;
     /** @brief High-precision note on on a specific MIDI channel. */
-    void hdNoteOnMPE(int delay, int channel, int noteNumber, float velocity) noexcept;
+    void hdNoteOn(int delay, int channel, int noteNumber, float velocity) noexcept;
     /** @brief Send a note off event on a specific MIDI channel (0..15). */
-    void noteOffMPE(int delay, int channel, int noteNumber, int velocity) noexcept;
+    void noteOff(int delay, int channel, int noteNumber, int velocity) noexcept;
     /** @brief High-precision note off on a specific MIDI channel. */
-    void hdNoteOffMPE(int delay, int channel, int noteNumber, float velocity) noexcept;
+    void hdNoteOff(int delay, int channel, int noteNumber, float velocity) noexcept;
     /** @brief Send a CC event on a specific MIDI channel (0..15). */
-    void ccMPE(int delay, int channel, int ccNumber, int ccValue) noexcept;
+    void cc(int delay, int channel, int ccNumber, int ccValue) noexcept;
     /** @brief High-precision CC on a specific MIDI channel. */
-    void hdccMPE(int delay, int channel, int ccNumber, float normValue) noexcept;
+    void hdcc(int delay, int channel, int ccNumber, float normValue) noexcept;
     /** @brief Send a pitch bend event on a specific MIDI channel (0..15). */
-    void pitchWheelMPE(int delay, int channel, int pitch) noexcept;
+    void pitchWheel(int delay, int channel, int pitch) noexcept;
     /** @brief High-precision pitch bend on a specific MIDI channel. */
-    void hdPitchWheelMPE(int delay, int channel, float pitch) noexcept;
+    void hdPitchWheel(int delay, int channel, float pitch) noexcept;
     /** @brief Send a channel aftertouch event on a specific MIDI channel. */
-    void channelAftertouchMPE(int delay, int channel, int aftertouch) noexcept;
+    void channelAftertouch(int delay, int channel, int aftertouch) noexcept;
     /** @brief High-precision channel aftertouch on a specific MIDI channel. */
-    void hdChannelAftertouchMPE(int delay, int channel, float normAftertouch) noexcept;
+    void hdChannelAftertouch(int delay, int channel, float normAftertouch) noexcept;
     /** @brief Send a polyphonic aftertouch event on a specific MIDI channel. */
-    void polyAftertouchMPE(int delay, int channel, int noteNumber, int aftertouch) noexcept;
+    void polyAftertouch(int delay, int channel, int noteNumber, int aftertouch) noexcept;
     /** @brief High-precision polyphonic aftertouch on a specific MIDI channel. */
-    void hdPolyAftertouchMPE(int delay, int channel, int noteNumber, float normAftertouch) noexcept;
+    void hdPolyAftertouch(int delay, int channel, int noteNumber, float normAftertouch) noexcept;
 
     /** @brief Enable or disable MPE mode (gates same-channel voice stealing). */
     void setMPEEnabled(bool enabled) noexcept;
