@@ -276,10 +276,10 @@ TEST_CASE("[MPE] When MPE is disabled, *MPE methods collapse channel to 0 (singl
 {
     // With MPE off, the *MPE API surface and the legacy channel-less API
     // are equivalent: both land in channel-0 storage and both trigger
-    // voices with triggerChannel_=0. Consumers (sfizz-ui's VST3 wrapper,
-    // sample-machine's PlayerEngine) can therefore call *MPE unconditionally
-    // without an MPE-off vs MPE-on dispatch branch, and the engine takes
-    // sole responsibility for what "MPE off" means.
+    // voices with triggerChannel_=0. Consumers (the VST3 / LV2 wrappers
+    // in sfizz-ui, or any downstream embedder) can therefore call *MPE
+    // unconditionally without an MPE-off vs MPE-on dispatch branch, and
+    // the engine takes sole responsibility for what "MPE off" means.
     sfz::Synth synth;
     REQUIRE(synth.getMPEEnabled() == false);
     sfz::AudioBuffer<float> buffer { 2, static_cast<unsigned>(synth.getSamplesPerBlock()) };
@@ -671,7 +671,7 @@ TEST_CASE("[MPE] Poly KP on any channel is accepted when MPE is disabled")
 // performHdcc and reports the drop via getDroppedManagerOnlyMessageCount.
 // RPN data CCs (6/38/98/99/100/101) are NOT zone-wide — they are per-channel
 // state machines — and must continue to flow on Member Channels so the
-// SMPL-46 RPN auto-config keeps working.
+// RPN 0 (Pitch Bend Sensitivity) auto-config keeps working.
 
 TEST_CASE("[MPE] Damper on the Manager Channel is registered when MPE is enabled")
 {
